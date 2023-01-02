@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # Welcome to Remix!
 
 - [Remix Docs](https://remix.run/docs)
@@ -61,7 +60,5 @@ netlify deploy --build
 # production deployment
 netlify deploy --build --prod
 ```
-=======
 # lofaseoul-partner
 로파서울 파트너사이트
->>>>>>> bf346b5b8fdd7a59be2582ee786439cdc605c76c
