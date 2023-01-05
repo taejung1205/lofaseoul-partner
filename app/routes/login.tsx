@@ -51,7 +51,8 @@ const LoginButton = styled.button`
  */
 export const action: ActionFunction = async ({ request, context }) => {
   // call my authenticator
-  const resp = await authenticator.authenticate("form", request, {
+  let resp = await authenticator.authenticate("form", request, {
+    successRedirect: "/",
     failureRedirect: "/login",
     throwOnError: true,
     context,
@@ -75,14 +76,16 @@ export const action: ActionFunction = async ({ request, context }) => {
  * @returns
  */
 export const loader: LoaderFunction = async ({ request }) => {
-  const user = await authenticator.isAuthenticated(request);
+  let user = await authenticator.isAuthenticated(request);
   if(user !== null && 'isAdmin' in user){
     if(user.isAdmin){
+      console.log(user);
       return redirect("/admin/dashboard");
     } else {
       return redirect("/");
     }
-  } 
+  }
+
   const session = await sessionStorage.getSession(
     request.headers.get("Cookie")
   );

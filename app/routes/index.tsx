@@ -1,4 +1,4 @@
-import { ActionFunction, LoaderFunction } from "@remix-run/node";
+import { ActionFunction, LoaderFunction, redirect } from "@remix-run/node";
 import { Form, useLoaderData } from "@remix-run/react";
 import authenticator from "~/services/auth.server";
 import { sessionStorage } from "~/services/session.server";
@@ -11,9 +11,16 @@ import { sessionStorage } from "~/services/session.server";
  * @returns
  */
 export let loader: LoaderFunction = async ({ request }) => {
-  return await authenticator.isAuthenticated(request, {
+  let user = await authenticator.isAuthenticated(request, {
     failureRedirect: "/login",
   });
+  if(user !== null && 'isAdmin' in user){
+    if(user.isAdmin){
+      console.log(user);
+      return redirect("/admin/dashboard");
+    } 
+  }
+  return user;
 };
 
 /**
