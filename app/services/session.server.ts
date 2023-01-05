@@ -20,4 +20,5 @@ export let { getSession, commitSession, destroySession } = sessionStorage;
 export type User = {
   name: string;
   token: string;
+  isAdmin: boolean;
 };

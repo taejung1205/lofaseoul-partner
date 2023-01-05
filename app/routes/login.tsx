@@ -1,7 +1,47 @@
 import { Form, useLoaderData } from "@remix-run/react";
-import { ActionFunction, LoaderFunction, json } from "@remix-run/node";
+import { ActionFunction, LoaderFunction, json, redirect } from "@remix-run/node";
 import authenticator from "~/services/auth.server";
 import { sessionStorage } from "~/services/session.server";
+import styled from "styled-components";
+import { AdminHeader, HeaderBox } from "~/components/header";
+
+const LoginPage = styled.div`
+  width: inherit;
+  font-size: 33px;
+  text-align: center;
+  font-weight: 700;
+  line-height: 1;
+`;
+
+const InputBox = styled.input`
+  width: 730px;
+  height: 75px;
+  border: 3px solid black;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 27px;
+  padding-top: 12px;
+  padding-bottom: 12px;
+  text-align: left;
+  font-size: 35px;
+  ::placeholder {
+    color: black;
+    font-weight: 700;
+    opacity: 1;
+  }
+  :focus::placeholder{
+    color: transparent;
+  }
+`;
+
+const LoginButton = styled.button`
+  width: 266px;
+  height: 60px;
+  background-color: black;
+  color: white;
+  font-weight: 700;
+  font-size: 33px;
+`
 
 /**
  * called when the user hits button to login
@@ -12,11 +52,17 @@ import { sessionStorage } from "~/services/session.server";
 export const action: ActionFunction = async ({ request, context }) => {
   // call my authenticator
   const resp = await authenticator.authenticate("form", request, {
-    successRedirect: "/",
     failureRedirect: "/login",
     throwOnError: true,
     context,
   });
+  if(resp !== null && 'isAdmin' in resp){
+    if(resp.isAdmin){
+      return redirect("/admin/dashboard");
+    } else {
+      return redirect("/");
+    }
+  }
   console.log(resp);
   return resp;
 };
@@ -29,10 +75,14 @@ export const action: ActionFunction = async ({ request, context }) => {
  * @returns
  */
 export const loader: LoaderFunction = async ({ request }) => {
-  await authenticator.isAuthenticated(request, {
-    successRedirect: "/",
-  });
-
+  const user = await authenticator.isAuthenticated(request);
+  if(user !== null && 'isAdmin' in user){
+    if(user.isAdmin){
+      return redirect("/admin/dashboard");
+    } else {
+      return redirect("/");
+    }
+  } 
   const session = await sessionStorage.getSession(
     request.headers.get("Cookie")
   );
@@ -45,33 +95,31 @@ export const loader: LoaderFunction = async ({ request }) => {
  *
  * @returns
  */
-export default function LoginPage() {
-    // if i got an error it will come back with the loader data
-    const loaderData = useLoaderData();
-    console.log(loaderData);
-    return (
-      <div style={{ fontFamily: "system-ui, sans-serif", lineHeight: "1.4" }}>
-        <h1>Welcome to Remix-Auth Example</h1>
-        <p>
-          Based on the Form Strategy From{" "}
-          <a href="https://github.com/sergiodxa/remix-auth" target={"_window"}>
-            Remix-Auth Project
-          </a>
-        </p>
-        <Form method="post">
-          <input type="string" name="username" placeholder="Username" required />
-          <input
-            type="password"
-            name="password"
-            placeholder="Password"
-            autoComplete="current-password"
-          />
-          <button>Sign In</button>
-        </Form>
-        <div>
-          {loaderData?.error ? <p>ERROR: {loaderData?.error?.message}</p> : null}
-        </div>
+export default function Login() {
+  // if i got an error it will come back with the loader data
+  const loaderData = useLoaderData();
+  console.log(loaderData);
+  return (
+    <LoginPage>
+      <HeaderBox />
+      <div style={{ height: "100px" }} />
+      로파 서울 파트너사이트입니다.
+      <div style={{ height: "150px" }} />
+      <Form method="post">
+        <InputBox type="string" name="username" placeholder="ID" required />
+        <div style={{ height: "40px" }} />
+        <InputBox
+          type="password"
+          name="password"
+          placeholder="PW"
+          autoComplete="current-password"
+        />
+        <div style={{ height: "100px" }} />
+        <LoginButton>로그인</LoginButton>
+      </Form>
+      <div>
+        {loaderData?.error ? <p>ERROR: {loaderData?.error?.message}</p> : null}
       </div>
-    );
-  }
-  
+    </LoginPage>
+  );
+}

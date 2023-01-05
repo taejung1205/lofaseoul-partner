@@ -33,6 +33,7 @@ export default function Index() {
       <h1>Welcome to Remix Protected Dashboard</h1>
       <p>{data?.name}</p>
       <p>{data?.token}</p>
+      <p>{data?.isAdmin ? "Hello" : "WOLD"}</p>
       <Form method="post">
         <button>Log Out</button>
       </Form>

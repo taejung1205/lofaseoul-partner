@@ -27,6 +27,14 @@ if (!firebaseApp?.apps.length || !firestore.apps.length) {
   firestore = getFirestore(firebaseApp);
 }
 
+/**
+ * 파이어베이스를 통해 로그인을 시도합니다.
+ * @param param0
+ * @returns
+ * -1: 로그인 실패
+ * 0: 일반 파트너 계정 로그인
+ * 1: 어드민 계정 로그인
+ */
 export async function doLogin({
   username,
   password,
@@ -34,21 +42,30 @@ export async function doLogin({
   username: string;
   password: string;
 }) {
-    const docRef = doc(firestore, "accounts", username);
-    const docSnap = await getDoc(docRef);
-    if (docSnap.exists()) {
-        if(process.env.PASSWORD_ENCRYPTION_KEY !== undefined){
-            const keyWordArray = crypto.enc.Utf8.parse( process.env.PASSWORD_ENCRYPTION_KEY! );
-            const cipher = crypto.AES.encrypt(password, keyWordArray, { mode: crypto.mode.ECB }).toString();
-            if(cipher === docSnap.data().password){
-                return true;
-            } else {
-                return false;
-            }
+  const docRef = doc(firestore, "accounts", username);
+  const docSnap = await getDoc(docRef);
+  if (docSnap.exists()) {
+    if (process.env.PASSWORD_ENCRYPTION_KEY !== undefined) {
+      const keyWordArray = crypto.enc.Utf8.parse(
+        process.env.PASSWORD_ENCRYPTION_KEY!
+      );
+      const cipher = crypto.AES.encrypt(password, keyWordArray, {
+        mode: crypto.mode.ECB,
+      }).toString();
+      if (cipher === docSnap.data().password) {
+        if (docSnap.data().isAdmin) {
+          return 1;
+        } else {
+          return 0;
         }
       } else {
-        // doc.data() will be undefined in this case
-        console.log("No such document!");
-        return false;
+        return -1;
       }
+    }
+    return -1;
+  } else {
+    // doc.data() will be undefined in this case
+    console.log("No such document!");
+    return -1;
+  }
 }

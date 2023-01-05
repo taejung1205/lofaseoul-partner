@@ -33,13 +33,17 @@ authenticator.use(
         "Bad Credentials: Password must be a string"
       );
 
-    const loginResult = await doLogin({ username: username, password: password });
+    const loginResult = await doLogin({
+      username: username,
+      password: password,
+    });
 
     // login the user, this could be whatever process you want
-    if (loginResult) {
+    if (loginResult >= 0) {
       user = {
         name: username,
         token: `${password}-${new Date().getTime()}`,
+        isAdmin: loginResult == 1 ? true : false,
       };
 
       // the type of this user must match the type you pass to the Authenticator
