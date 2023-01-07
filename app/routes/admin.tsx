@@ -9,9 +9,13 @@ import authenticator from "~/services/auth.server";
 import { sessionStorage } from "~/services/session.server";
 import styled from "styled-components";
 import { AdminHeader } from "~/components/header";
+import { AdminSidebar } from "~/components/sidebar";
 
 const AdminPage = styled.div`
   width: inherit;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
   font-size: 33px;
   text-align: center;
   font-weight: 700;
@@ -35,7 +39,15 @@ export default function Admin() {
   return (
     <AdminPage>
       <AdminHeader />
-      <Outlet />
+      <div
+        style={{
+          display: "flex",
+          height: "100%"
+        }}
+      >
+        <AdminSidebar />
+        <Outlet />
+      </div>
     </AdminPage>
   );
 }

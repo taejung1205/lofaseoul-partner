@@ -1,5 +1,5 @@
 export default function AdminDashboard() {
     return <>
-        <p>TEST</p>
+        <p>대쉬보드</p>
     </>
 }
