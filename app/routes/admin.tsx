@@ -42,7 +42,8 @@ export default function Admin() {
       <div
         style={{
           display: "flex",
-          height: "100%"
+          height: "100%",
+          width: "100%"
         }}
       >
         <AdminSidebar />

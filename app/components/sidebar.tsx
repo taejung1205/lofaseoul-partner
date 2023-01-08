@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 const SidebarBox = styled.div`
   width: 285px;
+  min-width: 285px;
   height: 100%;
   background-color: black;
   overflow: hidden;
