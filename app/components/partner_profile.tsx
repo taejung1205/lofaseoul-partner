@@ -37,6 +37,7 @@ export function PartnerProfile({
   otherFee,
   shippingFee,
   isEdit,
+  isNew,
   onEditClick,
   onSaveClick,
 }: {
@@ -49,6 +50,7 @@ export function PartnerProfile({
   otherFee: number;
   shippingFee: number;
   isEdit: boolean;
+  isNew: boolean;
   onEditClick: () => void;
   onSaveClick: () => void;
 }) {
@@ -107,7 +109,7 @@ export function PartnerProfile({
       </PartnerProfileBox>
     );
   } else {
-    const [nameEdit, setNameEdit] = useState(name);
+    const [nameEdit, setNameEdit] = useState(id);
     const [idEdit, setIdEdit] = useState(id);
     const [passwordEdit, setPasswordEdit] = useState(password);
     const [emailEdit, setEmailEdit] = useState(email);
@@ -126,13 +128,21 @@ export function PartnerProfile({
               border: "0.5px solid black",
             }}
           >
-            <InputBox
-              type="text"
-              name="name"
-              value={nameEdit}
-              onChange={(e) => setNameEdit(e.target.value)}
-              required
-            />
+            {isNew ? (
+              <InputBox
+                type="text"
+                name="name"
+                value={nameEdit}
+                onChange={(e) => setNameEdit(e.target.value)}
+                required
+              />
+            ) : (
+              <>
+                <div>{name}</div>
+                <input type="hidden" value={name} name="name" required />
+              </>
+            )}
+
             <button onClick={onSaveClick} type="submit">
               버튼
             </button>

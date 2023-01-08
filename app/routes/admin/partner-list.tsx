@@ -4,7 +4,10 @@ import { DocumentData } from "firebase/firestore";
 import { useState } from "react";
 import styled from "styled-components";
 import { PartnerProfile } from "~/components/partner_profile";
-import { getPartnerProfiles } from "~/services/firebase.server";
+import {
+  addPartnerProfile,
+  getPartnerProfiles,
+} from "~/services/firebase.server";
 
 const PartnerListPage = styled.div`
   width: 100%;
@@ -29,7 +32,37 @@ const NewProfileButton = styled.button`
 
 export const action: ActionFunction = async ({ request }) => {
   const body = await request.formData();
-  console.log(body.get("name"));
+  const name = body.get("name")?.toString();
+  const id = body.get("id")?.toString();
+  const password = body.get("password")?.toString();
+  const email = body.get("email")?.toString();
+  const phone = body.get("phone")?.toString();
+  const lofaFee = Number(body.get("lofaFee"));
+  const otherFee = Number(body.get("otherFee"));
+  const shippingFee = Number(body.get("shippingFee"));
+
+  if (
+    typeof name == "undefined" ||
+    typeof id == "undefined" ||
+    typeof password == "undefined" ||
+    typeof email == "undefined" ||
+    typeof phone == "undefined"
+  ) {
+    console.log("Error");
+  } else {
+    const result = await addPartnerProfile({
+      name: name,
+      id: id,
+      password: password,
+      email: email,
+      phone: phone,
+      lofaFee: lofaFee,
+      otherFee: otherFee,
+      shippingFee: shippingFee,
+    });
+    console.log(result);
+  }
+
   return null;
 };
 
@@ -55,12 +88,15 @@ export default function AdminPartnerList() {
             phone={doc.phone}
             lofaFee={doc.lofaFee}
             otherFee={doc.otherFee}
+            isNew={false}
             shippingFee={doc.shippingFee}
             isEdit={currentEdit == index}
             onEditClick={() => {
               setCurrentEdit(index);
             }}
-            onSaveClick={() => {}}
+            onSaveClick={() => {
+              setCurrentEdit(-1);
+            }}
           />
         );
       })}

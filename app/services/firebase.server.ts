@@ -7,6 +7,7 @@ import {
   getDocs,
   getFirestore,
   query,
+  setDoc,
   where,
 } from "firebase/firestore";
 import crypto from "crypto-js";
@@ -83,11 +84,45 @@ export async function doLogin({
  * 파트너의 정보들을 불러옵니다
  * @param param0
  * @returns
- * 
+ *
  */
-export async function getPartnerProfiles(){
+export async function getPartnerProfiles() {
   const accountsRef = collection(firestore, "accounts");
   const partnerQuery = query(accountsRef, where("isAdmin", "==", false));
   const querySnap = await getDocs(partnerQuery);
-  return querySnap.docs.map(doc => doc.data());
+  return querySnap.docs.map((doc) => doc.data());
+}
+
+export async function addPartnerProfile({
+  name,
+  id,
+  password,
+  email,
+  phone,
+  lofaFee,
+  otherFee,
+  shippingFee,
+}: {
+  name: string;
+  id: string;
+  password: string;
+  email: string;
+  phone: string;
+  lofaFee: number;
+  otherFee: number;
+  shippingFee: number;
+}) {
+
+  const result = await setDoc(doc(firestore, "accounts", name), {
+    name: name,
+    id: id,
+    password: password,
+    email: email,
+    phone: phone,
+    lofaFee: lofaFee,
+    otherFee: otherFee,
+    shippingFee: shippingFee,
+    isAdmin: false
+  });
+  return result;
 }
