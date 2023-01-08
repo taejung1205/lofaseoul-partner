@@ -109,7 +109,7 @@ export default function Login() {
       로파 서울 파트너사이트입니다.
       <div style={{ height: "150px" }} />
       <Form method="post">
-        <InputBox type="string" name="username" placeholder="ID" required />
+        <InputBox type="string" name="id" placeholder="ID" required />
         <div style={{ height: "40px" }} />
         <InputBox
           type="password"

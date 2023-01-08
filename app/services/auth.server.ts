@@ -14,35 +14,35 @@ const authenticator = new Authenticator<User | Error | null>(sessionStorage, {
 authenticator.use(
   new FormStrategy(async ({ form }) => {
     // get the data from the form...
-    let username = form.get("username") as string;
+    let id = form.get("id") as string;
     let password = form.get("password") as string;
 
     // initialize the user here
     let user = null;
 
     // do some validation, errors are in the sessionErrorKey
-    if (!username || username?.length === 0)
-      throw new AuthorizationError("Bad Credentials: Email is required");
-    if (typeof username !== "string")
-      throw new AuthorizationError("Bad Credentials: Email must be a string");
+    if (!id || id?.length === 0)
+      throw new AuthorizationError("아이디를 입력해주세요.");
+    if (typeof id !== "string")
+      throw new AuthorizationError("아이디가 올바르지 않습니다.");
 
     if (!password || password?.length === 0)
-      throw new AuthorizationError("Bad Credentials: Password is required");
+      throw new AuthorizationError("비밀번호를 입력해주세요.");
     if (typeof password !== "string")
       throw new AuthorizationError(
-        "Bad Credentials: Password must be a string"
+        "비밀번호가 올바르지 않습니다."
       );
 
     const loginResult = await doLogin({
-      username: username,
+      id: id,
       password: password,
     });
 
     // login the user, this could be whatever process you want
     if (loginResult >= 0) {
       user = {
-        name: username,
-        token: `${password}-${new Date().getTime()}`,
+        name: id,
+        token: `${id}-${new Date().getTime()}`,
         isAdmin: loginResult == 1 ? true : false,
       };
 
@@ -52,7 +52,7 @@ authenticator.use(
       return await Promise.resolve({ ...user });
     } else {
       // if problem with user throw error AuthorizationError
-      throw new AuthorizationError("Bad Credentials");
+      throw new AuthorizationError("로그인에 실패하였습니다. 입력한 정보를 확인해주세요.");
     }
   })
 );

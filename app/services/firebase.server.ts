@@ -1,6 +1,14 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
-import { doc, getDoc, getFirestore } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  getFirestore,
+  query,
+  where,
+} from "firebase/firestore";
 import crypto from "crypto-js";
 
 // TODO: Add SDKs for Firebase products that you want to use
@@ -36,36 +44,37 @@ if (!firebaseApp?.apps.length || !firestore.apps.length) {
  * 1: 어드민 계정 로그인
  */
 export async function doLogin({
-  username,
+  id,
   password,
 }: {
-  username: string;
+  id: string;
   password: string;
 }) {
-  const docRef = doc(firestore, "accounts", username);
-  const docSnap = await getDoc(docRef);
-  if (docSnap.exists()) {
-    if (process.env.PASSWORD_ENCRYPTION_KEY !== undefined) {
-      const keyWordArray = crypto.enc.Utf8.parse(
-        process.env.PASSWORD_ENCRYPTION_KEY!
-      );
-      const cipher = crypto.AES.encrypt(password, keyWordArray, {
-        mode: crypto.mode.ECB,
-      }).toString();
-      if (cipher === docSnap.data().password) {
-        if (docSnap.data().isAdmin) {
-          return 1;
+  const accountsRef = collection(firestore, "accounts");
+  const idQuery = query(accountsRef, where("id", "==", id));
+  const querySnap = await getDocs(idQuery);
+  if (!querySnap.empty && process.env.PASSWORD_ENCRYPTION_KEY !== undefined) {
+    let result = -1;
+    querySnap.forEach((doc) => {
+      // console.log(doc.data());
+      // const parsedKey = crypto.enc.Utf8.parse(
+      //   process.env.PASSWORD_ENCRYPTION_KEY!
+      // );
+      // const cipher = crypto.AES.encrypt(password, parsedKey, {
+      //   mode: crypto.mode.ECB,
+      // }).toString();
+
+      // if (cipher === doc.data().password) {
+      if (password === doc.data().password) {
+        if (doc.data().isAdmin) {
+          result = 1;
         } else {
-          return 0;
+          result = 0;
         }
-      } else {
-        return -1;
       }
-    }
-    return -1;
+    });
+    return result;
   } else {
-    // doc.data() will be undefined in this case
-    console.log("No such document!");
     return -1;
   }
 }
