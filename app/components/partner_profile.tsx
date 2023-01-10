@@ -39,6 +39,7 @@ export function PartnerProfile({
   isEdit,
   isNew,
   onEditClick,
+  isPartner,
 }: {
   name: string;
   id: string;
@@ -51,6 +52,7 @@ export function PartnerProfile({
   isEdit: boolean;
   isNew: boolean;
   onEditClick: () => void;
+  isPartner: boolean;
 }) {
   if (!isEdit) {
     return (
@@ -62,34 +64,38 @@ export function PartnerProfile({
             padding: "9px",
             border: "0.5px solid black",
             height: "48px",
-            alignItems: "center"
+            alignItems: "center",
           }}
         >
           <div>{name}</div>
-          <div style={{ display: "flex" }}>
-            <img
-              src={"/images/icon_edit.png"}
-              onClick={onEditClick}
-              style={{
-                width: "30px",
-                height: "30px",
-                marginRight: "10px",
-                cursor: "pointer"
-              }}
-            />
-            <Form method="post">
-              <input type="hidden" value={"delete"} name="action" required />
-              <input type="hidden" value={name} name="name" required />
-              <input
-                type="image"
-                src="/images/icon_trash.png"
+          {isPartner ? (
+            <></>
+          ) : (
+            <div style={{ display: "flex" }}>
+              <img
+                src={"/images/icon_edit.png"}
+                onClick={onEditClick}
                 style={{
                   width: "30px",
                   height: "30px",
+                  marginRight: "10px",
+                  cursor: "pointer",
                 }}
               />
-            </Form>
-          </div>
+              <Form method="post">
+                <input type="hidden" value={"delete"} name="action" required />
+                <input type="hidden" value={name} name="name" required />
+                <input
+                  type="image"
+                  src="/images/icon_trash.png"
+                  style={{
+                    width: "30px",
+                    height: "30px",
+                  }}
+                />
+              </Form>
+            </div>
+          )}
         </div>
         <ProfileGridContainer>
           <ProfileGridItem>
@@ -151,7 +157,7 @@ export function PartnerProfile({
               padding: "9px",
               border: "0.5px solid black",
               height: "48px",
-              alignItems: "center"
+              alignItems: "center",
             }}
           >
             {isNew ? (

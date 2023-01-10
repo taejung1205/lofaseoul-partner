@@ -8,10 +8,10 @@ import {
 import authenticator from "~/services/auth.server";
 import { sessionStorage } from "~/services/session.server";
 import styled from "styled-components";
-import { AdminHeader } from "~/components/header";
-import { AdminSidebar } from "~/components/sidebar";
+import { AdminHeader, PartnerHeader } from "~/components/header";
+import { AdminSidebar, PartnerSidebar } from "~/components/sidebar";
 
-const AdminPage = styled.div`
+const PartnerPage = styled.div`
   width: inherit;
   display: flex;
   flex-direction: column;
@@ -25,7 +25,7 @@ const AdminPage = styled.div`
 /**
  * check the user to see if there is an active session, if not
  * redirect to login page
- * if user is not admin, redirect to partner page
+ * if user is admin, redirect to admin page
  * @param param0
  * @returns
  */
@@ -33,28 +33,30 @@ export let loader: LoaderFunction = async ({ request }) => {
   let user = await authenticator.isAuthenticated(request, {
     failureRedirect: "/login",
   });
-  if(user !== null && 'isAdmin' in user){
-    if(!user.isAdmin){
+  if (user !== null && "isAdmin" in user) {
+    if (user.isAdmin) {
       return redirect("/partner/dashboard");
-    } 
+    }
   }
   return user;
 };
 
-export default function Admin() {
+export default function Partner() {
+  const userData = useLoaderData();
+
   return (
-    <AdminPage>
-      <AdminHeader />
+    <PartnerPage>
+      <PartnerHeader username={userData.name} />
       <div
         style={{
           display: "flex",
           height: "100%",
-          width: "100%"
+          width: "100%",
         }}
       >
-        <AdminSidebar />
+        <PartnerSidebar />
         <Outlet />
       </div>
-    </AdminPage>
+    </PartnerPage>
   );
 }

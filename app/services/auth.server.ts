@@ -39,11 +39,11 @@ authenticator.use(
     });
 
     // login the user, this could be whatever process you want
-    if (loginResult >= 0) {
+    if (loginResult != "fail") {
       user = {
-        name: id,
+        name: loginResult,
         token: `${id}-${new Date().getTime()}`,
-        isAdmin: loginResult == 1 ? true : false,
+        isAdmin: loginResult == "admin" ? true : false,
       };
 
       // the type of this user must match the type you pass to the Authenticator

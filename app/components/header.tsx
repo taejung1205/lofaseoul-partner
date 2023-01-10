@@ -24,7 +24,7 @@ export function AdminHeader() {
   );
 }
 
-export function UserHeader({ username }: { username: string }) {
+export function PartnerHeader({ username }: { username: string }) {
   return (
     <HeaderBox>
       <img src="/images/icon_person.png" />

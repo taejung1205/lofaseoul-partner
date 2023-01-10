@@ -68,13 +68,13 @@ export const action: ActionFunction = async ({ request }) => {
       // console.log(result);
       result = "Adding/Editing partner profile OK";
     }
-  } else if(actionType ==="delete"){
+  } else if (actionType === "delete") {
     const name = body.get("name")?.toString();
-    if(typeof name == "undefined"){
+    if (typeof name == "undefined") {
       console.log("Error");
       result = "Data invalid while deleting partner profile";
     } else {
-      const deletePartnerResult = await deletePartnerProfile({name: name});
+      const deletePartnerResult = await deletePartnerProfile({ name: name });
       result = "Deleting partner profile OK";
     }
   }
@@ -117,6 +117,7 @@ export default function AdminPartnerList() {
           shippingFee={0}
           isEdit={true}
           onEditClick={() => {}}
+          isPartner={false}
         />
       ) : (
         <></>
@@ -138,6 +139,7 @@ export default function AdminPartnerList() {
             onEditClick={() => {
               setCurrentEdit(index);
             }}
+            isPartner={false}
           />
         );
       })}

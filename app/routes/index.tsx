@@ -18,7 +18,9 @@ export let loader: LoaderFunction = async ({ request }) => {
     if(user.isAdmin){
       console.log(user);
       return redirect("/admin/dashboard");
-    } 
+    } else {
+      return redirect("/partner/dashboard");
+    }
   }
   return user;
 };

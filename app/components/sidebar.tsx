@@ -30,7 +30,7 @@ const SelectedSidebarButton = styled(NormalSidebarButton)`
   color: white;
 `;
 
-type Pathname =
+type AdminPathname =
   | null
   | "alert"
   | "dashboard"
@@ -42,16 +42,27 @@ type Pathname =
   | "shipped-list"
   | "stock-request";
 
+  type PartnerPathname =
+  | null
+  | "alert"
+  | "dashboard"
+  | "delayed-order"
+  | "waybill-share"
+  | "my-info"
+  | "settlement-list"
+  | "shipped-list"
+  | "stock-request";
+
 export function AdminSidebar() {
   const location = useLocation();
-  const [currentPage, setCurrentPage] = useState<Pathname>(null);
+  const [currentPage, setCurrentPage] = useState<AdminPathname>(null);
 
   function SidebarButton({
     name,
     pathname,
   }: {
     name: string;
-    pathname: Pathname;
+    pathname: AdminPathname;
   }) {
     if (currentPage === pathname) {
       return <SelectedSidebarButton>{name}</SelectedSidebarButton>;
@@ -114,6 +125,79 @@ export function AdminSidebar() {
       <SidebarButton name="출고 지연주문건" pathname="delayed-order" />
       <SidebarButton name="정산내역 공유" pathname="settlement-share" />
       <SidebarButton name="정산내역 관리" pathname="settlement-manage" />
+      <SidebarButton name="재고 요청" pathname="stock-request" />
+      <SidebarButton name="긴급알림" pathname="alert" />
+    </SidebarBox>
+  );
+}
+
+export function PartnerSidebar() {
+  const location = useLocation();
+  const [currentPage, setCurrentPage] = useState<PartnerPathname>(null);
+
+  function SidebarButton({
+    name,
+    pathname,
+  }: {
+    name: string;
+    pathname: PartnerPathname;
+  }) {
+    if (currentPage === pathname) {
+      return <SelectedSidebarButton>{name}</SelectedSidebarButton>;
+    } else {
+      return (
+        <Link
+          to={`/partner/${pathname}`}
+          style={{ display: "flex", textDecoration: "none"}}
+        >
+          <NormalSidebarButton>{name}</NormalSidebarButton>
+        </Link>
+      );
+    }
+  }
+  useEffect(() => {
+    switch (location.pathname) {
+      case "/partner/dashboard":
+        setCurrentPage("dashboard");
+        break;
+
+      case "/partner/alert":
+        setCurrentPage("alert");
+        break;
+
+      case "/partner/delayed-order":
+        setCurrentPage("delayed-order");
+        break;
+
+      case "/partner/waybill-share":
+        setCurrentPage("waybill-share");
+        break;
+
+      case "/partner/my-info":
+        setCurrentPage("my-info");
+        break;
+
+      case "/partner/settlement-list":
+        setCurrentPage("settlement-list");
+        break;
+
+      case "/partner/shipped-list":
+        setCurrentPage("shipped-list");
+        break;
+
+      case "/partner/stock-request":
+        setCurrentPage("stock-request");
+        break;
+    }
+  }, [location.pathname]);
+  return (
+    <SidebarBox>
+      <SidebarButton name="대쉬보드" pathname="dashboard" />
+      <SidebarButton name="내 계약 정보" pathname="my-info" />
+      <SidebarButton name="운송장 공유" pathname="waybill-share" />
+      <SidebarButton name="온라인배송완료내역" pathname="shipped-list" />
+      <SidebarButton name="출고 지연주문건" pathname="delayed-order" />
+      <SidebarButton name="정산내역" pathname="settlement-list" />
       <SidebarButton name="재고 요청" pathname="stock-request" />
       <SidebarButton name="긴급알림" pathname="alert" />
     </SidebarBox>

@@ -41,9 +41,9 @@ if (!firebaseApp?.apps.length || !firestore.apps.length) {
  * 파이어베이스를 통해 로그인을 시도합니다.
  * @param param0
  * @returns
- * -1: 로그인 실패
- * 0: 일반 파트너 계정 로그인
- * 1: 어드민 계정 로그인
+ * fail: 로그인 실패
+ * admin: 어드민 계정 로그인
+ * 그 외 string: 일반 파트너 계정 로그인 및 그 이름
  */
 export async function doLogin({
   id,
@@ -56,7 +56,7 @@ export async function doLogin({
   const idQuery = query(accountsRef, where("id", "==", id));
   const querySnap = await getDocs(idQuery);
   if (!querySnap.empty && process.env.PASSWORD_ENCRYPTION_KEY !== undefined) {
-    let result = -1;
+    let result = "fail";
     querySnap.forEach((doc) => {
       // console.log(doc.data());
       // const parsedKey = crypto.enc.Utf8.parse(
@@ -69,15 +69,15 @@ export async function doLogin({
       // if (cipher === doc.data().password) {
       if (password === doc.data().password) {
         if (doc.data().isAdmin) {
-          result = 1;
+          result = "admin";
         } else {
-          result = 0;
+          result = doc.data().name;
         }
       }
     });
     return result;
   } else {
-    return -1;
+    return "fail";
   }
 }
 
@@ -92,6 +92,23 @@ export async function getPartnerProfiles() {
   const partnerQuery = query(accountsRef, where("isAdmin", "==", false));
   const querySnap = await getDocs(partnerQuery);
   return querySnap.docs.map((doc) => doc.data());
+}
+
+/**
+ * 해당 이름의 파트너의 정보들을 불러옵니다
+ * @param param0
+ * @returns
+ *
+ */
+export async function getPartnerProfile({ name }: { name: string }) {
+  const docRef = doc(firestore, "accounts", name);
+  const docSnap = await getDoc(docRef);
+  if (docSnap.exists()) {
+    return docSnap.data();
+  } else {
+    console.log("not found");
+    return null;
+  }
 }
 
 export async function addPartnerProfile({
