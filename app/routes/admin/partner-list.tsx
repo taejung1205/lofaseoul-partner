@@ -1,7 +1,7 @@
-import { ActionFunction, LoaderFunction } from "@remix-run/node";
-import { useLoaderData } from "@remix-run/react";
+import { ActionFunction, json, LoaderFunction } from "@remix-run/node";
+import { useActionData, useLoaderData, useSubmit } from "@remix-run/react";
 import { DocumentData } from "firebase/firestore";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import styled from "styled-components";
 import { PartnerProfile } from "~/components/partner_profile";
 import {
@@ -40,6 +40,7 @@ export const action: ActionFunction = async ({ request }) => {
   const lofaFee = Number(body.get("lofaFee"));
   const otherFee = Number(body.get("otherFee"));
   const shippingFee = Number(body.get("shippingFee"));
+  let result = "";
 
   if (
     typeof name == "undefined" ||
@@ -49,8 +50,9 @@ export const action: ActionFunction = async ({ request }) => {
     typeof phone == "undefined"
   ) {
     console.log("Error");
+    result = "Data invalid";
   } else {
-    const result = await addPartnerProfile({
+    const addPartnerResult = await addPartnerProfile({
       name: name,
       id: id,
       password: password,
@@ -60,10 +62,10 @@ export const action: ActionFunction = async ({ request }) => {
       otherFee: otherFee,
       shippingFee: shippingFee,
     });
-    console.log(result);
+    // console.log(result);
+    result = "OK";
   }
-
-  return null;
+  return json(result);
 };
 
 export let loader: LoaderFunction = async ({ request }) => {
@@ -73,14 +75,42 @@ export let loader: LoaderFunction = async ({ request }) => {
 
 export default function AdminPartnerList() {
   const [currentEdit, setCurrentEdit] = useState<number>(-1);
-  const data = useLoaderData(); //Partner Profile List
+  const [isCreatingProfile, setIsCreatingProfile] = useState<boolean>(false);
+  const loaderData = useLoaderData(); //Partner Profile List
+  const actionData = useActionData();
+
+  useEffect(() =>{
+    setIsCreatingProfile(false);
+    setCurrentEdit(-1);
+  }, [actionData]);
+
   return (
     <PartnerListPage>
-      <NewProfileButton>신규 생성</NewProfileButton>
-      <div style={{ height: "40px" }} />
-      {data.map((doc: DocumentData, index: number) => {
+      <NewProfileButton onClick={() => setIsCreatingProfile((prev) => !prev)}>
+        신규 생성
+      </NewProfileButton>
+      <div style={{ minHeight: "40px" }} />
+      {isCreatingProfile ? (
+        <PartnerProfile
+          name={""}
+          id={""}
+          password={""}
+          email={""}
+          phone={""}
+          lofaFee={0}
+          otherFee={0}
+          isNew={true}
+          shippingFee={0}
+          isEdit={true}
+          onEditClick={() => {}}
+        />
+      ) : (
+        <></>
+      )}
+      {loaderData.map((doc: DocumentData, index: number) => {
         return (
           <PartnerProfile
+            key={`PartnerProfile-${index}`}
             name={doc.name}
             id={doc.id}
             password={doc.password}
@@ -94,12 +124,10 @@ export default function AdminPartnerList() {
             onEditClick={() => {
               setCurrentEdit(index);
             }}
-            onSaveClick={() => {
-              setCurrentEdit(-1);
-            }}
           />
         );
       })}
+      <div style={{ minHeight: "40px" }} />
     </PartnerListPage>
   );
 }

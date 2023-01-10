@@ -38,8 +38,7 @@ export function PartnerProfile({
   shippingFee,
   isEdit,
   isNew,
-  onEditClick,
-  onSaveClick,
+  onEditClick
 }: {
   name: string;
   id: string;
@@ -52,7 +51,6 @@ export function PartnerProfile({
   isEdit: boolean;
   isNew: boolean;
   onEditClick: () => void;
-  onSaveClick: () => void;
 }) {
   if (!isEdit) {
     return (
@@ -66,7 +64,7 @@ export function PartnerProfile({
           }}
         >
           <div>{name}</div>
-          <button onClick={onEditClick}>버튼</button>
+          <button type="button" onClick={onEditClick}>수정</button>
         </div>
         <ProfileGridContainer>
           <ProfileGridItem>
@@ -143,8 +141,8 @@ export function PartnerProfile({
               </>
             )}
 
-            <button onClick={onSaveClick} type="submit">
-              버튼
+            <button type="submit">
+              저장
             </button>
           </div>
           <ProfileGridContainer>
