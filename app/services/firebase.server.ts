@@ -2,6 +2,7 @@
 import { initializeApp } from "firebase/app";
 import {
   collection,
+  deleteDoc,
   doc,
   getDoc,
   getDocs,
@@ -112,7 +113,6 @@ export async function addPartnerProfile({
   otherFee: number;
   shippingFee: number;
 }) {
-
   const result = await setDoc(doc(firestore, "accounts", name), {
     name: name,
     id: id,
@@ -122,7 +122,12 @@ export async function addPartnerProfile({
     lofaFee: lofaFee,
     otherFee: otherFee,
     shippingFee: shippingFee,
-    isAdmin: false
+    isAdmin: false,
   });
+  return result;
+}
+
+export async function deletePartnerProfile({ name }: { name: string }) {
+  const result = await deleteDoc(doc(firestore, "accounts", name));
   return result;
 }

@@ -6,6 +6,7 @@ import styled from "styled-components";
 import { PartnerProfile } from "~/components/partner_profile";
 import {
   addPartnerProfile,
+  deletePartnerProfile,
   getPartnerProfiles,
 } from "~/services/firebase.server";
 
@@ -32,39 +33,52 @@ const NewProfileButton = styled.button`
 
 export const action: ActionFunction = async ({ request }) => {
   const body = await request.formData();
-  const name = body.get("name")?.toString();
-  const id = body.get("id")?.toString();
-  const password = body.get("password")?.toString();
-  const email = body.get("email")?.toString();
-  const phone = body.get("phone")?.toString();
-  const lofaFee = Number(body.get("lofaFee"));
-  const otherFee = Number(body.get("otherFee"));
-  const shippingFee = Number(body.get("shippingFee"));
   let result = "";
+  const actionType = body.get("action")?.toString();
+  if (actionType === "add") {
+    const name = body.get("name")?.toString();
+    const id = body.get("id")?.toString();
+    const password = body.get("password")?.toString();
+    const email = body.get("email")?.toString();
+    const phone = body.get("phone")?.toString();
+    const lofaFee = Number(body.get("lofaFee"));
+    const otherFee = Number(body.get("otherFee"));
+    const shippingFee = Number(body.get("shippingFee"));
 
-  if (
-    typeof name == "undefined" ||
-    typeof id == "undefined" ||
-    typeof password == "undefined" ||
-    typeof email == "undefined" ||
-    typeof phone == "undefined"
-  ) {
-    console.log("Error");
-    result = "Data invalid";
-  } else {
-    const addPartnerResult = await addPartnerProfile({
-      name: name,
-      id: id,
-      password: password,
-      email: email,
-      phone: phone,
-      lofaFee: lofaFee,
-      otherFee: otherFee,
-      shippingFee: shippingFee,
-    });
-    // console.log(result);
-    result = "OK";
+    if (
+      typeof name == "undefined" ||
+      typeof id == "undefined" ||
+      typeof password == "undefined" ||
+      typeof email == "undefined" ||
+      typeof phone == "undefined"
+    ) {
+      console.log("Error");
+      result = "Data invalid while adding/editing partner profile";
+    } else {
+      const addPartnerResult = await addPartnerProfile({
+        name: name,
+        id: id,
+        password: password,
+        email: email,
+        phone: phone,
+        lofaFee: lofaFee,
+        otherFee: otherFee,
+        shippingFee: shippingFee,
+      });
+      // console.log(result);
+      result = "Adding/Editing partner profile OK";
+    }
+  } else if(actionType ==="delete"){
+    const name = body.get("name")?.toString();
+    if(typeof name == "undefined"){
+      console.log("Error");
+      result = "Data invalid while deleting partner profile";
+    } else {
+      const deletePartnerResult = await deletePartnerProfile({name: name});
+      result = "Deleting partner profile OK";
+    }
   }
+
   return json(result);
 };
 
@@ -79,7 +93,7 @@ export default function AdminPartnerList() {
   const loaderData = useLoaderData(); //Partner Profile List
   const actionData = useActionData();
 
-  useEffect(() =>{
+  useEffect(() => {
     setIsCreatingProfile(false);
     setCurrentEdit(-1);
   }, [actionData]);

@@ -38,7 +38,7 @@ export function PartnerProfile({
   shippingFee,
   isEdit,
   isNew,
-  onEditClick
+  onEditClick,
 }: {
   name: string;
   id: string;
@@ -61,10 +61,35 @@ export function PartnerProfile({
             justifyContent: "space-between",
             padding: "9px",
             border: "0.5px solid black",
+            height: "48px",
+            alignItems: "center"
           }}
         >
           <div>{name}</div>
-          <button type="button" onClick={onEditClick}>수정</button>
+          <div style={{ display: "flex" }}>
+            <img
+              src={"/images/icon_edit.png"}
+              onClick={onEditClick}
+              style={{
+                width: "30px",
+                height: "30px",
+                marginRight: "10px",
+                cursor: "pointer"
+              }}
+            />
+            <Form method="post">
+              <input type="hidden" value={"delete"} name="action" required />
+              <input type="hidden" value={name} name="name" required />
+              <input
+                type="image"
+                src="/images/icon_trash.png"
+                style={{
+                  width: "30px",
+                  height: "30px",
+                }}
+              />
+            </Form>
+          </div>
         </div>
         <ProfileGridContainer>
           <ProfileGridItem>
@@ -118,12 +143,15 @@ export function PartnerProfile({
     return (
       <PartnerProfileBox>
         <Form method="post">
+          <input type="hidden" value={"add"} name="action" required />
           <div
             style={{
               display: "flex",
               justifyContent: "space-between",
               padding: "9px",
               border: "0.5px solid black",
+              height: "48px",
+              alignItems: "center"
             }}
           >
             {isNew ? (
@@ -141,9 +169,14 @@ export function PartnerProfile({
               </>
             )}
 
-            <button type="submit">
-              저장
-            </button>
+            <input
+              type="image"
+              src="/images/icon_save.png"
+              style={{
+                width: "30px",
+                height: "30px",
+              }}
+            />
           </div>
           <ProfileGridContainer>
             <ProfileGridItem>
