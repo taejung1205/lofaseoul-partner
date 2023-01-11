@@ -1,15 +1,12 @@
-import { Form, Outlet, useLoaderData } from "@remix-run/react";
+import { Outlet, useLoaderData, useSubmit } from "@remix-run/react";
 import {
   ActionFunction,
-  LoaderFunction,
-  json,
-  redirect,
+  LoaderFunction, redirect
 } from "@remix-run/node";
 import authenticator from "~/services/auth.server";
-import { sessionStorage } from "~/services/session.server";
 import styled from "styled-components";
-import { AdminHeader, PartnerHeader } from "~/components/header";
-import { AdminSidebar, PartnerSidebar } from "~/components/sidebar";
+import { PartnerHeader } from "~/components/header";
+import { PartnerSidebar } from "~/components/sidebar";
 
 const PartnerPage = styled.div`
   width: inherit;
@@ -21,6 +18,15 @@ const PartnerPage = styled.div`
   font-weight: 700;
   line-height: 1;
 `;
+
+/**
+ *  handle the logout request
+ *
+ * @param param0
+ */
+export const action: ActionFunction = async ({ request }) => {
+  await authenticator.logout(request, { redirectTo: "/login" });
+};
 
 /**
  * check the user to see if there is an active session, if not
@@ -43,10 +49,13 @@ export let loader: LoaderFunction = async ({ request }) => {
 
 export default function Partner() {
   const userData = useLoaderData();
-
+  const submit = useSubmit();
   return (
     <PartnerPage>
-      <PartnerHeader username={userData.name} />
+      <PartnerHeader
+        username={userData.name}
+        onLogoutClick={() => submit(null, { method: "post" })}
+      />
       <div
         style={{
           display: "flex",

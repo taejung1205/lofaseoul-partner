@@ -3,7 +3,7 @@ import { ActionFunction, LoaderFunction, json, redirect } from "@remix-run/node"
 import authenticator from "~/services/auth.server";
 import { sessionStorage } from "~/services/session.server";
 import styled from "styled-components";
-import { AdminHeader, HeaderBox } from "~/components/header";
+import { HeaderBox } from "~/components/header";
 
 const LoginPage = styled.div`
   width: inherit;
@@ -41,6 +41,7 @@ const LoginButton = styled.button`
   color: white;
   font-weight: 700;
   font-size: 33px;
+  cursor: pointer;
 `
 
 /**

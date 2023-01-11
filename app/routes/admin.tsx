@@ -1,12 +1,9 @@
-import { Form, Outlet, useLoaderData } from "@remix-run/react";
+import { Outlet, useSubmit } from "@remix-run/react";
 import {
   ActionFunction,
-  LoaderFunction,
-  json,
-  redirect,
+  LoaderFunction, redirect
 } from "@remix-run/node";
 import authenticator from "~/services/auth.server";
-import { sessionStorage } from "~/services/session.server";
 import styled from "styled-components";
 import { AdminHeader } from "~/components/header";
 import { AdminSidebar } from "~/components/sidebar";
@@ -23,6 +20,15 @@ const AdminPage = styled.div`
 `;
 
 /**
+ *  handle the logout request
+ *
+ * @param param0
+ */
+export const action: ActionFunction = async ({ request }) => {
+  await authenticator.logout(request, { redirectTo: "/login" });
+};
+
+/**
  * check the user to see if there is an active session, if not
  * redirect to login page
  * if user is not admin, redirect to partner page
@@ -33,23 +39,28 @@ export let loader: LoaderFunction = async ({ request }) => {
   let user = await authenticator.isAuthenticated(request, {
     failureRedirect: "/login",
   });
-  if(user !== null && 'isAdmin' in user){
-    if(!user.isAdmin){
+  if (user !== null && "isAdmin" in user) {
+    if (!user.isAdmin) {
       return redirect("/partner/dashboard");
-    } 
+    }
   }
   return user;
 };
 
 export default function Admin() {
+  const submit = useSubmit();
   return (
     <AdminPage>
-      <AdminHeader />
+      <AdminHeader
+        onLogoutClick={() => {
+          submit(null, { method: "post" });
+        }}
+      />
       <div
         style={{
           display: "flex",
           height: "100%",
-          width: "100%"
+          width: "100%",
         }}
       >
         <AdminSidebar />

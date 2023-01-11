@@ -14,9 +14,20 @@ export const HeaderBox = styled.div`
   line-height: 29px;
 `;
 
-export function AdminHeader() {
+export function AdminHeader({ onLogoutClick }: { onLogoutClick: () => void }) {
   return (
     <HeaderBox>
+      <div
+        style={{
+          color: "#00000080",
+          fontSize: "15px",
+          cursor: "pointer",
+        }}
+        onClick={onLogoutClick}
+      >
+        로그아웃
+      </div>
+      <div style={{ width: "10px" }} />
       <img src="/images/icon_person.png" />
       <div style={{ width: "10px" }} />
       ADMIN
@@ -24,9 +35,26 @@ export function AdminHeader() {
   );
 }
 
-export function PartnerHeader({ username }: { username: string }) {
+export function PartnerHeader({
+  username,
+  onLogoutClick,
+}: {
+  username: string;
+  onLogoutClick: () => void;
+}) {
   return (
     <HeaderBox>
+      <div
+        style={{
+          color: "#00000080",
+          fontSize: "15px",
+          cursor: "pointer",
+        }}
+        onClick={onLogoutClick}
+      >
+        로그아웃
+      </div>
+      <div style={{ width: "10px" }} />
       <img src="/images/icon_person.png" />
       <div style={{ width: "10px" }} />
       {username}
