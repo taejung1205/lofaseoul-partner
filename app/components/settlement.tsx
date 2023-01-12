@@ -59,7 +59,9 @@ function SettlementItem({
   check: boolean;
   onCheck: (index: number, isChecked: boolean) => void;
 }) {
-  useEffect(() => {}, [check]);
+  useEffect(() => {
+    setIsChecked(check);
+  }, [check]);
   const [isChecked, setIsChecked] = useState<boolean>(check);
   return (
     <SettlementItemBox key={`SettlementItem-${index}`}>
@@ -103,7 +105,6 @@ export function SettlementTable({
 
   function onCheck(index: number, isChecked: boolean) {
     itemsChecked[index] = isChecked;
-    console.log(itemsChecked);
   }
 
   useEffect(() => {
@@ -111,10 +112,22 @@ export function SettlementTable({
     setItemsChecked(newArr);
   }, [items]);
 
+  useEffect(() => {
+  }, [itemsChecked]);
+
   return (
     <SettlementBox>
       <SettlementHeader>
-        <Checkbox color={"gray"} size={"sm"} />
+        <Checkbox color={"gray"} size={"sm"} onChange={(event) =>{
+          const val = event.currentTarget.checked;
+          if(val){
+            const newArr = Array(items.length).fill(true);
+            setItemsChecked(newArr);
+          } else {
+            const newArr = Array(items.length).fill(false);
+            setItemsChecked(newArr);
+          }
+        }}/>
         <TextBox style={{ width: "90px" }}>판매처</TextBox>
         <TextBox style={{ width: "150px" }}>주문번호</TextBox>
         <TextBox style={{ width: "calc(50% - 318px" }}>상품명</TextBox>
@@ -140,7 +153,13 @@ export function SettlementTable({
       </SettlementItemsBox>
       <button
         onClick={() => {
-          onSubmit(items);
+          let settlementList = [];
+          for(let i = 0; i < items.length; i++){
+            if(itemsChecked[i]){
+              settlementList.push(items[i]);
+            }
+          }
+          onSubmit(settlementList);
         }}
       >
         gg

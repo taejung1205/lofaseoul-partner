@@ -54,13 +54,17 @@ const FileUpload = styled.input`
 export const action: ActionFunction = async ({ request }) => {
   const body = await request.formData();
   const data = body.get("data")?.toString();
-  console.log(data);
+  if(data !== undefined){
+    const jsonArr: SettlementItem[] = JSON.parse(data);
+    console.log(jsonArr);
+  }
+  
+ 
   return null;
 };
 
 export default function AdminSettlementShare() {
   const [items, setItems] = useState<SettlementItem[]>([]);
-  const [itemsChecked, setItemsChecked] = useState<boolean[]>([]);
   const [fileName, setFileName] = useState<string>("");
   const submit = useSubmit();
   const formRef = useRef<HTMLFormElement>(null);
@@ -73,7 +77,6 @@ export default function AdminSettlementShare() {
   }
 
   const readExcel = (e: any) => {
-    console.log("start");
     e.preventDefault();
     let json: any;
     if (e.target.files) {
@@ -108,17 +111,11 @@ export default function AdminSettlementShare() {
         });
         console.log(array);
         setItems(array);
-        let newArr: boolean[] = new Array(array.length).fill(false);
-        setItemsChecked(newArr);
       };
       reader.readAsArrayBuffer(e.target.files[0]);
       setFileName(e.target.files[0].name);
     }
   };
-
-  useEffect(() => {
-    // console.log(itemsChecked);
-  }, [itemsChecked]);
 
   return (
     <SettlementSharePage>
@@ -133,8 +130,6 @@ export default function AdminSettlementShare() {
       <SettlementTable
         items={items}
         onSubmit={submitSettlement}
-        // itemsChecked={itemsChecked}
-        // setItemsChecked={setItemsChecked}
       />
     </SettlementSharePage>
   );
