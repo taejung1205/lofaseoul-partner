@@ -1,44 +1,149 @@
 import { Checkbox } from "@mantine/core";
+import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 
+export type SettlementItem = {
+  seller: string;
+  orderNumber: string;
+  productName: string;
+  optionName: string;
+  price: number;
+  amount: number;
+  orderer: string;
+  receiver: string;
+  partnerName: string;
+};
+
 const SettlementBox = styled.div`
-  border: 1px solid black;
   width: inherit;
-  overflow: scroll;
+  height: 70%;
+  min-height: 70%;
+  position: relative;
 `;
 
-const SettlementHeader = styled.div`
-  background-color: #ebebeb;
+const SettlementItemsBox = styled.div`
+  max-height: 90%;
+  overflow-y: scroll;
+`;
+
+const SettlementItemBox = styled.div`
   display: flex;
   align-items: center;
-  padding: 10px;
+  padding: 10px 6px 10px 6px;
+`;
+
+const SettlementHeader = styled(SettlementItemBox)`
+  background-color: #ebebeb;
 `;
 
 const TextBox = styled.div`
   margin-left: 10px;
   font-weight: 700;
   font-size: 16px;
+  line-height: 16px;
   text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
 `;
 
-const SellerTextBox = styled(TextBox)`
-    width: 95px;
-`
+function SettlementItem({
+  item,
+  index,
+  check,
+  onCheck,
+}: {
+  item: SettlementItem;
+  index: number;
+  check: boolean;
+  onCheck: (index: number, isChecked: boolean) => void;
+}) {
+  useEffect(() => {}, [check]);
+  const [isChecked, setIsChecked] = useState<boolean>(check);
+  return (
+    <SettlementItemBox key={`SettlementItem-${index}`}>
+      <Checkbox
+        color={"gray"}
+        size={"sm"}
+        checked={isChecked}
+        onChange={(event) => {
+          setIsChecked(event.currentTarget.checked);
+          onCheck(index, event.currentTarget.checked);
+        }}
+      />
+      <TextBox style={{ width: "90px" }}>{item.seller}</TextBox>
+      <TextBox style={{ width: "150px", fontSize: "12px" }}>
+        {item.orderNumber}
+      </TextBox>
+      <TextBox style={{ width: "calc(50% - 310px", fontSize: "12px" }}>
+        {item.productName}
+      </TextBox>
+      <TextBox style={{ width: "calc(50% - 310px", fontSize: "12px" }}>
+        {item.optionName}
+      </TextBox>
+      <TextBox style={{ width: "60px" }}>{item.price}</TextBox>
+      <TextBox style={{ width: "30px" }}>{item.amount}</TextBox>
+      <TextBox style={{ width: "90px" }}>{item.orderer}</TextBox>
+      <TextBox style={{ width: "90px" }}>{item.receiver}</TextBox>
+    </SettlementItemBox>
+  );
+}
 
-export function SettlementTable() {
+export function SettlementTable({
+  items,
+}: // itemsChecked,
+// setItemsChecked,
+{
+  items: SettlementItem[];
+  // itemsChecked: boolean[];
+  // setItemsChecked: React.Dispatch<React.SetStateAction<boolean[]>>;
+}) {
+  const [itemsChecked, setItemsChecked] = useState<boolean[]>([]);
+
+  function onCheck(index: number, isChecked: boolean) {
+    itemsChecked[index] = isChecked;
+    console.log(itemsChecked);
+  }
+
+  useEffect(() => {
+    const newArr = Array(items.length).fill(false);
+    setItemsChecked(newArr);
+  }, [items]);
+
   return (
     <SettlementBox>
       <SettlementHeader>
         <Checkbox color={"gray"} size={"sm"} />
-        <SellerTextBox>판매처</SellerTextBox>
-        <div>주문번호</div>
-        <div>상품명</div>
-        <div>옵션명</div>
-        <div>판매단가</div>
-        <div>수량</div>
-        <div>주문자</div>
-        <div>송신자</div>
+        <TextBox style={{ width: "90px" }}>판매처</TextBox>
+        <TextBox style={{ width: "150px" }}>주문번호</TextBox>
+        <TextBox style={{ width: "calc(50% - 318px" }}>상품명</TextBox>
+        <TextBox style={{ width: "calc(50% - 318px" }}>옵션명</TextBox>
+        <TextBox style={{ width: "60px" }}>판매단가</TextBox>
+        <TextBox style={{ width: "30px" }}>수량</TextBox>
+        <TextBox style={{ width: "90px" }}>주문자</TextBox>
+        <TextBox style={{ width: "90px" }}>송신자</TextBox>
+        <div style={{ width: "16px" }} />
       </SettlementHeader>
+      <SettlementItemsBox>
+        {items.map((item, index) => {
+          return (
+            <SettlementItem
+              key={`SettlementItem-${index}`}
+              index={index}
+              item={item}
+              check={itemsChecked[index] ?? false}
+              onCheck={onCheck}
+            />
+          );
+        })}
+      </SettlementItemsBox>
+      <button
+        onClick={() => {
+          console.log(itemsChecked);
+        }}
+      >
+        gg
+      </button>
     </SettlementBox>
   );
 }
