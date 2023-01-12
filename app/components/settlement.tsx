@@ -1,5 +1,6 @@
 import { Checkbox } from "@mantine/core";
 import React, { useEffect, useState } from "react";
+import { useSubmit } from "react-router-dom";
 import styled from "styled-components";
 
 export type SettlementItem = {
@@ -91,13 +92,13 @@ function SettlementItem({
 
 export function SettlementTable({
   items,
-}: // itemsChecked,
-// setItemsChecked,
+  onSubmit
+}: 
 {
-  items: SettlementItem[];
-  // itemsChecked: boolean[];
-  // setItemsChecked: React.Dispatch<React.SetStateAction<boolean[]>>;
+  items: SettlementItem[],
+  onSubmit: (settlementList: SettlementItem[]) => void
 }) {
+  
   const [itemsChecked, setItemsChecked] = useState<boolean[]>([]);
 
   function onCheck(index: number, isChecked: boolean) {
@@ -139,7 +140,7 @@ export function SettlementTable({
       </SettlementItemsBox>
       <button
         onClick={() => {
-          console.log(itemsChecked);
+          onSubmit(items);
         }}
       >
         gg

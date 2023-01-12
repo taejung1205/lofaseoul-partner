@@ -1,4 +1,6 @@
-import { useEffect, useState } from "react";
+import { ActionFunction } from "@remix-run/node";
+import { Form, useSubmit } from "@remix-run/react";
+import { useEffect, useRef, useState } from "react";
 import { render } from "react-dom";
 import styled from "styled-components";
 import * as xlsx from "xlsx";
@@ -49,10 +51,26 @@ const FileUpload = styled.input`
   border: 0;
 `;
 
+export const action: ActionFunction = async ({ request }) => {
+  const body = await request.formData();
+  const data = body.get("data")?.toString();
+  console.log(data);
+  return null;
+};
+
 export default function AdminSettlementShare() {
   const [items, setItems] = useState<SettlementItem[]>([]);
   const [itemsChecked, setItemsChecked] = useState<boolean[]>([]);
   const [fileName, setFileName] = useState<string>("");
+  const submit = useSubmit();
+  const formRef = useRef<HTMLFormElement>(null);
+
+  function submitSettlement(settlementList: SettlementItem[]) {
+    const json = JSON.stringify(settlementList);
+    const formData = new FormData(formRef.current ?? undefined);
+    formData.set("data", json);
+    submit(formData, { method: "post" });
+  }
 
   const readExcel = (e: any) => {
     console.log("start");
@@ -114,6 +132,7 @@ export default function AdminSettlementShare() {
       <div style={{ height: "20px" }} />
       <SettlementTable
         items={items}
+        onSubmit={submitSettlement}
         // itemsChecked={itemsChecked}
         // setItemsChecked={setItemsChecked}
       />
