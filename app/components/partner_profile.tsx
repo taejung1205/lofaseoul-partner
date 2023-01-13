@@ -1,3 +1,4 @@
+import { Modal } from "@mantine/core";
 import { Form } from "@remix-run/react";
 import { useState } from "react";
 import styled from "styled-components";
@@ -27,6 +28,19 @@ const InputBox = styled.input`
   margin: 4px;
 `;
 
+const ModalButton = styled.button`
+  background-color: white;
+  border: 2px solid black;
+  font-size: 16px;
+  font-weight: 700;
+  width: 80px;
+  line-height: 1;
+  margin: 5px;
+  padding: 6px 6px 6px 6px;
+  border-radius: 1px;
+  cursor: pointer;
+`;
+
 export function PartnerProfile({
   name,
   id,
@@ -54,88 +68,134 @@ export function PartnerProfile({
   onEditClick: () => void;
   isPartner: boolean;
 }) {
+  const [isDeleteModalOpened, setIsDeleteModalOpened] =
+    useState<boolean>(false);
   if (!isEdit) {
     return (
-      <PartnerProfileBox>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            padding: "9px",
-            border: "0.5px solid black",
-            height: "48px",
-            alignItems: "center",
-          }}
+      <>
+        <Modal
+          centered
+          opened={isDeleteModalOpened}
+          onClose={() => setIsDeleteModalOpened(false)}
+          withCloseButton={false}
         >
-          <div>{name}</div>
-          {isPartner ? (
-            <></>
-          ) : (
-            <div style={{ display: "flex" }}>
-              <img
-                src={"/images/icon_edit.png"}
-                onClick={onEditClick}
-                style={{
-                  width: "30px",
-                  height: "30px",
-                  marginRight: "10px",
-                  cursor: "pointer",
-                }}
-              />
+          <div
+            style={{
+              justifyContent: "center",
+              textAlign: "center",
+              fontWeight: "700",
+            }}
+          >
+            해당 파트너를 삭제하시겠습니까?
+            <div style={{ height: "20px" }} />
+            <div style={{ display: "flex", justifyContent: "center" }}>
+              <ModalButton onClick={() => setIsDeleteModalOpened(false)}>
+                취소
+              </ModalButton>
               <Form method="post">
                 <input type="hidden" value={"delete"} name="action" required />
                 <input type="hidden" value={name} name="name" required />
-                <input
-                  type="image"
-                  src="/images/icon_trash.png"
+                <ModalButton type="submit" style={{borderColor: "red", color: "red"}}>삭제</ModalButton>
+              </Form>
+            </div>
+          </div>
+        </Modal>
+        <PartnerProfileBox>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              padding: "9px",
+              border: "0.5px solid black",
+              height: "48px",
+              alignItems: "center",
+            }}
+          >
+            <div>{name}</div>
+            {isPartner ? (
+              <></>
+            ) : (
+              <div style={{ display: "flex" }}>
+                <img
+                  src={"/images/icon_edit.png"}
+                  onClick={onEditClick}
                   style={{
                     width: "30px",
                     height: "30px",
+                    marginRight: "10px",
+                    cursor: "pointer",
                   }}
                 />
-              </Form>
-            </div>
-          )}
-        </div>
-        <ProfileGridContainer>
-          <ProfileGridItem>
-            <div style={{ padding: "13px", width: "120px" }}>아이디</div>
-            <div style={{ padding: "13px" }}>{id}</div>
-          </ProfileGridItem>
-          <ProfileGridItem>
-            <div style={{ padding: "13px", width: "120px" }}>비밀번호</div>
-            <div style={{ padding: "13px" }}>{password}</div>
-          </ProfileGridItem>
-          <ProfileGridItem>
-            <div style={{ padding: "13px", width: "120px" }}>이메일</div>
-            <div style={{ padding: "13px" }}>{email}</div>
-          </ProfileGridItem>
-          <ProfileGridItem>
-            <div style={{ padding: "13px", width: "120px" }}>연락처</div>
-            <div style={{ padding: "13px" }}>{phone}</div>
-          </ProfileGridItem>
-          <ProfileGridItem>
-            <div style={{ padding: "13px", width: "120px" }}>수수료</div>
-            <div
-              style={{
-                justifyContent: "space-between",
-                display: "flex",
-                alignItems: "center",
-                paddingLeft: "13px",
-              }}
-            >
-              <div style={{ fontSize: "15px" }}>로파 공홈 및 쇼룸</div>
-              <div style={{ padding: "13px" }}>{lofaFee}%</div>
-              <div style={{ fontSize: "15px" }}>타 채널</div>
-              <div style={{ padding: "13px" }}>{otherFee}%</div>
-            </div>
-          </ProfileGridItem>
-          <ProfileGridItem>
-            <div style={{ padding: "13px", width: "120px" }}>배송비</div>
-            <div style={{ padding: "13px" }}>{shippingFee}원</div>
-          </ProfileGridItem>
-        </ProfileGridContainer>
-      </PartnerProfileBox>
+                <img
+                  src={"/images/icon_trash.png"}
+                  onClick={() => setIsDeleteModalOpened(true)}
+                  style={{
+                    width: "30px",
+                    height: "30px",
+                    marginRight: "10px",
+                    cursor: "pointer",
+                  }}
+                />
+                {/* <Form method="post">
+                  <input
+                    type="hidden"
+                    value={"delete"}
+                    name="action"
+                    required
+                  />
+                  <input type="hidden" value={name} name="name" required />
+                  <input
+                    type="image"
+                    src="/images/icon_trash.png"
+                    style={{
+                      width: "30px",
+                      height: "30px",
+                    }}
+                  />
+                </Form> */}
+              </div>
+            )}
+          </div>
+          <ProfileGridContainer>
+            <ProfileGridItem>
+              <div style={{ padding: "13px", width: "120px" }}>아이디</div>
+              <div style={{ padding: "13px" }}>{id}</div>
+            </ProfileGridItem>
+            <ProfileGridItem>
+              <div style={{ padding: "13px", width: "120px" }}>비밀번호</div>
+              <div style={{ padding: "13px" }}>{password}</div>
+            </ProfileGridItem>
+            <ProfileGridItem>
+              <div style={{ padding: "13px", width: "120px" }}>이메일</div>
+              <div style={{ padding: "13px" }}>{email}</div>
+            </ProfileGridItem>
+            <ProfileGridItem>
+              <div style={{ padding: "13px", width: "120px" }}>연락처</div>
+              <div style={{ padding: "13px" }}>{phone}</div>
+            </ProfileGridItem>
+            <ProfileGridItem>
+              <div style={{ padding: "13px", width: "120px" }}>수수료</div>
+              <div
+                style={{
+                  justifyContent: "space-between",
+                  display: "flex",
+                  alignItems: "center",
+                  paddingLeft: "13px",
+                }}
+              >
+                <div style={{ fontSize: "15px" }}>로파 공홈 및 쇼룸</div>
+                <div style={{ padding: "13px" }}>{lofaFee}%</div>
+                <div style={{ fontSize: "15px" }}>타 채널</div>
+                <div style={{ padding: "13px" }}>{otherFee}%</div>
+              </div>
+            </ProfileGridItem>
+            <ProfileGridItem>
+              <div style={{ padding: "13px", width: "120px" }}>배송비</div>
+              <div style={{ padding: "13px" }}>{shippingFee}원</div>
+            </ProfileGridItem>
+          </ProfileGridContainer>
+        </PartnerProfileBox>
+      </>
     );
   } else {
     const [nameEdit, setNameEdit] = useState(id);

@@ -29,6 +29,7 @@ const NewProfileButton = styled.button`
   width: 110px;
   line-height: 1;
   padding: 6px 6px 6px 6px;
+  cursor: pointer;
 `;
 
 export const action: ActionFunction = async ({ request }) => {
