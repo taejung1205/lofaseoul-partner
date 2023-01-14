@@ -3,6 +3,7 @@ import React from "react";
 import { useEffect, useState } from "react";
 import { useSubmit } from "react-router-dom";
 import styled from "styled-components";
+import { BasicModal, ModalButton } from "./modal";
 
 export type SettlementItem = {
   seller: string;
@@ -55,7 +56,7 @@ const TextBox = styled.div`
   overflow: hidden;
 `;
 
-const SubmitButton = styled.button`
+const ShareButton = styled.button`
   background-color: black;
   color: white;
   font-size: 24px;
@@ -154,13 +155,15 @@ function SettlementItem({
 
 export function SettlementTable({
   items,
-  onSubmit,
+  onShare,
+  isDuplicate,
 }: {
   items: SettlementItem[];
-  onSubmit: (settlementList: SettlementItem[]) => void;
+  onShare: (settlementList: SettlementItem[]) => void;
+  isDuplicate: boolean;
 }) {
   const [itemsChecked, setItemsChecked] = useState<boolean[]>([]);
-
+  const [isShareModalOpened, setIsShareModalOpened] = useState<boolean>(false);
   function onCheck(index: number, isChecked: boolean) {
     itemsChecked[index] = isChecked;
   }
@@ -173,65 +176,94 @@ export function SettlementTable({
   useEffect(() => {}, [itemsChecked]);
 
   return (
-    <SettlementBox>
-      <SettlementHeader>
-        <Checkbox
-          color={"gray"}
-          size={"sm"}
-          onChange={(event) => {
-            const val = event.currentTarget.checked;
-            if (val) {
-              const newArr = Array(items.length).fill(true);
-              setItemsChecked(newArr);
-            } else {
-              const newArr = Array(items.length).fill(false);
-              setItemsChecked(newArr);
-            }
-          }}
-        />
-        <TextBox style={{ width: "90px" }}>판매처</TextBox>
-        <TextBox style={{ width: "150px" }}>주문번호</TextBox>
-        <TextBox style={{ width: "calc(50% - 318px" }}>상품명</TextBox>
-        <TextBox style={{ width: "calc(50% - 318px" }}>옵션명</TextBox>
-        <TextBox style={{ width: "60px" }}>판매단가</TextBox>
-        <TextBox style={{ width: "30px" }}>수량</TextBox>
-        <TextBox style={{ width: "90px" }}>주문자</TextBox>
-        <TextBox style={{ width: "90px" }}>송신자</TextBox>
-        <div style={{ width: "16px" }} />
-      </SettlementHeader>
-      <SettlementItemsBox>
-        {items.map((item, index) => {
-          return (
-            <SettlementItem
-              key={`SettlementItem-${index}`}
-              index={index}
-              item={item}
-              check={itemsChecked[index] ?? false}
-              onCheck={onCheck}
-            />
-          );
-        })}
-      </SettlementItemsBox>
-      {items.length > 0 ? <SettlementFooter /> : <></>}
-      <div style={{ height: "20px" }} />
-      {items.length > 0 ? (
-        <SubmitButton
-          onClick={() => {
-            let settlementList = [];
-            for (let i = 0; i < items.length; i++) {
-              if (itemsChecked[i]) {
-                settlementList.push(items[i]);
-              }
-            }
-            onSubmit(settlementList);
+    <>
+      <BasicModal
+        opened={isShareModalOpened}
+        onClose={() => setIsShareModalOpened}
+      >
+        <div
+          style={{
+            justifyContent: "center",
+            textAlign: "center",
+            fontWeight: "700",
           }}
         >
-          정산 내역 공유
-        </SubmitButton>
-      ) : (
-        <></>
-      )}
-    </SettlementBox>
+          {isDuplicate
+            ? "중복공유됩니다. 그래도 진행하시겠습니까?"
+            : "업체들에게 정산내역을 공유하시겠습니까?"}
+          <div style={{ height: "20px" }} />
+          <div style={{ display: "flex", justifyContent: "center" }}>
+            <ModalButton onClick={() => setIsShareModalOpened(false)}>
+              취소
+            </ModalButton>
+            <ModalButton
+              onClick={() => {
+                let settlementList = [];
+                for (let i = 0; i < items.length; i++) {
+                  if (itemsChecked[i]) {
+                    settlementList.push(items[i]);
+                  }
+                }
+                onShare(settlementList);
+                setIsShareModalOpened(false);
+              }}
+            >
+              공유
+            </ModalButton>
+          </div>
+        </div>
+      </BasicModal>
+
+      <SettlementBox>
+        <SettlementHeader>
+          <Checkbox
+            color={"gray"}
+            size={"sm"}
+            onChange={(event) => {
+              const val = event.currentTarget.checked;
+              if (val) {
+                const newArr = Array(items.length).fill(true);
+                setItemsChecked(newArr);
+              } else {
+                const newArr = Array(items.length).fill(false);
+                setItemsChecked(newArr);
+              }
+            }}
+          />
+          <TextBox style={{ width: "90px" }}>판매처</TextBox>
+          <TextBox style={{ width: "150px" }}>주문번호</TextBox>
+          <TextBox style={{ width: "calc(50% - 318px" }}>상품명</TextBox>
+          <TextBox style={{ width: "calc(50% - 318px" }}>옵션명</TextBox>
+          <TextBox style={{ width: "60px" }}>판매단가</TextBox>
+          <TextBox style={{ width: "30px" }}>수량</TextBox>
+          <TextBox style={{ width: "90px" }}>주문자</TextBox>
+          <TextBox style={{ width: "90px" }}>송신자</TextBox>
+          <div style={{ width: "16px" }} />
+        </SettlementHeader>
+        <SettlementItemsBox>
+          {items.map((item, index) => {
+            return (
+              <SettlementItem
+                key={`SettlementItem-${index}`}
+                index={index}
+                item={item}
+                check={itemsChecked[index] ?? false}
+                onCheck={onCheck}
+              />
+            );
+          })}
+        </SettlementItemsBox>
+        {items.length > 0 ? <SettlementFooter /> : <></>}
+        <div style={{ height: "20px" }} />
+        {items.length > 0 ? (
+          <ShareButton onClick={() => setIsShareModalOpened(true)}>
+            정산 내역 공유
+          </ShareButton>
+        ) : (
+          <></>
+        )}
+      </SettlementBox>
+    </>
   );
 }
 

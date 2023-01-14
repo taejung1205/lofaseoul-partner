@@ -1,6 +1,6 @@
-import { Modal } from "@mantine/core";
-import { ActionFunction } from "@remix-run/node";
-import { Form, useSubmit } from "@remix-run/react";
+import { JsonInput, Modal } from "@mantine/core";
+import { ActionFunction, LoaderFunction } from "@remix-run/node";
+import { Form, useLoaderData, useSubmit } from "@remix-run/react";
 import { useEffect, useRef, useState } from "react";
 import { render } from "react-dom";
 import styled from "styled-components";
@@ -13,6 +13,7 @@ import {
   SettlementTableMemo,
 } from "~/components/settlement";
 import { SettlementItem } from "~/components/settlement";
+import { addSettlement, getSettlementMonthes } from "~/services/firebase.server";
 
 const SettlementSharePage = styled.div`
   width: 100%;
@@ -60,12 +61,23 @@ const FileUpload = styled.input`
 
 export const action: ActionFunction = async ({ request }) => {
   const body = await request.formData();
-  const data = body.get("data")?.toString();
-  if (data !== undefined) {
-    const jsonArr: SettlementItem[] = JSON.parse(data);
-    console.log(jsonArr);
+  const actionType = body.get("action")?.toString();
+  if(actionType === "share"){
+    const settlement = body.get("settlement")?.toString();
+    const month = body.get("month")?.toString();
+    if (settlement !== undefined && month !== undefined) {
+      const jsonArr: SettlementItem[] = JSON.parse(settlement);
+      console.log(jsonArr);
+      await addSettlement({settlements: jsonArr, monthStr: month});
+    }
   }
+  
   return null;
+};
+
+export let loader: LoaderFunction = async ({ request }) => {
+  const monthes = await getSettlementMonthes();
+  return monthes;
 };
 
 export default function AdminSettlementShare() {
@@ -74,8 +86,11 @@ export default function AdminSettlementShare() {
   const [selectedMonthStr, setSelectedMonthStr] = useState<string>();
   const [fileName, setFileName] = useState<string>("");
   const [isErrorModalOpened, setIsErrorModalOpened] = useState<boolean>(false);
+  
   const [errorStr, setErrorStr] = useState<string>("에러");
+  
   const submit = useSubmit();
+  const sharedMonthes: string[] = useLoaderData();
   const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
@@ -88,10 +103,12 @@ export default function AdminSettlementShare() {
     }
   }, [selectedDate]);
 
-  function submitSettlement(settlementList: SettlementItem[]) {
+  function shareSettlement(settlementList: SettlementItem[]) {
     const json = JSON.stringify(settlementList);
     const formData = new FormData(formRef.current ?? undefined);
-    formData.set("data", json);
+    formData.set("settlement", json);
+    formData.set("month", selectedMonthStr!);
+    formData.set("action", "share");
     submit(formData, { method: "post" });
   }
 
@@ -149,7 +166,7 @@ export default function AdminSettlementShare() {
       setFileName(e.target.files[0].name);
     }
   };
-
+  console.log(selectedMonthStr);
   return (
     <>
       <BasicModal
@@ -172,6 +189,7 @@ export default function AdminSettlementShare() {
           </div>
         </div>
       </BasicModal>
+     
       <SettlementSharePage>
         <div style={{ display: "flex", alignItems: "center" }}>
           <img src="/images/icon_calendar.svg" />
@@ -201,9 +219,8 @@ export default function AdminSettlementShare() {
             accept=".xlsx,.xls"
           />
         </div>
-
         <div style={{ height: "20px" }} />
-        <SettlementTableMemo items={items} onSubmit={submitSettlement} />
+        <SettlementTableMemo items={items} onShare={shareSettlement} isDuplicate={sharedMonthes.includes(selectedMonthStr ?? "")}/>
       </SettlementSharePage>
     </>
   );
