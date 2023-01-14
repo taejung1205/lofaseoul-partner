@@ -10,7 +10,7 @@ import { BasicModal, ModalButton } from "~/components/modal";
 import {
   isSettlementItemValid,
   setPartnerName,
-  SettlementTable,
+  SettlementTableMemo,
 } from "~/components/settlement";
 import { SettlementItem } from "~/components/settlement";
 
@@ -203,7 +203,7 @@ export default function AdminSettlementShare() {
         </div>
 
         <div style={{ height: "20px" }} />
-        <SettlementTable items={items} onSubmit={submitSettlement} />
+        <SettlementTableMemo items={items} onSubmit={submitSettlement} />
       </SettlementSharePage>
     </>
   );

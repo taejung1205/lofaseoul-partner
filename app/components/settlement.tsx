@@ -1,5 +1,6 @@
 import { Checkbox } from "@mantine/core";
-import React, { useEffect, useState } from "react";
+import React from "react";
+import { useEffect, useState } from "react";
 import { useSubmit } from "react-router-dom";
 import styled from "styled-components";
 
@@ -233,3 +234,7 @@ export function SettlementTable({
     </SettlementBox>
   );
 }
+
+export const SettlementTableMemo = React.memo(SettlementTable, (prev, next) => {
+  return prev.items == next.items;
+});
