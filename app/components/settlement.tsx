@@ -48,6 +48,48 @@ const TextBox = styled.div`
   overflow: hidden;
 `;
 
+/**
+ * 해당 정산아이템이 유효한 지를 확인합니다.
+ * 파트너명, 옵션명을 제외하고 비어있는 값이 있으면 유효하지 않은 값으로 간주합니다.
+ *
+ * @param item : SettlementItem
+ * @returns
+ *  유효할 경우 true, 아닐 경우 false
+ */
+export function isSettlementItemValid(item: SettlementItem) {
+  if (
+    item.seller == undefined ||
+    item.orderNumber == undefined ||
+    item.productName == undefined ||
+    item.price == undefined ||
+    item.amount == undefined ||
+    item.orderer == undefined ||
+    item.receiver == undefined
+  ) {
+    return false;
+  } else {
+    return true;
+  }
+}
+
+/**
+ * 상품명을 바탕으로 파트너명을 도출해 해당 정산아이템 정보에 넣습니다. 
+ * @param item : SettlementItem (must be valid)
+ * @return
+ *  파트너명을 유효하게 찾았을 경우 true,
+ *  실패했을 경우 false
+ */
+export function setPartnerName(item: SettlementItem) {
+  const regExp = /\[(.*?)\]/;
+  let match = item.productName.match(regExp);
+  if (match) {
+    item.partnerName = match[1];
+    return true;
+  } else {
+    return false;
+  }
+}
+
 function SettlementItem({
   item,
   index,
@@ -94,13 +136,11 @@ function SettlementItem({
 
 export function SettlementTable({
   items,
-  onSubmit
-}: 
-{
-  items: SettlementItem[],
-  onSubmit: (settlementList: SettlementItem[]) => void
+  onSubmit,
+}: {
+  items: SettlementItem[];
+  onSubmit: (settlementList: SettlementItem[]) => void;
 }) {
-  
   const [itemsChecked, setItemsChecked] = useState<boolean[]>([]);
 
   function onCheck(index: number, isChecked: boolean) {
@@ -112,22 +152,25 @@ export function SettlementTable({
     setItemsChecked(newArr);
   }, [items]);
 
-  useEffect(() => {
-  }, [itemsChecked]);
+  useEffect(() => {}, [itemsChecked]);
 
   return (
     <SettlementBox>
       <SettlementHeader>
-        <Checkbox color={"gray"} size={"sm"} onChange={(event) =>{
-          const val = event.currentTarget.checked;
-          if(val){
-            const newArr = Array(items.length).fill(true);
-            setItemsChecked(newArr);
-          } else {
-            const newArr = Array(items.length).fill(false);
-            setItemsChecked(newArr);
-          }
-        }}/>
+        <Checkbox
+          color={"gray"}
+          size={"sm"}
+          onChange={(event) => {
+            const val = event.currentTarget.checked;
+            if (val) {
+              const newArr = Array(items.length).fill(true);
+              setItemsChecked(newArr);
+            } else {
+              const newArr = Array(items.length).fill(false);
+              setItemsChecked(newArr);
+            }
+          }}
+        />
         <TextBox style={{ width: "90px" }}>판매처</TextBox>
         <TextBox style={{ width: "150px" }}>주문번호</TextBox>
         <TextBox style={{ width: "calc(50% - 318px" }}>상품명</TextBox>
@@ -154,8 +197,8 @@ export function SettlementTable({
       <button
         onClick={() => {
           let settlementList = [];
-          for(let i = 0; i < items.length; i++){
-            if(itemsChecked[i]){
+          for (let i = 0; i < items.length; i++) {
+            if (itemsChecked[i]) {
               settlementList.push(items[i]);
             }
           }

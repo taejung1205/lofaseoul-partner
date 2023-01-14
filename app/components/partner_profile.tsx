@@ -1,7 +1,7 @@
-import { Modal } from "@mantine/core";
 import { Form } from "@remix-run/react";
 import { useState } from "react";
 import styled from "styled-components";
+import { BasicModal, ModalButton } from "./modal";
 
 const PartnerProfileBox = styled.div`
   background-color: #d9d9d9;
@@ -26,19 +26,6 @@ const InputBox = styled.input`
   font-size: 20px;
   font-weight: 700;
   margin: 4px;
-`;
-
-const ModalButton = styled.button`
-  background-color: white;
-  border: 2px solid black;
-  font-size: 16px;
-  font-weight: 700;
-  width: 80px;
-  line-height: 1;
-  margin: 5px;
-  padding: 6px 6px 6px 6px;
-  border-radius: 1px;
-  cursor: pointer;
 `;
 
 export function PartnerProfile({
@@ -73,11 +60,9 @@ export function PartnerProfile({
   if (!isEdit) {
     return (
       <>
-        <Modal
-          centered
+        <BasicModal
           opened={isDeleteModalOpened}
           onClose={() => setIsDeleteModalOpened(false)}
-          withCloseButton={false}
         >
           <div
             style={{
@@ -95,11 +80,16 @@ export function PartnerProfile({
               <Form method="post">
                 <input type="hidden" value={"delete"} name="action" required />
                 <input type="hidden" value={name} name="name" required />
-                <ModalButton type="submit" style={{borderColor: "red", color: "red"}}>삭제</ModalButton>
+                <ModalButton
+                  type="submit"
+                  style={{ borderColor: "red", color: "red" }}
+                >
+                  삭제
+                </ModalButton>
               </Form>
             </div>
           </div>
-        </Modal>
+        </BasicModal>
         <PartnerProfileBox>
           <div
             style={{
