@@ -151,23 +151,25 @@ export async function deletePartnerProfile({ name }: { name: string }) {
   return result;
 }
 
-export async function addSettlement({settlements, monthStr}: {
+export async function addSettlement({
+  settlements,
+  monthStr,
+}: {
   settlements: SettlementItem[];
-  monthStr: string
-}){
+  monthStr: string;
+}) {
   const batch = writeBatch(firestore);
   const time = new Date().getTime();
-  console.log(monthStr);
-  settlements.forEach((item, index) =>{
-    const docName = `${time}_${index}`
+  await setDoc(doc(firestore, `settlements/${monthStr}`), { isShared: true });
+  settlements.forEach((item, index) => {
+    const docName = `${time}_${index}`;
     let docRef = doc(firestore, `settlements/${monthStr}/items`, docName);
     batch.set(docRef, item);
   });
   await batch.commit();
 }
 
-export async function getSettlementMonthes(){
+export async function getSettlementMonthes() {
   const settlementsSnap = await getDocs(collection(firestore, "settlements"));
   return settlementsSnap.docs.map((doc) => doc.id);
 }
-

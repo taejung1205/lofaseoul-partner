@@ -1,8 +1,6 @@
-import { JsonInput, Modal } from "@mantine/core";
-import { ActionFunction, LoaderFunction } from "@remix-run/node";
-import { Form, useLoaderData, useSubmit } from "@remix-run/react";
+import { ActionFunction, LoaderFunction, redirect } from "@remix-run/node";
+import { useLoaderData, useSubmit } from "@remix-run/react";
 import { useEffect, useRef, useState } from "react";
-import { render } from "react-dom";
 import styled from "styled-components";
 import * as xlsx from "xlsx";
 import { dateToKorean, MonthSelectPopover } from "~/components/date";
@@ -13,7 +11,10 @@ import {
   SettlementTableMemo,
 } from "~/components/settlement";
 import { SettlementItem } from "~/components/settlement";
-import { addSettlement, getSettlementMonthes } from "~/services/firebase.server";
+import {
+  addSettlement,
+  getSettlementMonthes,
+} from "~/services/firebase.server";
 
 const SettlementSharePage = styled.div`
   width: 100%;
@@ -59,36 +60,51 @@ const FileUpload = styled.input`
   border: 0;
 `;
 
+const ShareButton = styled.button`
+  background-color: black;
+  color: white;
+  font-size: 24px;
+  font-weight: 700;
+  width: 350px;
+  line-height: 1;
+  padding: 6px 6px 6px 6px;
+  cursor: pointer;
+`;
+
 export const action: ActionFunction = async ({ request }) => {
   const body = await request.formData();
   const actionType = body.get("action")?.toString();
-  if(actionType === "share"){
+  if (actionType === "share") {
     const settlement = body.get("settlement")?.toString();
     const month = body.get("month")?.toString();
     if (settlement !== undefined && month !== undefined) {
       const jsonArr: SettlementItem[] = JSON.parse(settlement);
       console.log(jsonArr);
-      await addSettlement({settlements: jsonArr, monthStr: month});
+      await addSettlement({ settlements: jsonArr, monthStr: month });
+      return redirect("/admin/settlement-share");
     }
   }
-  
+
   return null;
 };
 
 export let loader: LoaderFunction = async ({ request }) => {
+  console.log("loading page");
   const monthes = await getSettlementMonthes();
   return monthes;
 };
 
 export default function AdminSettlementShare() {
   const [items, setItems] = useState<SettlementItem[]>([]);
+  const [itemsChecked, setItemsChecked] = useState<boolean[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date>();
   const [selectedMonthStr, setSelectedMonthStr] = useState<string>();
   const [fileName, setFileName] = useState<string>("");
   const [isErrorModalOpened, setIsErrorModalOpened] = useState<boolean>(false);
-  
+  const [isShareModalOpened, setIsShareModalOpened] = useState<boolean>(false);
+
   const [errorStr, setErrorStr] = useState<string>("에러");
-  
+
   const submit = useSubmit();
   const sharedMonthes: string[] = useLoaderData();
   const formRef = useRef<HTMLFormElement>(null);
@@ -98,10 +114,23 @@ export default function AdminSettlementShare() {
   }, []);
 
   useEffect(() => {
+    const newArr = Array(items.length).fill(true);
+    setItemsChecked(newArr);
+  }, [items]);
+
+  useEffect(() => {
     if (selectedDate !== undefined) {
       setSelectedMonthStr(dateToKorean(selectedDate));
     }
   }, [selectedDate]);
+
+  function onItemCheck(index: number, isChecked: boolean) {
+    itemsChecked[index] = isChecked;
+  }
+
+  function onCheckAll(isChecked: boolean) {
+    setItemsChecked(Array(items.length).fill(isChecked));
+  }
 
   function shareSettlement(settlementList: SettlementItem[]) {
     const json = JSON.stringify(settlementList);
@@ -166,7 +195,7 @@ export default function AdminSettlementShare() {
       setFileName(e.target.files[0].name);
     }
   };
-  console.log(selectedMonthStr);
+
   return (
     <>
       <BasicModal
@@ -189,7 +218,44 @@ export default function AdminSettlementShare() {
           </div>
         </div>
       </BasicModal>
-     
+
+      <BasicModal
+        opened={isShareModalOpened}
+        onClose={() => setIsShareModalOpened}
+      >
+        <div
+          style={{
+            justifyContent: "center",
+            textAlign: "center",
+            fontWeight: "700",
+          }}
+        >
+          {sharedMonthes.includes(selectedMonthStr ?? "")
+            ? "중복공유됩니다. 그래도 진행하시겠습니까?"
+            : "업체들에게 정산내역을 공유하시겠습니까?"}
+          <div style={{ height: "20px" }} />
+          <div style={{ display: "flex", justifyContent: "center" }}>
+            <ModalButton onClick={() => setIsShareModalOpened(false)}>
+              취소
+            </ModalButton>
+            <ModalButton
+              onClick={() => {
+                let settlementList = [];
+                for (let i = 0; i < items.length; i++) {
+                  if (itemsChecked[i]) {
+                    settlementList.push(items[i]);
+                  }
+                }
+                shareSettlement(settlementList);
+                setIsShareModalOpened(false);
+              }}
+            >
+              공유
+            </ModalButton>
+          </div>
+        </div>
+      </BasicModal>
+
       <SettlementSharePage>
         <div style={{ display: "flex", alignItems: "center" }}>
           <img src="/images/icon_calendar.svg" />
@@ -220,7 +286,29 @@ export default function AdminSettlementShare() {
           />
         </div>
         <div style={{ height: "20px" }} />
-        <SettlementTableMemo items={items} onShare={shareSettlement} isDuplicate={sharedMonthes.includes(selectedMonthStr ?? "")}/>
+        <SettlementTableMemo
+          items={items}
+          itemsChecked={itemsChecked}
+          onItemCheck={onItemCheck}
+          onCheckAll={onCheckAll}
+        />
+
+        <div style={{ height: "20px" }} />
+        {items.length > 0 ? (
+          <div
+            style={{
+              width: "inherit",
+              display: "flex",
+              justifyContent: "center",
+            }}
+          >
+            <ShareButton onClick={() => setIsShareModalOpened(true)}>
+              정산 내역 공유
+            </ShareButton>
+          </div>
+        ) : (
+          <></>
+        )}
       </SettlementSharePage>
     </>
   );

@@ -1,9 +1,7 @@
 import { Checkbox } from "@mantine/core";
 import React from "react";
 import { useEffect, useState } from "react";
-import { useSubmit } from "react-router-dom";
 import styled from "styled-components";
-import { BasicModal, ModalButton } from "./modal";
 
 export type SettlementItem = {
   seller: string;
@@ -19,13 +17,13 @@ export type SettlementItem = {
 
 const SettlementBox = styled.div`
   width: inherit;
-  height: 70%;
-  min-height: 70%;
+  height: 60%;
+  min-height: 60%;
   position: relative;
 `;
 
 const SettlementItemsBox = styled.div`
-  max-height: 80%;
+  max-height: 85%;
   overflow-y: scroll;
 `;
 
@@ -54,17 +52,6 @@ const TextBox = styled.div`
   text-overflow: ellipsis;
   white-space: nowrap;
   overflow: hidden;
-`;
-
-const ShareButton = styled.button`
-  background-color: black;
-  color: white;
-  font-size: 24px;
-  font-weight: 700;
-  width: 350px;
-  line-height: 1;
-  padding: 6px 6px 6px 6px;
-  cursor: pointer;
 `;
 
 /**
@@ -113,12 +100,12 @@ function SettlementItem({
   item,
   index,
   check,
-  onCheck,
+  onItemCheck,
 }: {
   item: SettlementItem;
   index: number;
   check: boolean;
-  onCheck: (index: number, isChecked: boolean) => void;
+  onItemCheck: (index: number, isChecked: boolean) => void;
 }) {
   useEffect(() => {
     setIsChecked(check);
@@ -132,7 +119,7 @@ function SettlementItem({
         checked={isChecked}
         onChange={(event) => {
           setIsChecked(event.currentTarget.checked);
-          onCheck(index, event.currentTarget.checked);
+          onItemCheck(index, event.currentTarget.checked);
         }}
       />
       <TextBox style={{ width: "90px" }}>{item.seller}</TextBox>
@@ -155,79 +142,34 @@ function SettlementItem({
 
 export function SettlementTable({
   items,
-  onShare,
-  isDuplicate,
+  itemsChecked,
+  onItemCheck,
+  onCheckAll
 }: {
   items: SettlementItem[];
-  onShare: (settlementList: SettlementItem[]) => void;
-  isDuplicate: boolean;
+  itemsChecked: boolean[];
+  onItemCheck: (index: number, isChecked: boolean) => void;
+  onCheckAll: (isChecked: boolean) => void;
 }) {
-  const [itemsChecked, setItemsChecked] = useState<boolean[]>([]);
-  const [isShareModalOpened, setIsShareModalOpened] = useState<boolean>(false);
-  function onCheck(index: number, isChecked: boolean) {
-    itemsChecked[index] = isChecked;
-  }
+  
+  const [allChecked, setAllChecked] = useState<boolean>(false);
 
   useEffect(() => {
-    const newArr = Array(items.length).fill(false);
-    setItemsChecked(newArr);
+    setAllChecked(true);
   }, [items]);
-
-  useEffect(() => {}, [itemsChecked]);
 
   return (
     <>
-      <BasicModal
-        opened={isShareModalOpened}
-        onClose={() => setIsShareModalOpened}
-      >
-        <div
-          style={{
-            justifyContent: "center",
-            textAlign: "center",
-            fontWeight: "700",
-          }}
-        >
-          {isDuplicate
-            ? "중복공유됩니다. 그래도 진행하시겠습니까?"
-            : "업체들에게 정산내역을 공유하시겠습니까?"}
-          <div style={{ height: "20px" }} />
-          <div style={{ display: "flex", justifyContent: "center" }}>
-            <ModalButton onClick={() => setIsShareModalOpened(false)}>
-              취소
-            </ModalButton>
-            <ModalButton
-              onClick={() => {
-                let settlementList = [];
-                for (let i = 0; i < items.length; i++) {
-                  if (itemsChecked[i]) {
-                    settlementList.push(items[i]);
-                  }
-                }
-                onShare(settlementList);
-                setIsShareModalOpened(false);
-              }}
-            >
-              공유
-            </ModalButton>
-          </div>
-        </div>
-      </BasicModal>
-
       <SettlementBox>
         <SettlementHeader>
           <Checkbox
             color={"gray"}
             size={"sm"}
+            checked={allChecked}
             onChange={(event) => {
               const val = event.currentTarget.checked;
-              if (val) {
-                const newArr = Array(items.length).fill(true);
-                setItemsChecked(newArr);
-              } else {
-                const newArr = Array(items.length).fill(false);
-                setItemsChecked(newArr);
-              }
+              setAllChecked(val);
+              onCheckAll(val);
             }}
           />
           <TextBox style={{ width: "90px" }}>판매처</TextBox>
@@ -248,25 +190,17 @@ export function SettlementTable({
                 index={index}
                 item={item}
                 check={itemsChecked[index] ?? false}
-                onCheck={onCheck}
+                onItemCheck={onItemCheck}
               />
             );
           })}
         </SettlementItemsBox>
         {items.length > 0 ? <SettlementFooter /> : <></>}
-        <div style={{ height: "20px" }} />
-        {items.length > 0 ? (
-          <ShareButton onClick={() => setIsShareModalOpened(true)}>
-            정산 내역 공유
-          </ShareButton>
-        ) : (
-          <></>
-        )}
       </SettlementBox>
     </>
   );
 }
 
 export const SettlementTableMemo = React.memo(SettlementTable, (prev, next) => {
-  return prev.items == next.items;
+  return prev.items == next.items && prev.itemsChecked == next.itemsChecked;
 });
