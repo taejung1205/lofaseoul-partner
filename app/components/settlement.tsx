@@ -37,6 +37,12 @@ const SettlementHeader = styled(SettlementItemBox)`
   background-color: #ebebeb;
 `;
 
+const SettlementFooter = styled.div`
+  display: flex;
+  height: 20px;
+  background-color: #ebebeb;
+`;
+
 const TextBox = styled.div`
   margin-left: 10px;
   font-weight: 700;
@@ -46,6 +52,17 @@ const TextBox = styled.div`
   text-overflow: ellipsis;
   white-space: nowrap;
   overflow: hidden;
+`;
+
+const SubmitButton = styled.button`
+  background-color: black;
+  color: white;
+  font-size: 24px;
+  font-weight: 700;
+  width: 350px;
+  line-height: 1;
+  padding: 6px 6px 6px 6px;
+  cursor: pointer;
 `;
 
 /**
@@ -73,7 +90,7 @@ export function isSettlementItemValid(item: SettlementItem) {
 }
 
 /**
- * 상품명을 바탕으로 파트너명을 도출해 해당 정산아이템 정보에 넣습니다. 
+ * 상품명을 바탕으로 파트너명을 도출해 해당 정산아이템 정보에 넣습니다.
  * @param item : SettlementItem (must be valid)
  * @return
  *  파트너명을 유효하게 찾았을 경우 true,
@@ -194,19 +211,25 @@ export function SettlementTable({
           );
         })}
       </SettlementItemsBox>
-      <button
-        onClick={() => {
-          let settlementList = [];
-          for (let i = 0; i < items.length; i++) {
-            if (itemsChecked[i]) {
-              settlementList.push(items[i]);
+      {items.length > 0 ? <SettlementFooter /> : <></>}
+      <div style={{ height: "20px" }} />
+      {items.length > 0 ? (
+        <SubmitButton
+          onClick={() => {
+            let settlementList = [];
+            for (let i = 0; i < items.length; i++) {
+              if (itemsChecked[i]) {
+                settlementList.push(items[i]);
+              }
             }
-          }
-          onSubmit(settlementList);
-        }}
-      >
-        gg
-      </button>
+            onSubmit(settlementList);
+          }}
+        >
+          정산 내역 공유
+        </SubmitButton>
+      ) : (
+        <></>
+      )}
     </SettlementBox>
   );
 }
