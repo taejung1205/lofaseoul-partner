@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { render } from "react-dom";
 import styled from "styled-components";
 import * as xlsx from "xlsx";
+import { dateToKorean, MonthSelectPopover } from "~/components/date";
 import { BasicModal, ModalButton } from "~/components/modal";
 import {
   isSettlementItemValid,
@@ -17,7 +18,7 @@ const SettlementSharePage = styled.div`
   width: 100%;
   font-size: 20px;
   font-weight: 700;
-  padding: 40px;
+  padding: 30px 40px 30px 40px;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -69,11 +70,23 @@ export const action: ActionFunction = async ({ request }) => {
 
 export default function AdminSettlementShare() {
   const [items, setItems] = useState<SettlementItem[]>([]);
+  const [selectedDate, setSelectedDate] = useState<Date>();
+  const [selectedMonthStr, setSelectedMonthStr] = useState<string>();
   const [fileName, setFileName] = useState<string>("");
   const [isErrorModalOpened, setIsErrorModalOpened] = useState<boolean>(false);
   const [errorStr, setErrorStr] = useState<string>("에러");
   const submit = useSubmit();
   const formRef = useRef<HTMLFormElement>(null);
+
+  useEffect(() => {
+    setSelectedDate(new Date());
+  }, []);
+
+  useEffect(() => {
+    if (selectedDate !== undefined) {
+      setSelectedMonthStr(dateToKorean(selectedDate));
+    }
+  }, [selectedDate]);
 
   function submitSettlement(settlementList: SettlementItem[]) {
     const json = JSON.stringify(settlementList);
@@ -160,6 +173,23 @@ export default function AdminSettlementShare() {
         </div>
       </BasicModal>
       <SettlementSharePage>
+        <div style={{ display: "flex", alignItems: "center" }}>
+          <img src="/images/icon_calendar.svg" />
+          <MonthSelectPopover
+            onLeftClick={() =>
+              setSelectedDate(
+                new Date(selectedDate!.setMonth(selectedDate!.getMonth() - 1))
+              )
+            }
+            onRightClick={() =>
+              setSelectedDate(
+                new Date(selectedDate!.setMonth(selectedDate!.getMonth() + 1))
+              )
+            }
+            monthStr={selectedMonthStr ?? ""}
+          />
+        </div>
+        <div style={{ height: "20px" }} />
         <div style={{ display: "flex" }} className="fileBox">
           <FileNameBox>{fileName}</FileNameBox>
           <div style={{ width: "20px" }} />

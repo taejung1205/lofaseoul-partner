@@ -23,7 +23,7 @@ const SettlementBox = styled.div`
 `;
 
 const SettlementItemsBox = styled.div`
-  max-height: 90%;
+  max-height: 80%;
   overflow-y: scroll;
 `;
 
