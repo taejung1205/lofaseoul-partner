@@ -184,3 +184,22 @@ export async function getSettlementMonthes() {
   const settlementsSnap = await getDocs(collection(firestore, "settlements"));
   return settlementsSnap.docs.map((doc) => doc.id);
 }
+
+/**
+ * 파트너의 정보들을 불러옵니다
+ * @param param0
+ * @returns
+ *
+ */
+export async function getSettlements({
+  partnerName,
+  monthStr,
+}: {
+  partnerName: string;
+  monthStr: string;
+}) {
+  const settlementsRef = collection(firestore, `settlements/${monthStr}/items`);
+  const settlementsQuery = query(settlementsRef, where("partnerName", "==", partnerName));
+  const querySnap = await getDocs(settlementsQuery);
+  return querySnap.docs.map((doc) => doc.data());
+}

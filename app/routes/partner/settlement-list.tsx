@@ -1,13 +1,16 @@
 import { LoaderFunction } from "@remix-run/node";
-import { Form, Link } from "@remix-run/react";
+import { Form, Link, useLoaderData } from "@remix-run/react";
 import { useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
 import {
   monthToKorean,
   MonthSelectPopover,
   monthToNumeral,
+  numeralMonthToKorean,
 } from "~/components/date";
 import { SettlementItem, SettlementTableMemo } from "~/components/settlement";
+import authenticator from "~/services/auth.server";
+import { getSettlements } from "~/services/firebase.server";
 
 const SettlementListPage = styled.div`
   width: 100%;
@@ -33,14 +36,36 @@ const GetListButton = styled.button`
   cursor: pointer;
 `;
 
+const EmptySettlementBox = styled.div`
+  display: flex;
+  text-align: center;
+  font-size: 24px;
+  height: 100px;
+  align-items: center;
+  justify-content: center;
+  width: inherit;
+`;
 export const loader: LoaderFunction = async ({ request }) => {
+  let partnerName: string;
+  let user = await authenticator.isAuthenticated(request, {
+    failureRedirect: "/login",
+  });
+  if (user !== null && "name" in user) {
+    partnerName = user.name;
+  } else {
+    return null;
+  }
+
   const url = new URL(request.url);
   const month = url.searchParams.get("month");
   if (month !== null) {
-    console.log(month);
-    return null;
+    const monthStr = numeralMonthToKorean(month);
+    const settlements = await getSettlements({
+      partnerName: partnerName,
+      monthStr: monthStr,
+    });
+    return settlements;
   } else {
-    console.log("nope");
     return null;
   }
 };
@@ -48,19 +73,26 @@ export const loader: LoaderFunction = async ({ request }) => {
 export default function AdminSettlementShare() {
   const [selectedDate, setSelectedDate] = useState<Date>();
   const [selectedMonthStr, setSelectedMonthStr] = useState<string>();
-  const [items, setItems] = useState<SettlementItem[]>([]);
   const [itemsChecked, setItemsChecked] = useState<boolean[]>([]);
+  const [isGetClicked, setIsGetClicked] = useState<boolean>(false);
+  const settlements: SettlementItem[] | null = useLoaderData(); //Partner Profile List
 
-  const monthNumeral = useMemo(() => monthToNumeral(selectedDate ?? new Date()), [selectedDate]);
+  const monthNumeral = useMemo(
+    () => monthToNumeral(selectedDate ?? new Date()),
+    [selectedDate]
+  );
 
   useEffect(() => {
     setSelectedDate(new Date());
+    if (settlements !== null) {
+      setIsGetClicked(true);
+    }
   }, []);
 
   useEffect(() => {
-    const newArr = Array(items.length).fill(true);
+    const newArr = Array(settlements?.length ?? 0).fill(true);
     setItemsChecked(newArr);
-  }, [items]);
+  }, [settlements]);
 
   useEffect(() => {
     if (selectedDate !== undefined) {
@@ -73,7 +105,7 @@ export default function AdminSettlementShare() {
   }
 
   function onCheckAll(isChecked: boolean) {
-    setItemsChecked(Array(items.length).fill(isChecked));
+    setItemsChecked(Array(settlements?.length ?? 0).fill(isChecked));
   }
 
   return (
@@ -99,12 +131,42 @@ export default function AdminSettlementShare() {
           </Link>
         </div>
         <div style={{ height: "20px" }} />
-        <SettlementTableMemo
-          items={items}
-          itemsChecked={itemsChecked}
-          onItemCheck={onItemCheck}
-          onCheckAll={onCheckAll}
-        />
+        {settlements == null ? (
+          <EmptySettlementBox
+            style={{
+              display: "flex",
+              textAlign: "center",
+              fontSize: "30px",
+              height: "100px",
+              alignItems: "center",
+              justifyContent: "center",
+              width: "inherit",
+            }}
+          >
+            조회하기 버튼을 클릭하여 정산내역을 확인할 수 있습니다.
+          </EmptySettlementBox>
+        ) : settlements?.length > 0 ? (
+          <SettlementTableMemo
+            items={settlements}
+            itemsChecked={itemsChecked}
+            onItemCheck={onItemCheck}
+            onCheckAll={onCheckAll}
+          />
+        ) : (
+          <EmptySettlementBox
+            style={{
+              display: "flex",
+              textAlign: "center",
+              fontSize: "30px",
+              height: "100px",
+              alignItems: "center",
+              justifyContent: "center",
+              width: "inherit",
+            }}
+          >
+            공유된 정산내역이 없습니다.
+          </EmptySettlementBox>
+        )}
 
         <div style={{ height: "20px" }} />
       </SettlementListPage>
