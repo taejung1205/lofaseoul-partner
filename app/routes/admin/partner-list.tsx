@@ -56,7 +56,7 @@ export const action: ActionFunction = async ({ request }) => {
       console.log("Error");
       result = "Data invalid while adding/editing partner profile";
     } else {
-      const addPartnerResult = await addPartnerProfile({
+      let partnerProfile: PartnerProfile = {
         name: name,
         id: id,
         password: password,
@@ -65,6 +65,9 @@ export const action: ActionFunction = async ({ request }) => {
         lofaFee: lofaFee,
         otherFee: otherFee,
         shippingFee: shippingFee,
+      };
+      const addPartnerResult = await addPartnerProfile({
+        partnerProfile,
       });
       // console.log(result);
       result = "Adding/Editing partner profile OK";
@@ -115,7 +118,7 @@ export default function AdminPartnerList() {
             phone: "",
             lofaFee: 0,
             otherFee: 0,
-            shippingFee: 0
+            shippingFee: 0,
           }}
           isNew={true}
           isEdit={true}
@@ -137,13 +140,15 @@ export default function AdminPartnerList() {
               phone: doc.phone,
               lofaFee: doc.lofaFee,
               otherFee: doc.otherFee,
-              shippingFee: doc.shippingFee
+              shippingFee: doc.shippingFee,
             }}
             isEdit={currentEdit == index}
             onEditClick={() => {
               setCurrentEdit(index);
-            } }
-            isPartner={false} isNew={false}          />
+            }}
+            isPartner={false}
+            isNew={false}
+          />
         );
       })}
       <div style={{ minHeight: "40px" }} />

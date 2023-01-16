@@ -39,14 +39,16 @@ export default function AdminPartnerList() {
         <></>
       ) : (
         <PartnerProfile
-          name={loaderData.name}
-          id={loaderData.id}
-          password={loaderData.password}
-          email={loaderData.email}
-          phone={loaderData.phone}
-          lofaFee={loaderData.lofaFee}
-          otherFee={loaderData.otherFee}
-          shippingFee={loaderData.shippingFee}
+          partnerProfile={{
+            name: loaderData.name,
+            id: loaderData.id,
+            password: loaderData.password,
+            email: loaderData.email,
+            phone: loaderData.phone,
+            lofaFee: loaderData.lofaFee,
+            otherFee: loaderData.otherFee,
+            shippingFee: loaderData.shippingFee,
+          }}
           isNew={false}
           isEdit={false}
           onEditClick={() => {}}

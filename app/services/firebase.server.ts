@@ -14,6 +14,7 @@ import {
 } from "firebase/firestore";
 import crypto from "crypto-js";
 import { SettlementItem } from "~/components/settlement";
+import { PartnerProfile } from "~/components/partner_profile";
 
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
@@ -114,36 +115,46 @@ export async function getPartnerProfile({ name }: { name: string }) {
 }
 
 export async function addPartnerProfile({
-  name,
-  id,
-  password,
-  email,
-  phone,
-  lofaFee,
-  otherFee,
-  shippingFee,
+  partnerProfile,
 }: {
-  name: string;
-  id: string;
-  password: string;
-  email: string;
-  phone: string;
-  lofaFee: number;
-  otherFee: number;
-  shippingFee: number;
+  partnerProfile: PartnerProfile;
 }) {
-  const result = await setDoc(doc(firestore, "accounts", name), {
-    name: name,
-    id: id,
-    password: password,
-    email: email,
-    phone: phone,
-    lofaFee: lofaFee,
-    otherFee: otherFee,
-    shippingFee: shippingFee,
+  const result = await setDoc(doc(firestore, "accounts", partnerProfile.name), {
+    name: partnerProfile.name,
+    id: partnerProfile.id,
+    password: partnerProfile.password,
+    email: partnerProfile.email,
+    phone: partnerProfile.phone,
+    lofaFee: partnerProfile.lofaFee,
+    otherFee: partnerProfile.otherFee,
+    shippingFee: partnerProfile.shippingFee,
     isAdmin: false,
   });
   return result;
+}
+
+export async function addPartnerProfiles({
+  partnerProfiles,
+}: {
+  partnerProfiles: PartnerProfile[];
+}) {
+  const batch = writeBatch(firestore);
+  partnerProfiles.forEach((item, index) => {
+    const docName = item.name;
+    let docRef = doc(firestore, "accounts", docName);
+    batch.set(docRef, {
+      name: item.name,
+      id: item.id,
+      password: item.password,
+      email: item.email,
+      phone: item.phone,
+      lofaFee: item.lofaFee,
+      otherFee: item.otherFee,
+      shippingFee: item.shippingFee,
+      isAdmin: false,
+    });
+  });
+  await batch.commit();
 }
 
 export async function deletePartnerProfile({ name }: { name: string }) {
