@@ -107,15 +107,17 @@ export default function AdminPartnerList() {
       <div style={{ minHeight: "40px" }} />
       {isCreatingProfile ? (
         <PartnerProfile
-          name={""}
-          id={""}
-          password={""}
-          email={""}
-          phone={""}
-          lofaFee={0}
-          otherFee={0}
+          partnerProfile={{
+            name: "",
+            id: "",
+            password: "",
+            email: "",
+            phone: "",
+            lofaFee: 0,
+            otherFee: 0,
+            shippingFee: 0
+          }}
           isNew={true}
-          shippingFee={0}
           isEdit={true}
           onEditClick={() => {}}
           isPartner={false}
@@ -127,21 +129,21 @@ export default function AdminPartnerList() {
         return (
           <PartnerProfile
             key={`PartnerProfile-${index}`}
-            name={doc.name}
-            id={doc.id}
-            password={doc.password}
-            email={doc.email}
-            phone={doc.phone}
-            lofaFee={doc.lofaFee}
-            otherFee={doc.otherFee}
-            isNew={false}
-            shippingFee={doc.shippingFee}
+            partnerProfile={{
+              name: doc.name,
+              id: doc.id,
+              password: doc.password,
+              email: doc.email,
+              phone: doc.phone,
+              lofaFee: doc.lofaFee,
+              otherFee: doc.otherFee,
+              shippingFee: doc.shippingFee
+            }}
             isEdit={currentEdit == index}
             onEditClick={() => {
               setCurrentEdit(index);
-            }}
-            isPartner={false}
-          />
+            } }
+            isPartner={false} isNew={false}          />
         );
       })}
       <div style={{ minHeight: "40px" }} />

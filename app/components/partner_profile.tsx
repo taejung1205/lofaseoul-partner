@@ -3,6 +3,17 @@ import { useState } from "react";
 import styled from "styled-components";
 import { BasicModal, ModalButton } from "./modal";
 
+export type PartnerProfile = {
+  name: string,
+  id: string,
+  password: string,
+  email: string,
+  phone: string,
+  lofaFee: number,
+  otherFee: number,
+  shippingFee: number,
+};
+
 const PartnerProfileBox = styled.div`
   background-color: #d9d9d9;
   border: 1px solid black;
@@ -29,27 +40,13 @@ const InputBox = styled.input`
 `;
 
 export function PartnerProfile({
-  name,
-  id,
-  password,
-  email,
-  phone,
-  lofaFee,
-  otherFee,
-  shippingFee,
+  partnerProfile,
   isEdit,
   isNew,
   onEditClick,
   isPartner,
 }: {
-  name: string;
-  id: string;
-  password: string;
-  email: string;
-  phone: string;
-  lofaFee: number;
-  otherFee: number;
-  shippingFee: number;
+  partnerProfile: PartnerProfile;
   isEdit: boolean;
   isNew: boolean;
   onEditClick: () => void;
@@ -79,7 +76,7 @@ export function PartnerProfile({
               </ModalButton>
               <Form method="post">
                 <input type="hidden" value={"delete"} name="action" required />
-                <input type="hidden" value={name} name="name" required />
+                <input type="hidden" value={partnerProfile.name} name="name" required />
                 <ModalButton
                   type="submit"
                   style={{ borderColor: "red", color: "red" }}
@@ -101,7 +98,7 @@ export function PartnerProfile({
               alignItems: "center",
             }}
           >
-            <div>{name}</div>
+            <div>{partnerProfile.name}</div>
             {isPartner ? (
               <></>
             ) : (
@@ -149,19 +146,19 @@ export function PartnerProfile({
           <ProfileGridContainer>
             <ProfileGridItem>
               <div style={{ padding: "13px", width: "120px" }}>아이디</div>
-              <div style={{ padding: "13px" }}>{id}</div>
+              <div style={{ padding: "13px" }}>{partnerProfile.id}</div>
             </ProfileGridItem>
             <ProfileGridItem>
               <div style={{ padding: "13px", width: "120px" }}>비밀번호</div>
-              <div style={{ padding: "13px" }}>{password}</div>
+              <div style={{ padding: "13px" }}>{partnerProfile.password}</div>
             </ProfileGridItem>
             <ProfileGridItem>
               <div style={{ padding: "13px", width: "120px" }}>이메일</div>
-              <div style={{ padding: "13px" }}>{email}</div>
+              <div style={{ padding: "13px" }}>{partnerProfile.email}</div>
             </ProfileGridItem>
             <ProfileGridItem>
               <div style={{ padding: "13px", width: "120px" }}>연락처</div>
-              <div style={{ padding: "13px" }}>{phone}</div>
+              <div style={{ padding: "13px" }}>{partnerProfile.phone}</div>
             </ProfileGridItem>
             <ProfileGridItem>
               <div style={{ padding: "13px", width: "120px" }}>수수료</div>
@@ -174,28 +171,28 @@ export function PartnerProfile({
                 }}
               >
                 <div style={{ fontSize: "15px" }}>로파 공홈 및 쇼룸</div>
-                <div style={{ padding: "13px" }}>{lofaFee}%</div>
+                <div style={{ padding: "13px" }}>{partnerProfile.lofaFee}%</div>
                 <div style={{ fontSize: "15px" }}>타 채널</div>
-                <div style={{ padding: "13px" }}>{otherFee}%</div>
+                <div style={{ padding: "13px" }}>{partnerProfile.otherFee}%</div>
               </div>
             </ProfileGridItem>
             <ProfileGridItem>
               <div style={{ padding: "13px", width: "120px" }}>배송비</div>
-              <div style={{ padding: "13px" }}>{shippingFee}원</div>
+              <div style={{ padding: "13px" }}>{partnerProfile.shippingFee}원</div>
             </ProfileGridItem>
           </ProfileGridContainer>
         </PartnerProfileBox>
       </>
     );
   } else {
-    const [nameEdit, setNameEdit] = useState(id);
-    const [idEdit, setIdEdit] = useState(id);
-    const [passwordEdit, setPasswordEdit] = useState(password);
-    const [emailEdit, setEmailEdit] = useState(email);
-    const [phoneEdit, setPhoneEdit] = useState(phone);
-    const [lofaFeeEdit, setLofaFeeEdit] = useState(lofaFee);
-    const [otherFeeEdit, setOtherFeeEdit] = useState(otherFee);
-    const [shippingFeeEdit, setShippingFeeEdit] = useState(shippingFee);
+    const [nameEdit, setNameEdit] = useState(partnerProfile.id);
+    const [idEdit, setIdEdit] = useState(partnerProfile.id);
+    const [passwordEdit, setPasswordEdit] = useState(partnerProfile.password);
+    const [emailEdit, setEmailEdit] = useState(partnerProfile.email);
+    const [phoneEdit, setPhoneEdit] = useState(partnerProfile.phone);
+    const [lofaFeeEdit, setLofaFeeEdit] = useState(partnerProfile.lofaFee);
+    const [otherFeeEdit, setOtherFeeEdit] = useState(partnerProfile.otherFee);
+    const [shippingFeeEdit, setShippingFeeEdit] = useState(partnerProfile.shippingFee);
     return (
       <PartnerProfileBox>
         <Form method="post">
@@ -220,8 +217,8 @@ export function PartnerProfile({
               />
             ) : (
               <>
-                <div>{name}</div>
-                <input type="hidden" value={name} name="name" required />
+                <div>{partnerProfile.name}</div>
+                <input type="hidden" value={partnerProfile.name} name="name" required />
               </>
             )}
 
