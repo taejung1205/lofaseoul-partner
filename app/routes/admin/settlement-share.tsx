@@ -3,7 +3,7 @@ import { useLoaderData, useSubmit } from "@remix-run/react";
 import { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import * as xlsx from "xlsx";
-import { dateToKorean, MonthSelectPopover } from "~/components/date";
+import { monthToKorean, MonthSelectPopover } from "~/components/date";
 import { BasicModal, ModalButton } from "~/components/modal";
 import {
   isSettlementItemValid,
@@ -120,7 +120,7 @@ export default function AdminSettlementShare() {
 
   useEffect(() => {
     if (selectedDate !== undefined) {
-      setSelectedMonthStr(dateToKorean(selectedDate));
+      setSelectedMonthStr(monthToKorean(selectedDate));
     }
   }, [selectedDate]);
 

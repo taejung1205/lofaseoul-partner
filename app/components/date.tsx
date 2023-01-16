@@ -1,10 +1,16 @@
 import { Popover } from "@mantine/core";
 import styled from "styled-components";
 
-export function dateToKorean(date: Date) {
+export function monthToKorean(date: Date) {
   const year = date.getFullYear().toString().substring(2);
   const month = (date.getMonth() + 1).toString().padStart(2, "0");
   return `${year}년 ${month}월`;
+}
+
+export function monthToNumeral(date: Date) {
+  const year = date.getFullYear().toString().substring(2);
+  const month = (date.getMonth() + 1).toString().padStart(2, "0");
+  return `${year}${month}`;
 }
 
 export function MonthSelectPopover({
