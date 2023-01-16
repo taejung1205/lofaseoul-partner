@@ -6,8 +6,8 @@ import { doLogin } from "./firebase.server";
 // Create an instance of the authenticator, pass a Type, User,  with what
 // strategies will return and will store in the session
 const authenticator = new Authenticator<User | Error | null>(sessionStorage, {
-  sessionKey: "sessionKey", // keep in sync
-  sessionErrorKey: "sessionErrorKey", // keep in sync
+  sessionKey: process.env.AUTH_SESSION_KEY, // keep in sync
+  sessionErrorKey: process.env.AUTH_SESSION_ERROR_KEY, // keep in sync
 });
 
 // Tell the Authenticator to use the form strategy
