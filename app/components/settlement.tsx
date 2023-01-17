@@ -13,7 +13,11 @@ export type SettlementItem = {
   orderer: string;
   receiver: string;
   partnerName: string;
+  fee: number;
+  shippingFee: number;
 };
+
+const possibleSellers = ["29cm", "EQL", "로파공홈", "오늘의집", "카카오"];
 
 const SettlementBox = styled.div`
   width: inherit;
@@ -55,9 +59,8 @@ const TextBox = styled.div`
 `;
 
 /**
- * 해당 정산아이템이 유효한 지를 확인합니다.
+ * 엑셀에서 읽어온 해당 정산아이템이 유효한 지를 확인합니다.
  * 파트너명, 옵션명을 제외하고 비어있는 값이 있으면 유효하지 않은 값으로 간주합니다.
- *
  * @param item : SettlementItem
  * @returns
  *  유효할 경우 true, 아닐 경우 false
@@ -78,6 +81,25 @@ export function isSettlementItemValid(item: SettlementItem) {
   }
 }
 
+
+/**
+ * 정산내역의 판매처가 유효한지를 확인합니다.
+ * 추가적으로, 만약 판매처가 '카페24'일 경우 '로파공홈'으로 수정합니다.
+ * @param item : SettlementItem (must be valid)
+ * @returns
+ *  유효할 경우 true, 아닐 경우 false
+ */
+export function isSettlementSellerValid(item: SettlementItem){
+  if(possibleSellers.includes(item.seller)){
+    return true;
+  } else if(item.seller === "카페24") {
+    item.seller = "로파공홈";
+    return true;
+  } else {
+    return false;
+  }
+}
+
 /**
  * 상품명을 바탕으로 파트너명을 도출해 해당 정산아이템 정보에 넣습니다.
  * @param item : SettlementItem (must be valid)
@@ -95,6 +117,7 @@ export function setPartnerName(item: SettlementItem) {
     return false;
   }
 }
+
 
 function SettlementItem({
   item,

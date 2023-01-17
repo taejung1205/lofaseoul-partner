@@ -1,18 +1,21 @@
-import { ActionFunction, LoaderFunction, redirect } from "@remix-run/node";
+import { ActionFunction, json, LoaderFunction, redirect } from "@remix-run/node";
 import { useLoaderData, useSubmit } from "@remix-run/react";
 import { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import * as xlsx from "xlsx";
 import { monthToKorean, MonthSelectPopover } from "~/components/date";
 import { BasicModal, ModalButton } from "~/components/modal";
+import { PartnerProfile } from "~/components/partner_profile";
 import {
   isSettlementItemValid,
+  isSettlementSellerValid,
   setPartnerName,
   SettlementTableMemo,
 } from "~/components/settlement";
 import { SettlementItem } from "~/components/settlement";
 import {
   addSettlement,
+  getPartnerProfiles,
   getSettlementMonthes,
 } from "~/services/firebase.server";
 
@@ -89,9 +92,9 @@ export const action: ActionFunction = async ({ request }) => {
 };
 
 export let loader: LoaderFunction = async ({ request }) => {
-  console.log("loading page");
   const monthes = await getSettlementMonthes();
-  return monthes;
+  const partners = await getPartnerProfiles();
+  return json({monthes: monthes, partners: partners});
 };
 
 export default function AdminSettlementShare() {
@@ -106,7 +109,9 @@ export default function AdminSettlementShare() {
   const [errorStr, setErrorStr] = useState<string>("에러");
 
   const submit = useSubmit();
-  const sharedMonthes: string[] = useLoaderData();
+  const loaderData = useLoaderData();
+  const sharedMonthes: string[] = loaderData.monthes;
+  const partnerProfiles: PartnerProfile[] = loaderData.partners;
   const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
@@ -166,6 +171,8 @@ export default function AdminSettlementShare() {
             orderer: element.주문자,
             receiver: element.수령자,
             partnerName: "",
+            fee: -1,
+            shippingFee: -1
           };
 
           let isValid = isSettlementItemValid(item);
@@ -176,6 +183,16 @@ export default function AdminSettlementShare() {
             setItems([]);
             return false;
           }
+
+          let isSellerValid = isSettlementSellerValid(item);
+          if(!isSellerValid){
+            setErrorStr("유효하지 않은 엑셀 파일입니다.\n판매처를 확인해주세요.");
+            setIsErrorModalOpened(true);
+            setFileName("");
+            setItems([]);
+            return false;
+          }
+
           let nameResult = setPartnerName(item);
           if (!nameResult || item.partnerName.length == 0) {
             setErrorStr(
@@ -186,6 +203,7 @@ export default function AdminSettlementShare() {
             setItems([]);
             return false;
           }
+
           array.push(item);
         }
         console.log(array);
