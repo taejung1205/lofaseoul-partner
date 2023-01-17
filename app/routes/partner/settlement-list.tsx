@@ -74,7 +74,6 @@ export default function AdminSettlementShare() {
   const [selectedDate, setSelectedDate] = useState<Date>();
   const [selectedMonthStr, setSelectedMonthStr] = useState<string>();
   const [itemsChecked, setItemsChecked] = useState<boolean[]>([]);
-  const [isGetClicked, setIsGetClicked] = useState<boolean>(false);
   const settlements: SettlementItem[] | null = useLoaderData(); //Partner Profile List
 
   const monthNumeral = useMemo(
@@ -84,9 +83,6 @@ export default function AdminSettlementShare() {
 
   useEffect(() => {
     setSelectedDate(new Date());
-    if (settlements !== null) {
-      setIsGetClicked(true);
-    }
   }, []);
 
   useEffect(() => {

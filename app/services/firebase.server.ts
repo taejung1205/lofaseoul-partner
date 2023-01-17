@@ -88,13 +88,17 @@ export async function doLogin({
  * 파트너의 정보들을 불러옵니다
  * @param param0
  * @returns
- *
+ *  Map(key: (partner name), value: PartnerProfile)
  */
 export async function getPartnerProfiles() {
   const accountsRef = collection(firestore, "accounts");
   const partnerQuery = query(accountsRef, where("isAdmin", "==", false));
   const querySnap = await getDocs(partnerQuery);
-  return querySnap.docs.map((doc) => doc.data());
+  const map = new Map<string, any>();
+  querySnap.docs.forEach((doc) => {
+    map.set(doc.id, doc.data());
+  })
+  return map;
 }
 
 /**

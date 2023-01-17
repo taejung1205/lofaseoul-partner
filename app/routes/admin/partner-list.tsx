@@ -88,7 +88,8 @@ export const action: ActionFunction = async ({ request }) => {
 
 export let loader: LoaderFunction = async ({ request }) => {
   const profileDocs = await getPartnerProfiles();
-  return profileDocs;
+  const profileArr = Array.from(profileDocs.values());
+  return profileArr;
 };
 
 export default function AdminPartnerList() {

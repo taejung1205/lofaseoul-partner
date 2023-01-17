@@ -2,6 +2,7 @@ import { Checkbox } from "@mantine/core";
 import React from "react";
 import { useEffect, useState } from "react";
 import styled from "styled-components";
+import { PartnerProfile } from "./partner_profile";
 
 export type SettlementItem = {
   seller: string;
@@ -83,13 +84,12 @@ export function isSettlementItemValid(item: SettlementItem) {
 
 
 /**
- * 정산내역의 판매처가 유효한지를 확인합니다.
- * 추가적으로, 만약 판매처가 '카페24'일 경우 '로파공홈'으로 수정합니다.
+ * 만약 판매처가 '카페24'일 경우 '로파공홈'으로 수정합니다.
  * @param item : SettlementItem (must be valid)
  * @returns
  *  유효할 경우 true, 아닐 경우 false
  */
-export function isSettlementSellerValid(item: SettlementItem){
+export function setSellerIfLofa(item: SettlementItem){
   if(possibleSellers.includes(item.seller)){
     return true;
   } else if(item.seller === "카페24") {
@@ -118,6 +118,19 @@ export function setPartnerName(item: SettlementItem) {
   }
 }
 
+/**
+ * 파트너 정보와 판매처를 바탕으로 수수료와 배송비를 기입합니다. 
+ * @param item : SettlementItem (must be valid) partnerProfile :  PartnerProfile
+ * @return 
+ */
+export function setSettlementFee(item: SettlementItem, partnerProfile: PartnerProfile){
+  item.shippingFee = partnerProfile.shippingFee;
+  if(item.seller == "로파공홈"){
+    item.fee = partnerProfile.lofaFee;
+  } else {
+    item.fee = partnerProfile.otherFee;
+  }
+}
 
 function SettlementItem({
   item,

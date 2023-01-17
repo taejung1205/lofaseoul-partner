@@ -1,6 +1,6 @@
 import { ActionFunction, json, LoaderFunction, redirect } from "@remix-run/node";
 import { useLoaderData, useSubmit } from "@remix-run/react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import styled from "styled-components";
 import * as xlsx from "xlsx";
 import { monthToKorean, MonthSelectPopover } from "~/components/date";
@@ -8,8 +8,9 @@ import { BasicModal, ModalButton } from "~/components/modal";
 import { PartnerProfile } from "~/components/partner_profile";
 import {
   isSettlementItemValid,
-  isSettlementSellerValid,
   setPartnerName,
+  setSellerIfLofa,
+  setSettlementFee,
   SettlementTableMemo,
 } from "~/components/settlement";
 import { SettlementItem } from "~/components/settlement";
@@ -93,8 +94,9 @@ export const action: ActionFunction = async ({ request }) => {
 
 export let loader: LoaderFunction = async ({ request }) => {
   const monthes = await getSettlementMonthes();
-  const partners = await getPartnerProfiles();
-  return json({monthes: monthes, partners: partners});
+  const partnersMap = await getPartnerProfiles();
+  const partnersArr = Array.from(partnersMap.values());
+  return json({monthes: monthes, partners: partnersArr});
 };
 
 export default function AdminSettlementShare() {
@@ -110,8 +112,14 @@ export default function AdminSettlementShare() {
 
   const submit = useSubmit();
   const loaderData = useLoaderData();
-  const sharedMonthes: string[] = loaderData.monthes;
-  const partnerProfiles: PartnerProfile[] = loaderData.partners;
+  const sharedMonthes:string[] = loaderData.monthes;
+  const partnerProfiles = useMemo(() => {
+    let map = new Map();
+    loaderData.partners.forEach((partner: PartnerProfile) => {
+      map.set(partner.name, partner);
+    });
+    return map;
+  }, [loaderData])
   const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
@@ -184,14 +192,7 @@ export default function AdminSettlementShare() {
             return false;
           }
 
-          let isSellerValid = isSettlementSellerValid(item);
-          if(!isSellerValid){
-            setErrorStr("유효하지 않은 엑셀 파일입니다.\n판매처를 확인해주세요.");
-            setIsErrorModalOpened(true);
-            setFileName("");
-            setItems([]);
-            return false;
-          }
+          setSellerIfLofa(item);
 
           let nameResult = setPartnerName(item);
           if (!nameResult || item.partnerName.length == 0) {
@@ -203,6 +204,19 @@ export default function AdminSettlementShare() {
             setItems([]);
             return false;
           }
+
+          const partnerProfile = partnerProfiles.get(item.partnerName);
+          if(partnerProfile === undefined) {
+            setErrorStr(
+              `유효하지 않은 엑셀 파일입니다.\n상품명의 파트너가 계약 업체 목록에 있는지 확인해주세요. (${item.partnerName})`
+            );
+            setIsErrorModalOpened(true);
+            setFileName("");
+            setItems([]);
+            return false;
+          }
+
+          setSettlementFee(item, partnerProfile);
 
           array.push(item);
         }
