@@ -97,7 +97,7 @@ export async function getPartnerProfiles() {
   const map = new Map<string, any>();
   querySnap.docs.forEach((doc) => {
     map.set(doc.id, doc.data());
-  })
+  });
   return map;
 }
 
@@ -175,13 +175,89 @@ export async function addSettlement({
 }) {
   const batch = writeBatch(firestore);
   const time = new Date().getTime();
-  await setDoc(doc(firestore, `settlements/${monthStr}`), { isShared: true });
+  let partnersJson: any = {};
+
   settlements.forEach((item, index) => {
-    const docName = `${time}_${index}`;
-    let docRef = doc(firestore, `settlements/${monthStr}/items`, docName);
-    batch.set(docRef, item);
+
+    //items에 해당 정산아이템 추가
+    const itemDocName = `${time}_${index}`;
+    let itemDocRef = doc(
+      firestore,
+      `settlements/${monthStr}/items`,
+      itemDocName
+    );
+    batch.set(itemDocRef, item);
+
+    /* partners에 총계 넣기 위한 계산 */
+
+    //정산금액: (가격 * 수량)의 (100 - 수수료)%
+    const newSettlement = Math.round(
+      (item.price * item.amount * (100 - item.fee)) / 100.0
+    );
+
+    const possibleSellers = ["29cm", "EQL", "로파공홈", "오늘의집", "카카오"];
+
+    let seller = "etc";
+    if (possibleSellers.includes(item.seller)) {
+      seller = item.seller;
+    }
+
+    if (partnersJson[item.partnerName] == undefined) {
+      partnersJson[item.partnerName] = {
+        settlement_29cm: 0,
+        shipping_29cm: 0,
+        settlement_EQL: 0,
+        shipping_EQL: 0,
+        settlement_로파공홈: 0,
+        shipping_로파공홈: 0,
+        settlement_오늘의집: 0,
+        shipping_오늘의집: 0,
+        settlement_카카오: 0,
+        shipping_카카오: 0,
+        settlement_etc: 0,
+        shipping_etc: 0,
+        orderNumbers: [],
+      };
+    }
+
+    if(!partnersJson[item.partnerName].orderNumbers.includes(item.orderNumber)){
+      partnersJson[item.partnerName][`shipping_${seller}`] += item.shippingFee;
+    }
+
+    partnersJson[item.partnerName][`settlement_${seller}`] += newSettlement;
+
+    partnersJson[item.partnerName].orderNumbers.push(item.orderNumber);
+
+
   });
+ 
+  //partners에 각 파트너의 총계 추가
+  for(let partnerName in partnersJson){
+    let partnerDocRef = doc(
+      firestore,
+    `settlements/${monthStr}/partners`,
+      partnerName
+    );
+    batch.set(partnerDocRef, partnersJson[partnerName]);
+  }
+
   await batch.commit();
+
+  await setDoc(doc(firestore, `settlements/${monthStr}`), {
+    isShared: true,
+    // settlement_29cm: 0,
+    // shipping_29cm: 0,
+    // settlement_EQL: 0,
+    // shipping_EQL: 0,
+    // settlement_로파공홈: 0,
+    // shipping_로파공홈: 0,
+    // settlement_오늘의집: 0,
+    // shipping_오늘의집: 0,
+    // settlement_카카오: 0,
+    // shipping_카카오: 0,
+    // settlement_etc: 0,
+    // shipping_etc: 0
+  });
 }
 
 export async function getSettlementMonthes() {
@@ -190,10 +266,10 @@ export async function getSettlementMonthes() {
 }
 
 /**
- * 파트너의 정보들을 불러옵니다
- * @param param0
+ * 정산 정보를 불러옵니다
+ * @param partnerName: 파트너명, monthStr: 월
  * @returns
- *
+ *  Array of SettlementItem
  */
 export async function getSettlements({
   partnerName,
@@ -203,7 +279,10 @@ export async function getSettlements({
   monthStr: string;
 }) {
   const settlementsRef = collection(firestore, `settlements/${monthStr}/items`);
-  const settlementsQuery = query(settlementsRef, where("partnerName", "==", partnerName));
+  const settlementsQuery = query(
+    settlementsRef,
+    where("partnerName", "==", partnerName)
+  );
   const querySnap = await getDocs(settlementsQuery);
   return querySnap.docs.map((doc) => doc.data());
 }
