@@ -1,3 +1,4 @@
+import { Select } from "@mantine/core";
 import { LoaderFunction } from "@remix-run/node";
 import { Form, Link, useLoaderData } from "@remix-run/react";
 import { useEffect, useMemo, useState } from "react";
@@ -8,6 +9,7 @@ import {
   monthToNumeral,
   numeralMonthToKorean,
 } from "~/components/date";
+import { PossibleSellers } from "~/components/seller";
 import { SettlementItem, SettlementTableMemo } from "~/components/settlement";
 import authenticator from "~/services/auth.server";
 import { getSettlements } from "~/services/firebase.server";
@@ -74,6 +76,8 @@ export default function AdminSettlementShare() {
   const [selectedDate, setSelectedDate] = useState<Date>();
   const [selectedMonthStr, setSelectedMonthStr] = useState<string>();
   const [itemsChecked, setItemsChecked] = useState<boolean[]>([]);
+  const [items, setItems] = useState<SettlementItem[]>([]);
+  const [seller, setSeller] = useState<string | null>("all");
   const settlements: SettlementItem[] | null = useLoaderData(); //Partner Profile List
 
   const monthNumeral = useMemo(
@@ -86,9 +90,24 @@ export default function AdminSettlementShare() {
   }, []);
 
   useEffect(() => {
-    const newArr = Array(settlements?.length ?? 0).fill(true);
-    setItemsChecked(newArr);
-  }, [settlements]);
+    if (settlements !== null) {
+      if (seller == "all") {
+        setItems(settlements);
+      } else if (seller == "etc") {
+        const newItems = settlements.filter(
+          (item) => !PossibleSellers.includes(item.seller)
+        );
+        setItems(newItems);
+      } else {
+        const newItems = settlements.filter((item) => item.seller == seller);
+        setItems(newItems);
+      }
+
+      console.log(items.length);
+      const newChecked = Array(items.length).fill(false);
+      setItemsChecked(newChecked);
+    }
+  }, [settlements, seller]);
 
   useEffect(() => {
     if (selectedDate !== undefined) {
@@ -101,30 +120,67 @@ export default function AdminSettlementShare() {
   }
 
   function onCheckAll(isChecked: boolean) {
-    setItemsChecked(Array(settlements?.length ?? 0).fill(isChecked));
+    setItemsChecked(Array(items.length ?? 0).fill(isChecked));
   }
 
   return (
     <>
       <SettlementListPage>
-        <div style={{ display: "flex", alignItems: "center" }}>
-          <img src="/images/icon_calendar.svg" />
-          <MonthSelectPopover
-            onLeftClick={() =>
-              setSelectedDate(
-                new Date(selectedDate!.setMonth(selectedDate!.getMonth() - 1))
-              )
-            }
-            onRightClick={() =>
-              setSelectedDate(
-                new Date(selectedDate!.setMonth(selectedDate!.getMonth() + 1))
-              )
-            }
-            monthStr={selectedMonthStr ?? ""}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            width: "inherit"
+          }}
+        >
+          <div style={{display: "flex", alignItems: "center",}}>
+            <img src="/images/icon_calendar.svg" />
+            <MonthSelectPopover
+              onLeftClick={() =>
+                setSelectedDate(
+                  new Date(selectedDate!.setMonth(selectedDate!.getMonth() - 1))
+                )
+              }
+              onRightClick={() =>
+                setSelectedDate(
+                  new Date(selectedDate!.setMonth(selectedDate!.getMonth() + 1))
+                )
+              }
+              monthStr={selectedMonthStr ?? ""}
+            />
+            <Link to={`/partner/settlement-list?month=${monthNumeral}`}>
+              <GetListButton type="submit">조회하기</GetListButton>
+            </Link>
+          </div>
+
+          <Select
+            value={seller}
+            onChange={setSeller}
+            data={[
+              { value: "all", label: "전체 판매처" },
+              { value: "29cm", label: "29cm" },
+              { value: "EQL", label: "EQL" },
+              { value: "로파공홈", label: "로파 홈페이지" },
+              { value: "오늘의집", label: "오늘의집" },
+              { value: "카카오", label: "카카오" },
+              { value: "etc", label: "기타" },
+            ]}
+            styles={{
+              input: {
+                fontSize: "20px",
+                fontWeight: "bold",
+                borderRadius: 0,
+                border: "3px solid black !important",
+                height: "40px",
+              },
+              item: {
+                '&[data-selected]': {
+                  backgroundColor: "grey"
+                },
+              }
+            }}
           />
-          <Link to={`/partner/settlement-list?month=${monthNumeral}`}>
-            <GetListButton type="submit">조회하기</GetListButton>
-          </Link>
         </div>
         <div style={{ height: "20px" }} />
         {settlements == null ? (
@@ -141,12 +197,13 @@ export default function AdminSettlementShare() {
           >
             조회하기 버튼을 클릭하여 정산내역을 확인할 수 있습니다.
           </EmptySettlementBox>
-        ) : settlements?.length > 0 ? (
+        ) : items.length > 0 ? (
           <SettlementTableMemo
-            items={settlements}
+            items={items}
             itemsChecked={itemsChecked}
             onItemCheck={onItemCheck}
             onCheckAll={onCheckAll}
+            defaultAllCheck={false}
           />
         ) : (
           <EmptySettlementBox
