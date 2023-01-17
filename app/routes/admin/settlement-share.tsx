@@ -323,6 +323,7 @@ export default function AdminSettlementShare() {
           itemsChecked={itemsChecked}
           onItemCheck={onItemCheck}
           onCheckAll={onCheckAll}
+          defaultAllCheck={true}
         />
 
         <div style={{ height: "20px" }} />

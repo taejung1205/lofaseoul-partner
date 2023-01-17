@@ -180,18 +180,20 @@ export function SettlementTable({
   items,
   itemsChecked,
   onItemCheck,
-  onCheckAll
+  onCheckAll,
+  defaultAllCheck = true
 }: {
   items: SettlementItem[];
   itemsChecked: boolean[];
   onItemCheck: (index: number, isChecked: boolean) => void;
   onCheckAll: (isChecked: boolean) => void;
+  defaultAllCheck: boolean
 }) {
   
   const [allChecked, setAllChecked] = useState<boolean>(false);
 
   useEffect(() => {
-    setAllChecked(true);
+    setAllChecked(defaultAllCheck);
   }, [items]);
 
   return (

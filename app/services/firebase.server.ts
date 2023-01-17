@@ -15,6 +15,7 @@ import {
 import crypto from "crypto-js";
 import { SettlementItem } from "~/components/settlement";
 import { PartnerProfile } from "~/components/partner_profile";
+import { PossibleSellers } from "~/components/seller";
 
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
@@ -195,10 +196,8 @@ export async function addSettlement({
       (item.price * item.amount * (100 - item.fee)) / 100.0
     );
 
-    const possibleSellers = ["29cm", "EQL", "로파공홈", "오늘의집", "카카오"];
-
     let seller = "etc";
-    if (possibleSellers.includes(item.seller)) {
+    if (PossibleSellers.includes(item.seller)) {
       seller = item.seller;
     }
 
