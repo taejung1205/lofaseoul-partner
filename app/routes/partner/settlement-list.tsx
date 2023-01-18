@@ -9,13 +9,15 @@ import {
   monthToNumeral,
   numeralMonthToKorean,
 } from "~/components/date";
-import { PossibleSellers } from "~/components/seller";
+import { PossibleSellers, SellerSelect } from "~/components/seller";
+import {
+  SettlementItem,
+  SettlementTableMemo,
+} from "~/components/settlement_table";
 import {
   getAllSellerSettlementSum,
-  SettlementItem,
   SettlementSumBar,
-  SettlementTableMemo,
-} from "~/components/settlement";
+} from "~/components/settlement_sum";
 import authenticator from "~/services/auth.server";
 import { getSettlements, getSettlementSum } from "~/services/firebase.server";
 
@@ -86,7 +88,7 @@ export default function AdminSettlementShare() {
   const [selectedMonthStr, setSelectedMonthStr] = useState<string>();
   const [itemsChecked, setItemsChecked] = useState<boolean[]>([]);
   const [items, setItems] = useState<SettlementItem[]>([]);
-  const [seller, setSeller] = useState<string | null>("all");
+  const [seller, setSeller] = useState<string>("all");
   const loaderData = useLoaderData();
 
   const monthNumeral = useMemo(
@@ -110,7 +112,7 @@ export default function AdminSettlementShare() {
     }
   }, [loaderData]);
 
-  const allSum = useMemo(() => getAllSellerSettlementSum(sums), [sums])
+  const allSum = useMemo(() => getAllSellerSettlementSum(sums), [sums]);
 
   useEffect(() => {
     setSelectedDate(new Date());
@@ -179,33 +181,7 @@ export default function AdminSettlementShare() {
             </Link>
           </div>
 
-          <Select
-            value={seller}
-            onChange={setSeller}
-            data={[
-              { value: "all", label: "전체 판매처" },
-              { value: "29cm", label: "29cm" },
-              { value: "EQL", label: "EQL" },
-              { value: "로파공홈", label: "로파 홈페이지" },
-              { value: "오늘의집", label: "오늘의집" },
-              { value: "카카오", label: "카카오" },
-              { value: "etc", label: "기타" },
-            ]}
-            styles={{
-              input: {
-                fontSize: "20px",
-                fontWeight: "bold",
-                borderRadius: 0,
-                border: "3px solid black !important",
-                height: "40px",
-              },
-              item: {
-                "&[data-selected]": {
-                  backgroundColor: "grey",
-                },
-              },
-            }}
-          />
+          <SellerSelect seller={seller} setSeller={setSeller} />
         </div>
         <div style={{ height: "20px" }} />
         {settlements == null ? (

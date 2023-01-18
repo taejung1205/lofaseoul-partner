@@ -95,6 +95,7 @@ export function PartnerProfile({
                 <ModalButton
                   type="submit"
                   style={{ borderColor: "red", color: "red" }}
+                  onClick={() => setIsDeleteModalOpened(false)}
                 >
                   삭제
                 </ModalButton>
