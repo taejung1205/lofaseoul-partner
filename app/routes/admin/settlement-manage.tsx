@@ -186,7 +186,7 @@ export default function AdminSettlementManage() {
           공유된 정산내역이 없습니다.
         </EmptySettlementBox>
       )}
-      {sums.length > 0 && totalSum !== null ? (
+      {sums !== null && sums.length > 0 && totalSum !== null ? (
         <>
           <div style={{ height: "40px" }} />
           <SettlementSumBar
