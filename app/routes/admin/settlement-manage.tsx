@@ -62,7 +62,7 @@ export const loader: LoaderFunction = async ({ request }) => {
       monthStr: monthStr,
     });
     console.log(sums);
-    return json({ sums: sums });
+    return json({ sums: sums, month: month });
   } else {
     return null;
   }
@@ -74,7 +74,7 @@ export default function AdminSettlementManage() {
   const [seller, setSeller] = useState<string>("all");
   const loaderData = useLoaderData();
 
-  const monthNumeral = useMemo(
+  const selectedMonthNumeral = useMemo(
     () => monthToNumeral(selectedDate ?? new Date()),
     [selectedDate]
   );
@@ -147,7 +147,7 @@ export default function AdminSettlementManage() {
             }
             monthStr={selectedMonthStr ?? ""}
           />
-          <Link to={`/admin/settlement-manage?month=${monthNumeral}`}>
+          <Link to={`/admin/settlement-manage?month=${selectedMonthNumeral}`}>
             <GetListButton type="submit">조회하기</GetListButton>
           </Link>
         </div>
@@ -170,7 +170,7 @@ export default function AdminSettlementManage() {
           조회하기 버튼을 클릭하여 정산내역을 확인할 수 있습니다.
         </EmptySettlementBox>
       ) : sums.length > 0 ? (
-        <SettlementSumTable items={sums} seller={seller} />
+        <SettlementSumTable items={sums} seller={seller} monthNumeral={loaderData.month} />
       ) : (
         <EmptySettlementBox
           style={{

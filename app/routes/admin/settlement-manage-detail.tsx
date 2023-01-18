@@ -17,8 +17,11 @@ import {
   getAllSellerSettlementSum,
   SettlementSumBar,
 } from "~/components/settlement_sum";
-import authenticator from "~/services/auth.server";
-import { getSettlements, getSettlementSum } from "~/services/firebase.server";
+import {
+  getPartnerProfile,
+  getSettlements,
+  getSettlementSum,
+} from "~/services/firebase.server";
 
 const SettlementListPage = styled.div`
   width: 100%;
@@ -53,21 +56,36 @@ const EmptySettlementBox = styled.div`
   justify-content: center;
   width: inherit;
 `;
-export const loader: LoaderFunction = async ({ request }) => {
-  let partnerName: string;
-  let user = await authenticator.isAuthenticated(request, {
-    failureRedirect: "/login",
-  });
-  if (user !== null && "name" in user) {
-    partnerName = user.name;
-  } else {
-    return null;
-  }
 
+const InputBox = styled.input`
+  width: 140px;
+  height: 40px;
+  border: 3px solid black;
+  padding: 6px;
+  text-align: left;
+  font-size: 20px;
+  font-weight: 700;
+  margin-left: 20px;
+  ::placeholder {
+    color: black;
+    font-weight: 700;
+    opacity: 1;
+  }
+  :focus::placeholder {
+    color: transparent;
+  }
+`;
+
+export const loader: LoaderFunction = async ({ request }) => {
   const url = new URL(request.url);
   const month = url.searchParams.get("month");
-  if (month !== null) {
+  const partnerName = url.searchParams.get("partner");
+  if (month !== null && partnerName !== null) {
     const monthStr = numeralMonthToKorean(month);
+    const checkPartner = await getPartnerProfile({ name: partnerName });
+    if (checkPartner == null) {
+      return json({ error: "partner", partnerName: partnerName });
+    }
     const settlements = await getSettlements({
       partnerName: partnerName,
       monthStr: monthStr,
@@ -76,9 +94,16 @@ export const loader: LoaderFunction = async ({ request }) => {
       partnerName: partnerName,
       monthStr: monthStr,
     });
-    return json({ settlements: settlements, sums: sums });
+
+    return json({
+      settlements: settlements,
+      sums: sums,
+      partnerName: partnerName,
+    });
+  } else if (month !== null) {
+    return json({ error: "partner null" });
   } else {
-    return null;
+    return json({ error: "month null", partnerName: partnerName });
   }
 };
 
@@ -88,6 +113,7 @@ export default function AdminSettlementShare() {
   const [itemsChecked, setItemsChecked] = useState<boolean[]>([]);
   const [items, setItems] = useState<SettlementItem[]>([]);
   const [seller, setSeller] = useState<string>("all");
+  const [partnerName, setPartnerName] = useState<string>();
   const loaderData = useLoaderData();
 
   const monthNumeral = useMemo(
@@ -96,7 +122,7 @@ export default function AdminSettlementShare() {
   );
 
   const settlements: SettlementItem[] | null = useMemo(() => {
-    if (loaderData == null) {
+    if (loaderData.error !== undefined) {
       return null;
     } else {
       return loaderData.settlements;
@@ -104,18 +130,40 @@ export default function AdminSettlementShare() {
   }, [loaderData]);
 
   const sums = useMemo(() => {
-    if (loaderData == null) {
+    if (loaderData.error !== undefined) {
       return null;
     } else {
       return loaderData.sums;
     }
   }, [loaderData]);
 
+  const errorStr = useMemo(() => {
+    if (loaderData.error == undefined) {
+      return null;
+    }
+
+    switch (loaderData.error) {
+      case "partner":
+        if (
+          loaderData.partnerName == undefined ||
+          loaderData.partnerName == "undefined"
+        ) {
+          return `파트너 정보가 잘못되었습니다. 다시 조회해주세요. `;
+        } else {
+          return `파트너명(${loaderData.partnerName})이 유효하지 않습니다.`;
+        }
+      case "partner null":
+        return `파트너 정보가 잘못되었습니다. 다시 조회해주세요. `;
+      case "partner null":
+        return `날짜 정보가 잘못되었습니다. 다시 조회해주세요. `;
+    }
+  }, [loaderData]);
+
   const allSum = useMemo(() => {
-    if (sums == null){
+    if (sums == null) {
       return null;
     } else {
-      return getAllSellerSettlementSum(sums)
+      return getAllSellerSettlementSum(sums);
     }
   }, [sums]);
 
@@ -146,6 +194,17 @@ export default function AdminSettlementShare() {
       setSelectedMonthStr(monthToKorean(selectedDate));
     }
   }, [selectedDate]);
+
+  useEffect(() => {
+    if (
+      loaderData.partnerName !== undefined &&
+      loaderData.partnerName !== "undefined"
+    ) {
+      setPartnerName(loaderData.partnerName);
+    } else {
+      setPartnerName("");
+    }
+  }, [loaderData]);
 
   function onItemCheck(index: number, isChecked: boolean) {
     itemsChecked[index] = isChecked;
@@ -181,7 +240,16 @@ export default function AdminSettlementShare() {
               }
               monthStr={selectedMonthStr ?? ""}
             />
-            <Link to={`/partner/settlement-list?month=${monthNumeral}`}>
+            <InputBox
+              type="text"
+              name="name"
+              value={partnerName}
+              onChange={(e) => setPartnerName(e.target.value)}
+              required
+            />
+            <Link
+              to={`/admin/settlement-manage-detail?month=${monthNumeral}&partner=${partnerName}`}
+            >
               <GetListButton type="submit">조회하기</GetListButton>
             </Link>
           </div>
@@ -189,21 +257,7 @@ export default function AdminSettlementShare() {
           <SellerSelect seller={seller} setSeller={setSeller} />
         </div>
         <div style={{ height: "20px" }} />
-        {settlements == null ? (
-          <EmptySettlementBox
-            style={{
-              display: "flex",
-              textAlign: "center",
-              fontSize: "30px",
-              height: "100px",
-              alignItems: "center",
-              justifyContent: "center",
-              width: "inherit",
-            }}
-          >
-            조회하기 버튼을 클릭하여 정산내역을 확인할 수 있습니다.
-          </EmptySettlementBox>
-        ) : items.length > 0 ? (
+        {loaderData.error == undefined ? (
           <SettlementTableMemo
             items={items}
             itemsChecked={itemsChecked}
@@ -212,19 +266,7 @@ export default function AdminSettlementShare() {
             defaultAllCheck={false}
           />
         ) : (
-          <EmptySettlementBox
-            style={{
-              display: "flex",
-              textAlign: "center",
-              fontSize: "30px",
-              height: "100px",
-              alignItems: "center",
-              justifyContent: "center",
-              width: "inherit",
-            }}
-          >
-            공유된 정산내역이 없습니다.
-          </EmptySettlementBox>
+          <EmptySettlementBox>{errorStr}</EmptySettlementBox>
         )}
         {items.length > 0 && allSum !== null ? (
           <>

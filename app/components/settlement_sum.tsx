@@ -1,3 +1,4 @@
+import { Form, Link } from "@remix-run/react";
 import { useEffect, useState } from "react";
 import styled from "styled-components";
 import { PossibleSellers } from "./seller";
@@ -22,7 +23,7 @@ const SettlementItemsBox = styled.div`
 const SettlementItemBox = styled.div`
   display: flex;
   align-items: center;
-  background-color: #EBEBEB4D;
+  background-color: #ebebeb4d;
   padding: 10px;
   margin-top: 8px;
   line-height: 1;
@@ -33,6 +34,14 @@ const SettlementHeader = styled(SettlementItemBox)`
 `;
 
 const TextBox = styled.div`
+  margin-left: 10px;
+  font-weight: 700;
+  font-size: 16px;
+  line-height: 16px;
+  text-align: center;
+`;
+
+const DetailButton = styled.button`
   margin-left: 10px;
   font-weight: 700;
   font-size: 16px;
@@ -108,11 +117,17 @@ export function SettlementSumBar({
       >
         정산 금액
         <div style={{ width: "15px" }} />
-        <div style={{ color: "#1859FF" }}> {`${settlement.toLocaleString()}원`}</div>
+        <div style={{ color: "#1859FF" }}>
+          {" "}
+          {`${settlement.toLocaleString()}원`}
+        </div>
         <div style={{ width: "25px" }} />
         배송비 별도 정산
         <div style={{ width: "15px" }} />
-        <div style={{ color: "#1859FF" }}> {`${shippingFee.toLocaleString()}원`}</div>
+        <div style={{ color: "#1859FF" }}>
+          {" "}
+          {`${shippingFee.toLocaleString()}원`}
+        </div>
         <div style={{ width: "25px" }} />
         정산 총계 (정산 금액 + 배송비)
         <div style={{ width: "15px" }} />
@@ -127,14 +142,15 @@ export function SettlementSumBar({
 export function SettlementSumTable({
   items,
   seller,
+  monthNumeral
 }: {
   items: SettlementSumItem[];
   seller: string;
+  monthNumeral: string
 }) {
- 
   const [isAllSum, setIsAllSum] = useState<boolean>(false);
   useEffect(() => {
-    setIsAllSum(seller == "all")
+    setIsAllSum(seller == "all");
   }, [seller]);
   return (
     <SettlementBox>
@@ -157,7 +173,9 @@ export function SettlementSumTable({
           }
           return (
             <SettlementItemBox key={`SettlementSumItem-${index}`}>
-              <TextBox style={{ width: "25%", textAlign: "left" }}>{item.partnerName}</TextBox>
+              <TextBox style={{ width: "25%", textAlign: "left" }}>
+                {item.partnerName}
+              </TextBox>
               <TextBox style={{ width: "20%" }}>
                 {isAllSum ? allSettlement : item.data[`settlement_${seller}`]}
               </TextBox>
@@ -170,7 +188,14 @@ export function SettlementSumTable({
                   : item.data[`settlement_${seller}`] +
                     item.data[`shipping_${seller}`]}
               </TextBox>
-              <TextBox style={{ width: "15%", color: "#1859FF"}}>자세히보기</TextBox>
+              <Link
+                to={`/admin/settlement-manage-detail?partner=${item.partnerName}&month=${monthNumeral}`}
+                style={{ width: "15%" }}
+              >
+                <TextBox style={{  color: "#1859FF" }}>
+                  자세히보기
+                </TextBox>
+              </Link>
             </SettlementItemBox>
           );
         })}
