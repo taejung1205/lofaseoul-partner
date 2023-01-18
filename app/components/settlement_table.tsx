@@ -166,10 +166,10 @@ function SettlementItem({
       <TextBox style={{ width: "150px", fontSize: "12px" }}>
         {item.orderNumber}
       </TextBox>
-      <TextBox style={{ width: "calc(50% - 310px", fontSize: "12px" }}>
+      <TextBox style={{ width: "calc(50% - 310px)", fontSize: "12px" }}>
         {item.productName}
       </TextBox>
-      <TextBox style={{ width: "calc(50% - 310px", fontSize: "12px" }}>
+      <TextBox style={{ width: "calc(50% - 310px)", fontSize: "12px" }}>
         {item.optionName}
       </TextBox>
       <TextBox style={{ width: "60px" }}>{item.price}</TextBox>
@@ -215,8 +215,8 @@ export function SettlementTable({
           />
           <TextBox style={{ width: "90px" }}>판매처</TextBox>
           <TextBox style={{ width: "150px" }}>주문번호</TextBox>
-          <TextBox style={{ width: "calc(50% - 318px" }}>상품명</TextBox>
-          <TextBox style={{ width: "calc(50% - 318px" }}>옵션명</TextBox>
+          <TextBox style={{ width: "calc(50% - 318px)" }}>상품명</TextBox>
+          <TextBox style={{ width: "calc(50% - 318px)" }}>옵션명</TextBox>
           <TextBox style={{ width: "60px" }}>판매단가</TextBox>
           <TextBox style={{ width: "30px" }}>수량</TextBox>
           <TextBox style={{ width: "90px" }}>주문자</TextBox>
