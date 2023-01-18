@@ -11,11 +11,10 @@ import {
 } from "~/components/date";
 import { PossibleSellers } from "~/components/seller";
 import {
-  getAllSellerSettlementSum,
   SettlementItem,
-  SettlementSumBar,
   SettlementTableMemo,
-} from "~/components/settlement";
+} from "~/components/settlement_table";
+import { getAllSellerSettlementSum, SettlementSumBar } from "~/components/settlement_sum";
 import authenticator from "~/services/auth.server";
 import { getSettlements, getSettlementSum } from "~/services/firebase.server";
 

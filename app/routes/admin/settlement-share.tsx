@@ -12,8 +12,8 @@ import {
   setSellerIfLofa,
   setSettlementFee,
   SettlementTableMemo,
-} from "~/components/settlement";
-import { SettlementItem } from "~/components/settlement";
+} from "~/components/settlement_table";
+import { SettlementItem } from "~/components/settlement_table";
 import {
   addSettlement,
   getPartnerProfiles,

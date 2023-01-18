@@ -13,7 +13,7 @@ import {
   writeBatch,
 } from "firebase/firestore";
 import crypto from "crypto-js";
-import { SettlementItem } from "~/components/settlement";
+import { SettlementItem } from "~/components/settlement_table";
 import { PartnerProfile } from "~/components/partner_profile";
 import { PossibleSellers } from "~/components/seller";
 
@@ -179,7 +179,6 @@ export async function addSettlement({
   let partnersJson: any = {};
 
   settlements.forEach((item, index) => {
-
     //items에 해당 정산아이템 추가
     const itemDocName = `${time}_${index}`;
     let itemDocRef = doc(
@@ -219,22 +218,22 @@ export async function addSettlement({
       };
     }
 
-    if(!partnersJson[item.partnerName].orderNumbers.includes(item.orderNumber)){
+    if (
+      !partnersJson[item.partnerName].orderNumbers.includes(item.orderNumber)
+    ) {
       partnersJson[item.partnerName][`shipping_${seller}`] += item.shippingFee;
     }
 
     partnersJson[item.partnerName][`settlement_${seller}`] += newSettlement;
 
     partnersJson[item.partnerName].orderNumbers.push(item.orderNumber);
-
-
   });
- 
+
   //partners에 각 파트너의 총계 추가
-  for(let partnerName in partnersJson){
+  for (let partnerName in partnersJson) {
     let partnerDocRef = doc(
       firestore,
-    `settlements/${monthStr}/partners`,
+      `settlements/${monthStr}/partners`,
       partnerName
     );
     batch.set(partnerDocRef, partnersJson[partnerName]);
@@ -275,24 +274,48 @@ export async function getSettlements({
 }
 
 /**
- * 정산 데이터를 불러옵니다
+ * 정산 합계 정보를 불러옵니다
  * @param partnerName: 파트너명, monthStr: 월
  * @returns
- *  해당 월 파트너의 판매처별 정산 금액 합 (settlement_{판매처이름}, shipping_{판매처이름}) 
+ *  해당 월 파트너의 판매처별 정산 금액 합 (settlement_{판매처이름}, shipping_{판매처이름})
  *  없을 경우 null
  */
 export async function getSettlementSum({
   partnerName,
-  monthStr
+  monthStr,
 }: {
   partnerName: string;
   monthStr: string;
-}){
-  const docRef = doc(firestore, `settlements/${monthStr}/partners`, partnerName);
+}) {
+  const docRef = doc(
+    firestore,
+    `settlements/${monthStr}/partners`,
+    partnerName
+  );
   const docSnap = await getDoc(docRef);
   if (docSnap.exists()) {
     return docSnap.data();
   } else {
     return null;
   }
+}
+
+/**
+ * 모든 파트너의 정산 합계 정보를 불러옵니다
+ * @param monthStr: 월
+ * @returns
+ *  해당 월 모든 파트너의 판매처별 정산 금액 합 ([partnerName, data: {settlement_{판매처이름}, shipping_{판매처이름...}])
+ */
+export async function getAllSettlementSum({ monthStr }: { monthStr: string }) {
+  const settlementsRef = collection(
+    firestore,
+    `settlements/${monthStr}/partners`
+  );
+  const querySnap = await getDocs(settlementsRef);
+  return querySnap.docs.map((doc) => {
+    return {
+      partnerName: doc.id,
+      data: doc.data(),
+    };
+  });
 }
