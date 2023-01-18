@@ -110,6 +110,8 @@ export default function AdminSettlementShare() {
     }
   }, [loaderData]);
 
+  const allSum = useMemo(() => getAllSellerSettlementSum(sums), [sums])
+
   useEffect(() => {
     setSelectedDate(new Date());
   }, []);
@@ -252,12 +254,12 @@ export default function AdminSettlementShare() {
               seller={seller ?? "all"}
               settlement={
                 seller == "all"
-                  ? getAllSellerSettlementSum(sums).settlement
+                  ? allSum.settlement
                   : sums[`settlement_${seller}`]
               }
               shippingFee={
                 seller == "all"
-                  ? getAllSellerSettlementSum(sums).shippingFee
+                  ? allSum.shippingFee
                   : sums[`shipping_${seller}`]
               }
             />
