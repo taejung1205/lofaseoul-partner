@@ -268,7 +268,7 @@ export default function AdminSettlementShare() {
         ) : (
           <EmptySettlementBox>{errorStr}</EmptySettlementBox>
         )}
-        {items.length > 0 && allSum !== null ? (
+        {sums !== null && allSum !== null ? (
           <>
             <div style={{ height: "20px" }} />
             <button>오류 보고</button>

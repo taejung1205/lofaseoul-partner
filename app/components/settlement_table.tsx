@@ -51,7 +51,7 @@ const TextBox = styled.div`
   margin-left: 10px;
   font-weight: 700;
   font-size: 16px;
-  line-height: 16px;
+  line-height: 20px;
   text-align: center;
   text-overflow: ellipsis;
   white-space: nowrap;
