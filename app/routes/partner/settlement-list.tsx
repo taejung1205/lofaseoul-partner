@@ -1,5 +1,5 @@
 import { Select } from "@mantine/core";
-import { LoaderFunction } from "@remix-run/node";
+import { json, LoaderFunction } from "@remix-run/node";
 import { Form, Link, useLoaderData } from "@remix-run/react";
 import { useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
@@ -10,9 +10,14 @@ import {
   numeralMonthToKorean,
 } from "~/components/date";
 import { PossibleSellers } from "~/components/seller";
-import { SettlementItem, SettlementTableMemo } from "~/components/settlement";
+import {
+  getAllSellerSettlementSum,
+  SettlementItem,
+  SettlementSumBar,
+  SettlementTableMemo,
+} from "~/components/settlement";
 import authenticator from "~/services/auth.server";
-import { getSettlements } from "~/services/firebase.server";
+import { getSettlements, getSettlementSum } from "~/services/firebase.server";
 
 const SettlementListPage = styled.div`
   width: 100%;
@@ -66,7 +71,11 @@ export const loader: LoaderFunction = async ({ request }) => {
       partnerName: partnerName,
       monthStr: monthStr,
     });
-    return settlements;
+    const sums = await getSettlementSum({
+      partnerName: partnerName,
+      monthStr: monthStr,
+    });
+    return json({ settlements: settlements, sums: sums });
   } else {
     return null;
   }
@@ -78,12 +87,28 @@ export default function AdminSettlementShare() {
   const [itemsChecked, setItemsChecked] = useState<boolean[]>([]);
   const [items, setItems] = useState<SettlementItem[]>([]);
   const [seller, setSeller] = useState<string | null>("all");
-  const settlements: SettlementItem[] | null = useLoaderData(); //Partner Profile List
+  const loaderData = useLoaderData();
 
   const monthNumeral = useMemo(
     () => monthToNumeral(selectedDate ?? new Date()),
     [selectedDate]
   );
+
+  const settlements: SettlementItem[] | null = useMemo(() => {
+    if (loaderData == null) {
+      return null;
+    } else {
+      return loaderData.settlements;
+    }
+  }, [loaderData]);
+
+  const sums = useMemo(() => {
+    if (loaderData == null) {
+      return null;
+    } else {
+      return loaderData.sums;
+    }
+  }, [loaderData]);
 
   useEffect(() => {
     setSelectedDate(new Date());
@@ -102,8 +127,6 @@ export default function AdminSettlementShare() {
         const newItems = settlements.filter((item) => item.seller == seller);
         setItems(newItems);
       }
-
-      console.log(items.length);
       const newChecked = Array(items.length).fill(false);
       setItemsChecked(newChecked);
     }
@@ -131,10 +154,10 @@ export default function AdminSettlementShare() {
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            width: "inherit"
+            width: "inherit",
           }}
         >
-          <div style={{display: "flex", alignItems: "center",}}>
+          <div style={{ display: "flex", alignItems: "center" }}>
             <img src="/images/icon_calendar.svg" />
             <MonthSelectPopover
               onLeftClick={() =>
@@ -175,10 +198,10 @@ export default function AdminSettlementShare() {
                 height: "40px",
               },
               item: {
-                '&[data-selected]': {
-                  backgroundColor: "grey"
+                "&[data-selected]": {
+                  backgroundColor: "grey",
                 },
-              }
+              },
             }}
           />
         </div>
@@ -220,8 +243,28 @@ export default function AdminSettlementShare() {
             공유된 정산내역이 없습니다.
           </EmptySettlementBox>
         )}
-
-        <div style={{ height: "20px" }} />
+        {items.length > 0 ? (
+          <>
+            <div style={{ height: "20px" }} />
+            <button>오류 보고</button>
+            <div style={{ height: "40px" }} />
+            <SettlementSumBar
+              seller={seller ?? "all"}
+              settlement={
+                seller == "all"
+                  ? getAllSellerSettlementSum(sums).settlement
+                  : sums[`settlement_${seller}`]
+              }
+              shippingFee={
+                seller == "all"
+                  ? getAllSellerSettlementSum(sums).shippingFee
+                  : sums[`shipping_${seller}`]
+              }
+            />
+          </>
+        ) : (
+          <></>
+        )}
       </SettlementListPage>
     </>
   );

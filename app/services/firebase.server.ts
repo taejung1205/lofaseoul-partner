@@ -244,18 +244,6 @@ export async function addSettlement({
 
   await setDoc(doc(firestore, `settlements/${monthStr}`), {
     isShared: true,
-    // settlement_29cm: 0,
-    // shipping_29cm: 0,
-    // settlement_EQL: 0,
-    // shipping_EQL: 0,
-    // settlement_로파공홈: 0,
-    // shipping_로파공홈: 0,
-    // settlement_오늘의집: 0,
-    // shipping_오늘의집: 0,
-    // settlement_카카오: 0,
-    // shipping_카카오: 0,
-    // settlement_etc: 0,
-    // shipping_etc: 0
   });
 }
 
@@ -265,7 +253,7 @@ export async function getSettlementMonthes() {
 }
 
 /**
- * 정산 정보를 불러옵니다
+ * 정산 데이터를 불러옵니다
  * @param partnerName: 파트너명, monthStr: 월
  * @returns
  *  Array of SettlementItem
@@ -284,4 +272,27 @@ export async function getSettlements({
   );
   const querySnap = await getDocs(settlementsQuery);
   return querySnap.docs.map((doc) => doc.data());
+}
+
+/**
+ * 정산 데이터를 불러옵니다
+ * @param partnerName: 파트너명, monthStr: 월
+ * @returns
+ *  해당 월 파트너의 판매처별 정산 금액 합 (settlement_{판매처이름}, shipping_{판매처이름}) 
+ *  없을 경우 null
+ */
+export async function getSettlementSum({
+  partnerName,
+  monthStr
+}: {
+  partnerName: string;
+  monthStr: string;
+}){
+  const docRef = doc(firestore, `settlements/${monthStr}/partners`, partnerName);
+  const docSnap = await getDoc(docRef);
+  if (docSnap.exists()) {
+    return docSnap.data();
+  } else {
+    return null;
+  }
 }

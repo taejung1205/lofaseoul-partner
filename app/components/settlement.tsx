@@ -1,4 +1,5 @@
 import { Checkbox } from "@mantine/core";
+import { json } from "@remix-run/node";
 import React from "react";
 import { useEffect, useState } from "react";
 import styled from "styled-components";
@@ -82,17 +83,16 @@ export function isSettlementItemValid(item: SettlementItem) {
   }
 }
 
-
 /**
  * 만약 판매처가 '카페24'일 경우 '로파공홈'으로 수정합니다.
  * @param item : SettlementItem (must be valid)
  * @returns
  *  유효할 경우 true, 아닐 경우 false
  */
-export function setSellerIfLofa(item: SettlementItem){
-  if(possibleSellers.includes(item.seller)){
+export function setSellerIfLofa(item: SettlementItem) {
+  if (possibleSellers.includes(item.seller)) {
     return true;
-  } else if(item.seller === "카페24") {
+  } else if (item.seller === "카페24") {
     item.seller = "로파공홈";
     return true;
   } else {
@@ -119,17 +119,35 @@ export function setPartnerName(item: SettlementItem) {
 }
 
 /**
- * 파트너 정보와 판매처를 바탕으로 수수료와 배송비를 기입합니다. 
+ * 파트너 정보와 판매처를 바탕으로 수수료와 배송비를 기입합니다.
  * @param item : SettlementItem (must be valid) partnerProfile :  PartnerProfile
- * @return 
+ * @return
  */
-export function setSettlementFee(item: SettlementItem, partnerProfile: PartnerProfile){
+export function setSettlementFee(
+  item: SettlementItem,
+  partnerProfile: PartnerProfile
+) {
   item.shippingFee = partnerProfile.shippingFee;
-  if(item.seller == "로파공홈"){
+  if (item.seller == "로파공홈") {
     item.fee = partnerProfile.lofaFee;
   } else {
     item.fee = partnerProfile.otherFee;
   }
+}
+
+/**
+ * 모든 판매처의 정산금액을 합친 금액을 계산합니다.
+ *  @param item : getSettlementSum()으로 가져온 json
+ * @return 모든 판매처 정산금액의 합 ({settlement: number, shippingFee: number})
+ */
+export function getAllSellerSettlementSum(sums: any) {
+  let settlement = 0;
+  let shippingFee = 0;
+  possibleSellers.forEach((seller) => {
+    settlement += sums[`settlement_${seller}`];
+    shippingFee += sums[`shipping_${seller}`];
+  });
+  return { settlement: settlement, shippingFee: shippingFee };
 }
 
 function SettlementItem({
@@ -181,15 +199,14 @@ export function SettlementTable({
   itemsChecked,
   onItemCheck,
   onCheckAll,
-  defaultAllCheck = true
+  defaultAllCheck = true,
 }: {
   items: SettlementItem[];
   itemsChecked: boolean[];
   onItemCheck: (index: number, isChecked: boolean) => void;
   onCheckAll: (isChecked: boolean) => void;
-  defaultAllCheck: boolean
+  defaultAllCheck: boolean;
 }) {
-  
   const [allChecked, setAllChecked] = useState<boolean>(false);
 
   useEffect(() => {
@@ -242,3 +259,73 @@ export function SettlementTable({
 export const SettlementTableMemo = React.memo(SettlementTable, (prev, next) => {
   return prev.items == next.items && prev.itemsChecked == next.itemsChecked;
 });
+
+export function SettlementSumBar({
+  seller,
+  settlement,
+  shippingFee,
+}: {
+  seller: string;
+  settlement: number;
+  shippingFee: number;
+}) {
+  const [sellerStr, setSellerStr] = useState<string>("");
+
+  useEffect(() => {
+    if (seller == "all") {
+      setSellerStr("전체 판매처 합계");
+    } else if (seller == "etc") {
+      setSellerStr("기타 판매처 합계");
+    } else if (seller == "etc") {
+      setSellerStr("로파 홈페이지 합계");
+    } else {
+      setSellerStr(`${seller} 합계`);
+    }
+  }, [seller]);
+  return (
+    <div
+      style={{
+        backgroundColor: "#D9D9D999",
+        width: "inherit",
+        alignItems: "center",
+        display: "flex",
+        justifyContent: "space-between",
+        padding: "20px",
+      }}
+    >
+      <div
+        style={{
+          fontSize: "20px",
+          fontWeight: "700",
+          alignItems: "center",
+          textAlign: "center",
+        }}
+      >
+        {sellerStr}
+      </div>
+      <div
+        style={{
+          display: "flex",
+          fontSize: "20px",
+          fontWeight: "700",
+          alignItems: "center",
+          textAlign: "center",
+        }}
+      >
+        정산 금액
+        <div style={{ width: "15px" }} />
+        <div style={{ color: "#1859FF" }}> {`${settlement}원`}</div>
+        <div style={{ width: "25px" }} />
+        배송비 별도 정산
+        <div style={{ width: "15px" }} />
+        <div style={{ color: "#1859FF" }}> {`${shippingFee}원`}</div>
+        <div style={{ width: "25px" }} />
+        정산 총계 (정산 금액 + 배송비)
+        <div style={{ width: "15px" }} />
+        <div style={{ color: "#1859FF" }}>
+          {`${settlement + shippingFee}원`}
+        </div>
+      </div>
+    </div>
+  );
+}
