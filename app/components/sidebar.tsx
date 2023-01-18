@@ -100,6 +100,7 @@ export function AdminSidebar() {
         break;
 
       case "/admin/settlement-manage":
+      case "/admin/settlement-manage-detail":
         setCurrentPage("settlement-manage");
         break;
 
