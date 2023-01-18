@@ -1,7 +1,6 @@
 import { json, LoaderFunction } from "@remix-run/node";
 import { Link, useLoaderData } from "@remix-run/react";
 import { useEffect, useMemo, useState } from "react";
-import { redirect } from "react-router";
 import styled from "styled-components";
 import {
   MonthSelectPopover,

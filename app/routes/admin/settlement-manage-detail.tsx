@@ -3,24 +3,24 @@ import { Link, useLoaderData } from "@remix-run/react";
 import { useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
 import {
-  monthToKorean,
-  MonthSelectPopover,
-  monthToNumeral,
-  numeralMonthToKorean,
+    monthToKorean,
+    MonthSelectPopover,
+    monthToNumeral,
+    numeralMonthToKorean,
 } from "~/components/date";
 import { PossibleSellers, SellerSelect } from "~/components/seller";
 import {
-  SettlementItem,
-  SettlementTableMemo,
+    SettlementItem,
+    SettlementTableMemo,
 } from "~/components/settlement_table";
 import {
-  getAllSellerSettlementSum,
-  SettlementSumBar,
+    getAllSellerSettlementSum,
+    SettlementSumBar,
 } from "~/components/settlement_sum";
 import {
-  getPartnerProfile,
-  getSettlements,
-  getSettlementSum,
+    getPartnerProfile,
+    getSettlements,
+    getSettlementSum,
 } from "~/services/firebase.server";
 
 const SettlementListPage = styled.div`

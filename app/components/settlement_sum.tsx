@@ -1,4 +1,4 @@
-import { Form, Link } from "@remix-run/react";
+import { Link } from "@remix-run/react";
 import { useEffect, useState } from "react";
 import styled from "styled-components";
 import { PossibleSellers } from "./seller";
