@@ -114,7 +114,6 @@ export async function getPartnerProfile({ name }: { name: string }) {
   if (docSnap.exists()) {
     return docSnap.data();
   } else {
-    console.log("not found");
     return null;
   }
 }
