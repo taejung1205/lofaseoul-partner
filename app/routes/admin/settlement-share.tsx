@@ -178,7 +178,7 @@ export default function AdminSettlementShare() {
             seller: element.판매처,
             orderNumber: element.주문번호,
             productName: element.상품명,
-            optionName: element.옵션명,
+            optionName: element.옵션명 ?? "",
             price: element.판매단가,
             amount: element.수량,
             orderer: element.주문자,
@@ -225,7 +225,6 @@ export default function AdminSettlementShare() {
 
           array.push(item);
         }
-        console.log(array);
         setItems(array);
       };
       reader.readAsArrayBuffer(e.target.files[0]);

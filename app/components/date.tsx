@@ -19,6 +19,18 @@ export function numeralMonthToKorean(numeral: string) {
   return `${year}년 ${month}월`;
 }
 
+export function koreanMonthToNumeral(monthStr: string){
+  const year = monthStr.substring(0, 2);
+  const month = monthStr.substring(4, 6);
+  return `${year}${month}`;
+}
+
+export function koreanMonthToDate(monthStr: string){
+  const year = monthStr.substring(0, 2);
+  const month = monthStr.substring(4, 6);
+  return new Date(2000 + Number(year), Number(month) - 1);
+}
+
 export function MonthSelectPopover({
   onLeftClick,
   onRightClick,

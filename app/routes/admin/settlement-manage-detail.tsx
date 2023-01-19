@@ -1,12 +1,19 @@
-import { json, LoaderFunction } from "@remix-run/node";
-import { Link, useLoaderData } from "@remix-run/react";
-import { useEffect, useMemo, useState } from "react";
+import {
+  ActionFunction,
+  json,
+  LoaderFunction,
+  redirect,
+} from "@remix-run/node";
+import { Link, useLoaderData, useSubmit } from "@remix-run/react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import styled from "styled-components";
 import {
   monthToKorean,
   MonthSelectPopover,
   monthToNumeral,
   numeralMonthToKorean,
+  koreanMonthToNumeral,
+  koreanMonthToDate,
 } from "~/components/date";
 import { PossibleSellers, SellerSelect } from "~/components/seller";
 import {
@@ -18,6 +25,7 @@ import {
   SettlementSumBar,
 } from "~/components/settlement_sum";
 import {
+  deleteSettlements,
   getPartnerProfile,
   getSettlements,
   getSettlementSum,
@@ -90,6 +98,34 @@ const EditDeleteButton = styled.button`
   cursor: pointer;
 `;
 
+export const action: ActionFunction = async ({ request }) => {
+  const body = await request.formData();
+  const actionType = body.get("action")?.toString();
+  if (actionType === "delete") {
+    const settlement = body.get("settlement")?.toString();
+    const month = body.get("month")?.toString();
+    const partnerName = body.get("partner")?.toString();
+    if (
+      settlement !== undefined &&
+      month !== undefined &&
+      partnerName !== undefined
+    ) {
+      const jsonArr: SettlementItem[] = JSON.parse(settlement);
+      await deleteSettlements({
+        settlements: jsonArr,
+        monthStr: month,
+        partnerName: partnerName,
+      });
+      const numeralMonth = koreanMonthToNumeral(month);
+      return redirect(
+        encodeURI(`/admin/settlement-manage-detail?partner=${partnerName}&month=${numeralMonth}`)
+      );
+    }
+  }
+
+  return null;
+};
+
 export const loader: LoaderFunction = async ({ request }) => {
   const url = new URL(request.url);
   const month = url.searchParams.get("month");
@@ -113,6 +149,7 @@ export const loader: LoaderFunction = async ({ request }) => {
       settlements: settlements,
       sums: sums,
       partnerName: partnerName,
+      monthStr: monthStr,
     });
   } else if (month !== null) {
     return json({ error: "partner null" });
@@ -136,7 +173,10 @@ export default function AdminSettlementShare() {
 
   const [isErrorModalOpened, setIsErrorModalOpened] = useState<boolean>(false);
 
+  const formRef = useRef<HTMLFormElement>(null);
+
   const loaderData = useLoaderData();
+  const submit = useSubmit();
 
   const monthNumeral = useMemo(
     () => monthToNumeral(selectedDate ?? new Date()),
@@ -156,6 +196,14 @@ export default function AdminSettlementShare() {
       return null;
     } else {
       return loaderData.sums;
+    }
+  }, [loaderData]);
+
+  const monthStr: string = useMemo(() => {
+    if (loaderData.error !== undefined) {
+      return null;
+    } else {
+      return loaderData.monthStr;
     }
   }, [loaderData]);
 
@@ -190,7 +238,11 @@ export default function AdminSettlementShare() {
   }, [sums]);
 
   useEffect(() => {
-    setSelectedDate(new Date());
+    if(monthStr !== null){
+      setSelectedDate(koreanMonthToDate(monthStr));
+    } else {
+      setSelectedDate(new Date());
+    }
   }, []);
 
   useEffect(() => {
@@ -209,7 +261,7 @@ export default function AdminSettlementShare() {
       const newChecked = Array(newItems.length).fill(false);
       setItemsChecked(newChecked);
     }
-  }, [settlements, seller]);
+  }, [loaderData, seller]);
 
   useEffect(() => {
     if (selectedDate !== undefined) {
@@ -245,6 +297,17 @@ export default function AdminSettlementShare() {
     }
     setSelectedItems(settlementList);
     return settlementList.length;
+  }
+
+  function deleteSettlements(settlementList: SettlementItem[]) {
+    const json = JSON.stringify(settlementList);
+    const formData = new FormData(formRef.current ?? undefined);
+    formData.set("settlement", json);
+    formData.set("month", monthStr);
+    formData.set("partner", loaderData.partnerName);
+    formData.set("action", "delete");
+    onCheckAll(false);
+    submit(formData, { method: "post" });
   }
 
   return (
@@ -287,24 +350,12 @@ export default function AdminSettlementShare() {
               취소
             </ModalButton>
             <ModalButton
-              onClick={() => {
-                console.log(selectedItems);
-                // let settlementList = [];
-                // for (let i = 0; i < items.length; i++) {
-                //   if (itemsChecked[i]) {
-                //     settlementList.push(items[i]);
-                //   }
-                // }
-                // if (settlementList.length > 0) {
-                //   shareSettlement(settlementList);
-                // } else {
-                //   setErrorStr("선택된 정산내역이 없습니다.");
-                //   setIsErrorModalOpened(true);
-                // }
-                // setIsShareModalOpened(false);
+              onClick={async () => {
+                deleteSettlements(selectedItems);
+                setIsDeleteModalOpened(false);
               }}
             >
-              공유
+              삭제
             </ModalButton>
           </div>
         </div>
@@ -351,13 +402,19 @@ export default function AdminSettlementShare() {
         </div>
         <div style={{ height: "20px" }} />
         {loaderData.error == undefined ? (
-          <SettlementTableMemo
-            items={items}
-            itemsChecked={itemsChecked}
-            onItemCheck={onItemCheck}
-            onCheckAll={onCheckAll}
-            defaultAllCheck={false}
-          />
+          items.length > 0 ? (
+            <SettlementTableMemo
+              items={items}
+              itemsChecked={itemsChecked}
+              onItemCheck={onItemCheck}
+              onCheckAll={onCheckAll}
+              defaultAllCheck={false}
+            />
+          ) : (
+            <EmptySettlementBox>
+              정산내역이 존재하지 않습니다.
+            </EmptySettlementBox>
+          )
         ) : (
           <EmptySettlementBox>{errorSettlementStr}</EmptySettlementBox>
         )}
@@ -368,7 +425,7 @@ export default function AdminSettlementShare() {
               <EditDeleteButton
                 onClick={() => {
                   const updatedListLength = updateCheckedItems();
-                  if(updatedListLength > 0){
+                  if (updatedListLength > 0) {
                     setIsDeleteModalOpened(true);
                   } else {
                     setErrorModalStr("선택된 정산내역이 없습니다.");
