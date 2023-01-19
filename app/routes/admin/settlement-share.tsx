@@ -1,4 +1,9 @@
-import { ActionFunction, json, LoaderFunction, redirect } from "@remix-run/node";
+import {
+  ActionFunction,
+  json,
+  LoaderFunction,
+  redirect,
+} from "@remix-run/node";
 import { useLoaderData, useSubmit } from "@remix-run/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import styled from "styled-components";
@@ -96,7 +101,7 @@ export let loader: LoaderFunction = async ({ request }) => {
   const monthes = await getSettlementMonthes();
   const partnersMap = await getPartnerProfiles();
   const partnersArr = Array.from(partnersMap.values());
-  return json({monthes: monthes, partners: partnersArr});
+  return json({ monthes: monthes, partners: partnersArr });
 };
 
 export default function AdminSettlementShare() {
@@ -112,14 +117,14 @@ export default function AdminSettlementShare() {
 
   const submit = useSubmit();
   const loaderData = useLoaderData();
-  const sharedMonthes:string[] = loaderData.monthes;
+  const sharedMonthes: string[] = loaderData.monthes;
   const partnerProfiles = useMemo(() => {
     let map = new Map();
     loaderData.partners.forEach((partner: PartnerProfile) => {
       map.set(partner.name, partner);
     });
     return map;
-  }, [loaderData])
+  }, [loaderData]);
   const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
@@ -180,7 +185,7 @@ export default function AdminSettlementShare() {
             receiver: element.수령자,
             partnerName: "",
             fee: -1,
-            shippingFee: -1
+            shippingFee: -1,
           };
 
           let isValid = isSettlementItemValid(item);
@@ -206,7 +211,7 @@ export default function AdminSettlementShare() {
           }
 
           const partnerProfile = partnerProfiles.get(item.partnerName);
-          if(partnerProfile === undefined) {
+          if (partnerProfile === undefined) {
             setErrorStr(
               `유효하지 않은 엑셀 파일입니다.\n상품명의 파트너가 계약 업체 목록에 있는지 확인해주세요. (${item.partnerName})`
             );
@@ -278,7 +283,13 @@ export default function AdminSettlementShare() {
                     settlementList.push(items[i]);
                   }
                 }
-                shareSettlement(settlementList);
+                if (settlementList.length > 0) {
+                  shareSettlement(settlementList);
+                } else {
+                  setErrorStr("선택된 정산내역이 없습니다.");
+                  setIsErrorModalOpened(true);
+                }
+
                 setIsShareModalOpened(false);
               }}
             >
