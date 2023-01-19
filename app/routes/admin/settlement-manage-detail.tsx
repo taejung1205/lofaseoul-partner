@@ -435,7 +435,19 @@ export default function AdminSettlementShare() {
               >
                 선택 정산건 삭제
               </EditDeleteButton>
-              <EditDeleteButton>선택 정산건 수정</EditDeleteButton>
+              <EditDeleteButton
+              onClick={() => {
+                const updatedListLength = updateCheckedItems();
+                if (updatedListLength == 1) {
+                  setIsDeleteModalOpened(true);
+                } else if (updatedListLength == 0){
+                  setErrorModalStr("선택된 정산내역이 없습니다.");
+                  setIsErrorModalOpened(true);
+                } else {
+                  setErrorModalStr("정산내역 수정은 1개씩만 가능합니다.");
+                  setIsErrorModalOpened(true);
+                }
+              }}>선택 정산건 수정</EditDeleteButton>
             </div>
             <div style={{ height: "40px" }} />
             <SettlementSumBar
