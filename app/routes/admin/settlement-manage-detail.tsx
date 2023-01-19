@@ -76,6 +76,19 @@ const InputBox = styled.input`
   }
 `;
 
+const EditDeleteButton = styled.button`
+  background-color: black;
+  color: white;
+  font-size: 24px;
+  font-weight: 700;
+  width: 220px;
+  height: 50px;
+  line-height: 1;
+  padding: 6px 6px 6px 6px;
+  margin-right: 40px;
+  cursor: pointer;
+`;
+
 export const loader: LoaderFunction = async ({ request }) => {
   const url = new URL(request.url);
   const month = url.searchParams.get("month");
@@ -271,7 +284,10 @@ export default function AdminSettlementShare() {
         {sums !== null && allSum !== null ? (
           <>
             <div style={{ height: "20px" }} />
-            <button>오류 보고</button>
+            <div style={{display: "flex"}}>
+              <EditDeleteButton>선택 정산건 삭제</EditDeleteButton>
+              <EditDeleteButton>선택 정산건 수정</EditDeleteButton>
+            </div>
             <div style={{ height: "40px" }} />
             <SettlementSumBar
               seller={seller ?? "all"}
