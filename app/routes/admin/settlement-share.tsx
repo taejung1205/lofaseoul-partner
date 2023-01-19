@@ -20,7 +20,7 @@ import {
 } from "~/components/settlement_table";
 import { SettlementItem } from "~/components/settlement_table";
 import {
-  addSettlement,
+  addSettlements,
   getPartnerProfiles,
   getSettlementMonthes,
 } from "~/services/firebase.server";
@@ -89,7 +89,7 @@ export const action: ActionFunction = async ({ request }) => {
     if (settlement !== undefined && month !== undefined) {
       const jsonArr: SettlementItem[] = JSON.parse(settlement);
       console.log(jsonArr);
-      await addSettlement({ settlements: jsonArr, monthStr: month });
+      await addSettlements({ settlements: jsonArr, monthStr: month });
       return redirect("/admin/settlement-share");
     }
   }

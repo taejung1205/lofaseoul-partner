@@ -3,25 +3,26 @@ import { Link, useLoaderData } from "@remix-run/react";
 import { useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
 import {
-    monthToKorean,
-    MonthSelectPopover,
-    monthToNumeral,
-    numeralMonthToKorean,
+  monthToKorean,
+  MonthSelectPopover,
+  monthToNumeral,
+  numeralMonthToKorean,
 } from "~/components/date";
 import { PossibleSellers, SellerSelect } from "~/components/seller";
 import {
-    SettlementItem,
-    SettlementTableMemo,
+  SettlementItem,
+  SettlementTableMemo,
 } from "~/components/settlement_table";
 import {
-    getAllSellerSettlementSum,
-    SettlementSumBar,
+  getAllSellerSettlementSum,
+  SettlementSumBar,
 } from "~/components/settlement_sum";
 import {
-    getPartnerProfile,
-    getSettlements,
-    getSettlementSum,
+  getPartnerProfile,
+  getSettlements,
+  getSettlementSum,
 } from "~/services/firebase.server";
+import { BasicModal, ModalButton } from "~/components/modal";
 
 const SettlementListPage = styled.div`
   width: 100%;
@@ -124,9 +125,17 @@ export default function AdminSettlementShare() {
   const [selectedDate, setSelectedDate] = useState<Date>();
   const [selectedMonthStr, setSelectedMonthStr] = useState<string>();
   const [itemsChecked, setItemsChecked] = useState<boolean[]>([]);
-  const [items, setItems] = useState<SettlementItem[]>([]);
+  const [items, setItems] = useState<SettlementItem[]>([]); //로딩된 전체 정산내역 아이템 리스트
+  const [selectedItems, setSelectedItems] = useState<SettlementItem[]>([]); // 체크박스로 선택된 아이템 목록. 삭제, 수정 버튼 눌렀을 때 업데이트됨
   const [seller, setSeller] = useState<string>("all");
   const [partnerName, setPartnerName] = useState<string>();
+  const [errorModalStr, setErrorModalStr] = useState<string>("");
+
+  const [isDeleteModalOpened, setIsDeleteModalOpened] =
+    useState<boolean>(false);
+
+  const [isErrorModalOpened, setIsErrorModalOpened] = useState<boolean>(false);
+
   const loaderData = useLoaderData();
 
   const monthNumeral = useMemo(
@@ -150,7 +159,7 @@ export default function AdminSettlementShare() {
     }
   }, [loaderData]);
 
-  const errorStr = useMemo(() => {
+  const errorSettlementStr = useMemo(() => {
     if (loaderData.error == undefined) {
       return null;
     }
@@ -186,18 +195,18 @@ export default function AdminSettlementShare() {
 
   useEffect(() => {
     if (settlements !== null) {
+      let newItems: SettlementItem[] = [];
       if (seller == "all") {
-        setItems(settlements);
+        newItems = settlements;
       } else if (seller == "etc") {
-        const newItems = settlements.filter(
+        newItems = settlements.filter(
           (item) => !PossibleSellers.includes(item.seller)
         );
-        setItems(newItems);
       } else {
-        const newItems = settlements.filter((item) => item.seller == seller);
-        setItems(newItems);
+        newItems = settlements.filter((item) => item.seller == seller);
       }
-      const newChecked = Array(items.length).fill(false);
+      setItems(newItems);
+      const newChecked = Array(newItems.length).fill(false);
       setItemsChecked(newChecked);
     }
   }, [settlements, seller]);
@@ -227,8 +236,79 @@ export default function AdminSettlementShare() {
     setItemsChecked(Array(items.length ?? 0).fill(isChecked));
   }
 
+  function updateCheckedItems() {
+    let settlementList = [];
+    for (let i = 0; i < items.length; i++) {
+      if (itemsChecked[i]) {
+        settlementList.push(items[i]);
+      }
+    }
+    setSelectedItems(settlementList);
+    return settlementList.length;
+  }
+
   return (
     <>
+      <BasicModal
+        opened={isErrorModalOpened}
+        onClose={() => setIsErrorModalOpened(false)}
+      >
+        <div
+          style={{
+            justifyContent: "center",
+            textAlign: "center",
+            fontWeight: "700",
+          }}
+        >
+          {errorModalStr}
+          <div style={{ height: "20px" }} />
+          <div style={{ display: "flex", justifyContent: "center" }}>
+            <ModalButton onClick={() => setIsErrorModalOpened(false)}>
+              확인
+            </ModalButton>
+          </div>
+        </div>
+      </BasicModal>
+      <BasicModal
+        opened={isDeleteModalOpened}
+        onClose={() => setIsDeleteModalOpened(false)}
+      >
+        <div
+          style={{
+            justifyContent: "center",
+            textAlign: "center",
+            fontWeight: "700",
+          }}
+        >
+          {`선택된 정산내역 ${selectedItems.length}건을 삭제하시겠습니까?`}
+          <div style={{ height: "20px" }} />
+          <div style={{ display: "flex", justifyContent: "center" }}>
+            <ModalButton onClick={() => setIsDeleteModalOpened(false)}>
+              취소
+            </ModalButton>
+            <ModalButton
+              onClick={() => {
+                console.log(selectedItems);
+                // let settlementList = [];
+                // for (let i = 0; i < items.length; i++) {
+                //   if (itemsChecked[i]) {
+                //     settlementList.push(items[i]);
+                //   }
+                // }
+                // if (settlementList.length > 0) {
+                //   shareSettlement(settlementList);
+                // } else {
+                //   setErrorStr("선택된 정산내역이 없습니다.");
+                //   setIsErrorModalOpened(true);
+                // }
+                // setIsShareModalOpened(false);
+              }}
+            >
+              공유
+            </ModalButton>
+          </div>
+        </div>
+      </BasicModal>
       <SettlementListPage>
         <div
           style={{
@@ -279,13 +359,25 @@ export default function AdminSettlementShare() {
             defaultAllCheck={false}
           />
         ) : (
-          <EmptySettlementBox>{errorStr}</EmptySettlementBox>
+          <EmptySettlementBox>{errorSettlementStr}</EmptySettlementBox>
         )}
         {sums !== null && allSum !== null ? (
           <>
             <div style={{ height: "20px" }} />
-            <div style={{display: "flex"}}>
-              <EditDeleteButton>선택 정산건 삭제</EditDeleteButton>
+            <div style={{ display: "flex" }}>
+              <EditDeleteButton
+                onClick={() => {
+                  const updatedListLength = updateCheckedItems();
+                  if(updatedListLength > 0){
+                    setIsDeleteModalOpened(true);
+                  } else {
+                    setErrorModalStr("선택된 정산내역이 없습니다.");
+                    setIsErrorModalOpened(true);
+                  }
+                }}
+              >
+                선택 정산건 삭제
+              </EditDeleteButton>
               <EditDeleteButton>선택 정산건 수정</EditDeleteButton>
             </div>
             <div style={{ height: "40px" }} />

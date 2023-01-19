@@ -12,7 +12,6 @@ import {
   where,
   writeBatch,
 } from "firebase/firestore";
-import crypto from "crypto-js";
 import { SettlementItem } from "~/components/settlement_table";
 import { PartnerProfile } from "~/components/partner_profile";
 import { PossibleSellers } from "~/components/seller";
@@ -118,6 +117,12 @@ export async function getPartnerProfile({ name }: { name: string }) {
   }
 }
 
+/**
+ * 파트너 정보를 추가합니다.
+ * @param partnerProfie: PartnerProfile
+ * @returns
+ *
+ */
 export async function addPartnerProfile({
   partnerProfile,
 }: {
@@ -137,6 +142,12 @@ export async function addPartnerProfile({
   return result;
 }
 
+/**
+ * 여러 파트너를 한 번에 추가합니다.
+ * @param partnerProfiles: PartnerProfile[]
+ * @returns
+ *
+ */
 export async function addPartnerProfiles({
   partnerProfiles,
 }: {
@@ -161,12 +172,25 @@ export async function addPartnerProfiles({
   await batch.commit();
 }
 
+/**
+ * 파트너 정보를 삭제합니다.
+ * @param name: string (해당 파트너 이름)
+ * @returns
+ *
+ */
 export async function deletePartnerProfile({ name }: { name: string }) {
   const result = await deleteDoc(doc(firestore, "accounts", name));
   return result;
 }
 
-export async function addSettlement({
+/**
+ * 정산내역을 추가합니다.
+ * 추가 후 정산합계 기록도 수정합니다.
+ * @param settlements: SettlementItem[], monthStr: string (입력할 월)
+ * @returns
+ *
+ */
+export async function addSettlements({
   settlements,
   monthStr,
 }: {
@@ -201,20 +225,15 @@ export async function addSettlement({
 
     if (partnersJson[item.partnerName] == undefined) {
       partnersJson[item.partnerName] = {
-        settlement_29cm: 0,
-        shipping_29cm: 0,
-        settlement_EQL: 0,
-        shipping_EQL: 0,
-        settlement_로파공홈: 0,
-        shipping_로파공홈: 0,
-        settlement_오늘의집: 0,
-        shipping_오늘의집: 0,
-        settlement_카카오: 0,
-        shipping_카카오: 0,
         settlement_etc: 0,
         shipping_etc: 0,
         orderNumbers: [],
       };
+
+      PossibleSellers.forEach((seller) => {
+        partnersJson[item.partnerName][`settlement_${seller}`] = 0;
+        partnersJson[item.partnerName][`shipping_${seller}`] = 0;
+      });
     }
 
     if (
@@ -230,12 +249,39 @@ export async function addSettlement({
 
   //partners에 각 파트너의 총계 추가
   for (let partnerName in partnersJson) {
+    let prevSum = await getSettlementSum({
+      partnerName: partnerName,
+      monthStr: monthStr,
+    });
     let partnerDocRef = doc(
       firestore,
       `settlements/${monthStr}/partners`,
       partnerName
     );
-    batch.set(partnerDocRef, partnersJson[partnerName]);
+    //기존 정산합이 없을 경우
+    if (prevSum == null) {
+      batch.set(partnerDocRef, partnersJson[partnerName]);
+    } else {
+      //기존 정산합이 있을 경우
+      let newSum: any = {};
+      newSum["orderNumbers"] = prevSum["orderNumbers"].concat(
+        partnersJson[partnerName]["orderNumbers"]
+      );
+      PossibleSellers.forEach((seller) => {
+        newSum[`settlement_${seller}`] =
+          prevSum![`settlement_${seller}`] +
+          partnersJson[partnerName][`settlement_${seller}`];
+        newSum[`shipping_${seller}`] =
+          prevSum![`shipping_${seller}`] +
+          partnersJson[partnerName][`shipping_${seller}`];
+      });
+      newSum[`settlement_etc`] =
+        prevSum["settlement_etc"] + partnersJson[partnerName][`settlement_etc`];
+      newSum[`shipping_etc`] =
+        prevSum["shipping_etc"] + partnersJson[partnerName][`shipping_etc`];
+      console.log(newSum);
+      batch.set(partnerDocRef, newSum);
+    }
   }
 
   await batch.commit();
@@ -318,3 +364,11 @@ export async function getAllSettlementSum({ monthStr }: { monthStr: string }) {
     };
   });
 }
+
+export async function deleteSettlements({
+  settlements,
+  monthStr,
+}: {
+  settlements: SettlementItem[];
+  monthStr: string;
+}) {}
