@@ -5,13 +5,15 @@ export function BasicModal({
   opened,
   onClose,
   children,
+  size = "md"
 }: {
   opened: boolean;
   onClose: () => void;
   children: React.ReactNode;
+  size?: string
 }) {
   return (
-    <Modal centered opened={opened} onClose={onClose} withCloseButton={false}>
+    <Modal centered opened={opened} onClose={onClose} withCloseButton={false} size={size}>
       {children}
     </Modal>
   );

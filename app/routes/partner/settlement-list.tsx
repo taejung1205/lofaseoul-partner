@@ -182,7 +182,7 @@ export default function AdminSettlementShare() {
               monthStr={selectedMonthStr ?? ""}
             />
             <Link to={`/partner/settlement-list?month=${monthNumeral}`}>
-              <GetListButton type="submit">조회하기</GetListButton>
+              <GetListButton>조회하기</GetListButton>
             </Link>
           </div>
 

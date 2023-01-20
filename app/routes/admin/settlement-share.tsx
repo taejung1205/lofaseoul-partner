@@ -1,4 +1,9 @@
-import { ActionFunction, json, LoaderFunction, redirect } from "@remix-run/node";
+import {
+  ActionFunction,
+  json,
+  LoaderFunction,
+  redirect,
+} from "@remix-run/node";
 import { useLoaderData, useSubmit } from "@remix-run/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import styled from "styled-components";
@@ -8,14 +13,14 @@ import { BasicModal, ModalButton } from "~/components/modal";
 import { PartnerProfile } from "~/components/partner_profile";
 import {
   isSettlementItemValid,
-  setPartnerName,
+  setSettlementPartnerName,
   setSellerIfLofa,
   setSettlementFee,
   SettlementTableMemo,
 } from "~/components/settlement_table";
 import { SettlementItem } from "~/components/settlement_table";
 import {
-  addSettlement,
+  addSettlements,
   getPartnerProfiles,
   getSettlementMonthes,
 } from "~/services/firebase.server";
@@ -84,7 +89,7 @@ export const action: ActionFunction = async ({ request }) => {
     if (settlement !== undefined && month !== undefined) {
       const jsonArr: SettlementItem[] = JSON.parse(settlement);
       console.log(jsonArr);
-      await addSettlement({ settlements: jsonArr, monthStr: month });
+      await addSettlements({ settlements: jsonArr, monthStr: month });
       return redirect("/admin/settlement-share");
     }
   }
@@ -96,7 +101,7 @@ export let loader: LoaderFunction = async ({ request }) => {
   const monthes = await getSettlementMonthes();
   const partnersMap = await getPartnerProfiles();
   const partnersArr = Array.from(partnersMap.values());
-  return json({monthes: monthes, partners: partnersArr});
+  return json({ monthes: monthes, partners: partnersArr });
 };
 
 export default function AdminSettlementShare() {
@@ -112,14 +117,14 @@ export default function AdminSettlementShare() {
 
   const submit = useSubmit();
   const loaderData = useLoaderData();
-  const sharedMonthes:string[] = loaderData.monthes;
+  const sharedMonthes: string[] = loaderData.monthes;
   const partnerProfiles = useMemo(() => {
     let map = new Map();
     loaderData.partners.forEach((partner: PartnerProfile) => {
       map.set(partner.name, partner);
     });
     return map;
-  }, [loaderData])
+  }, [loaderData]);
   const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
@@ -173,14 +178,14 @@ export default function AdminSettlementShare() {
             seller: element.판매처,
             orderNumber: element.주문번호,
             productName: element.상품명,
-            optionName: element.옵션명,
+            optionName: element.옵션명 ?? "",
             price: element.판매단가,
             amount: element.수량,
             orderer: element.주문자,
             receiver: element.수령자,
             partnerName: "",
             fee: -1,
-            shippingFee: -1
+            shippingFee: -1,
           };
 
           let isValid = isSettlementItemValid(item);
@@ -194,7 +199,7 @@ export default function AdminSettlementShare() {
 
           setSellerIfLofa(item);
 
-          let nameResult = setPartnerName(item);
+          let nameResult = setSettlementPartnerName(item);
           if (!nameResult || item.partnerName.length == 0) {
             setErrorStr(
               "유효하지 않은 엑셀 파일입니다.\n상품명에 파트너 이름이 들어있는지 확인해주세요."
@@ -206,7 +211,7 @@ export default function AdminSettlementShare() {
           }
 
           const partnerProfile = partnerProfiles.get(item.partnerName);
-          if(partnerProfile === undefined) {
+          if (partnerProfile === undefined) {
             setErrorStr(
               `유효하지 않은 엑셀 파일입니다.\n상품명의 파트너가 계약 업체 목록에 있는지 확인해주세요. (${item.partnerName})`
             );
@@ -220,7 +225,6 @@ export default function AdminSettlementShare() {
 
           array.push(item);
         }
-        console.log(array);
         setItems(array);
       };
       reader.readAsArrayBuffer(e.target.files[0]);
@@ -278,7 +282,13 @@ export default function AdminSettlementShare() {
                     settlementList.push(items[i]);
                   }
                 }
-                shareSettlement(settlementList);
+                if (settlementList.length > 0) {
+                  shareSettlement(settlementList);
+                } else {
+                  setErrorStr("선택된 정산내역이 없습니다.");
+                  setIsErrorModalOpened(true);
+                }
+
                 setIsShareModalOpened(false);
               }}
             >
