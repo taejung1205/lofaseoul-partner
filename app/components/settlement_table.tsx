@@ -67,13 +67,13 @@ const TextBox = styled.div`
  */
 export function isSettlementItemValid(item: SettlementItem) {
   if (
-    item.seller == undefined ||
-    item.orderNumber == undefined ||
-    item.productName == undefined ||
-    item.price == undefined ||
+    item.seller == undefined || item.seller == "" ||
+    item.orderNumber == undefined || item.orderNumber == "" ||
+    item.productName == undefined || item.productName == "" ||
+    item.price == undefined || 
     item.amount == undefined ||
-    item.orderer == undefined ||
-    item.receiver == undefined
+    item.orderer == undefined || item.orderer == "" ||
+    item.receiver == undefined || item.receiver == ""
   ) {
     return false;
   } else {
@@ -105,7 +105,7 @@ export function setSellerIfLofa(item: SettlementItem) {
  *  파트너명을 유효하게 찾았을 경우 true,
  *  실패했을 경우 false
  */
-export function setPartnerName(item: SettlementItem) {
+export function setSettlementPartnerName(item: SettlementItem) {
   const regExp = /\[(.*?)\]/;
   let match = item.productName.match(regExp);
   if (match) {

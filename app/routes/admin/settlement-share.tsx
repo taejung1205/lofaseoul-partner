@@ -13,7 +13,7 @@ import { BasicModal, ModalButton } from "~/components/modal";
 import { PartnerProfile } from "~/components/partner_profile";
 import {
   isSettlementItemValid,
-  setPartnerName,
+  setSettlementPartnerName,
   setSellerIfLofa,
   setSettlementFee,
   SettlementTableMemo,
@@ -199,7 +199,7 @@ export default function AdminSettlementShare() {
 
           setSellerIfLofa(item);
 
-          let nameResult = setPartnerName(item);
+          let nameResult = setSettlementPartnerName(item);
           if (!nameResult || item.partnerName.length == 0) {
             setErrorStr(
               "유효하지 않은 엑셀 파일입니다.\n상품명에 파트너 이름이 들어있는지 확인해주세요."
