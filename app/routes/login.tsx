@@ -1,9 +1,15 @@
-import { Form, useLoaderData } from "@remix-run/react";
-import { ActionFunction, LoaderFunction, json, redirect } from "@remix-run/node";
+import { Form, useLoaderData, useTransition } from "@remix-run/react";
+import {
+  ActionFunction,
+  LoaderFunction,
+  json,
+  redirect,
+} from "@remix-run/node";
 import authenticator from "~/services/auth.server";
 import { sessionStorage } from "~/services/session.server";
 import styled from "styled-components";
 import { HeaderBox } from "~/components/header";
+import { LoadingOverlay } from "@mantine/core";
 
 const LoginPage = styled.div`
   width: inherit;
@@ -29,7 +35,7 @@ const InputBox = styled.input`
     font-weight: 700;
     opacity: 1;
   }
-  :focus::placeholder{
+  :focus::placeholder {
     color: transparent;
   }
 `;
@@ -42,7 +48,7 @@ const LoginButton = styled.button`
   font-weight: 700;
   font-size: 33px;
   cursor: pointer;
-`
+`;
 
 /**
  * called when the user hits button to login
@@ -58,8 +64,8 @@ export const action: ActionFunction = async ({ request, context }) => {
     throwOnError: true,
     context,
   });
-  if(resp !== null && 'isAdmin' in resp){
-    if(resp.isAdmin){
+  if (resp !== null && "isAdmin" in resp) {
+    if (resp.isAdmin) {
       return redirect("/admin/dashboard");
     } else {
       return redirect("/");
@@ -78,8 +84,8 @@ export const action: ActionFunction = async ({ request, context }) => {
  */
 export const loader: LoaderFunction = async ({ request }) => {
   let user = await authenticator.isAuthenticated(request);
-  if(user !== null && 'isAdmin' in user){
-    if(user.isAdmin){
+  if (user !== null && "isAdmin" in user) {
+    if (user.isAdmin) {
       console.log(user);
       return redirect("/admin/dashboard");
     } else {
@@ -102,28 +108,39 @@ export const loader: LoaderFunction = async ({ request }) => {
 export default function Login() {
   // if i got an error it will come back with the loader data
   const loaderData = useLoaderData();
-  console.log(loaderData);
+  const transition = useTransition();
+
   return (
-    <LoginPage>
-      <HeaderBox />
-      <div style={{ height: "100px" }} />
-      로파 서울 파트너사이트입니다.
-      <div style={{ height: "150px" }} />
-      <Form method="post">
-        <InputBox type="string" name="id" placeholder="ID" required />
-        <div style={{ height: "40px" }} />
-        <InputBox
-          type="password"
-          name="password"
-          placeholder="PW"
-          autoComplete="current-password"
-        />
+    <>
+      <LoadingOverlay
+        visible={
+          transition.state == "loading" || transition.state == "submitting"
+        }
+        overlayBlur={2}
+      />
+      <LoginPage>
+        <HeaderBox />
         <div style={{ height: "100px" }} />
-        <LoginButton>로그인</LoginButton>
-      </Form>
-      <div>
-        {loaderData?.error ? <p>ERROR: {loaderData?.error?.message}</p> : null}
-      </div>
-    </LoginPage>
+        로파 서울 파트너사이트입니다.
+        <div style={{ height: "150px" }} />
+        <Form method="post">
+          <InputBox type="string" name="id" placeholder="ID" required />
+          <div style={{ height: "40px" }} />
+          <InputBox
+            type="password"
+            name="password"
+            placeholder="PW"
+            autoComplete="current-password"
+          />
+          <div style={{ height: "100px" }} />
+          <LoginButton>로그인</LoginButton>
+        </Form>
+        <div>
+          {loaderData?.error ? (
+            <p>ERROR: {loaderData?.error?.message}</p>
+          ) : null}
+        </div>
+      </LoginPage>
+    </>
   );
 }
