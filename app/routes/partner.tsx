@@ -1,12 +1,15 @@
-import { Outlet, useLoaderData, useSubmit } from "@remix-run/react";
 import {
-  ActionFunction,
-  LoaderFunction, redirect
-} from "@remix-run/node";
+  Outlet,
+  useLoaderData,
+  useSubmit,
+  useTransition,
+} from "@remix-run/react";
+import { ActionFunction, LoaderFunction, redirect } from "@remix-run/node";
 import authenticator from "~/services/auth.server";
 import styled from "styled-components";
 import { PartnerHeader } from "~/components/header";
 import { PartnerSidebar } from "~/components/sidebar";
+import { LoadingOverlay } from "@mantine/core";
 
 const PartnerPage = styled.div`
   width: inherit;
@@ -50,22 +53,32 @@ export let loader: LoaderFunction = async ({ request }) => {
 export default function Partner() {
   const userData = useLoaderData();
   const submit = useSubmit();
+  const transition = useTransition();
+
   return (
-    <PartnerPage>
-      <PartnerHeader
-        username={userData.name}
-        onLogoutClick={() => submit(null, { method: "post" })}
+    <>
+      <LoadingOverlay
+        visible={
+          transition.state == "loading" || transition.state == "submitting"
+        }
+        overlayBlur={2}
       />
-      <div
-        style={{
-          display: "flex",
-          height: "100%",
-          width: "100%",
-        }}
-      >
-        <PartnerSidebar />
-        <Outlet />
-      </div>
-    </PartnerPage>
+      <PartnerPage>
+        <PartnerHeader
+          username={userData.name}
+          onLogoutClick={() => submit(null, { method: "post" })}
+        />
+        <div
+          style={{
+            display: "flex",
+            height: "100%",
+            width: "100%",
+          }}
+        >
+          <PartnerSidebar />
+          <Outlet />
+        </div>
+      </PartnerPage>
+    </>
   );
 }

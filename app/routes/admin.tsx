@@ -1,12 +1,10 @@
-import { Outlet, useSubmit } from "@remix-run/react";
-import {
-  ActionFunction,
-  LoaderFunction, redirect
-} from "@remix-run/node";
+import { Outlet, useSubmit, useTransition } from "@remix-run/react";
+import { ActionFunction, LoaderFunction, redirect } from "@remix-run/node";
 import authenticator from "~/services/auth.server";
 import styled from "styled-components";
 import { AdminHeader } from "~/components/header";
 import { AdminSidebar } from "~/components/sidebar";
+import { LoadingOverlay } from "@mantine/core";
 
 const AdminPage = styled.div`
   width: inherit;
@@ -49,23 +47,28 @@ export let loader: LoaderFunction = async ({ request }) => {
 
 export default function Admin() {
   const submit = useSubmit();
+  const transition = useTransition();
+
   return (
-    <AdminPage>
-      <AdminHeader
-        onLogoutClick={() => {
-          submit(null, { method: "post" });
-        }}
-      />
-      <div
-        style={{
-          display: "flex",
-          height: "100%",
-          width: "100%",
-        }}
-      >
-        <AdminSidebar />
-        <Outlet />
-      </div>
-    </AdminPage>
+    <>
+      <LoadingOverlay visible={transition.state == "loading" || transition.state == "submitting"} overlayBlur={2} />
+      <AdminPage>
+        <AdminHeader
+          onLogoutClick={() => {
+            submit(null, { method: "post" });
+          }}
+        />
+        <div
+          style={{
+            display: "flex",
+            height: "100%",
+            width: "100%",
+          }}
+        >
+          <AdminSidebar />
+          <Outlet />
+        </div>
+      </AdminPage>
+    </>
   );
 }
