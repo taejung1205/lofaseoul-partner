@@ -97,7 +97,7 @@ export const loader: LoaderFunction = async ({ request }) => {
     request.headers.get("Cookie")
   );
 
-  const error = session.get("sessionErrorKey");
+  const error = session.get(process.env.AUTH_SESSION_ERROR_KEY ?? "");
   return json<any>({ error });
 };
 
@@ -137,7 +137,7 @@ export default function Login() {
         </Form>
         <div>
           {loaderData?.error ? (
-            <p>ERROR: {loaderData?.error?.message}</p>
+            <p>{loaderData?.error?.message}</p>
           ) : null}
         </div>
       </LoginPage>
