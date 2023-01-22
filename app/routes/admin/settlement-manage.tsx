@@ -4,8 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
 import {
   MonthSelectPopover,
-  monthToKorean,
-  monthToNumeral,
+  dateToKoreanMonth,
+  dateToNumeralMonth,
   numeralMonthToKorean,
 } from "~/components/date";
 import { SellerSelect as SellerSelect } from "~/components/seller";
@@ -74,7 +74,7 @@ export default function AdminSettlementManage() {
   const loaderData = useLoaderData();
 
   const selectedMonthNumeral = useMemo(
-    () => monthToNumeral(selectedDate ?? new Date()),
+    () => dateToNumeralMonth(selectedDate ?? new Date()),
     [selectedDate]
   );
 
@@ -117,7 +117,7 @@ export default function AdminSettlementManage() {
 
   useEffect(() => {
     if (selectedDate !== undefined) {
-      setSelectedMonthStr(monthToKorean(selectedDate));
+      setSelectedMonthStr(dateToKoreanMonth(selectedDate));
     }
   }, [selectedDate]);
 
@@ -147,7 +147,7 @@ export default function AdminSettlementManage() {
             monthStr={selectedMonthStr ?? ""}
           />
           <Link to={`/admin/settlement-manage?month=${selectedMonthNumeral}`}>
-            <GetListButton type="submit">조회하기</GetListButton>
+            <GetListButton>조회하기</GetListButton>
           </Link>
         </div>
 

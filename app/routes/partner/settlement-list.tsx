@@ -3,9 +3,9 @@ import { Link, useLoaderData } from "@remix-run/react";
 import { useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
 import {
-  monthToKorean,
+  dateToKoreanMonth,
   MonthSelectPopover,
-  monthToNumeral,
+  dateToNumeralMonth,
   numeralMonthToKorean,
 } from "~/components/date";
 import { PossibleSellers, SellerSelect } from "~/components/seller";
@@ -91,7 +91,7 @@ export default function AdminSettlementShare() {
   const loaderData = useLoaderData();
 
   const monthNumeral = useMemo(
-    () => monthToNumeral(selectedDate ?? new Date()),
+    () => dateToNumeralMonth(selectedDate ?? new Date()),
     [selectedDate]
   );
 
@@ -143,7 +143,7 @@ export default function AdminSettlementShare() {
 
   useEffect(() => {
     if (selectedDate !== undefined) {
-      setSelectedMonthStr(monthToKorean(selectedDate));
+      setSelectedMonthStr(dateToKoreanMonth(selectedDate));
     }
   }, [selectedDate]);
 
