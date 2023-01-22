@@ -8,9 +8,9 @@ import { Form, Link, useLoaderData, useSubmit } from "@remix-run/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import styled from "styled-components";
 import {
-  monthToKorean,
+  dateToKoreanMonth,
   MonthSelectPopover,
-  monthToNumeral,
+  dateToNumeralMonth,
   numeralMonthToKorean,
   koreanMonthToNumeral,
   koreanMonthToDate,
@@ -249,7 +249,7 @@ export default function AdminSettlementShare() {
   //선택중인 날짜를 주소로 넣기 위한 숫자 변환
   //TODO: 불필요하므로 이 과정 없애야
   const monthNumeral = useMemo(
-    () => monthToNumeral(selectedDate ?? new Date()),
+    () => dateToNumeralMonth(selectedDate ?? new Date()),
     [selectedDate]
   );
 
@@ -340,7 +340,7 @@ export default function AdminSettlementShare() {
 
   useEffect(() => {
     if (selectedDate !== undefined) {
-      setSelectedMonthStr(monthToKorean(selectedDate));
+      setSelectedMonthStr(dateToKoreanMonth(selectedDate));
     }
   }, [selectedDate]);
 

@@ -7,7 +7,7 @@ import {
   Scripts,
   ScrollRestoration,
 } from "@remix-run/react";
-import globalStyle from "~/global.style.css";
+import globalStyle from "~/styles/global.style.css";
 import { MantineProvider, createEmotionCache } from "@mantine/core";
 
 export const meta: MetaFunction = () => ({

@@ -1,13 +1,21 @@
 import { Popover } from "@mantine/core";
+import { DayPicker } from "react-day-picker";
 import styled from "styled-components";
 
-export function monthToKorean(date: Date) {
+import dayPickerStyles from "react-day-picker/dist/style.css";
+import myDayPickerStyles from "~/styles/day-picker.style.css";
+
+export function links() {
+  return [{ rel: "stylesheet", href: dayPickerStyles }];
+}
+
+export function dateToKoreanMonth(date: Date) {
   const year = date.getFullYear().toString().substring(2);
   const month = (date.getMonth() + 1).toString().padStart(2, "0");
   return `${year}년 ${month}월`;
 }
 
-export function monthToNumeral(date: Date) {
+export function dateToNumeralMonth(date: Date) {
   const year = date.getFullYear().toString().substring(2);
   const month = (date.getMonth() + 1).toString().padStart(2, "0");
   return `${year}${month}`;
@@ -19,16 +27,30 @@ export function numeralMonthToKorean(numeral: string) {
   return `${year}년 ${month}월`;
 }
 
-export function koreanMonthToNumeral(monthStr: string){
+export function koreanMonthToNumeral(monthStr: string) {
   const year = monthStr.substring(0, 2);
   const month = monthStr.substring(4, 6);
   return `${year}${month}`;
 }
 
-export function koreanMonthToDate(monthStr: string){
+export function koreanMonthToDate(monthStr: string) {
   const year = monthStr.substring(0, 2);
   const month = monthStr.substring(4, 6);
   return new Date(2000 + Number(year), Number(month) - 1);
+}
+
+export function dateToDayStr(date: Date) {
+  const year = date.getFullYear();
+  const month = (date.getMonth() + 1).toString().padStart(2, "0");
+  const day = date.getDate().toString().padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+export function dayStrToDate(dayStr: string) {
+  const year = dayStr.substring(0, 4);
+  const month = dayStr.substring(5, 7);
+  const day = dayStr.substring(8, 10);
+  return new Date(Number(year), Number(month) - 1, Number(day));
 }
 
 export function MonthSelectPopover({
@@ -53,6 +75,41 @@ export function MonthSelectPopover({
           <div style={{ width: "20px" }} />
           <div onClick={onRightClick} style={{ cursor: "pointer" }}>{`>`}</div>
         </div>
+      </Popover.Dropdown>
+    </Popover>
+  );
+}
+
+export function DaySelectPopover({
+  selectedDate,
+  setSelectedDate,
+}: {
+  selectedDate: Date | undefined;
+  setSelectedDate: (date: Date | undefined) => void;
+}) {
+  return (
+    <Popover>
+      <Popover.Target>
+        <MonthBox>
+          {selectedDate !== undefined ? dateToDayStr(selectedDate) : ""}
+        </MonthBox>
+      </Popover.Target>
+      <Popover.Dropdown>
+        <DayPicker
+          mode="single"
+          selected={selectedDate}
+          onSelect={setSelectedDate}
+          styles={{
+            day: {
+              fontSize: "16px",
+            },
+          }}
+          modifiersStyles={{
+            selected: {
+              backgroundColor: "grey",
+            },
+          }}
+        />
       </Popover.Dropdown>
     </Popover>
   );
