@@ -9,10 +9,27 @@ import {
   dayStrToDate,
 } from "~/components/date";
 import { GetListButton } from "~/components/button";
+import { json, LoaderFunction } from "@remix-run/node";
 
 export function links() {
   return [{ rel: "stylesheet", href: dayPickerStyles }];
 }
+
+export const loader: LoaderFunction = async ({ request }) => {
+    const url = new URL(request.url);
+    const day = url.searchParams.get("day");
+  
+    if (day !== null) {
+      //   const monthStr = numeralMonthToKorean(month);
+      //   const sums = await getAllSettlementSum({
+      //     monthStr: monthStr,
+      //   });
+      //   console.log(sums);
+      return json({ day: day });
+    } else {
+      return null;
+    }
+  };
 
 export default function AdminOrderList() {
   const [selectedDate, setSelectedDate] = useState<Date>();
