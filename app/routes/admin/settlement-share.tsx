@@ -10,6 +10,7 @@ import styled from "styled-components";
 import * as xlsx from "xlsx";
 import { dateToKoreanMonth, MonthSelectPopover } from "~/components/date";
 import { BasicModal, ModalButton } from "~/components/modal";
+import { PageLayout } from "~/components/page_layout";
 import { PartnerProfile } from "~/components/partner_profile";
 import {
   isSettlementItemValid,
@@ -24,17 +25,6 @@ import {
   getPartnerProfiles,
   getSettlementMonthes,
 } from "~/services/firebase.server";
-
-const SettlementSharePage = styled.div`
-  width: 100%;
-  font-size: 20px;
-  font-weight: 700;
-  padding: 30px 40px 30px 40px;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  overflow-y: scroll;
-`;
 
 const FileNameBox = styled.div`
   border: 3px solid #000000;
@@ -298,7 +288,7 @@ export default function AdminSettlementShare() {
         </div>
       </BasicModal>
 
-      <SettlementSharePage>
+      <PageLayout>
         <div style={{ display: "flex", alignItems: "center" }}>
           <img src="/images/icon_calendar.svg" />
           <MonthSelectPopover
@@ -352,7 +342,7 @@ export default function AdminSettlementShare() {
         ) : (
           <></>
         )}
-      </SettlementSharePage>
+      </PageLayout>
     </>
   );
 }

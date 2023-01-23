@@ -8,6 +8,7 @@ import {
   dateToNumeralMonth,
   numeralMonthToKorean,
 } from "~/components/date";
+import { PageLayout } from "~/components/page_layout";
 import { SellerSelect as SellerSelect } from "~/components/seller";
 import {
   getAllSellerSettlementSum,
@@ -16,17 +17,6 @@ import {
   SettlementSumTable,
 } from "~/components/settlement_sum";
 import { getAllSettlementSum } from "~/services/firebase.server";
-
-const SettlementManagePage = styled.div`
-  width: 100%;
-  font-size: 20px;
-  font-weight: 700;
-  padding: 30px 40px 30px 40px;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  overflow-y: scroll;
-`;
 
 const GetListButton = styled.button`
   background-color: white;
@@ -122,7 +112,7 @@ export default function AdminSettlementManage() {
   }, [selectedDate]);
 
   return (
-    <SettlementManagePage>
+    <PageLayout>
       <div
         style={{
           display: "flex",
@@ -169,7 +159,11 @@ export default function AdminSettlementManage() {
           조회하기 버튼을 클릭하여 정산내역을 확인할 수 있습니다.
         </EmptySettlementBox>
       ) : sums.length > 0 ? (
-        <SettlementSumTable items={sums} seller={seller} monthNumeral={loaderData.month} />
+        <SettlementSumTable
+          items={sums}
+          seller={seller}
+          monthNumeral={loaderData.month}
+        />
       ) : (
         <EmptySettlementBox
           style={{
@@ -197,6 +191,6 @@ export default function AdminSettlementManage() {
       ) : (
         <></>
       )}
-    </SettlementManagePage>
+    </PageLayout>
   );
 }

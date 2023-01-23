@@ -1,21 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
-import { dateToDayStr, DaySelectPopover, dayStrToDate } from "~/components/date";
+import {
+  dateToDayStr,
+  DaySelectPopover,
+  dayStrToDate,
+} from "~/components/date";
 
 import dayPickerStyles from "react-day-picker/dist/style.css";
 import styled from "styled-components";
 import { json, LoaderFunction } from "@remix-run/node";
 import { Link, useLoaderData } from "@remix-run/react";
-
-const SettlementSharePage = styled.div`
-  width: 100%;
-  font-size: 20px;
-  font-weight: 700;
-  padding: 30px 40px 30px 40px;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  overflow-y: scroll;
-`;
+import { PageLayout } from "~/components/page_layout";
 
 const FileNameBox = styled.div`
   border: 3px solid #000000;
@@ -79,20 +73,20 @@ export function links() {
 }
 
 export const loader: LoaderFunction = async ({ request }) => {
-    const url = new URL(request.url);
-    const day = url.searchParams.get("day");
-  
-    if (day !== null) {
+  const url = new URL(request.url);
+  const day = url.searchParams.get("day");
+
+  if (day !== null) {
     //   const monthStr = numeralMonthToKorean(month);
     //   const sums = await getAllSettlementSum({
     //     monthStr: monthStr,
     //   });
     //   console.log(sums);
-      return json({ day: day });
-    } else {
-      return null;
-    }
-  };
+    return json({ day: day });
+  } else {
+    return null;
+  }
+};
 
 export default function AdminOrderShare() {
   const [selectedDate, setSelectedDate] = useState<Date>();
@@ -105,17 +99,16 @@ export default function AdminOrderShare() {
 
   //날짜 수신
   useEffect(() => {
-    if(loaderData == null){
-        setSelectedDate(new Date());
+    if (loaderData == null) {
+      setSelectedDate(new Date());
     } else {
-        setSelectedDate(dayStrToDate(loaderData.day));
+      setSelectedDate(dayStrToDate(loaderData.day));
     }
-    
   }, []);
-  
+
   return (
     <>
-      <SettlementSharePage>
+      <PageLayout>
         <div style={{ display: "flex", alignItems: "center" }}>
           <img src="/images/icon_calendar.svg" />
           <DaySelectPopover
@@ -126,7 +119,7 @@ export default function AdminOrderShare() {
             <GetListButton>조회하기</GetListButton>
           </Link>
         </div>
-      </SettlementSharePage>
+      </PageLayout>
     </>
   );
 }

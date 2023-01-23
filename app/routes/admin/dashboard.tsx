@@ -1,5 +1,9 @@
+import { PageLayout } from "~/components/page_layout";
+
 export default function AdminDashboard() {
-    return <>
-        <p>대쉬보드</p>
+  return (
+    <>
+      <PageLayout>대쉬보드</PageLayout>
     </>
+  );
 }

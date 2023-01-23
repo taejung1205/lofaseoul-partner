@@ -3,23 +3,13 @@ import { useActionData, useLoaderData } from "@remix-run/react";
 import { DocumentData } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import styled from "styled-components";
+import { PageLayout } from "~/components/page_layout";
 import { PartnerProfile } from "~/components/partner_profile";
 import {
   addPartnerProfile,
   deletePartnerProfile,
   getPartnerProfiles,
 } from "~/services/firebase.server";
-
-const PartnerListPage = styled.div`
-  width: 100%;
-  font-size: 20px;
-  font-weight: 700;
-  padding: 40px;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  overflow-y: scroll;
-`;
 
 const NewProfileButton = styled.button`
   background-color: white;
@@ -104,7 +94,7 @@ export default function AdminPartnerList() {
   }, [actionData]);
 
   return (
-    <PartnerListPage>
+    <PageLayout>
       <NewProfileButton onClick={() => setIsCreatingProfile((prev) => !prev)}>
         신규 생성
       </NewProfileButton>
@@ -153,6 +143,6 @@ export default function AdminPartnerList() {
         );
       })}
       <div style={{ minHeight: "40px" }} />
-    </PartnerListPage>
+    </PageLayout>
   );
 }

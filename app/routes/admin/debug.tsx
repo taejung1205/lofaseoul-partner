@@ -44,7 +44,7 @@ export default function AdminOrderShare() {
             otherFee: element.타채널,
             shippingFee: element.배송비,
           };
-          if(item.name === "어드민"){
+          if (item.name === "어드민") {
             break;
           }
           array.push(item);

@@ -4,7 +4,7 @@ import {
   LoaderFunction,
   redirect,
 } from "@remix-run/node";
-import { Form, Link, useLoaderData, useSubmit } from "@remix-run/react";
+import { Link, useLoaderData, useSubmit } from "@remix-run/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import styled from "styled-components";
 import {
@@ -22,7 +22,6 @@ import {
   setSettlementPartnerName,
   SettlementItem,
   SettlementTable,
-  SettlementTableMemo,
 } from "~/components/settlement_table";
 import {
   getAllSellerSettlementSum,
@@ -37,17 +36,7 @@ import {
   getSettlementSum,
 } from "~/services/firebase.server";
 import { BasicModal, ModalButton } from "~/components/modal";
-
-const SettlementListPage = styled.div`
-  width: 100%;
-  font-size: 20px;
-  font-weight: 700;
-  padding: 30px 40px 30px 40px;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  overflow-y: scroll;
-`;
+import { PageLayout } from "~/components/page_layout";
 
 const GetListButton = styled.button`
   background-color: white;
@@ -680,7 +669,7 @@ export default function AdminSettlementShare() {
         </div>
       </BasicModal>
 
-      <SettlementListPage>
+      <PageLayout>
         <div
           style={{
             display: "flex",
@@ -791,7 +780,7 @@ export default function AdminSettlementShare() {
         ) : (
           <></>
         )}
-      </SettlementListPage>
+      </PageLayout>
     </>
   );
 }

@@ -1,5 +1,9 @@
+import { PageLayout } from "~/components/page_layout";
+
 export default function AdminOrderShare() {
-    return <>
-        <p>주문서 공유</p>
+  return (
+    <>
+      <PageLayout>주문서 공유</PageLayout>
     </>
+  );
 }

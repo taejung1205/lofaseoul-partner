@@ -19,17 +19,7 @@ import {
 } from "~/components/settlement_sum";
 import authenticator from "~/services/auth.server";
 import { getSettlements, getSettlementSum } from "~/services/firebase.server";
-
-const SettlementListPage = styled.div`
-  width: 100%;
-  font-size: 20px;
-  font-weight: 700;
-  padding: 30px 40px 30px 40px;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  overflow-y: scroll;
-`;
+import { PageLayout } from "~/components/page_layout";
 
 const GetListButton = styled.button`
   background-color: white;
@@ -112,10 +102,10 @@ export default function AdminSettlementShare() {
   }, [loaderData]);
 
   const allSum = useMemo(() => {
-    if (sums == null){
+    if (sums == null) {
       return null;
     } else {
-      return getAllSellerSettlementSum(sums)
+      return getAllSellerSettlementSum(sums);
     }
   }, [sums]);
 
@@ -157,7 +147,7 @@ export default function AdminSettlementShare() {
 
   return (
     <>
-      <SettlementListPage>
+      <PageLayout>
         <div
           style={{
             display: "flex",
@@ -248,7 +238,7 @@ export default function AdminSettlementShare() {
         ) : (
           <></>
         )}
-      </SettlementListPage>
+      </PageLayout>
     </>
   );
 }
