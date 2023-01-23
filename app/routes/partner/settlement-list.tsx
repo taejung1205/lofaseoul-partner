@@ -20,19 +20,7 @@ import {
 import authenticator from "~/services/auth.server";
 import { getSettlements, getSettlementSum } from "~/services/firebase.server";
 import { PageLayout } from "~/components/page_layout";
-
-const GetListButton = styled.button`
-  background-color: white;
-  border: 3px solid black;
-  font-size: 20px;
-  font-weight: 700;
-  width: 110px;
-  height: 40px;
-  line-height: 1;
-  margin-left: 20px;
-  padding: 6px 6px 6px 6px;
-  cursor: pointer;
-`;
+import { GetListButton } from "~/components/button";
 
 const EmptySettlementBox = styled.div`
   display: flex;

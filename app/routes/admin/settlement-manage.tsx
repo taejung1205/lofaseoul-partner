@@ -2,6 +2,7 @@ import { json, LoaderFunction } from "@remix-run/node";
 import { Link, useLoaderData } from "@remix-run/react";
 import { useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
+import { GetListButton } from "~/components/button";
 import {
   MonthSelectPopover,
   dateToKoreanMonth,
@@ -17,19 +18,6 @@ import {
   SettlementSumTable,
 } from "~/components/settlement_sum";
 import { getAllSettlementSum } from "~/services/firebase.server";
-
-const GetListButton = styled.button`
-  background-color: white;
-  border: 3px solid black;
-  font-size: 20px;
-  font-weight: 700;
-  width: 110px;
-  height: 40px;
-  line-height: 1;
-  margin-left: 20px;
-  padding: 6px 6px 6px 6px;
-  cursor: pointer;
-`;
 
 const EmptySettlementBox = styled.div`
   display: flex;
