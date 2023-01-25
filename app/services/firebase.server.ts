@@ -17,6 +17,8 @@ import { SettlementItem } from "~/components/settlement_table";
 import { PartnerProfile } from "~/components/partner_profile";
 import { PossibleSellers } from "~/components/seller";
 import { SettlementSumItem } from "~/components/settlement_sum";
+import { dateToDayStr } from "~/components/date";
+import { OrderItem } from "~/components/order";
 
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
@@ -308,6 +310,12 @@ export async function addSettlements({
   });
 }
 
+/**
+ * 정산을 등록한 월의 목록을 불러옵니다.
+ * @param 
+ * @returns
+ *  정산 기록이 있는 월들의 리스트 (XX년 XX월)
+ */
 export async function getSettlementMonthes() {
   const settlementsSnap = await getDocs(collection(firestore, "settlements"));
   return settlementsSnap.docs.map((doc) => doc.id);
@@ -491,4 +499,58 @@ export async function deleteSettlements({
 
   batch.commit();
 
+}
+
+
+/**
+ * 오늘 주문서가 공유되었는지를 불러옵니다. 
+ * @param 
+ * @returns
+ *  정산 기록이 있을 경우 오늘 날짜의 string, 없을 경우 null
+ */
+export async function isTodayOrderShared() {
+  const today = dateToDayStr(new Date());
+  const docRef = doc(firestore, "orders", today);
+  const docSnap = await getDoc(docRef);
+  if (docSnap.exists()) {
+    return today;
+  } else {
+    return null;
+  }
+}
+
+
+/**
+ * 주문서 내역을 추가합니다.
+ * @param orders: OrderItem[], dayStr: string (XXXX-XX-XX)
+ * @returns
+ *
+ */
+export async function addOrders({
+  orders,
+  dayStr,
+}: {
+  orders: OrderItem[];
+  dayStr: string;
+}) {
+  const batch = writeBatch(firestore);
+  const time = new Date().getTime();
+
+  orders.forEach((item, index) => {
+
+    //items에 해당 정산아이템 추가
+    const itemDocName = `${time}_${index}`;
+    let itemDocRef = doc(
+      firestore,
+      `orders/${dayStr}/items`,
+      itemDocName
+    );
+    batch.set(itemDocRef, item);
+  });
+
+  await batch.commit();
+
+  await setDoc(doc(firestore, `orders/${dayStr}`), {
+    isShared: true,
+  });
 }

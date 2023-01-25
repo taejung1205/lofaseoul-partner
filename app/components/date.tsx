@@ -3,7 +3,6 @@ import { DayPicker } from "react-day-picker";
 import styled from "styled-components";
 
 import dayPickerStyles from "react-day-picker/dist/style.css";
-import myDayPickerStyles from "~/styles/day-picker.style.css";
 
 export function links() {
   return [{ rel: "stylesheet", href: dayPickerStyles }];
