@@ -275,9 +275,11 @@ export default function AdminSettlementShare() {
         }
       case "partner null":
         return `파트너 정보가 잘못되었습니다. 다시 조회해주세요. `;
-      case "partner null":
+      case "month null":
         return `날짜 정보가 잘못되었습니다. 다시 조회해주세요. `;
     }
+
+    return "알 수 없는 오류입니다.";
   }, [loaderData]);
 
   //sums의 모든 판매처의 정산합 (settlement, shipping)

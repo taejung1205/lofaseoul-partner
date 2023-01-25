@@ -47,12 +47,6 @@ const OrderHeader = styled(OrderItemBox)`
   background-color: #ebebeb;
 `;
 
-const OrderFooter = styled.div`
-  display: flex;
-  height: 20px;
-  background-color: #ebebeb;
-`;
-
 const TextBox = styled.div`
   margin-left: 10px;
   font-weight: 700;
@@ -268,7 +262,6 @@ export function OrderTable({
             );
           })}
         </OrderItemsBox>
-        {items.length > 0 ? <OrderFooter /> : <></>}
       </OrderBox>
     </>
   );

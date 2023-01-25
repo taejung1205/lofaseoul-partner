@@ -312,7 +312,7 @@ export async function addSettlements({
 
 /**
  * 정산을 등록한 월의 목록을 불러옵니다.
- * @param 
+ * @param
  * @returns
  *  정산 기록이 있는 월들의 리스트 (XX년 XX월)
  */
@@ -397,13 +397,12 @@ export async function getAllSettlementSum({ monthStr }: { monthStr: string }) {
 export async function deleteSettlements({
   settlements,
   monthStr,
-  partnerName
+  partnerName,
 }: {
   settlements: SettlementItem[];
   monthStr: string;
   partnerName: string;
 }) {
-
   if (settlements.length == 0) {
     console.log("error: settlement length = 0");
     return null;
@@ -433,7 +432,6 @@ export async function deleteSettlements({
     return null;
   }
 
-  
   // 주문번호 제거
   let deletingOrderNumbers = settlements.map((item) => item.orderNumber);
   let newOrderNumbers = subtractArray(
@@ -443,7 +441,7 @@ export async function deleteSettlements({
 
   newSum!.orderNumbers = newOrderNumbers;
 
-  for(let i = 0; i < settlements.length; i++){
+  for (let i = 0; i < settlements.length; i++) {
     let item = settlements[i];
     let seller = "etc";
     if (PossibleSellers.includes(item.seller)) {
@@ -485,7 +483,7 @@ export async function deleteSettlements({
     const querySnap = await getDocs(idQuery);
     querySnap.forEach(async (doc) => {
       batch.delete(doc.ref);
-    })
+    });
   }
 
   const docRef = doc(
@@ -498,13 +496,11 @@ export async function deleteSettlements({
   batch.set(docRef, newSum);
 
   batch.commit();
-
 }
 
-
 /**
- * 오늘 주문서가 공유되었는지를 불러옵니다. 
- * @param 
+ * 오늘 주문서가 공유되었는지를 불러옵니다.
+ * @param
  * @returns
  *  정산 기록이 있을 경우 오늘 날짜의 string, 없을 경우 null
  */
@@ -518,7 +514,6 @@ export async function isTodayOrderShared() {
     return null;
   }
 }
-
 
 /**
  * 주문서 내역을 추가합니다.
@@ -537,14 +532,9 @@ export async function addOrders({
   const time = new Date().getTime();
 
   orders.forEach((item, index) => {
-
     //items에 해당 정산아이템 추가
     const itemDocName = `${time}_${index}`;
-    let itemDocRef = doc(
-      firestore,
-      `orders/${dayStr}/items`,
-      itemDocName
-    );
+    let itemDocRef = doc(firestore, `orders/${dayStr}/items`, itemDocName);
     batch.set(itemDocRef, item);
   });
 
@@ -553,4 +543,69 @@ export async function addOrders({
   await setDoc(doc(firestore, `orders/${dayStr}`), {
     isShared: true,
   });
+}
+
+/**
+ * 해당 날짜의 모든 주문서 정보를 불러옵니다
+ * @param dayStr: 날짜 (XXXX-XX-XX)
+ * @returns
+ *  Array of OrderItem
+ */
+export async function getAllOrders(dayStr: string) {
+  const ordersRef = collection(firestore, `orders/${dayStr}/items`);
+  const querySnap = await getDocs(ordersRef);
+  return querySnap.docs.map((doc) => doc.data());
+}
+
+/**
+ * 해당 주문서 내역들을 삭제합니다
+ * @param dayStr: 날짜 (XXXX-XX-XX), orders: 삭제할 주문서 목록
+ */
+export async function deleteOrders({
+  dayStr,
+  orders,
+}: {
+  orders: OrderItem[];
+  dayStr: string;
+}) {
+  if (orders.length == 0) {
+    console.log("error: settlement length = 0");
+    return null;
+  }
+
+  const batch = writeBatch(firestore);
+
+  for (let i = 0; i < orders.length; i++) {
+    const item = orders[i];
+
+    //items에 해당 정산아이템 삭제
+    const ordersRef = collection(firestore, `orders/${dayStr}/items`);
+
+    const idQuery = query(
+      ordersRef,
+      where("amount", "==", item.amount),
+      where("customsCode", "==", item.customsCode),
+      where("deliveryRequest", "==", item.deliveryRequest),
+      where("managementNumber", "==", item.managementNumber),
+      where("optionName", "==", item.optionName),
+      where("orderNumber", "==", item.orderNumber),
+      where("orderer", "==", item.orderer),
+      where("ordererPhone", "==", item.ordererPhone),
+      where("partnerName", "==", item.partnerName),
+      where("phone", "==", item.phone),
+      where("productName", "==", item.productName),
+      where("receiver", "==", item.receiver),
+      where("seller", "==", item.seller),
+      where("shippingCompanyNumber", "==", item.shippingCompanyNumber),
+      where("waybillNumber", "==", item.waybillNumber),
+      where("zipCode", "==", item.zipCode),
+      limit(1)
+    );
+    const querySnap = await getDocs(idQuery);
+    querySnap.forEach(async (doc) => {
+      batch.delete(doc.ref);
+    });
+  }
+
+  batch.commit();
 }
