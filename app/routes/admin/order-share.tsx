@@ -1,15 +1,26 @@
-import { useEffect, useMemo, useState } from "react";
-import {
-  dateToDayStr, dayStrToDate
-} from "~/components/date";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { dateToDayStr } from "~/components/date";
 
 import dayPickerStyles from "react-day-picker/dist/style.css";
 import styled from "styled-components";
-import { json, LoaderFunction } from "@remix-run/node";
+import { ActionFunction, json, LoaderFunction, redirect } from "@remix-run/node";
 import { PageLayout } from "~/components/page_layout";
-import { OrderItem } from "~/components/order";
+import {
+  isOrderItemValid,
+  OrderItem,
+  OrderTableMemo,
+  setOrderPartnerName,
+  setSellerIfLofa,
+} from "~/components/order";
 import * as xlsx from "xlsx";
-import { useLoaderData } from "@remix-run/react";
+import { useLoaderData, useSubmit } from "@remix-run/react";
+import {
+  addOrders,
+  getPartnerProfiles,
+  isTodayOrderShared,
+} from "~/services/firebase.server";
+import { PartnerProfile } from "~/components/partner_profile";
+import { BasicModal, ModalButton } from "~/components/modal";
 
 const FileNameBox = styled.div`
   border: 3px solid #000000;
@@ -59,32 +70,80 @@ export function links() {
   return [{ rel: "stylesheet", href: dayPickerStyles }];
 }
 
-export const loader: LoaderFunction = async ({ request }) => {
-  const url = new URL(request.url);
-  const day = url.searchParams.get("day");
-
-  if (day !== null) {
-    //   const monthStr = numeralMonthToKorean(month);
-    //   const sums = await getAllSettlementSum({
-    //     monthStr: monthStr,
-    //   });
-    //   console.log(sums);
-    return json({ day: day });
-  } else {
-    return null;
+export const action: ActionFunction = async ({ request }) => {
+  const body = await request.formData();
+  const actionType = body.get("action")?.toString();
+  if (actionType === "share") {
+    const order = body.get("order")?.toString();
+    const day = body.get("day")?.toString();
+    if (order !== undefined && day !== undefined) {
+      const jsonArr: OrderItem[] = JSON.parse(order);
+      console.log(jsonArr);
+      await addOrders({ orders: jsonArr, dayStr: day });
+      return redirect("/admin/order-share");
+    }
   }
+
+  return null;
+};
+
+export const loader: LoaderFunction = async ({ request }) => {
+  const isTodayShared = await isTodayOrderShared();
+  const partnersMap = await getPartnerProfiles();
+  const partnersArr = Array.from(partnersMap.values());
+  return json({ isTodayShared: isTodayShared, partners: partnersArr });
 };
 
 export default function AdminOrderShare() {
-  const [selectedDate, setSelectedDate] = useState<Date>();
   const [fileName, setFileName] = useState<string>("");
   const [items, setItems] = useState<OrderItem[]>([]);
   const [itemsChecked, setItemsChecked] = useState<boolean[]>([]);
+  const [currentDay, setCurrentDay] = useState<string>(""); //현재 시점 날짜
+
+  const [errorStr, setErrorStr] = useState<string>("");
 
   const [isErrorModalOpened, setIsErrorModalOpened] = useState<boolean>(false);
   const [isShareModalOpened, setIsShareModalOpened] = useState<boolean>(false);
 
   const loaderData = useLoaderData();
+  const formRef = useRef<HTMLFormElement>(null);
+
+  const submit = useSubmit();
+
+  const partnerProfiles = useMemo(() => {
+    let map = new Map();
+    loaderData.partners.forEach((partner: PartnerProfile) => {
+      map.set(partner.name, partner);
+    });
+    return map;
+  }, [loaderData]);
+
+  useEffect(() => {
+    const today = dateToDayStr(new Date());
+    setCurrentDay(today);
+  }, []);
+
+  useEffect(() => {
+    const newArr = Array(items.length).fill(true);
+    setItemsChecked(newArr);
+  }, [items]);
+
+  function onItemCheck(index: number, isChecked: boolean) {
+    itemsChecked[index] = isChecked;
+  }
+
+  function onCheckAll(isChecked: boolean) {
+    setItemsChecked(Array(items.length).fill(isChecked));
+  }
+
+  function shareOrder(settlementList: OrderItem[], dayStr: string) {
+    const json = JSON.stringify(settlementList);
+    const formData = new FormData(formRef.current ?? undefined);
+    formData.set("order", json);
+    formData.set("day", dayStr);
+    formData.set("action", "share");
+    submit(formData, { method: "post" });
+  }
 
   const readExcel = (e: any) => {
     e.preventDefault();
@@ -106,7 +165,7 @@ export default function AdminOrderShare() {
             orderNumber: element.주문번호,
             productName: element.상품명,
             optionName: element.옵션명 ?? "",
-            amount: element.배송수량,
+            amount: Number(element.배송수량),
             orderer: element.주문자명,
             receiver: element.수취인,
             partnerName: "",
@@ -116,45 +175,50 @@ export default function AdminOrderShare() {
             ordererPhone: element["주문자 전화번호"] ?? "",
             customsCode: element.통관부호 ?? "",
             deliveryRequest: element.배송요청사항 ?? "",
-            managementNumber: element.관리번호,
-            shippingCompanyNumber: element.배송사코드,
-            waybillNumber: element.송장번호
+            managementNumber: (element.관리번호)?.toString(),
+            shippingCompanyNumber: "",
+            waybillNumber: "",
           };
 
-          // let isValid = isSettlementItemValid(item);
-          // if (!isValid) {
-          //   setErrorStr("유효하지 않은 엑셀 파일입니다.");
-          //   setIsErrorModalOpened(true);
-          //   setFileName("");
-          //   setItems([]);
-          //   return false;
-          // }
+         
 
-          // setSellerIfLofa(item);
+          let isValid = isOrderItemValid(item);
+          if (!isValid) {
+            console.log(item);
+            setErrorStr("유효하지 않은 엑셀 파일입니다.");
+            setIsErrorModalOpened(true);
+            setFileName("");
+            setItems([]);
+            return false;
+          }
 
-          // let nameResult = setSettlementPartnerName(item);
-          // if (!nameResult || item.partnerName.length == 0) {
-          //   setErrorStr(
-          //     "유효하지 않은 엑셀 파일입니다.\n상품명에 파트너 이름이 들어있는지 확인해주세요."
-          //   );
-          //   setIsErrorModalOpened(true);
-          //   setFileName("");
-          //   setItems([]);
-          //   return false;
-          // }
+          setSellerIfLofa(item);
 
-          // const partnerProfile = partnerProfiles.get(item.partnerName);
-          // if (partnerProfile === undefined) {
-          //   setErrorStr(
-          //     `유효하지 않은 엑셀 파일입니다.\n상품명의 파트너가 계약 업체 목록에 있는지 확인해주세요. (${item.partnerName})`
-          //   );
-          //   setIsErrorModalOpened(true);
-          //   setFileName("");
-          //   setItems([]);
-          //   return false;
-          // }
+          let nameResult = setOrderPartnerName(item);
 
-          //setSettlementFee(item, partnerProfile);
+          if (!nameResult || item.partnerName.length == 0) {
+            console.log(item);
+            setErrorStr(
+              "유효하지 않은 엑셀 파일입니다.\n상품명에 파트너 이름이 들어있는지 확인해주세요."
+            );
+            setIsErrorModalOpened(true);
+            setFileName("");
+            setItems([]);
+            return false;
+          }
+
+          const partnerProfile = partnerProfiles.get(item.partnerName);
+
+          if (partnerProfile === undefined) {
+            console.log(item);
+            setErrorStr(
+              `유효하지 않은 엑셀 파일입니다.\n상품명의 파트너가 계약 업체 목록에 있는지 확인해주세요. (${item.partnerName})`
+            );
+            setIsErrorModalOpened(true);
+            setFileName("");
+            setItems([]);
+            return false;
+          }
 
           array.push(item);
         }
@@ -166,19 +230,74 @@ export default function AdminOrderShare() {
     }
   };
 
-  //날짜 수신
-  useEffect(() => {
-    if (loaderData == null) {
-      setSelectedDate(new Date());
-    } else {
-      setSelectedDate(dayStrToDate(loaderData.day));
-    }
-  }, []);
-
   return (
     <>
+      <BasicModal
+        opened={isErrorModalOpened}
+        onClose={() => setIsErrorModalOpened(false)}
+      >
+        <div
+          style={{
+            justifyContent: "center",
+            textAlign: "center",
+            fontWeight: "700",
+          }}
+        >
+          {errorStr}
+          <div style={{ height: "20px" }} />
+          <div style={{ display: "flex", justifyContent: "center" }}>
+            <ModalButton onClick={() => setIsErrorModalOpened(false)}>
+              확인
+            </ModalButton>
+          </div>
+        </div>
+      </BasicModal>
+
+      <BasicModal
+        opened={isShareModalOpened}
+        onClose={() => setIsShareModalOpened}
+      >
+        <div
+          style={{
+            justifyContent: "center",
+            textAlign: "center",
+            fontWeight: "700",
+          }}
+        >
+          {loaderData.isTodayShared == null
+            ? `${dateToDayStr(new Date())} 주문을 전달하시겠습니까?`
+            : `금일(${loaderData.isTodayShared}) 공유된 주문건이 있습니다. 추가로 공유하시겠습니까?`}
+          <div style={{ height: "20px" }} />
+          <div style={{ display: "flex", justifyContent: "center" }}>
+            <ModalButton onClick={() => setIsShareModalOpened(false)}>
+              취소
+            </ModalButton>
+            <ModalButton
+              onClick={() => {
+                let orderList = [];
+                for (let i = 0; i < items.length; i++) {
+                  if (itemsChecked[i]) {
+                    orderList.push(items[i]);
+                  }
+                }
+                if (orderList.length > 0 && currentDay.length > 0) {
+                  shareOrder(orderList, currentDay);
+                } else {
+                  setErrorStr("선택된 정산내역이 없습니다.");
+                  setIsErrorModalOpened(true);
+                }
+
+                setIsShareModalOpened(false);
+              }}
+            >
+              공유
+            </ModalButton>
+          </div>
+        </div>
+      </BasicModal>
+
       <PageLayout>
-      <div style={{ display: "flex" }} className="fileBox">
+        <div style={{ display: "flex" }} className="fileBox">
           <FileNameBox>{fileName}</FileNameBox>
           <div style={{ width: "20px" }} />
           <FileUploadButton htmlFor="uploadFile">파일 첨부</FileUploadButton>
@@ -190,6 +309,38 @@ export default function AdminOrderShare() {
           />
         </div>
         <div style={{ height: "20px" }} />
+        <OrderTableMemo
+          items={items}
+          itemsChecked={itemsChecked}
+          onItemCheck={onItemCheck}
+          onCheckAll={onCheckAll}
+          defaultAllCheck={true}
+        />
+        <div style={{ height: "20px" }} />
+        {items.length > 0 ? (
+          <div
+            style={{
+              width: "inherit",
+              display: "flex",
+              justifyContent: "center",
+            }}
+          >
+            <ShareButton
+              onClick={() => {
+                const today = dateToDayStr(new Date());
+                if(today !== currentDay){
+                  setErrorStr("날짜가 변경되었습니다. 페이지를 새로고침해주세요.");
+                } else {
+                  setIsShareModalOpened(true);
+                }
+              }}
+            >
+              주문서 전송
+            </ShareButton>
+          </div>
+        ) : (
+          <></>
+        )}
       </PageLayout>
     </>
   );
