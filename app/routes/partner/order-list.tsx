@@ -231,6 +231,12 @@ export default function AdminOrderList() {
         width: 30,
         wrap: true,
       },
+      {
+        column: "관리번호",
+        type: String,
+        value: (item: OrderItem) => item.managementNumber,
+        width: 15,
+      },
     ];
 
     await writeXlsxFile(items, {
