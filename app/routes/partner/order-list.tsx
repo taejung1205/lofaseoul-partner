@@ -4,20 +4,17 @@ import dayPickerStyles from "react-day-picker/dist/style.css";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLoaderData, useSubmit } from "@remix-run/react";
 import {
-    dateToDayStr,
-    DaySelectPopover,
-    dayStrToDate,
+  dateToDayStr,
+  DaySelectPopover,
+  dayStrToDate,
 } from "~/components/date";
 import { GetListButton } from "~/components/button";
-import {
-    ActionFunction,
-    json,
-    LoaderFunction
-} from "@remix-run/node";
+import { ActionFunction, json, LoaderFunction } from "@remix-run/node";
 import { OrderItem, OrderTable } from "~/components/order";
 import styled from "styled-components";
 import { getPartnerOrders } from "~/services/firebase.server";
 import authenticator from "~/services/auth.server";
+import writeXlsxFile from "write-excel-file";
 
 const EmptySettlementBox = styled.div`
   display: flex;
@@ -137,6 +134,116 @@ export default function AdminOrderList() {
     }
   }, [loaderData]);
 
+  async function writeExcel() {
+    const schema = [
+      {
+        column: "판매처",
+        type: String,
+        value: (item: OrderItem) => item.seller,
+        width: 15,
+        wrap: true,
+      },
+      {
+        column: "주문번호",
+        type: String,
+        value: (item: OrderItem) => item.orderNumber,
+        width: 30,
+        wrap: true,
+      },
+      {
+        column: "상품명",
+        type: String,
+        value: (item: OrderItem) => item.productName,
+        width: 60,
+        wrap: true,
+      },
+      {
+        column: "옵션명",
+        type: String,
+        value: (item: OrderItem) => item.optionName,
+        width: 30,
+      },
+      {
+        column: "배송수량",
+        type: Number,
+        value: (item: OrderItem) => item.amount,
+        width: 10,
+      },
+      {
+        column: "우편번호",
+        type: String,
+        value: (item: OrderItem) => item.zipCode,
+        width: 10,
+      },
+      {
+        column: "주소",
+        type: String,
+        value: (item: OrderItem) => item.address,
+        width: 60,
+        wrap: true,
+      },
+      {
+        column: "연락처",
+        type: String,
+        value: (item: OrderItem) => item.phone,
+        width: 15,
+      },
+      {
+        column: "수취인",
+        type: String,
+        value: (item: OrderItem) => item.receiver,
+        width: 10,
+      },
+      {
+        column: "배송사코드",
+        type: String,
+        value: (item: OrderItem) => item.shippingCompanyNumber,
+        width: 15,
+      },
+      {
+        column: "송장번호",
+        type: String,
+        value: (item: OrderItem) => item.waybillNumber,
+        width: 15,
+      },
+      {
+        column: "주문자명",
+        type: String,
+        value: (item: OrderItem) => item.orderer,
+        width: 10,
+      },
+      {
+        column: "주문자 전화번호",
+        type: String,
+        value: (item: OrderItem) => item.ordererPhone,
+        width: 15,
+      },
+      {
+        column: "통관부호",
+        type: String,
+        value: (item: OrderItem) => item.customsCode,
+        width: 15,
+      },
+      {
+        column: "배송요청사항",
+        type: String,
+        value: (item: OrderItem) => item.deliveryRequest,
+        width: 30,
+        wrap: true,
+      },
+    ];
+
+    await writeXlsxFile(items, {
+      schema,
+      headerStyle: {
+        fontWeight: "bold",
+        align: "center",
+      },
+      fileName: `주문서_${loaderData.day}.xlsx`,
+      fontFamily: "맑은 고딕",
+      fontSize: 10,
+    });
+  }
 
   return (
     <>
@@ -165,8 +272,8 @@ export default function AdminOrderList() {
               />
               <div style={{ height: "20px" }} />
               <DownloadButton
-                onClick={() => {
-                  //TODO: 주문서 다운로드
+                onClick={async () => {
+                  await writeExcel();
                 }}
               >
                 주문서 다운로드
