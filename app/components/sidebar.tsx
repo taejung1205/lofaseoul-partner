@@ -47,6 +47,7 @@ type AdminPathname =
   | "alert"
   | "dashboard"
   | "delayed-order"
+  | "order-list"
   | "waybill-share"
   | "my-info"
   | "settlement-list"
@@ -173,6 +174,10 @@ export function PartnerSidebar() {
         setCurrentPage("waybill-share");
         break;
 
+        case "/partner/order-list":
+          setCurrentPage("order-list");
+          break;
+
       case "/partner/my-info":
         setCurrentPage("my-info");
         break;
@@ -190,6 +195,7 @@ export function PartnerSidebar() {
     <SidebarBox>
       <SidebarButton name="대쉬보드" pathname="dashboard" />
       <SidebarButton name="내 계약 정보" pathname="my-info" />
+      <SidebarButton name="주문서 조회" pathname="order-list" />
       <SidebarButton name="운송장 공유" pathname="waybill-share" />
       <SidebarButton name="온라인배송완료내역" pathname="shipped-list" />
       <SidebarButton name="출고 지연주문건" pathname="delayed-order" />

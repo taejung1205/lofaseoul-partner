@@ -133,11 +133,13 @@ function OrderItem({
   index,
   check,
   onItemCheck,
+  checkboxRequired = true,
 }: {
   item: OrderItem;
   index: number;
   check: boolean;
   onItemCheck: (index: number, isChecked: boolean) => void;
+  checkboxRequired?: boolean;
 }) {
   useEffect(() => {
     setIsChecked(check);
@@ -145,15 +147,20 @@ function OrderItem({
   const [isChecked, setIsChecked] = useState<boolean>(check);
   return (
     <OrderItemBox key={`SettlementItem-${index}`}>
-      <Checkbox
-        color={"gray"}
-        size={"sm"}
-        checked={isChecked}
-        onChange={(event) => {
-          setIsChecked(event.currentTarget.checked);
-          onItemCheck(index, event.currentTarget.checked);
-        }}
-      />
+      {checkboxRequired ? (
+        <Checkbox
+          color={"gray"}
+          size={"sm"}
+          checked={isChecked}
+          onChange={(event) => {
+            setIsChecked(event.currentTarget.checked);
+            onItemCheck(index, event.currentTarget.checked);
+          }}
+        />
+      ) : (
+        <></>
+      )}
+
       <TextBox style={{ minWidth: "90px", width: "90px" }}>
         {item.managementNumber}
       </TextBox>
@@ -206,12 +213,14 @@ export function OrderTable({
   onItemCheck,
   onCheckAll,
   defaultAllCheck = true,
+  checkboxRequired = true,
 }: {
   items: OrderItem[];
   itemsChecked: boolean[];
   onItemCheck: (index: number, isChecked: boolean) => void;
   onCheckAll: (isChecked: boolean) => void;
   defaultAllCheck: boolean;
+  checkboxRequired?: boolean;
 }) {
   const [allChecked, setAllChecked] = useState<boolean>(false);
 
@@ -223,16 +232,21 @@ export function OrderTable({
     <>
       <OrderBox>
         <OrderHeader>
-          <Checkbox
-            color={"gray"}
-            size={"sm"}
-            checked={allChecked}
-            onChange={(event) => {
-              const val = event.currentTarget.checked;
-              setAllChecked(val);
-              onCheckAll(val);
-            }}
-          />
+          {checkboxRequired ? (
+            <Checkbox
+              color={"gray"}
+              size={"sm"}
+              checked={allChecked}
+              onChange={(event) => {
+                const val = event.currentTarget.checked;
+                setAllChecked(val);
+                onCheckAll(val);
+              }}
+            />
+          ) : (
+            <></>
+          )}
+
           <TextBox style={{ minWidth: "90px" }}>관리번호</TextBox>
           <TextBox style={{ minWidth: "90px" }}>판매처</TextBox>
           <TextBox style={{ minWidth: "160px" }}>주문번호</TextBox>
@@ -258,6 +272,7 @@ export function OrderTable({
                 item={item}
                 check={itemsChecked[index] ?? false}
                 onItemCheck={onItemCheck}
+                checkboxRequired={checkboxRequired}
               />
             );
           })}
