@@ -51,7 +51,7 @@ export let loader: LoaderFunction = async ({ request }) => {
       return emailToId(userEmail?.email!);
     }
   } else {
-    redirect("/login");
+    return redirect("/login");
   }
 };
 
