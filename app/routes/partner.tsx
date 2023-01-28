@@ -4,13 +4,12 @@ import {
   useSubmit,
   useTransition,
 } from "@remix-run/react";
-import { ActionFunction, LoaderFunction, redirect } from "@remix-run/node";
+import { ActionFunction, json, LoaderFunction, redirect } from "@remix-run/node";
 import styled from "styled-components";
 import { PartnerHeader } from "~/components/header";
 import { PartnerSidebar } from "~/components/sidebar";
 import { LoadingOverlay } from "@mantine/core";
 import { getCurrentUser, isCurrentUserAdmin, logout } from "~/services/auth.server";
-import { emailToId } from "~/utils/account";
 
 const PartnerPage = styled.div`
   width: inherit;
@@ -47,8 +46,8 @@ export let loader: LoaderFunction = async ({ request }) => {
     if (userAdmin) {
       return redirect("/admin/dashboard");
     } else {
-      const userEmail = await getCurrentUser();
-      return emailToId(userEmail?.email!);
+      const user = await getCurrentUser();
+      return json({name: user?.uid});
     }
   } else {
     return redirect("/login");
@@ -56,7 +55,7 @@ export let loader: LoaderFunction = async ({ request }) => {
 };
 
 export default function Partner() {
-  const userData = useLoaderData();
+  const loaderData = useLoaderData();
   const submit = useSubmit();
   const transition = useTransition();
 
@@ -70,7 +69,7 @@ export default function Partner() {
       />
       <PartnerPage>
         <PartnerHeader
-          username={userData.name}
+          username={loaderData.name}
           onLogoutClick={() => submit(null, { method: "post" })}
         />
         <div

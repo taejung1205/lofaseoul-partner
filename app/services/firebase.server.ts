@@ -666,3 +666,55 @@ export async function deleteOrders({
 
   batch.commit();
 }
+
+
+/**
+ * 해당 주문서 내역들을 삭제합니다
+ * @param dayStr: 날짜 (XXXX-XX-XX), orders: 삭제할 주문서 목록
+ */
+export async function shareWaybills({
+  dayStr,
+  orders,
+}: {
+  orders: OrderItem[];
+  dayStr: string;
+}) {
+  if (orders.length == 0) {
+    console.log("error: settlement length = 0");
+    return null;
+  }
+
+  const batch = writeBatch(firestore);
+
+  for (let i = 0; i < orders.length; i++) {
+    const item = orders[i];
+
+    //items에 해당 주문서 아이템 찾은 후 택배사, 송장번호 정보 기입
+    const ordersRef = collection(firestore, `orders/${dayStr}/items`);
+
+    const idQuery = query(
+      ordersRef,
+      where("amount", "==", item.amount),
+      where("customsCode", "==", item.customsCode),
+      where("deliveryRequest", "==", item.deliveryRequest),
+      where("managementNumber", "==", item.managementNumber),
+      where("optionName", "==", item.optionName),
+      where("orderNumber", "==", item.orderNumber),
+      where("orderer", "==", item.orderer),
+      where("ordererPhone", "==", item.ordererPhone),
+      where("partnerName", "==", item.partnerName),
+      where("phone", "==", item.phone),
+      where("productName", "==", item.productName),
+      where("receiver", "==", item.receiver),
+      where("seller", "==", item.seller),
+      where("zipCode", "==", item.zipCode),
+      limit(1)
+    );
+    const querySnap = await getDocs(idQuery);
+    querySnap.forEach(async (doc) => {
+      batch.update(doc.ref, {"shippingCompanyNumber": item.shippingCompanyNumber, "waybillNumber": item.waybillNumber});
+    });
+  }
+
+  batch.commit();
+}
