@@ -3,6 +3,7 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signOut,
+  onAuthStateChanged,
 } from "firebase/auth";
 import { emailToId, idToEmail } from "~/utils/account";
 import { isAdmin } from "./firebase.server";
@@ -46,6 +47,7 @@ export async function login(id: string | undefined, password: string | undefined
       const errorMessage: string = error.message;
       return errorMessage;
     });
+
   return result;
 }
 
@@ -61,6 +63,18 @@ export async function logout() {
       return errorMessage;
     });
 }
+
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    
+    console.log("User: ", user.uid);
+    // ...
+  } else {
+    // User is signed out
+    // ...
+    console.log("signed out: ", user);
+  }
+});
 
 export async function getCurrentUser() {
   if (user) {
