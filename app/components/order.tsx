@@ -3,6 +3,7 @@ import React from "react";
 import { useEffect, useState } from "react";
 import styled from "styled-components";
 import { PossibleSellers } from "./seller";
+import { ShippingCompanySelect } from "./shipping_company";
 
 export type OrderItem = {
   seller: string;
@@ -134,17 +135,39 @@ function OrderItem({
   check,
   onItemCheck,
   checkboxRequired = true,
+  isWaybill = false,
+  onItemShippingCompanySelect = (index: number, company: string) => {},
+  onItemWaybillNumberEdit = (index: number, number: string) => {},
 }: {
   item: OrderItem;
   index: number;
   check: boolean;
   onItemCheck: (index: number, isChecked: boolean) => void;
   checkboxRequired?: boolean;
+  isWaybill?: boolean;
+  onItemShippingCompanySelect?: (
+    index: number,
+    shippingCompany: string
+  ) => void;
+  onItemWaybillNumberEdit?: (index: number, waybillNumber: string) => void;
 }) {
+  const [isChecked, setIsChecked] = useState<boolean>(check);
+  const [shippingCompany, setShippingCompany] = useState<string>(
+    item.shippingCompanyNumber
+  );
+  const [waybillNumber, setWaybillNumber] = useState<string>(
+    item.waybillNumber
+  );
+
   useEffect(() => {
     setIsChecked(check);
   }, [check]);
-  const [isChecked, setIsChecked] = useState<boolean>(check);
+
+  useEffect(() => {
+    setShippingCompany(item.shippingCompanyNumber);
+    setWaybillNumber(item.waybillNumber);
+  }, [item]);
+
   return (
     <OrderItemBox key={`SettlementItem-${index}`}>
       {checkboxRequired ? (
@@ -167,10 +190,31 @@ function OrderItem({
       <TextBox style={{ minWidth: "90px", width: "90px" }}>
         {item.seller}
       </TextBox>
-      <TextBox style={{ minWidth: "160px", fontSize: "12px", width: "150px" }}>
+      <TextBox style={{ minWidth: "160px", fontSize: "12px", width: "160px" }}>
         {item.orderNumber}
       </TextBox>
-      <TextBox style={{ minWidth: "450px", fontSize: "12px", width: "400px" }}>
+      {isWaybill ? (
+        <>
+          <ShippingCompanySelect
+            shippingCompany={shippingCompany}
+            setShippingCompany={(val: string) => {
+              setShippingCompany(val);
+              onItemShippingCompanySelect(index, val);
+            }}
+          />
+          <input
+            style={{ minWidth: "160px", width: "160px", marginLeft: "10px", fontSize: "12px", height: "40px"}}
+            value={waybillNumber}
+            onChange={(e) => {
+              setWaybillNumber(e.target.value);
+              onItemWaybillNumberEdit(index, e.target.value);
+            }}
+          />
+        </>
+      ) : (
+        <></>
+      )}
+      <TextBox style={{ minWidth: "450px", fontSize: "12px", width: "450px" }}>
         {item.productName}
       </TextBox>
       <TextBox style={{ minWidth: "250px", fontSize: "12px", width: "250px" }}>
@@ -182,7 +226,7 @@ function OrderItem({
       <TextBox style={{ minWidth: "60px", width: "60px" }}>
         {item.zipCode}
       </TextBox>
-      <TextBox style={{ minWidth: "400px", fontSize: "12px", width: "300px" }}>
+      <TextBox style={{ minWidth: "400px", fontSize: "12px", width: "400px" }}>
         {item.address}
       </TextBox>
       <TextBox style={{ minWidth: "150px", width: "150px" }}>
@@ -214,6 +258,9 @@ export function OrderTable({
   onCheckAll,
   defaultAllCheck = true,
   checkboxRequired = true,
+  isWaybill = false,
+  onItemShippingCompanySelect,
+  onItemWaybillNumberEdit,
 }: {
   items: OrderItem[];
   itemsChecked: boolean[];
@@ -221,6 +268,12 @@ export function OrderTable({
   onCheckAll: (isChecked: boolean) => void;
   defaultAllCheck: boolean;
   checkboxRequired?: boolean;
+  isWaybill?: boolean;
+  onItemShippingCompanySelect?: (
+    index: number,
+    shippingCompany: string
+  ) => void;
+  onItemWaybillNumberEdit?: (index: number, waybillNumber: string) => void;
 }) {
   const [allChecked, setAllChecked] = useState<boolean>(false);
 
@@ -250,13 +303,23 @@ export function OrderTable({
           <TextBox style={{ minWidth: "90px" }}>관리번호</TextBox>
           <TextBox style={{ minWidth: "90px" }}>판매처</TextBox>
           <TextBox style={{ minWidth: "160px" }}>주문번호</TextBox>
+
+          {isWaybill ? (
+            <>
+              <TextBox style={{ minWidth: "160px" }}>택배사</TextBox>
+              <TextBox style={{ minWidth: "160px" }}>송장번호</TextBox>
+            </>
+          ) : (
+            <></>
+          )}
+
           <TextBox style={{ minWidth: "450px" }}>상품명</TextBox>
           <TextBox style={{ minWidth: "250px" }}>옵션명</TextBox>
           <TextBox style={{ minWidth: "30px" }}>수량</TextBox>
           <TextBox style={{ minWidth: "60px" }}>우편번호</TextBox>
           <TextBox style={{ minWidth: "400px" }}>주소</TextBox>
-          <TextBox style={{ minWidth: "150px" }}>연락처</TextBox>
-          <TextBox style={{ minWidth: "150px" }}>주문자 전화번호</TextBox>
+          <TextBox style={{ minWidth: "160px" }}>연락처</TextBox>
+          <TextBox style={{ minWidth: "160px" }}>주문자 전화번호</TextBox>
           <TextBox style={{ minWidth: "90px" }}>주문자명</TextBox>
           <TextBox style={{ minWidth: "90px" }}>수취인</TextBox>
           <TextBox style={{ minWidth: "90px" }}>통관부호</TextBox>
@@ -273,6 +336,9 @@ export function OrderTable({
                 check={itemsChecked[index] ?? false}
                 onItemCheck={onItemCheck}
                 checkboxRequired={checkboxRequired}
+                isWaybill={isWaybill}
+                onItemShippingCompanySelect={onItemShippingCompanySelect}
+                onItemWaybillNumberEdit={onItemWaybillNumberEdit}
               />
             );
           })}
