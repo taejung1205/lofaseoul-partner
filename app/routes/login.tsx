@@ -1,4 +1,4 @@
-import { Form, useLoaderData, useTransition } from "@remix-run/react";
+import { Form, useActionData, useLoaderData, useTransition } from "@remix-run/react";
 import {
   ActionFunction,
   LoaderFunction,
@@ -63,7 +63,8 @@ export const action: ActionFunction = async ({ request, context }) => {
 
   if(typeof resp == "string"){
     //TODO: 로그인 에러
-    return resp;
+    console.log(resp);
+    return json({error: resp});
   } else {
     const isAdmin = await isCurrentUserAdmin();
     if(isAdmin) {
@@ -94,7 +95,7 @@ export const loader: LoaderFunction = async ({ request }) => {
  */
 export default function Login() {
   // if i got an error it will come back with the loader data
-  const loaderData = useLoaderData();
+  const actionData = useActionData();
   const transition = useTransition();
 
   return (
@@ -123,9 +124,9 @@ export default function Login() {
           <LoginButton>로그인</LoginButton>
         </Form>
         <div>
-          {loaderData?.error ? (
-            <p>{loaderData?.error?.message}</p>
-          ) : null}
+          {actionData?.error ? (
+            <p>{actionData?.error}</p>
+          ) : <></>}
         </div>
       </LoginPage>
     </>
