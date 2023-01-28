@@ -9,7 +9,6 @@ import { emailToId, idToEmail } from "~/utils/account";
 import { isAdmin } from "./firebase.server";
 
 const auth = getAuth();
-const user = auth.currentUser;
 
 export async function createUser(id: string, password: string) {
   const email = idToEmail(id);
@@ -66,17 +65,21 @@ export async function logout() {
 
 onAuthStateChanged(auth, (user) => {
   if (user) {
-    
-    console.log("User: ", user.uid);
+
+    // console.log("User: ", user.uid);
     // ...
   } else {
     // User is signed out
     // ...
-    console.log("signed out: ", user);
+    // console.log("signed out: ", user);
   }
 });
 
 export async function getCurrentUser() {
+
+  let user = auth.currentUser;
+  onAuthStateChanged(auth, (user) => user);
+
   if (user) {
     // User is signed in, see docs for a list of available properties
     // https://firebase.google.com/docs/reference/js/firebase.User
@@ -93,6 +96,10 @@ export async function getCurrentUser() {
  * 로그인이 됐을 경우, admin이면 true, 아니면 false
  */
 export async function isCurrentUserAdmin(){
+
+  let user = auth.currentUser;
+  onAuthStateChanged(auth, (user) => user);
+
   if (user) {
     const email = user.email;
     if(email !== null){
