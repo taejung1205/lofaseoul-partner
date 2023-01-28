@@ -10,7 +10,7 @@ import { isAdmin } from "./firebase.server";
 const auth = getAuth();
 const user = auth.currentUser;
 
-export function createUser(id: string, password: string) {
+export async function createUser(id: string, password: string) {
   const email = idToEmail(id);
   createUserWithEmailAndPassword(auth, email, password)
     .then((userCredential) => {
@@ -67,7 +67,7 @@ export async function getCurrentUser() {
     // User is signed in, see docs for a list of available properties
     // https://firebase.google.com/docs/reference/js/firebase.User
     // ...
-    return user.email;
+    return user;
   } else {
     // No user is signed in.
     return null;

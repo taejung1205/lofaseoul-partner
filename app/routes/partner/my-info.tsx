@@ -2,21 +2,18 @@ import { LoaderFunction } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { PageLayout } from "~/components/page_layout";
 import { PartnerProfile } from "~/components/partner_profile";
+import { getCurrentUser } from "~/services/auth.server";
 import { getPartnerProfile } from "~/services/firebase.server";
 
 export let loader: LoaderFunction = async ({ request }) => {
-  // let user = await authenticator.isAuthenticated(request, {
-  //   failureRedirect: "/login",
-  // });
-  // if (user !== null && "name" in user) {
-  //   const name = user.name;
-  //   const profileDoc = await getPartnerProfile({ name: name });
-  //   console.log(profileDoc);
-  //   return profileDoc;
-  // } else {
-  //   return null;
-  // }
-  return null;
+  let user = await getCurrentUser();
+  if (user !== null) {
+    const name = user.uid;
+    const profileDoc = await getPartnerProfile({ name: name });
+    return profileDoc;
+  } else {
+    return null;
+  }
 };
 
 export default function AdminPartnerList() {

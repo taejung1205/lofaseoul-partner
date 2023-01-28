@@ -17,9 +17,14 @@ import {
 import { SettlementItem } from "~/components/settlement_table";
 import { PartnerProfile } from "~/components/partner_profile";
 import { PossibleSellers } from "~/components/seller";
-import { SettlementSumItem } from "~/components/settlement_sum";
 import { dateToDayStr } from "~/components/date";
 import { OrderItem } from "~/components/order";
+import { createUser } from "./auth.server";
+import {
+  createAuthAccount,
+  deleteAuthAccount,
+  updateAuthAccount,
+} from "./firebaseAdmin.server";
 
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
@@ -46,11 +51,11 @@ if (!firebaseApp?.apps.length || !firestore.apps.length) {
 }
 
 /**
- * 해당 ID의 계정이 어드민인지 확인합니다. 
+ * 해당 ID의 계정이 어드민인지 확인합니다.
  * @param id: 아이디
  * @returns true: 어드민, false: 일반 파트너 (또는 존재하지 않는 계정)
  */
-export async function isAdmin(id: string){
+export async function isAdmin(id: string) {
   const accountsRef = collection(firestore, "accounts");
   const idQuery = query(accountsRef, where("id", "==", id), limit(1));
   const querySnap = await getDocs(idQuery);
@@ -64,41 +69,6 @@ export async function isAdmin(id: string){
     return result;
   } else {
     return false;
-  }
-}
-
-/**
- * 파이어베이스를 통해 로그인을 시도합니다.
- * @param param0
- * @returns
- * fail: 로그인 실패
- * admin: 어드민 계정 로그인
- * 그 외 string: 일반 파트너 계정 로그인 및 그 이름
- */
-export async function doLogin({
-  id,
-  password,
-}: {
-  id: string;
-  password: string;
-}) {
-  const accountsRef = collection(firestore, "accounts");
-  const idQuery = query(accountsRef, where("id", "==", id));
-  const querySnap = await getDocs(idQuery);
-  if (!querySnap.empty && process.env.PASSWORD_ENCRYPTION_KEY !== undefined) {
-    let result = "fail";
-    querySnap.forEach((doc) => {
-      if (password === doc.data().password) {
-        if (doc.data().isAdmin) {
-          result = "admin";
-        } else {
-          result = doc.data().name;
-        }
-      }
-    });
-    return result;
-  } else {
-    return "fail";
   }
 }
 
@@ -136,16 +106,39 @@ export async function getPartnerProfile({ name }: { name: string }) {
 }
 
 /**
- * 파트너 정보를 추가합니다.
+ * 파트너 정보를 추가하거나 수정합니다.
  * @param partnerProfie: PartnerProfile
  * @returns
- *
+ * 에러가 있을 경우 string
+ * 정상적일 경우 null
  */
 export async function addPartnerProfile({
   partnerProfile,
 }: {
   partnerProfile: PartnerProfile;
 }) {
+  const docRef = doc(firestore, "accounts", partnerProfile.name);
+  const docSnap = await getDoc(docRef);
+  if (docSnap.exists()) {
+    const result = await updateAuthAccount(
+      docSnap.data().id,
+      partnerProfile.id,
+      partnerProfile.password
+    );
+    if (typeof result == "string") {
+      return result;
+    }
+  } else {
+    const result = await createAuthAccount(
+      partnerProfile.id,
+      partnerProfile.password,
+      partnerProfile.name
+    );
+    if (typeof result == "string") {
+      return result;
+    }
+  }
+
   const result = await setDoc(doc(firestore, "accounts", partnerProfile.name), {
     name: partnerProfile.name,
     id: partnerProfile.id,
@@ -156,7 +149,10 @@ export async function addPartnerProfile({
     otherFee: partnerProfile.otherFee,
     shippingFee: partnerProfile.shippingFee,
     isAdmin: false,
+  }).catch((error) => {
+    return error.message;
   });
+
   return result;
 }
 
@@ -172,7 +168,7 @@ export async function addPartnerProfiles({
   partnerProfiles: PartnerProfile[];
 }) {
   const batch = writeBatch(firestore);
-  partnerProfiles.forEach((item, index) => {
+  partnerProfiles.forEach(async (item, index) => {
     const docName = item.name;
     let docRef = doc(firestore, "accounts", docName);
     batch.set(docRef, {
@@ -186,19 +182,31 @@ export async function addPartnerProfiles({
       shippingFee: item.shippingFee,
       isAdmin: false,
     });
+
+    await createAuthAccount(item.id, item.password, item.name);
   });
   await batch.commit();
 }
 
 /**
  * 파트너 정보를 삭제합니다.
- * @param name: string (해당 파트너 이름)
+ * @param id: string (해당 파트너 아이디)
  * @returns
- *
+ *  에러가 있을 경우 string
+ * 정상적일 경우 null
  */
 export async function deletePartnerProfile({ name }: { name: string }) {
-  const result = await deleteDoc(doc(firestore, "accounts", name));
-  return result;
+  const authResult = await deleteAuthAccount(name);
+  if (typeof authResult == "string") {
+    console.log(authResult);
+    return authResult;
+  }
+  const firestoreResult = await deleteDoc(
+    doc(firestore, "accounts", name)
+  ).catch((error) => {
+    return error.message;
+  });
+  return firestoreResult;
 }
 
 /**

@@ -30,7 +30,7 @@ const PartnerPage = styled.div`
  */
 export const action: ActionFunction = async ({ request }) => {
   await logout();
-  redirect("/login");
+  return redirect("/login");
 };
 
 /**
@@ -48,7 +48,7 @@ export let loader: LoaderFunction = async ({ request }) => {
       return redirect("/admin/dashboard");
     } else {
       const userEmail = await getCurrentUser();
-      return emailToId(userEmail!);
+      return emailToId(userEmail?.email!);
     }
   } else {
     redirect("/login");
