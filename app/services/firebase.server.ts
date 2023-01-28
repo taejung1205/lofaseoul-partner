@@ -46,6 +46,28 @@ if (!firebaseApp?.apps.length || !firestore.apps.length) {
 }
 
 /**
+ * 해당 ID의 계정이 어드민인지 확인합니다. 
+ * @param id: 아이디
+ * @returns true: 어드민, false: 일반 파트너 (또는 존재하지 않는 계정)
+ */
+export async function isAdmin(id: string){
+  const accountsRef = collection(firestore, "accounts");
+  const idQuery = query(accountsRef, where("id", "==", id), limit(1));
+  const querySnap = await getDocs(idQuery);
+  if (!querySnap.empty) {
+    let result = false;
+    querySnap.forEach((doc) => {
+      if (doc.data().isAdmin) {
+        result = true;
+      }
+    });
+    return result;
+  } else {
+    return false;
+  }
+}
+
+/**
  * 파이어베이스를 통해 로그인을 시도합니다.
  * @param param0
  * @returns

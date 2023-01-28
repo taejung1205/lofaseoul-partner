@@ -1,60 +1,95 @@
-import { Authenticator, AuthorizationError } from "remix-auth";
-import { FormStrategy } from "remix-auth-form";
-import { sessionStorage, User } from "~/services/session.server";
-import { doLogin } from "./firebase.server";
+import {
+  getAuth,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut,
+} from "firebase/auth";
+import { emailToId, idToEmail } from "~/utils/account";
+import { isAdmin } from "./firebase.server";
 
-// Create an instance of the authenticator, pass a Type, User,  with what
-// strategies will return and will store in the session
-const authenticator = new Authenticator<User | Error | null>(sessionStorage, {
-  sessionKey: process.env.AUTH_SESSION_KEY, // keep in sync
-  sessionErrorKey: process.env.AUTH_SESSION_ERROR_KEY, // keep in sync
-});
+const auth = getAuth();
+const user = auth.currentUser;
 
-// Tell the Authenticator to use the form strategy
-authenticator.use(
-  new FormStrategy(async ({ form }) => {
-    // get the data from the form...
-    let id = form.get("id") as string;
-    let password = form.get("password") as string;
-
-    // initialize the user here
-    let user = null;
-
-    // do some validation, errors are in the sessionErrorKey
-    if (!id || id?.length === 0)
-      throw new AuthorizationError("아이디를 입력해주세요.");
-    if (typeof id !== "string")
-      throw new AuthorizationError("아이디가 올바르지 않습니다.");
-
-    if (!password || password?.length === 0)
-      throw new AuthorizationError("비밀번호를 입력해주세요.");
-    if (typeof password !== "string")
-      throw new AuthorizationError(
-        "비밀번호가 올바르지 않습니다."
-      );
-
-    const loginResult = await doLogin({
-      id: id,
-      password: password,
+export function createUser(id: string, password: string) {
+  const email = idToEmail(id);
+  createUserWithEmailAndPassword(auth, email, password)
+    .then((userCredential) => {
+      // Signed in
+      const user = userCredential.user;
+      // ...
+    })
+    .catch((error) => {
+      const errorCode = error.code;
+      const errorMessage = error.message;
+      // ..
     });
+}
 
-    // login the user, this could be whatever process you want
-    if (loginResult != "fail") {
-      user = {
-        name: loginResult,
-        token: `${id}-${new Date().getTime()}`,
-        isAdmin: loginResult == "admin" ? true : false,
-      };
+export async function login(id: string | undefined, password: string | undefined) {
+  if(id == undefined){
+    return "아이디를 입력해주세요."
+  }
 
-      // the type of this user must match the type you pass to the Authenticator
-      // the strategy will automatically inherit the type if you instantiate
-      // directly inside the `use` method
-      return await Promise.resolve({ ...user });
-    } else {
-      // if problem with user throw error AuthorizationError
-      throw new AuthorizationError("로그인에 실패하였습니다. 입력한 정보를 확인해주세요.");
+  if(password == undefined){
+    return "비밀번호를 입력해주세요."
+  }
+
+  const email = idToEmail(id);
+  const result = await signInWithEmailAndPassword(auth, email, password)
+    .then((userCredential) => {
+      // Signed in
+      const user = userCredential.user;
+      return user;
+    })
+    .catch((error) => {
+      const errorCode: string = error.code;
+      const errorMessage: string = error.message;
+      return errorMessage;
+    });
+  return result;
+}
+
+export async function logout() {
+  const result = signOut(auth)
+    .then(() => {
+      // Sign-out successful.
+      return "ok";
+    })
+    .catch((error) => {
+      // An error happened.
+      const errorMessage: string = error.message;
+      return errorMessage;
+    });
+}
+
+export async function getCurrentUser() {
+  if (user) {
+    // User is signed in, see docs for a list of available properties
+    // https://firebase.google.com/docs/reference/js/firebase.User
+    // ...
+    return user.email;
+  } else {
+    // No user is signed in.
+    return null;
+  }
+}
+
+/**
+ * 로그인이 되지 않았을 경우 null return
+ * 로그인이 됐을 경우, admin이면 true, 아니면 false
+ */
+export async function isCurrentUserAdmin(){
+  if (user) {
+    const email = user.email;
+    if(email !== null){
+      const id = emailToId(email);
+      const admin = await isAdmin(id);
+      return admin;
+    } else  {
+      return null;
     }
-  })
-);
-
-export default authenticator;
+  } else {
+    // No user is signed in.
+    return null;
+  }
+}
