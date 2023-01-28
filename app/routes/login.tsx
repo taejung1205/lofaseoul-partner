@@ -1,15 +1,15 @@
-import { Form, useLoaderData, useTransition } from "@remix-run/react";
+import { Form, useActionData, useLoaderData, useTransition } from "@remix-run/react";
 import {
   ActionFunction,
   LoaderFunction,
   json,
   redirect,
 } from "@remix-run/node";
-import authenticator from "~/services/auth.server";
 import { sessionStorage } from "~/services/session.server";
 import styled from "styled-components";
 import { HeaderBox } from "~/components/header";
 import { LoadingOverlay } from "@mantine/core";
+import { isCurrentUserAdmin, login } from "~/services/auth.server";
 
 const LoginPage = styled.div`
   width: inherit;
@@ -51,54 +51,42 @@ const LoginButton = styled.button`
 `;
 
 /**
- * called when the user hits button to login
- *
- * @param param0
- * @returns
+ * 로그인
  */
 export const action: ActionFunction = async ({ request, context }) => {
-  // call my authenticator
-  let resp = await authenticator.authenticate("form", request, {
-    successRedirect: "/",
-    failureRedirect: "/login",
-    throwOnError: true,
-    context,
-  });
-  if (resp !== null && "isAdmin" in resp) {
-    if (resp.isAdmin) {
+
+  const body = await request.formData();
+  const id = body.get("id")?.toString();
+  const password = body.get("password")?.toString();
+
+  let resp = await login(id, password);
+
+  if(typeof resp == "string"){
+    //TODO: 로그인 에러
+    console.log(resp);
+    return json({error: resp});
+  } else {
+    const isAdmin = await isCurrentUserAdmin();
+    if(isAdmin) {
       return redirect("/admin/dashboard");
     } else {
-      return redirect("/");
+      return redirect("/partner/dashboard");
     }
   }
-  console.log(resp);
-  return resp;
 };
 
-/**
- * get the cookie and see if there are any errors that were
- * generated when attempting to login
- *
- * @param param0
- * @returns
- */
+
 export const loader: LoaderFunction = async ({ request }) => {
-  let user = await authenticator.isAuthenticated(request);
-  if (user !== null && "isAdmin" in user) {
-    if (user.isAdmin) {
-      console.log(user);
+  const userAdmin = await isCurrentUserAdmin(); //로그인 안됐을 경우 null, 했을 경우 admin 여부
+  if (userAdmin !== null) {
+    if (userAdmin) {
       return redirect("/admin/dashboard");
     } else {
-      return redirect("/");
+      return redirect("/partner/dashboard");
     }
+  } else {
+    return null;
   }
-
-  const session = await sessionStorage.getSession(
-    request.headers.get("Cookie")
-  );
-
-  const error = session.get(process.env.AUTH_SESSION_ERROR_KEY ?? "");
-  return json<any>({ error });
 };
 
 /**
@@ -107,7 +95,7 @@ export const loader: LoaderFunction = async ({ request }) => {
  */
 export default function Login() {
   // if i got an error it will come back with the loader data
-  const loaderData = useLoaderData();
+  const actionData = useActionData();
   const transition = useTransition();
 
   return (
@@ -136,9 +124,9 @@ export default function Login() {
           <LoginButton>로그인</LoginButton>
         </Form>
         <div>
-          {loaderData?.error ? (
-            <p>{loaderData?.error?.message}</p>
-          ) : null}
+          {actionData?.error ? (
+            <p>{actionData?.error}</p>
+          ) : <></>}
         </div>
       </LoginPage>
     </>

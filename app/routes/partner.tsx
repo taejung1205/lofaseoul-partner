@@ -5,11 +5,12 @@ import {
   useTransition,
 } from "@remix-run/react";
 import { ActionFunction, LoaderFunction, redirect } from "@remix-run/node";
-import authenticator from "~/services/auth.server";
 import styled from "styled-components";
 import { PartnerHeader } from "~/components/header";
 import { PartnerSidebar } from "~/components/sidebar";
 import { LoadingOverlay } from "@mantine/core";
+import { getCurrentUser, isCurrentUserAdmin, logout } from "~/services/auth.server";
+import { emailToId } from "~/utils/account";
 
 const PartnerPage = styled.div`
   width: inherit;
@@ -28,7 +29,8 @@ const PartnerPage = styled.div`
  * @param param0
  */
 export const action: ActionFunction = async ({ request }) => {
-  await authenticator.logout(request, { redirectTo: "/login" });
+  await logout();
+  return redirect("/login");
 };
 
 /**
@@ -39,15 +41,18 @@ export const action: ActionFunction = async ({ request }) => {
  * @returns
  */
 export let loader: LoaderFunction = async ({ request }) => {
-  let user = await authenticator.isAuthenticated(request, {
-    failureRedirect: "/login",
-  });
-  if (user !== null && "isAdmin" in user) {
-    if (user.isAdmin) {
+
+  const userAdmin = await isCurrentUserAdmin(); //로그인 안됐을 경우 null, 했을 경우 admin 여부
+  if (userAdmin !== null) {
+    if (userAdmin) {
       return redirect("/admin/dashboard");
+    } else {
+      const userEmail = await getCurrentUser();
+      return emailToId(userEmail?.email!);
     }
+  } else {
+    return redirect("/login");
   }
-  return user;
 };
 
 export default function Partner() {

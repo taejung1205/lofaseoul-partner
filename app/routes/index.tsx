@@ -1,6 +1,5 @@
 import { ActionFunction, LoaderFunction, redirect } from "@remix-run/node";
-import { Form, useLoaderData } from "@remix-run/react";
-import authenticator from "~/services/auth.server";
+import { isCurrentUserAdmin } from "~/services/auth.server";
 
 /**
  * check the user to see if there is an active session, if not
@@ -10,41 +9,22 @@ import authenticator from "~/services/auth.server";
  * @returns
  */
 export let loader: LoaderFunction = async ({ request }) => {
-  let user = await authenticator.isAuthenticated(request, {
-    failureRedirect: "/login",
-  });
-  if(user !== null && 'isAdmin' in user){
-    if(user.isAdmin){
-      console.log(user);
+
+  const userAdmin = await isCurrentUserAdmin(); //로그인 안됐을 경우 null, 했을 경우 admin 여부
+  if (userAdmin !== null) {
+    if (userAdmin) {
       return redirect("/admin/dashboard");
     } else {
       return redirect("/partner/dashboard");
     }
+  } else {
+    return redirect("/login");
   }
-  return user;
-};
-
-/**
- *  handle the logout request
- *
- * @param param0
- */
-export const action: ActionFunction = async ({ request }) => {
-  await authenticator.logout(request, { redirectTo: "/login" });
 };
 
 export default function Index() {
-  const data = useLoaderData();
-  console.log(data);
   return (
-    <div style={{ fontFamily: "system-ui, sans-serif", lineHeight: "1.4" }}>
-      <h1>Welcome to Remix Protected Dashboard</h1>
-      <p>{data?.name}</p>
-      <p>{data?.token}</p>
-      <p>{data?.isAdmin ? "Hello" : "WOLD"}</p>
-      <Form method="post">
-        <button>Log Out</button>
-      </Form>
+    <div>
     </div>
   );
 }

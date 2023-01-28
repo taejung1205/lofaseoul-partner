@@ -13,8 +13,8 @@ import { ActionFunction, json, LoaderFunction } from "@remix-run/node";
 import { OrderItem, OrderTable } from "~/components/order";
 import styled from "styled-components";
 import { getPartnerOrders } from "~/services/firebase.server";
-import authenticator from "~/services/auth.server";
 import writeXlsxFile from "write-excel-file";
+import { getCurrentUser } from "~/services/auth.server";
 
 const EmptySettlementBox = styled.div`
   display: flex;
@@ -64,14 +64,13 @@ export const action: ActionFunction = async ({ request }) => {
 
 export const loader: LoaderFunction = async ({ request }) => {
   let partnerName: string;
-  let user = await authenticator.isAuthenticated(request, {
-    failureRedirect: "/login",
-  });
-  if (user !== null && "name" in user) {
-    partnerName = user.name;
+  let user = await getCurrentUser();
+  if (user !== null) {
+    partnerName = user.uid;
   } else {
     return null;
   }
+
   const url = new URL(request.url);
   const day = url.searchParams.get("day");
   console.log(day);

@@ -24,7 +24,7 @@ const NewProfileButton = styled.button`
 
 export const action: ActionFunction = async ({ request }) => {
   const body = await request.formData();
-  let result = "";
+  let error = "";
   const actionType = body.get("action")?.toString();
   if (actionType === "add") {
     const name = body.get("name")?.toString();
@@ -44,7 +44,7 @@ export const action: ActionFunction = async ({ request }) => {
       typeof phone == "undefined"
     ) {
       console.log("Error");
-      result = "Data invalid while adding/editing partner profile";
+      error = "데이터가 유효하지 않습니다.";
     } else {
       let partnerProfile: PartnerProfile = {
         name: name,
@@ -59,21 +59,27 @@ export const action: ActionFunction = async ({ request }) => {
       const addPartnerResult = await addPartnerProfile({
         partnerProfile,
       });
-      // console.log(result);
-      result = "Adding/Editing partner profile OK";
+
+      if (typeof addPartnerResult == "string") {
+        error = addPartnerResult;
+      }
     }
   } else if (actionType === "delete") {
     const name = body.get("name")?.toString();
     if (typeof name == "undefined") {
       console.log("Error");
-      result = "Data invalid while deleting partner profile";
+      error = "Data invalid while deleting partner profile";
     } else {
-      const deletePartnerResult = await deletePartnerProfile({ name: name });
-      result = "Deleting partner profile OK";
+      const deletePartnerResult: any = await deletePartnerProfile({
+        name: name,
+      });
+      if (typeof deletePartnerResult == "string") {
+        error = deletePartnerResult;
+      }
     }
   }
 
-  return json(result);
+  return json({ error: error });
 };
 
 export let loader: LoaderFunction = async ({ request }) => {
@@ -95,6 +101,7 @@ export default function AdminPartnerList() {
 
   return (
     <PageLayout>
+      {actionData?.error?.length > 0 ? <div style={{margin: "10px"}}>{actionData.error}</div> : <></>}
       <NewProfileButton onClick={() => setIsCreatingProfile((prev) => !prev)}>
         신규 생성
       </NewProfileButton>

@@ -17,10 +17,10 @@ import {
   getAllSellerSettlementSum,
   SettlementSumBar,
 } from "~/components/settlement_sum";
-import authenticator from "~/services/auth.server";
 import { getSettlements, getSettlementSum } from "~/services/firebase.server";
 import { PageLayout } from "~/components/page_layout";
 import { GetListButton } from "~/components/button";
+import { getCurrentUser } from "~/services/auth.server";
 
 const EmptySettlementBox = styled.div`
   display: flex;
@@ -46,15 +46,15 @@ const ReportButton = styled.button`
 `;
 
 export const loader: LoaderFunction = async ({ request }) => {
+
   let partnerName: string;
-  let user = await authenticator.isAuthenticated(request, {
-    failureRedirect: "/login",
-  });
-  if (user !== null && "name" in user) {
-    partnerName = user.name;
+  let user = await getCurrentUser();
+  if (user !== null) {
+    partnerName = user.uid;
   } else {
     return null;
   }
+  
 
   const url = new URL(request.url);
   const month = url.searchParams.get("month");

@@ -1,10 +1,10 @@
 import { Outlet, useSubmit, useTransition } from "@remix-run/react";
 import { ActionFunction, LoaderFunction, redirect } from "@remix-run/node";
-import authenticator from "~/services/auth.server";
 import styled from "styled-components";
 import { AdminHeader } from "~/components/header";
 import { AdminSidebar } from "~/components/sidebar";
 import { LoadingOverlay } from "@mantine/core";
+import { isCurrentUserAdmin, logout } from "~/services/auth.server";
 
 const AdminPage = styled.div`
   width: inherit;
@@ -23,7 +23,8 @@ const AdminPage = styled.div`
  * @param param0
  */
 export const action: ActionFunction = async ({ request }) => {
-  await authenticator.logout(request, { redirectTo: "/login" });
+  await logout();
+  return redirect("/login");
 };
 
 /**
@@ -34,15 +35,16 @@ export const action: ActionFunction = async ({ request }) => {
  * @returns
  */
 export let loader: LoaderFunction = async ({ request }) => {
-  let user = await authenticator.isAuthenticated(request, {
-    failureRedirect: "/login",
-  });
-  if (user !== null && "isAdmin" in user) {
-    if (!user.isAdmin) {
+  const userAdmin = await isCurrentUserAdmin(); //로그인 안됐을 경우 null, 했을 경우 admin 여부
+  if (userAdmin !== null) {
+    if (!userAdmin) {
       return redirect("/partner/dashboard");
+    } else {
+      return null;
     }
+  } else {
+    return redirect("/login");
   }
-  return user;
 };
 
 export default function Admin() {
@@ -51,7 +53,12 @@ export default function Admin() {
 
   return (
     <>
-      <LoadingOverlay visible={transition.state == "loading" || transition.state == "submitting"} overlayBlur={2} />
+      <LoadingOverlay
+        visible={
+          transition.state == "loading" || transition.state == "submitting"
+        }
+        overlayBlur={2}
+      />
       <AdminPage>
         <AdminHeader
           onLogoutClick={() => {
