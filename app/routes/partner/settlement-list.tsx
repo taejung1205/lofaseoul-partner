@@ -46,7 +46,6 @@ const ReportButton = styled.button`
 `;
 
 export const loader: LoaderFunction = async ({ request }) => {
-
   let partnerName: string;
   let user = await getCurrentUser();
   if (user !== null) {
@@ -54,7 +53,6 @@ export const loader: LoaderFunction = async ({ request }) => {
   } else {
     return null;
   }
-  
 
   const url = new URL(request.url);
   const month = url.searchParams.get("month");
@@ -221,7 +219,13 @@ export default function AdminSettlementShare() {
         {items.length > 0 && allSum !== null ? (
           <>
             <div style={{ height: "20px" }} />
-            <ReportButton>오류 보고</ReportButton>
+            <ReportButton
+              onClick={() => {
+                //TODO: 알리고
+              }}
+            >
+              오류 보고
+            </ReportButton>
             <div style={{ height: "40px" }} />
             <SettlementSumBar
               seller={seller ?? "all"}

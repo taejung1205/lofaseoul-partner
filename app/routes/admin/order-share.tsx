@@ -3,7 +3,7 @@ import { dateToDayStr } from "~/components/date";
 
 import dayPickerStyles from "react-day-picker/dist/style.css";
 import styled from "styled-components";
-import { ActionFunction, json, LoaderFunction, redirect } from "@remix-run/node";
+import { ActionFunction, json, LoaderFunction } from "@remix-run/node";
 import { PageLayout } from "~/components/page_layout";
 import {
   isOrderItemValid,
@@ -13,7 +13,7 @@ import {
   adjustSellerName,
 } from "~/components/order";
 import * as xlsx from "xlsx";
-import { useLoaderData, useSubmit } from "@remix-run/react";
+import { useActionData, useLoaderData, useSubmit } from "@remix-run/react";
 import {
   addOrders,
   getPartnerProfiles,
@@ -79,7 +79,7 @@ export const action: ActionFunction = async ({ request }) => {
     if (order !== undefined && day !== undefined) {
       const jsonArr: OrderItem[] = JSON.parse(order);
       await addOrders({ orders: jsonArr, dayStr: day });
-      return redirect("/admin/order-share");
+      return json({ message: `${day} 주문 공유가 완료되었습니다.` });
     }
   }
 
@@ -99,14 +99,15 @@ export default function AdminOrderShare() {
   const [itemsChecked, setItemsChecked] = useState<boolean[]>([]);
   const [currentDay, setCurrentDay] = useState<string>(""); //현재 시점 날짜
 
-  const [errorStr, setErrorStr] = useState<string>("");
+  const [noticeModalStr, setNoticeModalStr] = useState<string>("");
 
-  const [isErrorModalOpened, setIsErrorModalOpened] = useState<boolean>(false);
+  const [isNoticeModalOpened, setIsNoticeModalOpened] =
+    useState<boolean>(false);
   const [isShareModalOpened, setIsShareModalOpened] = useState<boolean>(false);
 
   const loaderData = useLoaderData();
   const formRef = useRef<HTMLFormElement>(null);
-
+  const actionData = useActionData();
   const submit = useSubmit();
 
   const partnerProfiles = useMemo(() => {
@@ -126,6 +127,13 @@ export default function AdminOrderShare() {
     const newArr = Array(items.length).fill(true);
     setItemsChecked(newArr);
   }, [items]);
+
+  useEffect(() => {
+    if (actionData !== undefined && actionData !== null) {
+      setNoticeModalStr(actionData.message);
+      setIsNoticeModalOpened(true);
+    }
+  }, [actionData]);
 
   function onItemCheck(index: number, isChecked: boolean) {
     itemsChecked[index] = isChecked;
@@ -174,20 +182,18 @@ export default function AdminOrderShare() {
             ordererPhone: element["주문자 전화번호"] ?? "",
             customsCode: element.통관부호 ?? "",
             deliveryRequest: element.배송요청사항 ?? "",
-            managementNumber: (element.관리번호)?.toString(),
+            managementNumber: element.관리번호?.toString(),
             shippingCompany: "",
             waybillNumber: "",
             waybillSharedDate: "",
-            orderSharedDate: ""
+            orderSharedDate: "",
           };
-
-         
 
           let isValid = isOrderItemValid(item);
           if (!isValid) {
             console.log(item);
-            setErrorStr("유효하지 않은 엑셀 파일입니다.");
-            setIsErrorModalOpened(true);
+            setNoticeModalStr("유효하지 않은 엑셀 파일입니다.");
+            setIsNoticeModalOpened(true);
             setFileName("");
             setItems([]);
             return false;
@@ -199,10 +205,10 @@ export default function AdminOrderShare() {
 
           if (!nameResult || item.partnerName.length == 0) {
             console.log(item);
-            setErrorStr(
+            setNoticeModalStr(
               "유효하지 않은 엑셀 파일입니다.\n상품명에 파트너 이름이 들어있는지 확인해주세요."
             );
-            setIsErrorModalOpened(true);
+            setIsNoticeModalOpened(true);
             setFileName("");
             setItems([]);
             return false;
@@ -212,10 +218,10 @@ export default function AdminOrderShare() {
 
           if (partnerProfile === undefined) {
             console.log(item);
-            setErrorStr(
+            setNoticeModalStr(
               `유효하지 않은 엑셀 파일입니다.\n상품명의 파트너가 계약 업체 목록에 있는지 확인해주세요. (${item.partnerName})`
             );
-            setIsErrorModalOpened(true);
+            setIsNoticeModalOpened(true);
             setFileName("");
             setItems([]);
             return false;
@@ -233,8 +239,8 @@ export default function AdminOrderShare() {
   return (
     <>
       <BasicModal
-        opened={isErrorModalOpened}
-        onClose={() => setIsErrorModalOpened(false)}
+        opened={isNoticeModalOpened}
+        onClose={() => setIsNoticeModalOpened(false)}
       >
         <div
           style={{
@@ -243,10 +249,10 @@ export default function AdminOrderShare() {
             fontWeight: "700",
           }}
         >
-          {errorStr}
+          {noticeModalStr}
           <div style={{ height: "20px" }} />
           <div style={{ display: "flex", justifyContent: "center" }}>
-            <ModalButton onClick={() => setIsErrorModalOpened(false)}>
+            <ModalButton onClick={() => setIsNoticeModalOpened(false)}>
               확인
             </ModalButton>
           </div>
@@ -283,8 +289,8 @@ export default function AdminOrderShare() {
                 if (orderList.length > 0 && currentDay.length > 0) {
                   shareOrder(orderList, currentDay);
                 } else {
-                  setErrorStr("선택된 정산내역이 없습니다.");
-                  setIsErrorModalOpened(true);
+                  setNoticeModalStr("선택된 정산내역이 없습니다.");
+                  setIsNoticeModalOpened(true);
                 }
 
                 setIsShareModalOpened(false);
@@ -328,8 +334,10 @@ export default function AdminOrderShare() {
             <ShareButton
               onClick={() => {
                 const today = dateToDayStr(new Date());
-                if(today !== currentDay){
-                  setErrorStr("날짜가 변경되었습니다. 페이지를 새로고침해주세요.");
+                if (today !== currentDay) {
+                  setNoticeModalStr(
+                    "날짜가 변경되었습니다. 페이지를 새로고침해주세요."
+                  );
                 } else {
                   setIsShareModalOpened(true);
                 }

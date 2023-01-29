@@ -1,11 +1,10 @@
-import { Form, useActionData, useLoaderData, useTransition } from "@remix-run/react";
+import { Form, useActionData, useTransition } from "@remix-run/react";
 import {
   ActionFunction,
   LoaderFunction,
   json,
   redirect,
 } from "@remix-run/node";
-import { sessionStorage } from "~/services/session.server";
 import styled from "styled-components";
 import { HeaderBox } from "~/components/header";
 import { LoadingOverlay } from "@mantine/core";
@@ -54,27 +53,25 @@ const LoginButton = styled.button`
  * 로그인
  */
 export const action: ActionFunction = async ({ request, context }) => {
-
   const body = await request.formData();
   const id = body.get("id")?.toString();
   const password = body.get("password")?.toString();
 
   let resp = await login(id, password);
 
-  if(typeof resp == "string"){
+  if (typeof resp == "string") {
     //TODO: 로그인 에러
     console.log(resp);
-    return json({error: resp});
+    return json({ error: resp });
   } else {
     const isAdmin = await isCurrentUserAdmin();
-    if(isAdmin) {
+    if (isAdmin) {
       return redirect("/admin/dashboard");
     } else {
       return redirect("/partner/dashboard");
     }
   }
 };
-
 
 export const loader: LoaderFunction = async ({ request }) => {
   const userAdmin = await isCurrentUserAdmin(); //로그인 안됐을 경우 null, 했을 경우 admin 여부
@@ -123,11 +120,7 @@ export default function Login() {
           <div style={{ height: "100px" }} />
           <LoginButton>로그인</LoginButton>
         </Form>
-        <div>
-          {actionData?.error ? (
-            <p>{actionData?.error}</p>
-          ) : <></>}
-        </div>
+        <div>{actionData?.error ? <p>{actionData?.error}</p> : <></>}</div>
       </LoginPage>
     </>
   );

@@ -101,7 +101,11 @@ export default function AdminPartnerList() {
 
   return (
     <PageLayout>
-      {actionData?.error?.length > 0 ? <div style={{margin: "10px"}}>{actionData.error}</div> : <></>}
+      {actionData?.error?.length > 0 ? (
+        <div style={{ margin: "10px" }}>{actionData.error}</div>
+      ) : (
+        <></>
+      )}
       <NewProfileButton onClick={() => setIsCreatingProfile((prev) => !prev)}>
         신규 생성
       </NewProfileButton>

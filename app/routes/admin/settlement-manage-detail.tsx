@@ -1,10 +1,10 @@
+import { ActionFunction, json, LoaderFunction } from "@remix-run/node";
 import {
-  ActionFunction,
-  json,
-  LoaderFunction,
-  redirect,
-} from "@remix-run/node";
-import { Link, useLoaderData, useSubmit } from "@remix-run/react";
+  Link,
+  useActionData,
+  useLoaderData,
+  useSubmit,
+} from "@remix-run/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import styled from "styled-components";
 import {
@@ -12,7 +12,6 @@ import {
   MonthSelectPopover,
   dateToNumeralMonth,
   numeralMonthToKorean,
-  koreanMonthToNumeral,
   koreanMonthToDate,
 } from "~/components/date";
 import { PossibleSellers, SellerSelect } from "~/components/seller";
@@ -113,12 +112,7 @@ export const action: ActionFunction = async ({ request }) => {
         monthStr: month,
         partnerName: partnerName,
       });
-      const numeralMonth = koreanMonthToNumeral(month);
-      return redirect(
-        encodeURI(
-          `/admin/settlement-manage-detail?partner=${partnerName}&month=${numeralMonth}`
-        )
-      );
+      return json({ message: `삭제가 완료되었습니다.` });
     }
   } else if (actionType === "edit") {
     const deletingItem = body.get("deleting-item")?.toString();
@@ -142,12 +136,7 @@ export const action: ActionFunction = async ({ request }) => {
         settlements: [jsonNew],
         monthStr: month,
       });
-      const numeralMonth = koreanMonthToNumeral(month);
-      return redirect(
-        encodeURI(
-          `/admin/settlement-manage-detail?partner=${partnerName}&month=${numeralMonth}`
-        )
-      );
+      return json({ message: `수정이 완료되었습니다.` });
     }
   }
 
@@ -197,7 +186,7 @@ export default function AdminSettlementShare() {
   const [selectedItems, setSelectedItems] = useState<SettlementItem[]>([]); // 체크박스로 선택된 아이템 목록. 삭제, 수정 버튼 눌렀을 때 업데이트됨
   const [seller, setSeller] = useState<string>("all"); //판매처
   const [partnerName, setPartnerName] = useState<string>(""); //파트너명 (조회된 파트너명으로 시작, 입력창으로 수정 및 조회)
-  const [errorModalStr, setErrorModalStr] = useState<string>(""); //안내 모달창에서 뜨는 메세지
+  const [noticeModalStr, setNoticeModalStr] = useState<string>(""); //안내 모달창에서 뜨는 메세지
   const [editErrorStr, setEditErrorStr] = useState<string>(""); //수정 모달에서 뜨는 에러 메세지
 
   //정산내역 수정시 입력창 내용물
@@ -215,11 +204,12 @@ export default function AdminSettlementShare() {
   // 모달 열림 여부
   const [isDeleteModalOpened, setIsDeleteModalOpened] =
     useState<boolean>(false);
-  const [isErrorModalOpened, setIsErrorModalOpened] = useState<boolean>(false);
+  const [isNoticeModalOpened, setIsNoticeModalOpened] =
+    useState<boolean>(false);
   const [isEditModalOpened, setIsEditModalOpened] = useState<boolean>(false);
 
   const formRef = useRef<HTMLFormElement>(null);
-
+  const actionData = useActionData();
   const loaderData = useLoaderData();
   const submit = useSubmit();
 
@@ -333,6 +323,13 @@ export default function AdminSettlementShare() {
       setPartnerName("");
     }
   }, [loaderData]);
+
+  useEffect(() => {
+    if (actionData !== undefined && actionData !== null) {
+      setNoticeModalStr(actionData.message);
+      setIsNoticeModalOpened(true);
+    }
+  }, [actionData]);
 
   function onItemCheck(index: number, isChecked: boolean) {
     itemsChecked[index] = isChecked;
@@ -448,8 +445,8 @@ export default function AdminSettlementShare() {
     <>
       {/* 안내용 모달 */}
       <BasicModal
-        opened={isErrorModalOpened}
-        onClose={() => setIsErrorModalOpened(false)}
+        opened={isNoticeModalOpened}
+        onClose={() => setIsNoticeModalOpened(false)}
       >
         <div
           style={{
@@ -458,10 +455,10 @@ export default function AdminSettlementShare() {
             fontWeight: "700",
           }}
         >
-          {errorModalStr}
+          {noticeModalStr}
           <div style={{ height: "20px" }} />
           <div style={{ display: "flex", justifyContent: "center" }}>
-            <ModalButton onClick={() => setIsErrorModalOpened(false)}>
+            <ModalButton onClick={() => setIsNoticeModalOpened(false)}>
               확인
             </ModalButton>
           </div>
@@ -731,8 +728,8 @@ export default function AdminSettlementShare() {
                   if (updatedList.length > 0) {
                     setIsDeleteModalOpened(true);
                   } else {
-                    setErrorModalStr("선택된 정산내역이 없습니다.");
-                    setIsErrorModalOpened(true);
+                    setNoticeModalStr("선택된 정산내역이 없습니다.");
+                    setIsNoticeModalOpened(true);
                   }
                 }}
               >
@@ -745,11 +742,11 @@ export default function AdminSettlementShare() {
                     updateEditItems(updatedList[0]);
                     setIsEditModalOpened(true);
                   } else if (updatedList.length == 0) {
-                    setErrorModalStr("선택된 정산내역이 없습니다.");
-                    setIsErrorModalOpened(true);
+                    setNoticeModalStr("선택된 정산내역이 없습니다.");
+                    setIsNoticeModalOpened(true);
                   } else {
-                    setErrorModalStr("정산내역 수정은 1개씩만 가능합니다.");
-                    setIsErrorModalOpened(true);
+                    setNoticeModalStr("정산내역 수정은 1개씩만 가능합니다.");
+                    setIsNoticeModalOpened(true);
                   }
                 }}
               >

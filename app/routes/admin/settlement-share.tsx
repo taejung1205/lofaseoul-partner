@@ -1,10 +1,5 @@
-import {
-  ActionFunction,
-  json,
-  LoaderFunction,
-  redirect,
-} from "@remix-run/node";
-import { useLoaderData, useSubmit } from "@remix-run/react";
+import { ActionFunction, json, LoaderFunction } from "@remix-run/node";
+import { useActionData, useLoaderData, useSubmit } from "@remix-run/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import styled from "styled-components";
 import * as xlsx from "xlsx";
@@ -80,7 +75,7 @@ export const action: ActionFunction = async ({ request }) => {
       const jsonArr: SettlementItem[] = JSON.parse(settlement);
       console.log(jsonArr);
       await addSettlements({ settlements: jsonArr, monthStr: month });
-      return redirect("/admin/settlement-share");
+      return json({ message: `${month} 정산내역 공유가 완료되었습니다.` });
     }
   }
 
@@ -100,13 +95,15 @@ export default function AdminSettlementShare() {
   const [selectedDate, setSelectedDate] = useState<Date>();
   const [selectedMonthStr, setSelectedMonthStr] = useState<string>();
   const [fileName, setFileName] = useState<string>("");
-  const [isErrorModalOpened, setIsErrorModalOpened] = useState<boolean>(false);
+  const [isNoticeModalOpened, setIsNoticeModalOpened] =
+    useState<boolean>(false);
   const [isShareModalOpened, setIsShareModalOpened] = useState<boolean>(false);
 
-  const [errorStr, setErrorStr] = useState<string>("에러");
+  const [noticeModalStr, setNoticeModalStr] = useState<string>("에러");
 
   const submit = useSubmit();
   const loaderData = useLoaderData();
+  const actionData = useActionData();
   const sharedMonthes: string[] = loaderData.monthes;
   const partnerProfiles = useMemo(() => {
     let map = new Map();
@@ -131,6 +128,13 @@ export default function AdminSettlementShare() {
       setSelectedMonthStr(dateToKoreanMonth(selectedDate));
     }
   }, [selectedDate]);
+
+  useEffect(() => {
+    if (actionData !== undefined && actionData !== null) {
+      setNoticeModalStr(actionData.message);
+      setIsNoticeModalOpened(true);
+    }
+  }, [actionData]);
 
   function onItemCheck(index: number, isChecked: boolean) {
     itemsChecked[index] = isChecked;
@@ -180,8 +184,8 @@ export default function AdminSettlementShare() {
 
           let isValid = isSettlementItemValid(item);
           if (!isValid) {
-            setErrorStr("유효하지 않은 엑셀 파일입니다.");
-            setIsErrorModalOpened(true);
+            setNoticeModalStr("유효하지 않은 엑셀 파일입니다.");
+            setIsNoticeModalOpened(true);
             setFileName("");
             setItems([]);
             return false;
@@ -191,10 +195,10 @@ export default function AdminSettlementShare() {
 
           let nameResult = setSettlementPartnerName(item);
           if (!nameResult || item.partnerName.length == 0) {
-            setErrorStr(
+            setNoticeModalStr(
               "유효하지 않은 엑셀 파일입니다.\n상품명에 파트너 이름이 들어있는지 확인해주세요."
             );
-            setIsErrorModalOpened(true);
+            setIsNoticeModalOpened(true);
             setFileName("");
             setItems([]);
             return false;
@@ -202,10 +206,10 @@ export default function AdminSettlementShare() {
 
           const partnerProfile = partnerProfiles.get(item.partnerName);
           if (partnerProfile === undefined) {
-            setErrorStr(
+            setNoticeModalStr(
               `유효하지 않은 엑셀 파일입니다.\n상품명의 파트너가 계약 업체 목록에 있는지 확인해주세요. (${item.partnerName})`
             );
-            setIsErrorModalOpened(true);
+            setIsNoticeModalOpened(true);
             setFileName("");
             setItems([]);
             return false;
@@ -225,8 +229,8 @@ export default function AdminSettlementShare() {
   return (
     <>
       <BasicModal
-        opened={isErrorModalOpened}
-        onClose={() => setIsErrorModalOpened(false)}
+        opened={isNoticeModalOpened}
+        onClose={() => setIsNoticeModalOpened(false)}
       >
         <div
           style={{
@@ -235,10 +239,10 @@ export default function AdminSettlementShare() {
             fontWeight: "700",
           }}
         >
-          {errorStr}
+          {noticeModalStr}
           <div style={{ height: "20px" }} />
           <div style={{ display: "flex", justifyContent: "center" }}>
-            <ModalButton onClick={() => setIsErrorModalOpened(false)}>
+            <ModalButton onClick={() => setIsNoticeModalOpened(false)}>
               확인
             </ModalButton>
           </div>
@@ -275,8 +279,8 @@ export default function AdminSettlementShare() {
                 if (settlementList.length > 0) {
                   shareSettlement(settlementList);
                 } else {
-                  setErrorStr("선택된 정산내역이 없습니다.");
-                  setIsErrorModalOpened(true);
+                  setNoticeModalStr("선택된 정산내역이 없습니다.");
+                  setIsNoticeModalOpened(true);
                 }
 
                 setIsShareModalOpened(false);

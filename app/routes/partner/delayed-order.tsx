@@ -1,7 +1,7 @@
 import { PageLayout } from "~/components/page_layout";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useLoaderData, useSubmit } from "@remix-run/react";
+import { useActionData, useLoaderData, useSubmit } from "@remix-run/react";
 import {
   ActionFunction,
   json,
@@ -50,7 +50,7 @@ export const action: ActionFunction = async ({ request }) => {
       await shareDelayedWaybills({
         waybills: jsonArr,
       });
-      return redirect(encodeURI(`/partner/delayed-order`));
+      return json({ message: `운송장 입력이 완료되었습니다.` });
     }
   }
 
@@ -71,18 +71,18 @@ export const loader: LoaderFunction = async ({ request }) => {
 };
 
 export default function PartnerDelayedOrder() {
-  const [errorModalStr, setErrorModalStr] = useState<string>(""); //안내 모달창에서 뜨는 메세지
+  const [noticeModalStr, setNoticeModalStr] = useState<string>(""); //안내 모달창에서 뜨는 메세지
   const [selectedItems, setSelectedItems] = useState<OrderItem[]>([]); // 체크박스로 선택된 아이템 목록. 삭제, 수정 버튼 눌렀을 때 업데이트됨
   const [itemsChecked, setItemsChecked] = useState<boolean[]>([]); //체크된 정산내역 index 배열
   const [items, setItems] = useState<OrderItem[]>([]); //로딩된 전체 정산내역 아이템 리스트
 
-  const [errorStr, setErrorStr] = useState<string>("");
-
-  const [isErrorModalOpened, setIsErrorModalOpened] = useState<boolean>(false);
+  const [isNoticeModalOpened, setIsNoticeModalOpened] =
+    useState<boolean>(false);
   const [isShareModalOpened, setIsShareModalOpened] = useState<boolean>(false);
 
   const submit = useSubmit();
   const loaderData = useLoaderData();
+  const actionData = useActionData();
   const formRef = useRef<HTMLFormElement>(null);
 
   //loaderData에서 불러온 에러 정보를 바탕으로 한 에러 메세지
@@ -101,6 +101,13 @@ export default function PartnerDelayedOrder() {
       setItems(loaderData.orders);
     }
   }, [loaderData]);
+
+  useEffect(() => {
+    if (actionData !== undefined && actionData !== null) {
+      setNoticeModalStr(actionData.message);
+      setIsNoticeModalOpened(true);
+    }
+  }, [actionData]);
 
   //체크박스로 선택된 정산내역을 업뎃합니다. (삭제, 수정 버튼 클릭시 발생)
   // 수정된 리스트를 반환합니다.
@@ -150,8 +157,8 @@ export default function PartnerDelayedOrder() {
     <>
       {/* 안내용 모달 */}
       <BasicModal
-        opened={isErrorModalOpened}
-        onClose={() => setIsErrorModalOpened(false)}
+        opened={isNoticeModalOpened}
+        onClose={() => setIsNoticeModalOpened(false)}
       >
         <div
           style={{
@@ -160,10 +167,10 @@ export default function PartnerDelayedOrder() {
             fontWeight: "700",
           }}
         >
-          {errorStr}
+          {noticeModalStr}
           <div style={{ height: "20px" }} />
           <div style={{ display: "flex", justifyContent: "center" }}>
-            <ModalButton onClick={() => setIsErrorModalOpened(false)}>
+            <ModalButton onClick={() => setIsNoticeModalOpened(false)}>
               확인
             </ModalButton>
           </div>
@@ -227,14 +234,14 @@ export default function PartnerDelayedOrder() {
                   onClick={() => {
                     const updatedList = updateCheckedItems();
                     if (updatedList == null) {
-                      setErrorStr(
+                      setNoticeModalStr(
                         "선택한 항목의 택배사, 송장번호를 확인해주세요."
                       );
-                      setIsErrorModalOpened(true);
+                      setIsNoticeModalOpened(true);
                     } else {
                       if (updatedList.length == 0) {
-                        setErrorStr("선택된 정산내역이 없습니다.");
-                        setIsErrorModalOpened(true);
+                        setNoticeModalStr("선택된 정산내역이 없습니다.");
+                        setIsNoticeModalOpened(true);
                       } else {
                         setIsShareModalOpened(true);
                       }
