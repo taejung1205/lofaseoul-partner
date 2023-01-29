@@ -176,8 +176,9 @@ export default function AdminOrderShare() {
             customsCode: element.통관부호 ?? "",
             deliveryRequest: element.배송요청사항 ?? "",
             managementNumber: (element.관리번호)?.toString(),
-            shippingCompanyNumber: "",
+            shippingCompany: "",
             waybillNumber: "",
+            waybillSharedDate: ""
           };
 
          
