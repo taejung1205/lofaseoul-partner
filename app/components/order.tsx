@@ -20,7 +20,7 @@ export type OrderItem = {
   customsCode: string;
   deliveryRequest: string;
   managementNumber: string; //관리번호
-  shippingCompanyNumber: string;
+  shippingCompany: string;
   waybillNumber: string;
   partnerName: string;
 };
@@ -153,7 +153,7 @@ function OrderItem({
 }) {
   const [isChecked, setIsChecked] = useState<boolean>(check);
   const [shippingCompany, setShippingCompany] = useState<string>(
-    item.shippingCompanyNumber
+    item.shippingCompany
   );
   const [waybillNumber, setWaybillNumber] = useState<string>(
     item.waybillNumber
@@ -164,7 +164,7 @@ function OrderItem({
   }, [check]);
 
   useEffect(() => {
-    setShippingCompany(item.shippingCompanyNumber);
+    setShippingCompany(item.shippingCompany);
     setWaybillNumber(item.waybillNumber);
   }, [item]);
 

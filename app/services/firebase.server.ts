@@ -653,7 +653,7 @@ export async function deleteOrders({
       where("productName", "==", item.productName),
       where("receiver", "==", item.receiver),
       where("seller", "==", item.seller),
-      where("shippingCompanyNumber", "==", item.shippingCompanyNumber),
+      where("shippingCompany", "==", item.shippingCompany),
       where("waybillNumber", "==", item.waybillNumber),
       where("zipCode", "==", item.zipCode),
       limit(1)
@@ -712,7 +712,7 @@ export async function shareWaybills({
     );
     const querySnap = await getDocs(idQuery);
     querySnap.forEach(async (doc) => {
-      batch.update(doc.ref, {"shippingCompanyNumber": item.shippingCompanyNumber, "waybillNumber": item.waybillNumber});
+      batch.update(doc.ref, {"shippingCompany": item.shippingCompany, "waybillNumber": item.waybillNumber});
     });
   }
 

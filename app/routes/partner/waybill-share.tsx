@@ -206,7 +206,7 @@ export default function AdminOrderList() {
   }
 
   function onItemShippingCompanySelect(index: number, shippingCompany: string) {
-    items[index].shippingCompanyNumber = shippingCompany;
+    items[index].shippingCompany = shippingCompany;
   }
 
   function onItemWaybillNumberEdit(index: number, waybillNumber: string) {
@@ -221,7 +221,7 @@ export default function AdminOrderList() {
     for (let i = 0; i < items.length; i++) {
       if (itemsChecked[i]) {
         if (
-          items[i].shippingCompanyNumber.length == 0 ||
+          items[i].shippingCompany.length == 0 ||
           items[i].waybillNumber.length == 0
         ) {
           return null;
@@ -266,7 +266,7 @@ export default function AdminOrderList() {
             customsCode: element.통관부호 ?? "",
             deliveryRequest: element.배송요청사항 ?? "",
             managementNumber: element.관리번호?.toString(),
-            shippingCompanyNumber: element.배송사코드 ?? "",
+            shippingCompany: element.배송사코드 ?? "",
             waybillNumber: element.송장번호 ?? "",
           };
 
@@ -306,10 +306,10 @@ export default function AdminOrderList() {
             return false;
           }
 
-          if (!PossibleShippingCompanies.includes(item.shippingCompanyNumber)) {
+          if (!PossibleShippingCompanies.includes(item.shippingCompany)) {
             warningMessage =
               "택배사 이름이 잘못 입력된 운송장이 있습니다. 확인 및 수정 후 공유해주세요.";
-            item.shippingCompanyNumber = "";
+            item.shippingCompany = "";
           }
 
           array.push(item);
@@ -389,7 +389,7 @@ export default function AdminOrderList() {
       {
         column: "배송사코드",
         type: String,
-        value: (item: OrderItem) => item.shippingCompanyNumber,
+        value: (item: OrderItem) => item.shippingCompany,
         width: 15,
       },
       {
