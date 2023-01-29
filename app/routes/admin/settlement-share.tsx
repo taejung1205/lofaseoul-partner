@@ -15,7 +15,7 @@ import { PartnerProfile } from "~/components/partner_profile";
 import {
   isSettlementItemValid,
   setSettlementPartnerName,
-  setSellerIfLofa,
+  adjustSellerName,
   setSettlementFee,
   SettlementTableMemo,
 } from "~/components/settlement_table";
@@ -187,7 +187,7 @@ export default function AdminSettlementShare() {
             return false;
           }
 
-          setSellerIfLofa(item);
+          adjustSellerName(item);
 
           let nameResult = setSettlementPartnerName(item);
           if (!nameResult || item.partnerName.length == 0) {

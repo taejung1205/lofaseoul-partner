@@ -10,7 +10,7 @@ import {
   OrderItem,
   OrderTableMemo,
   setOrderPartnerName,
-  setSellerIfLofa,
+  adjustSellerName,
 } from "~/components/order";
 import * as xlsx from "xlsx";
 import { useLoaderData, useSubmit } from "@remix-run/react";
@@ -193,7 +193,7 @@ export default function AdminOrderShare() {
             return false;
           }
 
-          setSellerIfLofa(item);
+          adjustSellerName(item);
 
           let nameResult = setOrderPartnerName(item);
 

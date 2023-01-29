@@ -20,7 +20,7 @@ import {
   OrderItem,
   OrderTable,
   setOrderPartnerName,
-  setSellerIfLofa,
+  adjustSellerName,
 } from "~/components/order";
 import styled from "styled-components";
 import {
@@ -282,7 +282,7 @@ export default function AdminOrderList() {
             return false;
           }
 
-          setSellerIfLofa(item);
+          adjustSellerName(item);
 
           let nameResult = setOrderPartnerName(item);
 

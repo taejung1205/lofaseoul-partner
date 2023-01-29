@@ -18,7 +18,7 @@ import {
 import { PossibleSellers, SellerSelect } from "~/components/seller";
 import {
   isSettlementItemValid,
-  setSellerIfLofa,
+  adjustSellerName,
   setSettlementPartnerName,
   SettlementItem,
   SettlementTable,
@@ -404,7 +404,7 @@ export default function AdminSettlementShare() {
       return null;
     }
 
-    setSellerIfLofa(newSettlement);
+    adjustSellerName(newSettlement);
 
     const nameResult = setSettlementPartnerName(newSettlement);
     if (!nameResult || newSettlement.partnerName.length == 0) {
