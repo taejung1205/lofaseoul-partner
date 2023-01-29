@@ -196,7 +196,7 @@ export default function AdminSettlementShare() {
   const [items, setItems] = useState<SettlementItem[]>([]); //로딩된 전체 정산내역 아이템 리스트
   const [selectedItems, setSelectedItems] = useState<SettlementItem[]>([]); // 체크박스로 선택된 아이템 목록. 삭제, 수정 버튼 눌렀을 때 업데이트됨
   const [seller, setSeller] = useState<string>("all"); //판매처
-  const [partnerName, setPartnerName] = useState<string>(); //파트너명 (조회된 파트너명으로 시작, 입력창으로 수정 및 조회)
+  const [partnerName, setPartnerName] = useState<string>(""); //파트너명 (조회된 파트너명으로 시작, 입력창으로 수정 및 조회)
   const [errorModalStr, setErrorModalStr] = useState<string>(""); //안내 모달창에서 뜨는 메세지
   const [editErrorStr, setEditErrorStr] = useState<string>(""); //수정 모달에서 뜨는 에러 메세지
 
@@ -691,7 +691,11 @@ export default function AdminSettlementShare() {
               required
             />
             <Link
-              to={`/admin/settlement-manage-detail?month=${monthNumeral}&partner=${partnerName}`}
+              to={
+                partnerName.length > 0
+                  ? `/admin/settlement-manage-detail?month=${monthNumeral}&partner=${partnerName}`
+                  : `/admin/settlement-manage-detail?month=${monthNumeral}`
+              }
             >
               <GetListButton>조회하기</GetListButton>
             </Link>
