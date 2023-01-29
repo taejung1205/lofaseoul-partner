@@ -11,15 +11,15 @@ import {
   orderBy,
   query,
   setDoc,
+  Timestamp,
   where,
   writeBatch,
 } from "firebase/firestore";
 import { SettlementItem } from "~/components/settlement_table";
 import { PartnerProfile } from "~/components/partner_profile";
 import { PossibleSellers } from "~/components/seller";
-import { dateToDayStr } from "~/components/date";
+import { dateToDayStr, dayStrToDate } from "~/components/date";
 import { OrderItem } from "~/components/order";
-import { createUser } from "./auth.server";
 import {
   createAuthAccount,
   deleteAuthAccount,
@@ -563,10 +563,18 @@ export async function addOrders({
   const time = new Date().getTime();
 
   orders.forEach((item, index) => {
-    //items에 해당 정산아이템 추가
+    //orders의 해당 날짜 items에 해당 주문건 아이템 추가
     const itemDocName = `${time}_${index}`;
     let itemDocRef = doc(firestore, `orders/${dayStr}/items`, itemDocName);
     batch.set(itemDocRef, item);
+
+    //지연주문건에, 주문건 등록 날짜 (Timestamp) 추가해 해당 아이템 추가
+    // (id를 똑같이 쓰므로 함께 삭제하거나 운송장 기입할 때 같은 id 삭제하면 됨)
+    const date = dayStrToDate(dayStr);
+    const timestamp = Timestamp.fromDate(date);
+    const delayedOrderItem = { ...item, orderTimestamp: timestamp };
+    let delayedOrderItemDocRef = doc(firestore, `delayed-orders`, itemDocName);
+    batch.set(delayedOrderItemDocRef, delayedOrderItem);
   });
 
   await batch.commit();
@@ -635,7 +643,7 @@ export async function deleteOrders({
   for (let i = 0; i < orders.length; i++) {
     const item = orders[i];
 
-    //items에 해당 정산아이템 삭제
+    //order items에 해당 정산아이템 삭제
     const ordersRef = collection(firestore, `orders/${dayStr}/items`);
 
     const idQuery = query(
@@ -659,18 +667,25 @@ export async function deleteOrders({
       limit(1)
     );
     const querySnap = await getDocs(idQuery);
-    querySnap.forEach(async (doc) => {
-      batch.delete(doc.ref);
+    querySnap.forEach(async (document) => {
+      const docName = document.id;
+      batch.delete(document.ref);
+
+      //지연주문건에서도 삭제
+      let delayedOrderItemDocRef = doc(firestore, `delayed-orders`, docName);
+      batch.delete(delayedOrderItemDocRef);
     });
   }
 
   batch.commit();
 }
 
-
 /**
- * 해당 주문서 내역들을 삭제합니다
- * @param dayStr: 날짜 (XXXX-XX-XX), orders: 삭제할 주문서 목록
+ * 운송장이 기입된 주문서들을 공유합니다.
+ * @param dayStr: 날짜 (XXXX-XX-XX), orders: 운송장 기입된 주문서 목록
+ * 1. 해당 주문서의 운송장 내용이 업데이트되고,
+ * 2. 그 주문서에 해당하는 지연주문건이 삭제되며,
+ * 3. 운송장을 공유한 날짜에 완료운송장 항목을 추가합니다. (수정일 경우 삭제 후 재등록)
  */
 export async function shareWaybills({
   dayStr,
@@ -680,11 +695,14 @@ export async function shareWaybills({
   dayStr: string;
 }) {
   if (orders.length == 0) {
-    console.log("error: settlement length = 0");
-    return null;
+    return "오류: 입력된 운송장이 없습니다.";
   }
 
   const batch = writeBatch(firestore);
+
+  const today = dateToDayStr(new Date());
+
+  let result = true;
 
   for (let i = 0; i < orders.length; i++) {
     const item = orders[i];
@@ -692,6 +710,7 @@ export async function shareWaybills({
     //items에 해당 주문서 아이템 찾은 후 택배사, 송장번호 정보 기입
     const ordersRef = collection(firestore, `orders/${dayStr}/items`);
 
+    //기존 주문서 탐색
     const idQuery = query(
       ordersRef,
       where("amount", "==", item.amount),
@@ -711,10 +730,57 @@ export async function shareWaybills({
       limit(1)
     );
     const querySnap = await getDocs(idQuery);
-    querySnap.forEach(async (doc) => {
-      batch.update(doc.ref, {"shippingCompany": item.shippingCompany, "waybillNumber": item.waybillNumber});
+
+    if(querySnap.empty){
+      console.log("error: not found");
+      return "오류: 입력한 운송장에 해당하는 주문건을 찾을 수 없습니다."
+    }
+
+    querySnap.forEach(async (document) => {
+      const docName = document.id;
+
+      //기존에 운송장 입력한 기록이 있으면 날짜 확인
+      const prevWaybillSharedDate = document.data().waybillSharedDate;
+
+      //주문서에 운송장 내용 기입
+      batch.update(document.ref, {
+        shippingCompany: item.shippingCompany,
+        waybillNumber: item.waybillNumber,
+        waybillSharedDate: today,
+      });
+
+      //지연주문건에서도 삭제
+      let delayedOrderItemDocRef = doc(firestore, `delayed-orders`, docName);
+      batch.delete(delayedOrderItemDocRef);
+
+      //다른 날짜에 운송장이 이미 있으면 삭제
+      if (
+        prevWaybillSharedDate !== undefined &&
+        prevWaybillSharedDate.length > 0 &&
+        prevWaybillSharedDate !== today
+      ) {
+        let prevWaybillDocRef = doc(
+          firestore,
+          `waybills/${prevWaybillSharedDate}/items`,
+          docName
+        );
+        batch.delete(prevWaybillDocRef);
+      }
+
+      //완료운송장에 추가
+      let waybillItemDocRef = doc(
+        firestore,
+        `waybills/${today}/items`,
+        docName
+      );
+      batch.set(waybillItemDocRef, {...item, waybillSharedDate: today});
     });
   }
 
+  await setDoc(doc(firestore, `waybills/${today}`), {
+    isShared: true,
+  });
+
   batch.commit();
+  return true;
 }

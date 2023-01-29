@@ -23,6 +23,7 @@ export type OrderItem = {
   shippingCompany: string;
   waybillNumber: string;
   partnerName: string;
+  waybillSharedDate: string; //운송장이 마지막으로 공유된 날짜 XXXX-XX-XX
 };
 
 const OrderBox = styled.div`
@@ -61,7 +62,8 @@ const TextBox = styled.div`
 
 /**
  * 엑셀에서 읽어온 해당 주문서 아이템이 유효한 지를 확인합니다.
- * 옵션명, 파트너명, 송장번호, 주문자 번호, 통관부호, 배송요청사항, 배송사번호를 제외하고 비어있는 값이 있으면 유효하지 않은 값으로 간주합니다.
+ * 옵션명, 파트너명, 송장번호, 주문자 번호, 통관부호, 배송요청사항, 
+ * 배송사번호, 운송장 공유 일자를 제외하고 비어있는 값이 있으면 유효하지 않은 값으로 간주합니다.
  * @param item : SettlementItem
  * @returns
  *  유효할 경우 true, 아닐 경우 false

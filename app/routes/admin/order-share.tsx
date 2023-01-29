@@ -178,6 +178,7 @@ export default function AdminOrderShare() {
             managementNumber: (element.관리번호)?.toString(),
             shippingCompany: "",
             waybillNumber: "",
+            waybillSharedDate: ""
           };
 
          
