@@ -23,9 +23,7 @@ import {
   adjustSellerName,
 } from "~/components/order";
 import styled from "styled-components";
-import {
-  getPartnerOrders, addWaybills
-} from "~/services/firebase.server";
+import { getPartnerOrders, addWaybills } from "~/services/firebase.server";
 import writeXlsxFile from "write-excel-file";
 import { getCurrentUser } from "~/services/auth.server";
 import * as xlsx from "xlsx";
@@ -93,20 +91,20 @@ export function links() {
 }
 
 export const action: ActionFunction = async ({ request }) => {
-    const body = await request.formData();
-    const actionType = body.get("action")?.toString();
-    if (actionType === "share") {
-      const orders = body.get("order")?.toString();
-      const day = body.get("day")?.toString();
-      if (orders !== undefined && day !== undefined) {
-        const jsonArr: OrderItem[] = JSON.parse(orders);
-        await addWaybills({
-          orders: jsonArr,
-          dayStr: day,
-        });
-        return redirect(encodeURI(`/partner/waybill-share?day=${day}`));
-      }
+  const body = await request.formData();
+  const actionType = body.get("action")?.toString();
+  if (actionType === "share") {
+    const orders = body.get("order")?.toString();
+    const day = body.get("day")?.toString();
+    if (orders !== undefined && day !== undefined) {
+      const jsonArr: OrderItem[] = JSON.parse(orders);
+      await addWaybills({
+        orders: jsonArr,
+        dayStr: day,
+      });
+      return redirect(encodeURI(`/partner/waybill-share?day=${day}`));
     }
+  }
 
   return null;
 };
@@ -217,7 +215,7 @@ export default function AdminOrderList() {
   // 수정된 리스트를 반환합니다.
   // 만약 택배사 정보나 송장번호가 비어있는 아이템이 있다면, 대신 null을 반환합니다.
   function updateCheckedItems() {
-    let settlementList = [];
+    let waybillList = [];
     for (let i = 0; i < items.length; i++) {
       if (itemsChecked[i]) {
         if (
@@ -226,11 +224,11 @@ export default function AdminOrderList() {
         ) {
           return null;
         }
-        settlementList.push(items[i]);
+        waybillList.push(items[i]);
       }
     }
-    setSelectedItems(settlementList);
-    return settlementList;
+    setSelectedItems(waybillList);
+    return waybillList;
   }
 
   const readExcel = (e: any) => {
@@ -269,7 +267,7 @@ export default function AdminOrderList() {
             shippingCompany: element.배송사코드 ?? "",
             waybillNumber: element.송장번호 ?? "",
             waybillSharedDate: "",
-            orderSharedDate: ""
+            orderSharedDate: "",
           };
 
           let isValid = isOrderItemValid(item);
@@ -483,7 +481,9 @@ export default function AdminOrderList() {
           <br />
           {`운송장을 공유할 주문서 일자: ${loaderData.day}`}
           <br />
-          {"(해당 날짜에 공유된 주문건이 아닐 경우 운송장 공유가 정상적으로 이루어지지 않습니다.)"}
+          {
+            "(해당 날짜에 공유된 주문건이 아닐 경우 운송장 공유가 정상적으로 이루어지지 않습니다.)"
+          }
           <div style={{ height: "20px" }} />
           <div style={{ display: "flex", justifyContent: "center" }}>
             <ModalButton onClick={() => setIsShareModalOpened(false)}>
