@@ -182,7 +182,7 @@ export default function PartnerDelayedOrder() {
             fontWeight: "700",
           }}
         >
-          {`선택한 운송장 ${selectedItems.length}건을 수정 및 재공유하시겠습니까?`}
+          {`선택한 운송장 ${selectedItems.length}건을 공유하시겠습니까?`}
           <div style={{ height: "20px" }} />
           <div style={{ display: "flex", justifyContent: "center" }}>
             <ModalButton onClick={() => setIsShareModalOpened(false)}>
@@ -241,7 +241,7 @@ export default function PartnerDelayedOrder() {
                     }
                   }}
                 >
-                  수정 재전송
+                  운송장 공유
                 </SendNoticeButton>
               </div>
             </>
