@@ -2,6 +2,7 @@ import { Checkbox } from "@mantine/core";
 import React from "react";
 import { useEffect, useState } from "react";
 import styled from "styled-components";
+import { dayStrToDate } from "./date";
 import { PossibleSellers } from "./seller";
 import { ShippingCompanySelect } from "./shipping_company";
 
@@ -65,7 +66,7 @@ const TextBox = styled.div`
  * 엑셀에서 읽어온 해당 주문서 아이템이 유효한 지를 확인합니다.
  * 옵션명, 파트너명, 송장번호, 주문자 번호, 통관부호, 배송요청사항,
  * 배송사번호, 운송장 공유 일자를 제외하고 비어있는 값이 있으면 유효하지 않은 값으로 간주합니다.
- * @param item : SettlementItem
+ * @param item : OrderItem
  * @returns
  *  유효할 경우 true, 아닐 경우 false
  */
@@ -96,7 +97,6 @@ export function isOrderItemValid(item: OrderItem) {
     return true;
   }
 }
-
 
 /**
  * 판매처 유사명을 수정합니다
@@ -148,6 +148,7 @@ function OrderItem({
   checkboxRequired = true,
   isWaybill = false,
   isWaybillEdit = false,
+  isDelayedOrder = false,
   onItemShippingCompanySelect = (index: number, company: string) => {},
   onItemWaybillNumberEdit = (index: number, number: string) => {},
 }: {
@@ -156,8 +157,9 @@ function OrderItem({
   check: boolean;
   onItemCheck: (index: number, isChecked: boolean) => void;
   checkboxRequired?: boolean;
-  isWaybill?: boolean;
-  isWaybillEdit?: boolean;
+  isWaybill: boolean;
+  isWaybillEdit: boolean;
+  isDelayedOrder: boolean;
   onItemShippingCompanySelect?: (
     index: number,
     shippingCompany: string
@@ -197,6 +199,24 @@ function OrderItem({
         <></>
       )}
 
+      {isDelayedOrder ? (
+        <>
+          <TextBox
+            style={{ minWidth: "160px", fontSize: "16px", width: "160px" }}
+          >
+            {item.orderSharedDate}
+          </TextBox>
+          <TextBox style={{ minWidth: "80px", width: "80px", color: "red" }}>
+            {`+${Math.floor(
+              (new Date().getTime() -
+                dayStrToDate(item.orderSharedDate).getTime()) /
+                (1000 * 60 * 60 * 24)
+            )}`}
+          </TextBox>
+        </>
+      ) : (
+        <></>
+      )}
       <TextBox style={{ minWidth: "90px", width: "90px" }}>
         {item.managementNumber}
       </TextBox>
@@ -295,6 +315,7 @@ export function OrderTable({
   checkboxRequired = true,
   isWaybillEdit = false,
   isWaybill = false,
+  isDelayedOrder = false,
   onItemShippingCompanySelect,
   onItemWaybillNumberEdit,
 }: {
@@ -306,6 +327,7 @@ export function OrderTable({
   checkboxRequired?: boolean;
   isWaybillEdit?: boolean;
   isWaybill?: boolean;
+  isDelayedOrder?: boolean;
   onItemShippingCompanySelect?: (
     index: number,
     shippingCompany: string
@@ -337,11 +359,19 @@ export function OrderTable({
             <></>
           )}
 
+          {isDelayedOrder ? (
+            <>
+              <TextBox style={{ minWidth: "160px" }}>주문공유 날짜</TextBox>
+              <TextBox style={{ minWidth: "80px" }}>지연일</TextBox>
+            </>
+          ) : (
+            <></>
+          )}
           <TextBox style={{ minWidth: "90px" }}>관리번호</TextBox>
           <TextBox style={{ minWidth: "90px" }}>판매처</TextBox>
           <TextBox style={{ minWidth: "160px" }}>주문번호</TextBox>
 
-          {(isWaybillEdit || isWaybill) ? (
+          {isWaybillEdit || isWaybill ? (
             <>
               <TextBox style={{ minWidth: "160px" }}>택배사</TextBox>
               <TextBox style={{ minWidth: "160px" }}>송장번호</TextBox>
@@ -367,7 +397,7 @@ export function OrderTable({
           {items.map((item, index) => {
             return (
               <OrderItem
-                key={`SettlementItem-${index}`}
+                key={`OrderItem-${index}`}
                 index={index}
                 item={item}
                 check={itemsChecked[index] ?? false}
@@ -375,6 +405,7 @@ export function OrderTable({
                 checkboxRequired={checkboxRequired}
                 isWaybill={isWaybill}
                 isWaybillEdit={isWaybillEdit}
+                isDelayedOrder={isDelayedOrder}
                 onItemShippingCompanySelect={onItemShippingCompanySelect}
                 onItemWaybillNumberEdit={onItemWaybillNumberEdit}
               />

@@ -572,7 +572,7 @@ export async function addOrders({
     // (id를 똑같이 쓰므로 함께 삭제하거나 운송장 기입할 때 같은 id 삭제하면 됨)
     const date = dayStrToDate(dayStr);
     const timestamp = Timestamp.fromDate(date);
-    const delayedOrderItem = { ...item, orderTimestamp: timestamp };
+    const delayedOrderItem = { ...item, orderSharedDate: dayStr, orderTimestamp: timestamp };
     let delayedOrderItemDocRef = doc(firestore, `delayed-orders`, itemDocName);
     batch.set(delayedOrderItemDocRef, delayedOrderItem);
   });
@@ -924,4 +924,18 @@ export async function editWaybills({
 
   batch.commit();
   return true;
+}
+
+
+/**
+ * 모든 지연주문건을 불러옵니다
+ * @param 
+ * @returns
+ *  Array of OrderItem
+ */
+export async function getAllDelayedOrders() {
+  const ordersRef = collection(firestore, `delayed-orders`);
+  const ordersQuery = query(ordersRef, orderBy("orderTimestamp"));
+  const querySnap = await getDocs(ordersQuery);
+  return querySnap.docs.map((doc) => doc.data());
 }
