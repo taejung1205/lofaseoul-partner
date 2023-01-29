@@ -145,9 +145,9 @@ export const loader: LoaderFunction = async ({ request }) => {
 export default function AdminOrderList() {
   const [fileName, setFileName] = useState<string>("");
   const [selectedDate, setSelectedDate] = useState<Date>();
-  const [itemsChecked, setItemsChecked] = useState<boolean[]>([]); //체크된 정산내역 index 배열
+  const [itemsChecked, setItemsChecked] = useState<boolean[]>([]); //체크된 주문건 index 배열
   const [selectedItems, setSelectedItems] = useState<OrderItem[]>([]); // 체크박스로 선택된 아이템 목록. 삭제, 수정 버튼 눌렀을 때 업데이트됨
-  const [items, setItems] = useState<OrderItem[]>([]); //로딩된 전체 정산내역 아이템 리스트
+  const [items, setItems] = useState<OrderItem[]>([]); //로딩된 전체 주문건 아이템 리스트
 
   const [noticeModalStr, setNoticeModalStr] = useState<string>("");
 
@@ -225,7 +225,7 @@ export default function AdminOrderList() {
     items[index].waybillNumber = waybillNumber;
   }
 
-  //체크박스로 선택된 정산내역을 업뎃합니다. (삭제, 수정 버튼 클릭시 발생)
+  //체크박스로 선택된 주문건 업뎃합니다. (삭제, 수정 버튼 클릭시 발생)
   // 수정된 리스트를 반환합니다.
   // 만약 택배사 정보나 송장번호가 비어있는 아이템이 있다면, 대신 null을 반환합니다.
   function updateCheckedItems() {
@@ -570,7 +570,7 @@ export default function AdminOrderList() {
                       setIsNoticeModalOpened(true);
                     } else {
                       if (updatedList.length == 0) {
-                        setNoticeModalStr("선택된 정산내역이 없습니다.");
+                        setNoticeModalStr("선택된 운송장이 없습니다.");
                         setIsNoticeModalOpened(true);
                       } else {
                         setIsShareModalOpened(true);
@@ -584,7 +584,7 @@ export default function AdminOrderList() {
             </>
           ) : (
             <EmptySettlementBox>
-              정산내역이 존재하지 않습니다.
+              주문건이 존재하지 않습니다.
             </EmptySettlementBox>
           )
         ) : (

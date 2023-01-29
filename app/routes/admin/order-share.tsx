@@ -289,7 +289,7 @@ export default function AdminOrderShare() {
                 if (orderList.length > 0 && currentDay.length > 0) {
                   shareOrder(orderList, currentDay);
                 } else {
-                  setNoticeModalStr("선택된 정산내역이 없습니다.");
+                  setNoticeModalStr("선택된 주문건이 없습니다.");
                   setIsNoticeModalOpened(true);
                 }
 

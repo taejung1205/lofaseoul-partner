@@ -85,8 +85,8 @@ export default function AdminOrderList() {
   const [selectedDate, setSelectedDate] = useState<Date>();
   const [noticeModalStr, setNoticeModalStr] = useState<string>(""); //안내 모달창에서 뜨는 메세지
   const [selectedItems, setSelectedItems] = useState<OrderItem[]>([]); // 체크박스로 선택된 아이템 목록. 삭제, 수정 버튼 눌렀을 때 업데이트됨
-  const [itemsChecked, setItemsChecked] = useState<boolean[]>([]); //체크된 정산내역 index 배열
-  const [items, setItems] = useState<OrderItem[]>([]); //로딩된 전체 정산내역 아이템 리스트
+  const [itemsChecked, setItemsChecked] = useState<boolean[]>([]); //체크된 주문건 index 배열
+  const [items, setItems] = useState<OrderItem[]>([]); //로딩된 전체 주문건 아이템 리스트
 
   const [isDeleteModalOpened, setIsDeleteModalOpened] =
     useState<boolean>(false);
@@ -138,7 +138,7 @@ export default function AdminOrderList() {
     }
   }, [actionData]);
 
-  //정산건 삭제를 post합니다.
+  //주문건 삭제를 post합니다.
   function submitDelete(orderList: OrderItem[]) {
     const json = JSON.stringify(orderList);
     const formData = new FormData(formRef.current ?? undefined);
@@ -148,7 +148,7 @@ export default function AdminOrderList() {
     submit(formData, { method: "post" });
   }
 
-  //체크박스로 선택된 정산내역을 업뎃합니다. (삭제, 수정 버튼 클릭시 발생)
+  //체크박스로 선택된 주문내역을 업뎃합니다. (삭제, 수정 버튼 클릭시 발생)
   // 수정된 리스트를 반환합니다.
   function updateCheckedItems() {
     let settlementList = [];
@@ -197,7 +197,7 @@ export default function AdminOrderList() {
         </div>
       </BasicModal>
 
-      {/* 정산내역 삭제 모달 */}
+      {/* 주문내역 삭제 모달 */}
       <BasicModal
         opened={isDeleteModalOpened}
         onClose={() => setIsDeleteModalOpened(false)}
@@ -209,7 +209,7 @@ export default function AdminOrderList() {
             fontWeight: "700",
           }}
         >
-          {`선택된 정산내역 ${selectedItems.length}건을 삭제하시겠습니까?`}
+          {`선택된 주문건 ${selectedItems.length}건을 삭제하시겠습니까?`}
           <div style={{ height: "20px" }} />
           <div style={{ display: "flex", justifyContent: "center" }}>
             <ModalButton onClick={() => setIsDeleteModalOpened(false)}>
@@ -256,7 +256,7 @@ export default function AdminOrderList() {
                   if (updatedList.length > 0) {
                     setIsDeleteModalOpened(true);
                   } else {
-                    setNoticeModalStr("선택된 정산내역이 없습니다.");
+                    setNoticeModalStr("선택된 주문건이 없습니다.");
                     setIsNoticeModalOpened(true);
                   }
                 }}
@@ -266,7 +266,7 @@ export default function AdminOrderList() {
             </>
           ) : (
             <EmptySettlementBox>
-              정산내역이 존재하지 않습니다.
+              주문내역이 존재하지 않습니다.
             </EmptySettlementBox>
           )
         ) : (

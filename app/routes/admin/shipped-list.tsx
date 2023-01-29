@@ -351,7 +351,7 @@ export default function AdminShippedList() {
             </>
           ) : (
             <EmptySettlementBox>
-              정산내역이 존재하지 않습니다.
+              주문건 존재하지 않습니다.
             </EmptySettlementBox>
           )
         ) : (
