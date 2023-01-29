@@ -702,7 +702,7 @@ export async function shareWaybills({
 
   let nextDay = new Date();
   nextDay.setDate(nextDay.getDate() + 1);
-  const nextDayStr = dateToDayStr(new Date());
+  const nextDayStr = dateToDayStr(nextDay);
 
   for (let i = 0; i < orders.length; i++) {
     const item = orders[i];
