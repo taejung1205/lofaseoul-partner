@@ -78,7 +78,6 @@ export const action: ActionFunction = async ({ request }) => {
     const day = body.get("day")?.toString();
     if (order !== undefined && day !== undefined) {
       const jsonArr: OrderItem[] = JSON.parse(order);
-      console.log(jsonArr);
       await addOrders({ orders: jsonArr, dayStr: day });
       return redirect("/admin/order-share");
     }
@@ -178,7 +177,8 @@ export default function AdminOrderShare() {
             managementNumber: (element.관리번호)?.toString(),
             shippingCompany: "",
             waybillNumber: "",
-            waybillSharedDate: ""
+            waybillSharedDate: "",
+            orderSharedDate: ""
           };
 
          
@@ -223,7 +223,6 @@ export default function AdminOrderShare() {
 
           array.push(item);
         }
-        console.log(array);
         setItems(array);
       };
       reader.readAsArrayBuffer(e.target.files[0]);

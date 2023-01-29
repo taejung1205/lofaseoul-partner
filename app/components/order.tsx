@@ -23,6 +23,7 @@ export type OrderItem = {
   shippingCompany: string;
   waybillNumber: string;
   partnerName: string;
+  orderSharedDate: string; //주문서가 공유된 날짜 XXXX-XX-XX
   waybillSharedDate: string; //운송장이 마지막으로 공유된 날짜 XXXX-XX-XX
 };
 

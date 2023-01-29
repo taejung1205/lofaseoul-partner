@@ -566,7 +566,7 @@ export async function addOrders({
     //orders의 해당 날짜 items에 해당 주문건 아이템 추가
     const itemDocName = `${time}_${index}`;
     let itemDocRef = doc(firestore, `orders/${dayStr}/items`, itemDocName);
-    batch.set(itemDocRef, item);
+    batch.set(itemDocRef, {...item, orderSharedDate: dayStr});
 
     //지연주문건에, 주문건 등록 날짜 (Timestamp) 추가해 해당 아이템 추가
     // (id를 똑같이 쓰므로 함께 삭제하거나 운송장 기입할 때 같은 id 삭제하면 됨)

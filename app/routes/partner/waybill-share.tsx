@@ -268,7 +268,8 @@ export default function AdminOrderList() {
             managementNumber: element.관리번호?.toString(),
             shippingCompany: element.배송사코드 ?? "",
             waybillNumber: element.송장번호 ?? "",
-            waybillSharedDate: ""
+            waybillSharedDate: "",
+            orderSharedDate: ""
           };
 
           let isValid = isOrderItemValid(item);
