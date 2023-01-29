@@ -1,10 +1,10 @@
+import { ActionFunction, json, LoaderFunction } from "@remix-run/node";
 import {
-  ActionFunction,
-  json,
-  LoaderFunction,
-  redirect,
-} from "@remix-run/node";
-import { Link, useActionData, useLoaderData, useSubmit } from "@remix-run/react";
+  Link,
+  useActionData,
+  useLoaderData,
+  useSubmit,
+} from "@remix-run/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import styled from "styled-components";
 import {
@@ -12,7 +12,6 @@ import {
   MonthSelectPopover,
   dateToNumeralMonth,
   numeralMonthToKorean,
-  koreanMonthToNumeral,
   koreanMonthToDate,
 } from "~/components/date";
 import { PossibleSellers, SellerSelect } from "~/components/seller";
@@ -205,7 +204,8 @@ export default function AdminSettlementShare() {
   // 모달 열림 여부
   const [isDeleteModalOpened, setIsDeleteModalOpened] =
     useState<boolean>(false);
-  const [isNoticeModalOpened, setIsNoticeModalOpened] = useState<boolean>(false);
+  const [isNoticeModalOpened, setIsNoticeModalOpened] =
+    useState<boolean>(false);
   const [isEditModalOpened, setIsEditModalOpened] = useState<boolean>(false);
 
   const formRef = useRef<HTMLFormElement>(null);

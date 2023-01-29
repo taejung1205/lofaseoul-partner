@@ -3,7 +3,7 @@ import { dateToDayStr } from "~/components/date";
 
 import dayPickerStyles from "react-day-picker/dist/style.css";
 import styled from "styled-components";
-import { ActionFunction, json, LoaderFunction, redirect } from "@remix-run/node";
+import { ActionFunction, json, LoaderFunction } from "@remix-run/node";
 import { PageLayout } from "~/components/page_layout";
 import {
   isOrderItemValid,
@@ -101,7 +101,8 @@ export default function AdminOrderShare() {
 
   const [noticeModalStr, setNoticeModalStr] = useState<string>("");
 
-  const [isNoticeModalOpened, setIsNoticeModalOpened] = useState<boolean>(false);
+  const [isNoticeModalOpened, setIsNoticeModalOpened] =
+    useState<boolean>(false);
   const [isShareModalOpened, setIsShareModalOpened] = useState<boolean>(false);
 
   const loaderData = useLoaderData();
@@ -181,14 +182,12 @@ export default function AdminOrderShare() {
             ordererPhone: element["주문자 전화번호"] ?? "",
             customsCode: element.통관부호 ?? "",
             deliveryRequest: element.배송요청사항 ?? "",
-            managementNumber: (element.관리번호)?.toString(),
+            managementNumber: element.관리번호?.toString(),
             shippingCompany: "",
             waybillNumber: "",
             waybillSharedDate: "",
-            orderSharedDate: ""
+            orderSharedDate: "",
           };
-
-         
 
           let isValid = isOrderItemValid(item);
           if (!isValid) {
@@ -335,8 +334,10 @@ export default function AdminOrderShare() {
             <ShareButton
               onClick={() => {
                 const today = dateToDayStr(new Date());
-                if(today !== currentDay){
-                  setNoticeModalStr("날짜가 변경되었습니다. 페이지를 새로고침해주세요.");
+                if (today !== currentDay) {
+                  setNoticeModalStr(
+                    "날짜가 변경되었습니다. 페이지를 새로고침해주세요."
+                  );
                 } else {
                   setIsShareModalOpened(true);
                 }

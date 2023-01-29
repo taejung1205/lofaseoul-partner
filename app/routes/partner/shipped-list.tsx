@@ -2,7 +2,12 @@ import { PageLayout } from "~/components/page_layout";
 
 import dayPickerStyles from "react-day-picker/dist/style.css";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useActionData, useLoaderData, useSubmit } from "@remix-run/react";
+import {
+  Link,
+  useActionData,
+  useLoaderData,
+  useSubmit,
+} from "@remix-run/react";
 import {
   dateToDayStr,
   DaySelectPopover,
@@ -103,7 +108,8 @@ export default function AdminOrderList() {
 
   const [noticeModalStr, setNoticeModalStr] = useState<string>("");
 
-  const [isNoticeModalOpened, setIsNoticeModalOpened] = useState<boolean>(false);
+  const [isNoticeModalOpened, setIsNoticeModalOpened] =
+    useState<boolean>(false);
   const [isShareModalOpened, setIsShareModalOpened] = useState<boolean>(false);
 
   const submit = useSubmit();

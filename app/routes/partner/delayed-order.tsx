@@ -76,7 +76,8 @@ export default function PartnerDelayedOrder() {
   const [itemsChecked, setItemsChecked] = useState<boolean[]>([]); //체크된 정산내역 index 배열
   const [items, setItems] = useState<OrderItem[]>([]); //로딩된 전체 정산내역 아이템 리스트
 
-  const [isNoticeModalOpened, setIsNoticeModalOpened] = useState<boolean>(false);
+  const [isNoticeModalOpened, setIsNoticeModalOpened] =
+    useState<boolean>(false);
   const [isShareModalOpened, setIsShareModalOpened] = useState<boolean>(false);
 
   const submit = useSubmit();

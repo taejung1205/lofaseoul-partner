@@ -14,12 +14,7 @@ import {
   dayStrToDate,
 } from "~/components/date";
 import { GetListButton } from "~/components/button";
-import {
-  ActionFunction,
-  json,
-  LoaderFunction,
-  redirect,
-} from "@remix-run/node";
+import { ActionFunction, json, LoaderFunction } from "@remix-run/node";
 import { BasicModal, ModalButton } from "~/components/modal";
 import { OrderItem, OrderTable } from "~/components/order";
 import styled from "styled-components";

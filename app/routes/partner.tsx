@@ -4,12 +4,21 @@ import {
   useSubmit,
   useTransition,
 } from "@remix-run/react";
-import { ActionFunction, json, LoaderFunction, redirect } from "@remix-run/node";
+import {
+  ActionFunction,
+  json,
+  LoaderFunction,
+  redirect,
+} from "@remix-run/node";
 import styled from "styled-components";
 import { PartnerHeader } from "~/components/header";
 import { PartnerSidebar } from "~/components/sidebar";
 import { LoadingOverlay } from "@mantine/core";
-import { getCurrentUser, isCurrentUserAdmin, logout } from "~/services/auth.server";
+import {
+  getCurrentUser,
+  isCurrentUserAdmin,
+  logout,
+} from "~/services/auth.server";
 
 const PartnerPage = styled.div`
   width: inherit;
@@ -40,14 +49,13 @@ export const action: ActionFunction = async ({ request }) => {
  * @returns
  */
 export let loader: LoaderFunction = async ({ request }) => {
-
   const userAdmin = await isCurrentUserAdmin(); //로그인 안됐을 경우 null, 했을 경우 admin 여부
   if (userAdmin !== null) {
     if (userAdmin) {
       return redirect("/admin/dashboard");
     } else {
       const user = await getCurrentUser();
-      return json({name: user?.uid});
+      return json({ name: user?.uid });
     }
   } else {
     return redirect("/login");

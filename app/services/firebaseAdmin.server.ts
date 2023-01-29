@@ -8,7 +8,9 @@ let auth: Auth;
 
 const serviceAccount: ServiceAccount = {
   projectId: process.env.FIREBASE_PROJECT_ID,
-  privateKey:  process.env.FIREBASE_ADMIN_PRIVATE_KEY ? process.env.FIREBASE_ADMIN_PRIVATE_KEY.replace(/\\n/gm, "\n") :  undefined,
+  privateKey: process.env.FIREBASE_ADMIN_PRIVATE_KEY
+    ? process.env.FIREBASE_ADMIN_PRIVATE_KEY.replace(/\\n/gm, "\n")
+    : undefined,
   clientEmail: process.env.FIREBASE_ADMIN_CLIENT_EMAIL,
 };
 
@@ -34,15 +36,17 @@ export async function createAuthAccount(
   name: string
 ) {
   const email = idToEmail(id);
-  return auth.createUser({
-    email: email,
-    password: password,
-    displayName: name,
-    uid: name
-  }).catch((error) => {
-    console.log(error.code);
-    return error.message;
-  });
+  return auth
+    .createUser({
+      email: email,
+      password: password,
+      displayName: name,
+      uid: name,
+    })
+    .catch((error) => {
+      console.log(error.code);
+      return error.message;
+    });
 }
 
 /**
@@ -55,14 +59,16 @@ export async function updateAuthAccount(
   password: string
 ) {
   const email = idToEmail(id);
-  return auth.updateUser(name, {
-    email: email,
-    password: password,
-  }).catch((error) => {
-    console.log(error.code);
-    //TODO: code에 맞는 메세지 반환
-    return error.message;
-  });;
+  return auth
+    .updateUser(name, {
+      email: email,
+      password: password,
+    })
+    .catch((error) => {
+      console.log(error.code);
+      //TODO: code에 맞는 메세지 반환
+      return error.message;
+    });
 }
 
 /**

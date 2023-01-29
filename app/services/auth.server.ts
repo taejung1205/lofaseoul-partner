@@ -25,13 +25,16 @@ export async function createUser(id: string, password: string) {
     });
 }
 
-export async function login(id: string | undefined, password: string | undefined) {
-  if(id == undefined){
-    return "아이디를 입력해주세요."
+export async function login(
+  id: string | undefined,
+  password: string | undefined
+) {
+  if (id == undefined) {
+    return "아이디를 입력해주세요.";
   }
 
-  if(password == undefined){
-    return "비밀번호를 입력해주세요."
+  if (password == undefined) {
+    return "비밀번호를 입력해주세요.";
   }
 
   const email = idToEmail(id);
@@ -65,7 +68,6 @@ export async function logout() {
 
 onAuthStateChanged(auth, (user) => {
   if (user) {
-
     // console.log("User: ", user.uid);
     // ...
   } else {
@@ -76,7 +78,6 @@ onAuthStateChanged(auth, (user) => {
 });
 
 export async function getCurrentUser() {
-
   let user = auth.currentUser;
   onAuthStateChanged(auth, (user) => user);
 
@@ -95,18 +96,17 @@ export async function getCurrentUser() {
  * 로그인이 되지 않았을 경우 null return
  * 로그인이 됐을 경우, admin이면 true, 아니면 false
  */
-export async function isCurrentUserAdmin(){
-
+export async function isCurrentUserAdmin() {
   let user = auth.currentUser;
   onAuthStateChanged(auth, (user) => user);
 
   if (user) {
     const email = user.email;
-    if(email !== null){
+    if (email !== null) {
       const id = emailToId(email);
       const admin = await isAdmin(id);
       return admin;
-    } else  {
+    } else {
       return null;
     }
   } else {
