@@ -4,6 +4,7 @@ import {
   collection,
   deleteDoc,
   doc,
+  getCountFromServer,
   getDoc,
   getDocs,
   getFirestore,
@@ -1050,4 +1051,97 @@ export async function shareDelayedWaybills({
 
   batch.commit();
   return true;
+}
+
+/**
+ * 오늘 공유한 주문 건수를 불러옵니다.
+ * @returns
+ */
+export async function getTodayOrdersCount() {
+  const today = dateToDayStr(new Date());
+  const ordersRef = collection(firestore, `orders/${today}/items`);
+  const snapshot = await getCountFromServer(ordersRef);
+  return snapshot.data().count;
+}
+
+/**
+ * 해당 파트너가 오늘 공유받은 주문 건수를 불러옵니다.
+ * @param partnerName: 파트너명
+ * @returns
+ */
+export async function getPartnerTodayOrdersCount(partnerName: string) {
+  const today = dateToDayStr(new Date());
+  const ordersRef = collection(firestore, `orders/${today}/items`);
+  const orderQuery = query(ordersRef, where("partnerName", "==", partnerName));
+  const snapshot = await getCountFromServer(orderQuery);
+  return snapshot.data().count;
+}
+
+/**
+ * 이전날 공유된 (즉 오늘날로 등록된) 운송장 건수를 불러옵니다.
+ * @returns
+ */
+export async function getTodayWaybillsCount() {
+  const today = dateToDayStr(new Date());
+  const waybillsRef = collection(firestore, `waybills/${today}/items`);
+  const snapshot = await getCountFromServer(waybillsRef);
+  return snapshot.data().count;
+}
+
+/**
+ * 해당 파트너가 이전날 공유한 (즉 오늘날로 등록된) 운송장 건수를 불러옵니다.
+ * @param partnerName: 파트너명
+ * @returns
+ */
+export async function getPartnerTodayWaybillsCount(partnerName: string) {
+  const today = dateToDayStr(new Date());
+  const waybillsRef = collection(firestore, `waybills/${today}/items`);
+  const waybillQuery = query(
+    waybillsRef,
+    where("partnerName", "==", partnerName)
+  );
+  const snapshot = await getCountFromServer(waybillQuery);
+  return snapshot.data().count;
+}
+
+/**
+ * 지연일자가 일정일 이상인 주문건의 개수를 불러옵니다.
+ * @params day: 기준 지연일자
+ * @returns
+ */
+export async function getDelayedOrdersCount(day: number) {
+  const date = new Date();
+  date.setDate(date.getDate() - day);
+  const timestamp = Timestamp.fromDate(date);
+
+  const delayedRef = collection(firestore, "delayed-orders");
+  const delayQuery = query(
+    delayedRef,
+    where("orderTimestamp", "<=", timestamp)
+  );
+  const snapshot = await getCountFromServer(delayQuery);
+  return snapshot.data().count;
+}
+
+/**
+ * 지연일자가 일정일 이상인 주문건의 개수를 불러옵니다.
+ * @params day: 기준 지연일자, partnerName: 파트너명
+ * @returns
+ */
+export async function getPartnerDelayedOrdersCount(
+  day: number,
+  partnerName: string
+) {
+  const date = new Date();
+  date.setDate(date.getDate() - day);
+  const timestamp = Timestamp.fromDate(date);
+
+  const delayedRef = collection(firestore, "delayed-orders");
+  const delayQuery = query(
+    delayedRef,
+    where("orderTimestamp", "<=", timestamp),
+    where("partnerName", "==", partnerName)
+  );
+  const snapshot = await getCountFromServer(delayQuery);
+  return snapshot.data().count;
 }
