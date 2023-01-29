@@ -63,7 +63,7 @@ const TextBox = styled.div`
 
 /**
  * 엑셀에서 읽어온 해당 주문서 아이템이 유효한 지를 확인합니다.
- * 옵션명, 파트너명, 송장번호, 주문자 번호, 통관부호, 배송요청사항, 
+ * 옵션명, 파트너명, 송장번호, 주문자 번호, 통관부호, 배송요청사항,
  * 배송사번호, 운송장 공유 일자를 제외하고 비어있는 값이 있으면 유효하지 않은 값으로 간주합니다.
  * @param item : SettlementItem
  * @returns
@@ -139,6 +139,7 @@ function OrderItem({
   onItemCheck,
   checkboxRequired = true,
   isWaybill = false,
+  isWaybillEdit = false,
   onItemShippingCompanySelect = (index: number, company: string) => {},
   onItemWaybillNumberEdit = (index: number, number: string) => {},
 }: {
@@ -148,6 +149,7 @@ function OrderItem({
   onItemCheck: (index: number, isChecked: boolean) => void;
   checkboxRequired?: boolean;
   isWaybill?: boolean;
+  isWaybillEdit?: boolean;
   onItemShippingCompanySelect?: (
     index: number,
     shippingCompany: string
@@ -198,6 +200,22 @@ function OrderItem({
       </TextBox>
       {isWaybill ? (
         <>
+          <TextBox
+            style={{ minWidth: "160px", fontSize: "16px", width: "160px" }}
+          >
+            {item.shippingCompany}
+          </TextBox>
+          <TextBox
+            style={{ minWidth: "160px", fontSize: "12px", width: "160px" }}
+          >
+            {item.waybillNumber}
+          </TextBox>
+        </>
+      ) : (
+        <></>
+      )}
+      {isWaybillEdit ? (
+        <>
           <ShippingCompanySelect
             shippingCompany={shippingCompany}
             setShippingCompany={(val: string) => {
@@ -206,7 +224,13 @@ function OrderItem({
             }}
           />
           <input
-            style={{ minWidth: "160px", width: "160px", marginLeft: "10px", fontSize: "12px", height: "40px"}}
+            style={{
+              minWidth: "160px",
+              width: "160px",
+              marginLeft: "10px",
+              fontSize: "12px",
+              height: "40px",
+            }}
             value={waybillNumber}
             onChange={(e) => {
               setWaybillNumber(e.target.value);
@@ -261,6 +285,7 @@ export function OrderTable({
   onCheckAll,
   defaultAllCheck = true,
   checkboxRequired = true,
+  isWaybillEdit = false,
   isWaybill = false,
   onItemShippingCompanySelect,
   onItemWaybillNumberEdit,
@@ -271,6 +296,7 @@ export function OrderTable({
   onCheckAll: (isChecked: boolean) => void;
   defaultAllCheck: boolean;
   checkboxRequired?: boolean;
+  isWaybillEdit?: boolean;
   isWaybill?: boolean;
   onItemShippingCompanySelect?: (
     index: number,
@@ -307,7 +333,7 @@ export function OrderTable({
           <TextBox style={{ minWidth: "90px" }}>판매처</TextBox>
           <TextBox style={{ minWidth: "160px" }}>주문번호</TextBox>
 
-          {isWaybill ? (
+          {(isWaybillEdit || isWaybill) ? (
             <>
               <TextBox style={{ minWidth: "160px" }}>택배사</TextBox>
               <TextBox style={{ minWidth: "160px" }}>송장번호</TextBox>
@@ -340,6 +366,7 @@ export function OrderTable({
                 onItemCheck={onItemCheck}
                 checkboxRequired={checkboxRequired}
                 isWaybill={isWaybill}
+                isWaybillEdit={isWaybillEdit}
                 onItemShippingCompanySelect={onItemShippingCompanySelect}
                 onItemWaybillNumberEdit={onItemWaybillNumberEdit}
               />

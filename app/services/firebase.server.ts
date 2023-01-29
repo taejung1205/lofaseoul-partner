@@ -784,3 +784,43 @@ export async function shareWaybills({
   batch.commit();
   return true;
 }
+
+/**
+ * 해당 날짜의 모든 운송장 정보를 불러옵니다
+ * @param dayStr: 날짜 (XXXX-XX-XX)
+ * @returns
+ *  Array of OrderItem
+ */
+export async function getAllWaybills(dayStr: string) {
+  const ordersRef = collection(firestore, `waybills/${dayStr}/items`);
+  const ordersQuery = query(ordersRef, orderBy("managementNumber"));
+  const querySnap = await getDocs(ordersQuery);
+  return querySnap.docs.map((doc) => doc.data());
+}
+
+
+
+/**
+ * 해당 날짜의, 지정된 파트너의 운송장 정보를 불러옵니다
+ * @param dayStr: 날짜 (XXXX-XX-XX), partnerName: 파트너 이름
+ * @returns
+ *  Array of OrderItem
+ */
+export async function getPartnerWaybills({
+  dayStr,
+  partnerName,
+}: {
+  dayStr: string;
+  partnerName: string;
+}) {
+  const ordersRef = collection(firestore, `waybills/${dayStr}/items`);
+
+  const ordersQuery = query(
+    ordersRef,
+    where("partnerName", "==", partnerName),
+    orderBy("managementNumber")
+  );
+  const querySnap = await getDocs(ordersQuery);
+
+  return querySnap.docs.map((doc) => doc.data());
+}

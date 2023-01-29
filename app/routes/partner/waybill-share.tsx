@@ -533,7 +533,7 @@ export default function AdminOrderList() {
                 onItemCheck={onItemCheck}
                 onCheckAll={onCheckAll}
                 defaultAllCheck={false}
-                isWaybill={true}
+                isWaybillEdit={true}
                 onItemShippingCompanySelect={onItemShippingCompanySelect}
                 onItemWaybillNumberEdit={onItemWaybillNumberEdit}
               />
