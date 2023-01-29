@@ -629,6 +629,7 @@ export async function getPartnerOrders({
 
 /**
  * 해당 주문서 내역들을 삭제합니다
+ * 지연주문건과, 완료운송장도 함께 삭제합니다.
  * @param dayStr: 날짜 (XXXX-XX-XX), orders: 삭제할 주문서 목록
  */
 export async function deleteOrders({
@@ -679,6 +680,18 @@ export async function deleteOrders({
       //지연주문건에서도 삭제
       let delayedOrderItemDocRef = doc(firestore, `delayed-orders`, docName);
       batch.delete(delayedOrderItemDocRef);
+
+      //완료운송장도 있으면 삭제
+      const waybillSharedDate = document.data().waybillSharedDate;
+
+      if (waybillSharedDate.length > 0) {
+        let waybillItemDocRef = doc(
+          firestore,
+          `waybills/${waybillSharedDate}/items`,
+          docName
+        );
+        batch.delete(waybillItemDocRef);
+      }
     });
   }
 
