@@ -2,7 +2,12 @@ import { PageLayout } from "~/components/page_layout";
 
 import dayPickerStyles from "react-day-picker/dist/style.css";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useLoaderData, useSubmit } from "@remix-run/react";
+import {
+  Link,
+  useActionData,
+  useLoaderData,
+  useSubmit,
+} from "@remix-run/react";
 import {
   dateToDayStr,
   DaySelectPopover,
@@ -59,7 +64,7 @@ export const action: ActionFunction = async ({ request }) => {
         orders: jsonArr,
         dayStr: day,
       });
-      return redirect(encodeURI(`/admin/order-list?day=${day}`));
+      return json({ message: "삭제가 완료되었습니다." });
     }
   }
 
@@ -83,17 +88,19 @@ export const loader: LoaderFunction = async ({ request }) => {
 
 export default function AdminOrderList() {
   const [selectedDate, setSelectedDate] = useState<Date>();
-  const [errorModalStr, setErrorModalStr] = useState<string>(""); //안내 모달창에서 뜨는 메세지
+  const [noticeModalStr, setNoticeModalStr] = useState<string>(""); //안내 모달창에서 뜨는 메세지
   const [selectedItems, setSelectedItems] = useState<OrderItem[]>([]); // 체크박스로 선택된 아이템 목록. 삭제, 수정 버튼 눌렀을 때 업데이트됨
   const [itemsChecked, setItemsChecked] = useState<boolean[]>([]); //체크된 정산내역 index 배열
   const [items, setItems] = useState<OrderItem[]>([]); //로딩된 전체 정산내역 아이템 리스트
 
   const [isDeleteModalOpened, setIsDeleteModalOpened] =
     useState<boolean>(false);
-  const [isErrorModalOpened, setIsErrorModalOpened] = useState<boolean>(false);
+  const [isNoticeModalOpened, setIsNoticeModalOpened] =
+    useState<boolean>(false);
 
   const submit = useSubmit();
   const loaderData = useLoaderData();
+  const actionData = useActionData();
   const formRef = useRef<HTMLFormElement>(null);
 
   const selectedDayStr = useMemo(
@@ -128,6 +135,13 @@ export default function AdminOrderList() {
       setItems(loaderData.orders);
     }
   }, [loaderData]);
+
+  useEffect(() => {
+    if (actionData !== undefined && actionData !== null) {
+      setNoticeModalStr(actionData.message);
+      setIsNoticeModalOpened(true);
+    }
+  }, [actionData]);
 
   //정산건 삭제를 post합니다.
   function submitDelete(orderList: OrderItem[]) {
@@ -164,8 +178,8 @@ export default function AdminOrderList() {
     <>
       {/* 안내용 모달 */}
       <BasicModal
-        opened={isErrorModalOpened}
-        onClose={() => setIsErrorModalOpened(false)}
+        opened={isNoticeModalOpened}
+        onClose={() => setIsNoticeModalOpened(false)}
       >
         <div
           style={{
@@ -174,10 +188,14 @@ export default function AdminOrderList() {
             fontWeight: "700",
           }}
         >
-          {errorModalStr}
+          {noticeModalStr}
           <div style={{ height: "20px" }} />
           <div style={{ display: "flex", justifyContent: "center" }}>
-            <ModalButton onClick={() => setIsErrorModalOpened(false)}>
+            <ModalButton
+              onClick={() => {
+                setIsNoticeModalOpened(false);
+              }}
+            >
               확인
             </ModalButton>
           </div>
@@ -243,8 +261,8 @@ export default function AdminOrderList() {
                   if (updatedList.length > 0) {
                     setIsDeleteModalOpened(true);
                   } else {
-                    setErrorModalStr("선택된 정산내역이 없습니다.");
-                    setIsErrorModalOpened(true);
+                    setNoticeModalStr("선택된 정산내역이 없습니다.");
+                    setIsNoticeModalOpened(true);
                   }
                 }}
               >

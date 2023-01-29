@@ -32,20 +32,7 @@ const SendNoticeButton = styled.button`
 `;
 
 export const action: ActionFunction = async ({ request }) => {
-  // const body = await request.formData();
-  // const actionType = body.get("action")?.toString();
-  // if (actionType === "delete") {
-  //   const orders = body.get("order")?.toString();
-  //   const day = body.get("day")?.toString();
-  //   if (orders !== undefined && day !== undefined) {
-  //     const jsonArr: OrderItem[] = JSON.parse(orders);
-  //     await deleteOrders({
-  //       orders: jsonArr,
-  //       dayStr: day,
-  //     });
-  //     return redirect(encodeURI(`/admin/order-list?day=${day}`));
-  //   }
-  // }
+  //TODO: 알리고 메세지
 
   return null;
 };
@@ -150,7 +137,7 @@ export default function AdminDelayedOrder() {
             </ModalButton>
             <ModalButton
               onClick={async () => {
-                //submitDelete(selectedItems);
+                //TODO: 알리고 메세지
                 setIsDeleteModalOpened(false);
               }}
             >
