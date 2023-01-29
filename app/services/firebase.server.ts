@@ -687,7 +687,7 @@ export async function deleteOrders({
  * 2. 그 주문서에 해당하는 지연주문건이 삭제되며,
  * 3. 운송장을 공유한 날짜에 완료운송장 항목을 추가합니다. (수정일 경우 삭제 후 재등록)
  */
-export async function shareWaybills({
+export async function addWaybills({
   dayStr,
   orders,
 }: {
@@ -823,4 +823,105 @@ export async function getPartnerWaybills({
   const querySnap = await getDocs(ordersQuery);
 
   return querySnap.docs.map((doc) => doc.data());
+}
+
+
+/**
+ * 운송장을 수정하여 다시 공유합니다.
+ * @param dayStr: 운송장 공유 날짜 (XXXX-XX-XX), waybills: 운송장  목록
+ * 1. 해당 운송장 내용이 업데이트되고,
+ * 2. 운송장의 원 주문서를 수정합니다.
+ */
+export async function editWaybills({
+  dayStr,
+  waybills,
+}: {
+  waybills: OrderItem[];
+  dayStr: string;
+}) {
+  if (waybills.length == 0) {
+    return "오류: 입력된 운송장이 없습니다.";
+  }
+
+  const batch = writeBatch(firestore);
+
+  let nextDay = new Date();
+  nextDay.setDate(nextDay.getDate() + 1);
+  const nextDayStr = dateToDayStr(nextDay);
+
+  for (let i = 0; i < waybills.length; i++) {
+    const item = waybills[i];
+
+    const waybillsRef = collection(firestore, `waybills/${dayStr}/items`);
+
+    //기존 운송장 탐색
+    const idQuery = query(
+      waybillsRef,
+      where("amount", "==", item.amount),
+      where("customsCode", "==", item.customsCode),
+      where("deliveryRequest", "==", item.deliveryRequest),
+      where("managementNumber", "==", item.managementNumber),
+      where("optionName", "==", item.optionName),
+      where("orderNumber", "==", item.orderNumber),
+      where("orderer", "==", item.orderer),
+      where("ordererPhone", "==", item.ordererPhone),
+      where("partnerName", "==", item.partnerName),
+      where("phone", "==", item.phone),
+      where("productName", "==", item.productName),
+      where("receiver", "==", item.receiver),
+      where("seller", "==", item.seller),
+      where("zipCode", "==", item.zipCode),
+      limit(1)
+    );
+    const querySnap = await getDocs(idQuery);
+
+    if(querySnap.empty){
+      console.log("error: not found");
+      return "오류: 수정을 요청한 운송장을 찾을 수 없습니다."
+    }
+
+    querySnap.forEach(async (document) => {
+      const docName = document.id;
+
+      //운송장의 원 주문서가 공유된 날짜
+      const orderSharedDate = document.data().orderSharedDate;
+
+      //기존 운송장이 공유된 날짜가 다르면 그 운송장 삭제
+      if(dayStr !== nextDayStr){
+        batch.delete(document.ref);
+      }
+
+      //완료운송장에 추가(수정)
+      let waybillItemDocRef = doc(
+        firestore,
+        `waybills/${nextDayStr}/items`,
+        docName
+      );
+      
+      batch.set(waybillItemDocRef, {...item, waybillSharedDate: nextDayStr});
+
+      //원 주문서 수정
+
+      let orderItemDocRef = doc(
+        firestore,
+        `orders/${orderSharedDate}/items`,
+        docName
+      );
+
+      batch.update(orderItemDocRef, {
+        shippingCompany: item.shippingCompany,
+        waybillNumber: item.waybillNumber,
+        waybillSharedDate: nextDayStr,
+      });
+
+      
+    });
+  }
+
+  await setDoc(doc(firestore, `waybills/${nextDayStr}`), {
+    isShared: true,
+  });
+
+  batch.commit();
+  return true;
 }

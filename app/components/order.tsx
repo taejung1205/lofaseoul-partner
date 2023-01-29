@@ -256,10 +256,10 @@ function OrderItem({
       <TextBox style={{ minWidth: "400px", fontSize: "12px", width: "400px" }}>
         {item.address}
       </TextBox>
-      <TextBox style={{ minWidth: "150px", width: "150px" }}>
+      <TextBox style={{ minWidth: "160px", width: "160px" }}>
         {item.phone}
       </TextBox>
-      <TextBox style={{ minWidth: "150px", width: "150px" }}>
+      <TextBox style={{ minWidth: "160px", width: "160px" }}>
         {item.ordererPhone}
       </TextBox>
       <TextBox style={{ minWidth: "90px", width: "90px" }}>

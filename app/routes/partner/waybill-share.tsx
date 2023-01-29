@@ -24,7 +24,7 @@ import {
 } from "~/components/order";
 import styled from "styled-components";
 import {
-  getPartnerOrders, shareWaybills
+  getPartnerOrders, addWaybills
 } from "~/services/firebase.server";
 import writeXlsxFile from "write-excel-file";
 import { getCurrentUser } from "~/services/auth.server";
@@ -100,7 +100,7 @@ export const action: ActionFunction = async ({ request }) => {
       const day = body.get("day")?.toString();
       if (orders !== undefined && day !== undefined) {
         const jsonArr: OrderItem[] = JSON.parse(orders);
-        await shareWaybills({
+        await addWaybills({
           orders: jsonArr,
           dayStr: day,
         });
