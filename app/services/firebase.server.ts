@@ -700,9 +700,9 @@ export async function shareWaybills({
 
   const batch = writeBatch(firestore);
 
-  const today = dateToDayStr(new Date());
-
-  let result = true;
+  let nextDay = new Date();
+  nextDay.setDate(nextDay.getDate() + 1);
+  const nextDayStr = dateToDayStr(new Date());
 
   for (let i = 0; i < orders.length; i++) {
     const item = orders[i];
@@ -746,7 +746,7 @@ export async function shareWaybills({
       batch.update(document.ref, {
         shippingCompany: item.shippingCompany,
         waybillNumber: item.waybillNumber,
-        waybillSharedDate: today,
+        waybillSharedDate: nextDayStr,
       });
 
       //지연주문건에서도 삭제
@@ -757,7 +757,7 @@ export async function shareWaybills({
       if (
         prevWaybillSharedDate !== undefined &&
         prevWaybillSharedDate.length > 0 &&
-        prevWaybillSharedDate !== today
+        prevWaybillSharedDate !== nextDayStr
       ) {
         let prevWaybillDocRef = doc(
           firestore,
@@ -770,14 +770,14 @@ export async function shareWaybills({
       //완료운송장에 추가
       let waybillItemDocRef = doc(
         firestore,
-        `waybills/${today}/items`,
+        `waybills/${nextDayStr}/items`,
         docName
       );
-      batch.set(waybillItemDocRef, {...item, waybillSharedDate: today});
+      batch.set(waybillItemDocRef, {...item, waybillSharedDate: nextDayStr});
     });
   }
 
-  await setDoc(doc(firestore, `waybills/${today}`), {
+  await setDoc(doc(firestore, `waybills/${nextDayStr}`), {
     isShared: true,
   });
 
