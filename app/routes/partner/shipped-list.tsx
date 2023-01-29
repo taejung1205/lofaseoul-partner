@@ -17,12 +17,7 @@ import {
 } from "@remix-run/node";
 import { OrderItem, OrderTable } from "~/components/order";
 import styled from "styled-components";
-import {
-  getPartnerOrders,
-  addWaybills,
-  editWaybills,
-  getPartnerWaybills,
-} from "~/services/firebase.server";
+import { editWaybills, getPartnerWaybills } from "~/services/firebase.server";
 import { getCurrentUser } from "~/services/auth.server";
 import { BasicModal, ModalButton } from "~/components/modal";
 
@@ -101,7 +96,6 @@ export const loader: LoaderFunction = async ({ request }) => {
 };
 
 export default function AdminOrderList() {
-  const [fileName, setFileName] = useState<string>("");
   const [selectedDate, setSelectedDate] = useState<Date>();
   const [itemsChecked, setItemsChecked] = useState<boolean[]>([]); //체크된 정산내역 index 배열
   const [selectedItems, setSelectedItems] = useState<OrderItem[]>([]); // 체크박스로 선택된 아이템 목록. 삭제, 수정 버튼 눌렀을 때 업데이트됨
@@ -178,7 +172,7 @@ export default function AdminOrderList() {
   // 수정된 리스트를 반환합니다.
   // 만약 택배사 정보나 송장번호가 비어있는 아이템이 있다면, 대신 null을 반환합니다.
   function updateCheckedItems() {
-    let settlementList = [];
+    let waybillList = [];
     for (let i = 0; i < items.length; i++) {
       if (itemsChecked[i]) {
         if (
@@ -187,13 +181,12 @@ export default function AdminOrderList() {
         ) {
           return null;
         }
-        settlementList.push(items[i]);
+        waybillList.push(items[i]);
       }
     }
-    setSelectedItems(settlementList);
-    return settlementList;
+    setSelectedItems(waybillList);
+    return waybillList;
   }
-
   return (
     <>
       <BasicModal
@@ -219,7 +212,7 @@ export default function AdminOrderList() {
 
       <BasicModal
         opened={isShareModalOpened}
-        onClose={() => setIsShareModalOpened}
+        onClose={() => setIsShareModalOpened(false)}
       >
         <div
           style={{

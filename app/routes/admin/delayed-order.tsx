@@ -51,8 +51,6 @@ export const action: ActionFunction = async ({ request }) => {
 };
 
 export const loader: LoaderFunction = async ({ request }) => {
-  const url = new URL(request.url);
-
   const orders = await getAllDelayedOrders();
   return json({ orders: orders });
 };
