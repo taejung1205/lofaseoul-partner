@@ -2,7 +2,7 @@ import { PageLayout } from "~/components/page_layout";
 
 import dayPickerStyles from "react-day-picker/dist/style.css";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useLoaderData, useSubmit } from "@remix-run/react";
+import { Link, useActionData, useLoaderData, useSubmit } from "@remix-run/react";
 import {
   dateToDayStr,
   DaySelectPopover,
@@ -60,7 +60,7 @@ export const action: ActionFunction = async ({ request }) => {
         waybills: jsonArr,
         dayStr: day,
       });
-      return redirect(encodeURI(`/partner/shipped-list?day=${day}`));
+      return json({ message: `운송장 수정이 완료되었습니다.` });
     }
   }
 
@@ -101,12 +101,13 @@ export default function AdminOrderList() {
   const [selectedItems, setSelectedItems] = useState<OrderItem[]>([]); // 체크박스로 선택된 아이템 목록. 삭제, 수정 버튼 눌렀을 때 업데이트됨
   const [items, setItems] = useState<OrderItem[]>([]); //로딩된 전체 정산내역 아이템 리스트
 
-  const [errorStr, setErrorStr] = useState<string>("");
+  const [noticeModalStr, setNoticeModalStr] = useState<string>("");
 
-  const [isErrorModalOpened, setIsErrorModalOpened] = useState<boolean>(false);
+  const [isNoticeModalOpened, setIsNoticeModalOpened] = useState<boolean>(false);
   const [isShareModalOpened, setIsShareModalOpened] = useState<boolean>(false);
 
   const submit = useSubmit();
+  const actionData = useActionData();
   const loaderData = useLoaderData();
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -142,6 +143,13 @@ export default function AdminOrderList() {
       setItems(loaderData.waybills);
     }
   }, [loaderData]);
+
+  useEffect(() => {
+    if (actionData !== undefined && actionData !== null) {
+      setNoticeModalStr(actionData.message);
+      setIsNoticeModalOpened(true);
+    }
+  }, [actionData]);
 
   function shareWaybill(waybillList: OrderItem[], dayStr: string) {
     const json = JSON.stringify(waybillList);
@@ -190,8 +198,8 @@ export default function AdminOrderList() {
   return (
     <>
       <BasicModal
-        opened={isErrorModalOpened}
-        onClose={() => setIsErrorModalOpened(false)}
+        opened={isNoticeModalOpened}
+        onClose={() => setIsNoticeModalOpened(false)}
       >
         <div
           style={{
@@ -200,10 +208,10 @@ export default function AdminOrderList() {
             fontWeight: "700",
           }}
         >
-          {errorStr}
+          {noticeModalStr}
           <div style={{ height: "20px" }} />
           <div style={{ display: "flex", justifyContent: "center" }}>
-            <ModalButton onClick={() => setIsErrorModalOpened(false)}>
+            <ModalButton onClick={() => setIsNoticeModalOpened(false)}>
               확인
             </ModalButton>
           </div>
@@ -277,14 +285,14 @@ export default function AdminOrderList() {
                   onClick={() => {
                     const updatedList = updateCheckedItems();
                     if (updatedList == null) {
-                      setErrorStr(
+                      setNoticeModalStr(
                         "선택한 항목의 택배사, 송장번호를 확인해주세요."
                       );
-                      setIsErrorModalOpened(true);
+                      setIsNoticeModalOpened(true);
                     } else {
                       if (updatedList.length == 0) {
-                        setErrorStr("선택된 정산내역이 없습니다.");
-                        setIsErrorModalOpened(true);
+                        setNoticeModalStr("선택된 정산내역이 없습니다.");
+                        setIsNoticeModalOpened(true);
                       } else {
                         setIsShareModalOpened(true);
                       }
