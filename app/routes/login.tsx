@@ -73,43 +73,24 @@ export const action: ActionFunction = async ({ request, context }) => {
 
     return createUserSession({ user: user, isRedirect: true });
   } catch (error: any) {
+    let message = error.message;
+    switch (error.code) {
+      case "auth/user-not-found":
+        message = "아이디가 존재하지 않습니다.";
+        break;
+      case "auth/wrong-password":
+        message = "비밀번호가 잘못되었습니다.";
+        break;
+    }
     return json({
       result: "fail",
-      errorCode: error.code,
+      errorCode: message,
       errorMessage: error.message,
     });
   }
-
-  // const id = body.get("id")?.toString();
-  // const password = body.get("password")?.toString();
-
-  // let resp = await login(id, password);
-
-  // if (typeof resp == "string") {
-  //   //TODO: 로그인 에러
-  //   console.log(resp);
-  //   return json({ error: resp });
-  // } else {
-  //   const isAdmin = await isCurrentUserAdmin();
-  //   if (isAdmin) {
-  //     return redirect("/admin/dashboard");
-  //   } else {
-  //     return redirect("/partner/dashboard");
-  //   }
-  // }
 };
 
 export const loader: LoaderFunction = async ({ request }) => {
-  // const userAdmin = await isCurrentUserAdmin(); //로그인 안됐을 경우 null, 했을 경우 admin 여부
-  // if (userAdmin !== null) {
-  //   if (userAdmin) {
-  //     return redirect("/admin/dashboard");
-  //   } else {
-  //     return redirect("/partner/dashboard");
-  //   }
-  // } else {
-  //   return null;
-  // }
   const firebaseConfig = getFirebaseConfig();
   return json({ firebaseConfig: firebaseConfig });
 };
