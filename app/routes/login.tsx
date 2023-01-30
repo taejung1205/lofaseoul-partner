@@ -9,6 +9,7 @@ import styled from "styled-components";
 import { HeaderBox } from "~/components/header";
 import { LoadingOverlay } from "@mantine/core";
 import { isCurrentUserAdmin, login } from "~/services/auth.server";
+import { createUserSession, getUserSession } from "~/services/session.server";
 
 const LoginPage = styled.div`
   width: inherit;
@@ -57,25 +58,27 @@ export const action: ActionFunction = async ({ request, context }) => {
   const id = body.get("id")?.toString();
   const password = body.get("password")?.toString();
 
-  let resp = await login(id, password);
+  let response = await login(id, password);
 
-  if (typeof resp == "string") {
+  if (typeof response == "string") {
     //TODO: 로그인 에러
-    console.log(resp);
-    return json({ error: resp });
+    console.log(response);
+    return json({ error: response });
   } else {
+    const token = await response.getIdToken();
     const isAdmin = await isCurrentUserAdmin();
     if (isAdmin) {
-      return redirect("/admin/dashboard");
+      return createUserSession(token, "/admin/dashboard");
     } else {
-      return redirect("/partner/dashboard");
+      return createUserSession(token, "/partner/dashboard");
     }
   }
 };
 
 export const loader: LoaderFunction = async ({ request }) => {
+  const sessionUser = await getUserSession(request);
   const userAdmin = await isCurrentUserAdmin(); //로그인 안됐을 경우 null, 했을 경우 admin 여부
-  if (userAdmin !== null) {
+  if (sessionUser !== null && userAdmin !== null) {
     if (userAdmin) {
       return redirect("/admin/dashboard");
     } else {

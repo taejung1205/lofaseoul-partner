@@ -78,3 +78,18 @@ export async function updateAuthAccount(
 export async function deleteAuthAccount(name: string) {
   return auth.deleteUser(name);
 }
+
+
+export async function getSessionToken(idToken: string){
+  const decodedToken = await auth.verifyIdToken(idToken);
+  if(new Date().getTime() / 1000 - decodedToken.auth_time > 5 * 60) {
+    throw new Error("Recent sign in required");
+  }
+
+  const week = 60 * 60 * 24 * 7 * 1000;
+  return auth.createSessionCookie(idToken, {expiresIn: week});
+}
+
+export async function verifySessionCookie(token: string){
+  return auth.verifySessionCookie(token, true);
+}

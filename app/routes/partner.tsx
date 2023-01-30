@@ -19,6 +19,7 @@ import {
   isCurrentUserAdmin,
   logout,
 } from "~/services/auth.server";
+import { destroyUserSession, getUserSession } from "~/services/session.server";
 
 const PartnerPage = styled.div`
   width: inherit;
@@ -38,7 +39,7 @@ const PartnerPage = styled.div`
  */
 export const action: ActionFunction = async ({ request }) => {
   await logout();
-  return redirect("/login");
+  return destroyUserSession(request);
 };
 
 /**
@@ -49,6 +50,10 @@ export const action: ActionFunction = async ({ request }) => {
  * @returns
  */
 export let loader: LoaderFunction = async ({ request }) => {
+  const sessionUser = await getUserSession(request);
+  if (!sessionUser) {
+    return redirect("/login");
+  }
   const userAdmin = await isCurrentUserAdmin(); //로그인 안됐을 경우 null, 했을 경우 admin 여부
   if (userAdmin !== null) {
     if (userAdmin) {
