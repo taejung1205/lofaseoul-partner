@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { dateToDayStr } from "~/components/date";
+import { dateToDayStr, getTimezoneDate } from "~/components/date";
 
 import dayPickerStyles from "react-day-picker/dist/style.css";
 import styled from "styled-components";
@@ -119,7 +119,7 @@ export default function AdminOrderShare() {
   }, [loaderData]);
 
   useEffect(() => {
-    const today = dateToDayStr(new Date());
+    const today = dateToDayStr(getTimezoneDate(new Date()));
     setCurrentDay(today);
   }, []);
 
@@ -271,7 +271,7 @@ export default function AdminOrderShare() {
           }}
         >
           {loaderData.isTodayShared == null
-            ? `${dateToDayStr(new Date())} 주문을 전달하시겠습니까?`
+            ? `${dateToDayStr(getTimezoneDate(new Date()))} 주문을 전달하시겠습니까?`
             : `금일(${loaderData.isTodayShared}) 공유된 주문건이 있습니다. 추가로 공유하시겠습니까?`}
           <div style={{ height: "20px" }} />
           <div style={{ display: "flex", justifyContent: "center" }}>
@@ -333,7 +333,7 @@ export default function AdminOrderShare() {
           >
             <ShareButton
               onClick={() => {
-                const today = dateToDayStr(new Date());
+                const today = dateToDayStr(getTimezoneDate(new Date()));
                 if (today !== currentDay) {
                   setNoticeModalStr(
                     "날짜가 변경되었습니다. 페이지를 새로고침해주세요."

@@ -8,15 +8,22 @@ export function links() {
   return [{ rel: "stylesheet", href: dayPickerStyles }];
 }
 
+export function getTimezoneDate(date: Date) {
+  const timezoneOffset = date.getTimezoneOffset() / 60;
+  return new Date(date.getTime() + (timezoneOffset + 9) * 3600 * 1000);
+}
+
 export function dateToKoreanMonth(date: Date) {
-  const year = date.getFullYear().toString().substring(2);
-  const month = (date.getMonth() + 1).toString().padStart(2, "0");
+  const newDate = getTimezoneDate(date);
+  const year = newDate.getFullYear().toString().substring(2);
+  const month = (newDate.getMonth() + 1).toString().padStart(2, "0");
   return `${year}년 ${month}월`;
 }
 
 export function dateToNumeralMonth(date: Date) {
-  const year = date.getFullYear().toString().substring(2);
-  const month = (date.getMonth() + 1).toString().padStart(2, "0");
+  const newDate = getTimezoneDate(date);
+  const year = newDate.getFullYear().toString().substring(2);
+  const month = (newDate.getMonth() + 1).toString().padStart(2, "0");
   return `${year}${month}`;
 }
 
@@ -39,9 +46,7 @@ export function koreanMonthToDate(monthStr: string) {
 }
 
 export function dateToDayStr(date: Date) {
-  const timezoneOffset = date.getTimezoneOffset() / 60;
-  const newDate = new Date(date.getTime() + (timezoneOffset + 9) * 3600 * 1000);
-
+  const newDate = getTimezoneDate(date);
   const year = newDate.getFullYear();
   const month = (newDate.getMonth() + 1).toString().padStart(2, "0");
   const day = newDate.getDate().toString().padStart(2, "0");

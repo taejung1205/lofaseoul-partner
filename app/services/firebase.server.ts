@@ -19,7 +19,7 @@ import {
 import { SettlementItem } from "~/components/settlement_table";
 import { PartnerProfile } from "~/components/partner_profile";
 import { PossibleSellers } from "~/components/seller";
-import { dateToDayStr, dayStrToDate } from "~/components/date";
+import { dateToDayStr, dayStrToDate, getTimezoneDate } from "~/components/date";
 import { OrderItem } from "~/components/order";
 import {
   createAuthAccount,
@@ -728,7 +728,7 @@ export async function addWaybills({
 
   const batch = writeBatch(firestore);
 
-  let nextDay = new Date();
+  let nextDay = getTimezoneDate(new Date());
   nextDay.setDate(nextDay.getDate() + 1);
   const nextDayStr = dateToDayStr(nextDay);
 
@@ -870,7 +870,7 @@ export async function editWaybills({
 
   const batch = writeBatch(firestore);
 
-  let nextDay = new Date();
+  let nextDay =getTimezoneDate(new Date());
   nextDay.setDate(nextDay.getDate() + 1);
   const nextDayStr = dateToDayStr(nextDay);
 
@@ -999,7 +999,7 @@ export async function shareDelayedWaybills({
 
   const batch = writeBatch(firestore);
 
-  let nextDay = new Date();
+  let nextDay = getTimezoneDate(new Date());
   nextDay.setDate(nextDay.getDate() + 1);
   const nextDayStr = dateToDayStr(nextDay);
 
@@ -1133,7 +1133,7 @@ export async function getPartnerTodayWaybillsCount(partnerName: string) {
  * @returns
  */
 export async function getDelayedOrdersCount(day: number) {
-  const date = new Date();
+  const date = getTimezoneDate(new Date())
   date.setDate(date.getDate() - day);
   const timestamp = Timestamp.fromDate(date);
 
@@ -1155,7 +1155,7 @@ export async function getPartnerDelayedOrdersCount(
   day: number,
   partnerName: string
 ) {
-  const date = new Date();
+  const date = getTimezoneDate(new Date());
   date.setDate(date.getDate() - day);
   const timestamp = Timestamp.fromDate(date);
 

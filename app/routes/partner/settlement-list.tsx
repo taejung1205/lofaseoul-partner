@@ -7,6 +7,7 @@ import {
   MonthSelectPopover,
   dateToNumeralMonth,
   numeralMonthToKorean,
+  getTimezoneDate,
 } from "~/components/date";
 import { PossibleSellers, SellerSelect } from "~/components/seller";
 import {
@@ -110,7 +111,7 @@ export default function AdminSettlementShare() {
   }, [sums]);
 
   useEffect(() => {
-    setSelectedDate(new Date());
+    setSelectedDate(getTimezoneDate(new Date()));
   }, []);
 
   useEffect(() => {

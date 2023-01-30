@@ -84,8 +84,7 @@ export const action: ActionFunction = async ({ request, context }) => {
 
 export const loader: LoaderFunction = async ({ request }) => {
   const firebaseConfig = getFirebaseConfig();
-  const newDate = dateToDayStr(new Date());
-  return json({ firebaseConfig: firebaseConfig, timezone: newDate });
+  return json({ firebaseConfig: firebaseConfig });
 };
 
 /**
@@ -140,7 +139,6 @@ export default function Login() {
         overlayBlur={2}
       />
       <LoginPage>
-        {loaderData.timezone}
         <HeaderBox />
         <div style={{ height: "100px" }} />
         로파 서울 파트너사이트입니다.

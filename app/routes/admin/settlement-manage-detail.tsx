@@ -13,6 +13,7 @@ import {
   dateToNumeralMonth,
   numeralMonthToKorean,
   koreanMonthToDate,
+  getTimezoneDate,
 } from "~/components/date";
 import { PossibleSellers, SellerSelect } from "~/components/seller";
 import {
@@ -216,7 +217,7 @@ export default function AdminSettlementShare() {
   //선택중인 날짜를 주소로 넣기 위한 숫자 변환
   //TODO: 불필요하므로 이 과정 없애야
   const monthNumeral = useMemo(
-    () => dateToNumeralMonth(selectedDate ?? new Date()),
+    () => dateToNumeralMonth(selectedDate ?? getTimezoneDate(new Date())),
     [selectedDate]
   );
 
@@ -285,7 +286,7 @@ export default function AdminSettlementShare() {
     if (monthStr !== null) {
       setSelectedDate(koreanMonthToDate(monthStr));
     } else {
-      setSelectedDate(new Date());
+      setSelectedDate(getTimezoneDate(new Date()));
     }
   }, []);
 
