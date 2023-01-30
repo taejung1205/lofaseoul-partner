@@ -39,9 +39,12 @@ export function koreanMonthToDate(monthStr: string) {
 }
 
 export function dateToDayStr(date: Date) {
-  const year = date.getFullYear();
-  const month = (date.getMonth() + 1).toString().padStart(2, "0");
-  const day = date.getDate().toString().padStart(2, "0");
+  const timezoneOffset = date.getTimezoneOffset() / 60;
+  const newDate = new Date(date.getTime() + (timezoneOffset + 9) * 3600 * 1000);
+
+  const year = newDate.getFullYear();
+  const month = (newDate.getMonth() + 1).toString().padStart(2, "0");
+  const day = newDate.getDate().toString().padStart(2, "0");
   return `${year}-${month}-${day}`;
 }
 

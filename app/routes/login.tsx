@@ -12,6 +12,7 @@ import { useRef, useState } from "react";
 import { getSignInToken } from "~/services/auth.client";
 import { getFirebaseConfig, isAdmin } from "~/services/firebase.server";
 import { createUserSession, User } from "~/services/session.server";
+import { dateToDayStr } from "~/components/date";
 
 const LoginPage = styled.div`
   width: inherit;
@@ -83,8 +84,8 @@ export const action: ActionFunction = async ({ request, context }) => {
 
 export const loader: LoaderFunction = async ({ request }) => {
   const firebaseConfig = getFirebaseConfig();
-  const timezone = new Date().getTimezoneOffset();
-  return json({ firebaseConfig: firebaseConfig, timezone: timezone });
+  const newDate = dateToDayStr(new Date());
+  return json({ firebaseConfig: firebaseConfig, timezone: newDate });
 };
 
 /**
