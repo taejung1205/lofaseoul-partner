@@ -1,18 +1,19 @@
-import { LoaderFunction } from "@remix-run/node";
+import { LoaderFunction, redirect } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { PageLayout } from "~/components/page_layout";
 import { PartnerProfile } from "~/components/partner_profile";
-import { getCurrentUser } from "~/services/auth.server";
 import { getPartnerProfile } from "~/services/firebase.server";
+import { requireUser } from "~/services/session.server";
 
 export let loader: LoaderFunction = async ({ request }) => {
-  let user = await getCurrentUser();
+  let partnerName: string;
+  const user = await requireUser(request);
   if (user !== null) {
-    const name = user.uid;
-    const profileDoc = await getPartnerProfile({ name: name });
+    partnerName = user.uid;
+    const profileDoc = await getPartnerProfile({ name: partnerName });
     return profileDoc;
   } else {
-    return null;
+    return redirect("/login");
   }
 };
 

@@ -10,7 +10,7 @@ import {
   numeralMonthToKorean,
 } from "~/components/date";
 import { PageLayout } from "~/components/page_layout";
-import { SellerSelect as SellerSelect } from "~/components/seller";
+import { SellerSelect } from "~/components/seller";
 import {
   getAllSellerSettlementSum,
   SettlementSumBar,
