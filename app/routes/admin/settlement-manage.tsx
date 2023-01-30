@@ -8,6 +8,7 @@ import {
   dateToKoreanMonth,
   dateToNumeralMonth,
   numeralMonthToKorean,
+  getTimezoneDate,
 } from "~/components/date";
 import { PageLayout } from "~/components/page_layout";
 import { SellerSelect } from "~/components/seller";
@@ -52,7 +53,7 @@ export default function AdminSettlementManage() {
   const loaderData = useLoaderData();
 
   const selectedMonthNumeral = useMemo(
-    () => dateToNumeralMonth(selectedDate ?? new Date()),
+    () => dateToNumeralMonth(selectedDate ?? getTimezoneDate(new Date())),
     [selectedDate]
   );
 
@@ -90,7 +91,7 @@ export default function AdminSettlementManage() {
   }, [sums, seller]);
 
   useEffect(() => {
-    setSelectedDate(new Date());
+    setSelectedDate(getTimezoneDate(new Date()));
   }, []);
 
   useEffect(() => {

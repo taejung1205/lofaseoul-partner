@@ -12,6 +12,7 @@ import { useRef, useState } from "react";
 import { getSignInToken } from "~/services/auth.client";
 import { getFirebaseConfig, isAdmin } from "~/services/firebase.server";
 import { createUserSession, User } from "~/services/session.server";
+import { dateToDayStr } from "~/components/date";
 
 const LoginPage = styled.div`
   width: inherit;

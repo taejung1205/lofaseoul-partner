@@ -2,7 +2,7 @@ import { PartnerProfile } from "~/components/partner_profile";
 
 import * as xlsx from "xlsx";
 import { useSubmit } from "@remix-run/react";
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { ActionFunction } from "@remix-run/node";
 import { addPartnerProfiles } from "~/services/firebase.server";
 
@@ -18,6 +18,10 @@ export const action: ActionFunction = async ({ request }) => {
 export default function AdminOrderShare() {
   const submit = useSubmit();
   const formRef = useRef<HTMLFormElement>(null);
+
+  useEffect(() => {
+    console.log(new Date());
+  }, [])
 
   const readExcel = (e: any) => {
     e.preventDefault();
@@ -62,6 +66,8 @@ export default function AdminOrderShare() {
     formData.set("accounts", json);
     submit(formData, { method: "post" });
   }
+
+
 
   return (
     <>
