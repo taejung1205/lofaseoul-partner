@@ -73,18 +73,9 @@ export const action: ActionFunction = async ({ request, context }) => {
 
     return createUserSession({ user: user, isRedirect: true });
   } catch (error: any) {
-    let message = error.message;
-    switch (error.code) {
-      case "auth/user-not-found":
-        message = "아이디가 존재하지 않습니다.";
-        break;
-      case "auth/wrong-password":
-        message = "비밀번호가 잘못되었습니다.";
-        break;
-    }
     return json({
       result: "fail",
-      errorCode: message,
+      errorCode: error.code,
       errorMessage: error.message,
     });
   }
@@ -104,6 +95,7 @@ export default function Login() {
 
   const [id, setId] = useState<string>("");
   const [password, setPassword] = useState<string>("");
+  const [errorMessage, setErrorMessage] = useState<string>("");
 
   const transition = useTransition();
   const loaderData = useLoaderData();
@@ -113,7 +105,7 @@ export default function Login() {
 
   async function handleLogin() {
     if (id.length == 0 || password.length == 0) {
-      console.log("아이디 패스워드 입력");
+      setErrorMessage("아이디와 패스워드를 입력하세요.");
       return null;
     }
     const resp = await getSignInToken(id, password, loaderData.firebaseConfig);
@@ -124,7 +116,16 @@ export default function Login() {
       formData.set("email", resp.email ?? "");
       submit(formData, { method: "post" });
     } else {
-      console.log(resp);
+      switch (resp.errorCode) {
+        case "auth/user-not-found":
+        case "auth/invalid-password":
+          setErrorMessage("아이디와 비밀번호를 확인해주세요.");
+          break;
+        default:
+          setErrorMessage("로그인 중 오류가 발생했습니다.");
+          break;
+      }
+      return null;
     }
   }
 
@@ -166,6 +167,7 @@ export default function Login() {
           ) : (
             <></>
           )}
+          <p>{errorMessage}</p>
         </div>
       </LoginPage>
     </>
