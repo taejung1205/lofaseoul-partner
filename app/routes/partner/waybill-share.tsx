@@ -30,7 +30,7 @@ import {
 import styled from "styled-components";
 import { getPartnerOrders, addWaybills } from "~/services/firebase.server";
 import writeXlsxFile from "write-excel-file";
-import { getCurrentUser } from "~/services/auth.server";
+import { getCurrentUser } from "~/utils/auth";
 import * as xlsx from "xlsx";
 import { BasicModal, ModalButton } from "~/components/modal";
 import { PossibleShippingCompanies } from "~/components/shipping_company";

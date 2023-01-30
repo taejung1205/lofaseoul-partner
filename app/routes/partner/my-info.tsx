@@ -2,7 +2,7 @@ import { LoaderFunction } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { PageLayout } from "~/components/page_layout";
 import { PartnerProfile } from "~/components/partner_profile";
-import { getCurrentUser } from "~/services/auth.server";
+import { getCurrentUser } from "~/utils/auth";
 import { getPartnerProfile } from "~/services/firebase.server";
 
 export let loader: LoaderFunction = async ({ request }) => {

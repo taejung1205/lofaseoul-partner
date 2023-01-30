@@ -23,7 +23,7 @@ import {
 import { OrderItem, OrderTable } from "~/components/order";
 import styled from "styled-components";
 import { editWaybills, getPartnerWaybills } from "~/services/firebase.server";
-import { getCurrentUser } from "~/services/auth.server";
+import { getCurrentUser } from "~/utils/auth";
 import { BasicModal, ModalButton } from "~/components/modal";
 
 const EmptySettlementBox = styled.div`

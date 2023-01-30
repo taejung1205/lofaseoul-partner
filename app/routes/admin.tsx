@@ -4,7 +4,7 @@ import styled from "styled-components";
 import { AdminHeader } from "~/components/header";
 import { AdminSidebar } from "~/components/sidebar";
 import { LoadingOverlay } from "@mantine/core";
-import { isCurrentUserAdmin, logout } from "~/services/auth.server";
+import { isCurrentUserAdmin, logout } from "~/utils/auth";
 
 const AdminPage = styled.div`
   width: inherit;

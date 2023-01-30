@@ -3,7 +3,7 @@ import { useLoaderData } from "@remix-run/react";
 import { json } from "react-router";
 import styled from "styled-components";
 import { PageLayout } from "~/components/page_layout";
-import { getCurrentUser } from "~/services/auth.server";
+import { getCurrentUser } from "~/utils/auth";
 import {
   getPartnerDelayedOrdersCount,
   getPartnerTodayOrdersCount,

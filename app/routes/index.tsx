@@ -1,5 +1,5 @@
 import { LoaderFunction, redirect } from "@remix-run/node";
-import { isCurrentUserAdmin } from "~/services/auth.server";
+import { isCurrentUserAdmin } from "~/utils/auth";
 
 /**
  * check the user to see if there is an active session, if not

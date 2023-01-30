@@ -15,7 +15,7 @@ import {
   getPartnerDelayedOrders,
   shareDelayedWaybills,
 } from "~/services/firebase.server";
-import { getCurrentUser } from "~/services/auth.server";
+import { getCurrentUser } from "~/utils/auth";
 
 const EmptySettlementBox = styled.div`
   display: flex;

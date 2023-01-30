@@ -6,7 +6,7 @@ import {
   onAuthStateChanged,
 } from "firebase/auth";
 import { emailToId, idToEmail } from "~/utils/account";
-import { isAdmin } from "./firebase.server";
+import { isAdmin } from "../services/firebase.server";
 
 const auth = getAuth();
 

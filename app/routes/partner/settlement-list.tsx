@@ -20,7 +20,7 @@ import {
 import { getSettlements, getSettlementSum } from "~/services/firebase.server";
 import { PageLayout } from "~/components/page_layout";
 import { GetListButton } from "~/components/button";
-import { getCurrentUser } from "~/services/auth.server";
+import { getCurrentUser } from "~/utils/auth";
 
 const EmptySettlementBox = styled.div`
   display: flex;

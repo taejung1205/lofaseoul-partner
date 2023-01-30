@@ -8,7 +8,7 @@ import {
 import styled from "styled-components";
 import { HeaderBox } from "~/components/header";
 import { LoadingOverlay } from "@mantine/core";
-import { isCurrentUserAdmin, login } from "~/services/auth.server";
+import { isCurrentUserAdmin, login } from "~/utils/auth";
 
 const LoginPage = styled.div`
   width: inherit;

@@ -18,7 +18,7 @@ import {
   getCurrentUser,
   isCurrentUserAdmin,
   logout,
-} from "~/services/auth.server";
+} from "~/utils/auth";
 
 const PartnerPage = styled.div`
   width: inherit;
