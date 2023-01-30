@@ -26,6 +26,7 @@ import {
   deleteAuthAccount,
   updateAuthAccount,
 } from "./firebaseAdmin.server";
+import { emailToId } from "~/utils/account";
 
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
@@ -52,11 +53,20 @@ if (!firebaseApp?.apps.length || !firestore.apps.length) {
 }
 
 /**
+ * Firebase를 위한 설정입니다. Client side에서 로그인하기 위해 사용합니다. 
+ * @returns firebaseConfig
+ */
+export function getFirebaseConfig(){
+  return firebaseConfig;
+}
+
+/**
  * 해당 ID의 계정이 어드민인지 확인합니다.
- * @param id: 아이디
+ * @param email: 이메일
  * @returns true: 어드민, false: 일반 파트너 (또는 존재하지 않는 계정)
  */
-export async function isAdmin(id: string) {
+export async function isAdmin(email: string) {
+  const id = emailToId(email);
   const accountsRef = collection(firestore, "accounts");
   const idQuery = query(accountsRef, where("id", "==", id), limit(1));
   const querySnap = await getDocs(idQuery);

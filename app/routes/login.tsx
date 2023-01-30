@@ -1,14 +1,17 @@
-import { Form, useActionData, useTransition } from "@remix-run/react";
 import {
-  ActionFunction,
-  LoaderFunction,
-  json,
-  redirect,
-} from "@remix-run/node";
+  useActionData,
+  useLoaderData,
+  useSubmit,
+  useTransition,
+} from "@remix-run/react";
+import { ActionFunction, LoaderFunction, json } from "@remix-run/node";
 import styled from "styled-components";
 import { HeaderBox } from "~/components/header";
 import { LoadingOverlay } from "@mantine/core";
-import { isCurrentUserAdmin, login } from "~/services/auth.server";
+import { useRef, useState } from "react";
+import { getSignInToken } from "~/services/auth.client";
+import { getFirebaseConfig, isAdmin } from "~/services/firebase.server";
+import { createUserSession, User } from "~/services/session.server";
 
 const LoginPage = styled.div`
   width: inherit;
@@ -53,37 +56,62 @@ const LoginButton = styled.button`
  * 로그인
  */
 export const action: ActionFunction = async ({ request, context }) => {
-  const body = await request.formData();
-  const id = body.get("id")?.toString();
-  const password = body.get("password")?.toString();
+  try {
+    const body = await request.formData();
+    const idToken: string = body.get("idToken")?.toString()!;
+    const uid: string = body.get("uid")?.toString()!;
+    const email: string = body.get("email")?.toString()!;
 
-  let resp = await login(id, password);
+    const admin = await isAdmin(email);
 
-  if (typeof resp == "string") {
-    //TODO: 로그인 에러
-    console.log(resp);
-    return json({ error: resp });
-  } else {
-    const isAdmin = await isCurrentUserAdmin();
-    if (isAdmin) {
-      return redirect("/admin/dashboard");
-    } else {
-      return redirect("/partner/dashboard");
-    }
+    const user: User = {
+      idToken: idToken,
+      email: email,
+      uid: uid,
+      isAdmin: admin,
+    };
+
+    return createUserSession({ user: user, isRedirect: true });
+  } catch (error: any) {
+    return json({
+      result: "fail",
+      errorCode: error.code,
+      errorMessage: error.message,
+    });
   }
+
+  // const id = body.get("id")?.toString();
+  // const password = body.get("password")?.toString();
+
+  // let resp = await login(id, password);
+
+  // if (typeof resp == "string") {
+  //   //TODO: 로그인 에러
+  //   console.log(resp);
+  //   return json({ error: resp });
+  // } else {
+  //   const isAdmin = await isCurrentUserAdmin();
+  //   if (isAdmin) {
+  //     return redirect("/admin/dashboard");
+  //   } else {
+  //     return redirect("/partner/dashboard");
+  //   }
+  // }
 };
 
 export const loader: LoaderFunction = async ({ request }) => {
-  const userAdmin = await isCurrentUserAdmin(); //로그인 안됐을 경우 null, 했을 경우 admin 여부
-  if (userAdmin !== null) {
-    if (userAdmin) {
-      return redirect("/admin/dashboard");
-    } else {
-      return redirect("/partner/dashboard");
-    }
-  } else {
-    return null;
-  }
+  // const userAdmin = await isCurrentUserAdmin(); //로그인 안됐을 경우 null, 했을 경우 admin 여부
+  // if (userAdmin !== null) {
+  //   if (userAdmin) {
+  //     return redirect("/admin/dashboard");
+  //   } else {
+  //     return redirect("/partner/dashboard");
+  //   }
+  // } else {
+  //   return null;
+  // }
+  const firebaseConfig = getFirebaseConfig();
+  return json({ firebaseConfig: firebaseConfig });
 };
 
 /**
@@ -92,8 +120,32 @@ export const loader: LoaderFunction = async ({ request }) => {
  */
 export default function Login() {
   // if i got an error it will come back with the loader data
-  const actionData = useActionData();
+
+  const [id, setId] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
+
   const transition = useTransition();
+  const loaderData = useLoaderData();
+  const actionData = useActionData();
+  const submit = useSubmit();
+  const formRef = useRef<HTMLFormElement>(null);
+
+  async function handleLogin() {
+    if (id.length == 0 || password.length == 0) {
+      console.log("아이디 패스워드 입력");
+      return null;
+    }
+    const resp = await getSignInToken(id, password, loaderData.firebaseConfig);
+    if (resp.result == "success") {
+      const formData = new FormData(formRef.current ?? undefined);
+      formData.set("idToken", resp.idToken ?? "");
+      formData.set("uid", resp.uid ?? "");
+      formData.set("email", resp.email ?? "");
+      submit(formData, { method: "post" });
+    } else {
+      console.log(resp);
+    }
+  }
 
   return (
     <>
@@ -108,19 +160,32 @@ export default function Login() {
         <div style={{ height: "100px" }} />
         로파 서울 파트너사이트입니다.
         <div style={{ height: "150px" }} />
-        <Form method="post">
-          <InputBox type="string" name="id" placeholder="ID" required />
-          <div style={{ height: "40px" }} />
-          <InputBox
-            type="password"
-            name="password"
-            placeholder="PW"
-            autoComplete="current-password"
-          />
-          <div style={{ height: "100px" }} />
-          <LoginButton>로그인</LoginButton>
-        </Form>
-        <div>{actionData?.error ? <p>{actionData?.error}</p> : <></>}</div>
+        <InputBox
+          type="string"
+          name="id"
+          placeholder="ID"
+          required
+          value={id}
+          onChange={(event) => setId(event.target.value)}
+        />
+        <div style={{ height: "40px" }} />
+        <InputBox
+          type="password"
+          name="password"
+          placeholder="PW"
+          autoComplete="current-password"
+          value={password}
+          onChange={(event) => setPassword(event.target.value)}
+        />
+        <div style={{ height: "100px" }} />
+        <LoginButton onClick={handleLogin}>로그인</LoginButton>
+        <div>
+          {actionData?.errorCode ? (
+            <p>Login Failed: {actionData?.errorMessage}</p>
+          ) : (
+            <></>
+          )}
+        </div>
       </LoginPage>
     </>
   );

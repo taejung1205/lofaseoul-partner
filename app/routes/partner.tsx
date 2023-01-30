@@ -5,20 +5,15 @@ import {
   useTransition,
 } from "@remix-run/react";
 import {
-  ActionFunction,
   json,
   LoaderFunction,
-  redirect,
+  redirect
 } from "@remix-run/node";
 import styled from "styled-components";
 import { PartnerHeader } from "~/components/header";
 import { PartnerSidebar } from "~/components/sidebar";
 import { LoadingOverlay } from "@mantine/core";
-import {
-  getCurrentUser,
-  isCurrentUserAdmin,
-  logout,
-} from "~/services/auth.server";
+import { requireUser } from "~/services/session.server";
 
 const PartnerPage = styled.div`
   width: inherit;
@@ -32,16 +27,6 @@ const PartnerPage = styled.div`
 `;
 
 /**
- *  handle the logout request
- *
- * @param param0
- */
-export const action: ActionFunction = async ({ request }) => {
-  await logout();
-  return redirect("/login");
-};
-
-/**
  * check the user to see if there is an active session, if not
  * redirect to login page
  * if user is admin, redirect to admin page
@@ -49,13 +34,16 @@ export const action: ActionFunction = async ({ request }) => {
  * @returns
  */
 export let loader: LoaderFunction = async ({ request }) => {
-  const userAdmin = await isCurrentUserAdmin(); //로그인 안됐을 경우 null, 했을 경우 admin 여부
-  if (userAdmin !== null) {
-    if (userAdmin) {
+  const user = await requireUser(request);
+  if (user == null) {
+    return redirect("/login");
+  }
+
+  if (user.isAdmin !== null) {
+    if (user.isAdmin) {
       return redirect("/admin/dashboard");
     } else {
-      const user = await getCurrentUser();
-      return json({ name: user?.uid });
+      return json({ name: user.uid });
     }
   } else {
     return redirect("/login");
@@ -78,7 +66,9 @@ export default function Partner() {
       <PartnerPage>
         <PartnerHeader
           username={loaderData.name}
-          onLogoutClick={() => submit(null, { method: "post" })}
+          onLogoutClick={() =>
+            submit(null, { method: "post", action: "/logout" })
+          }
         />
         <div
           style={{

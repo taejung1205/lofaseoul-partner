@@ -1,4 +1,4 @@
-import { json, LoaderFunction } from "@remix-run/node";
+import { json, LoaderFunction, redirect } from "@remix-run/node";
 import { Link, useLoaderData } from "@remix-run/react";
 import { useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
@@ -20,7 +20,7 @@ import {
 import { getSettlements, getSettlementSum } from "~/services/firebase.server";
 import { PageLayout } from "~/components/page_layout";
 import { GetListButton } from "~/components/button";
-import { getCurrentUser } from "~/services/auth.server";
+import { requireUser } from "~/services/session.server";
 
 const EmptySettlementBox = styled.div`
   display: flex;
@@ -47,11 +47,11 @@ const ReportButton = styled.button`
 
 export const loader: LoaderFunction = async ({ request }) => {
   let partnerName: string;
-  let user = await getCurrentUser();
+  const user = await requireUser(request);
   if (user !== null) {
     partnerName = user.uid;
   } else {
-    return null;
+    return redirect("/login");
   }
 
   const url = new URL(request.url);
