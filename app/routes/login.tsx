@@ -79,37 +79,9 @@ export const action: ActionFunction = async ({ request, context }) => {
       errorMessage: error.message,
     });
   }
-
-  // const id = body.get("id")?.toString();
-  // const password = body.get("password")?.toString();
-
-  // let resp = await login(id, password);
-
-  // if (typeof resp == "string") {
-  //   //TODO: 로그인 에러
-  //   console.log(resp);
-  //   return json({ error: resp });
-  // } else {
-  //   const isAdmin = await isCurrentUserAdmin();
-  //   if (isAdmin) {
-  //     return redirect("/admin/dashboard");
-  //   } else {
-  //     return redirect("/partner/dashboard");
-  //   }
-  // }
 };
 
 export const loader: LoaderFunction = async ({ request }) => {
-  // const userAdmin = await isCurrentUserAdmin(); //로그인 안됐을 경우 null, 했을 경우 admin 여부
-  // if (userAdmin !== null) {
-  //   if (userAdmin) {
-  //     return redirect("/admin/dashboard");
-  //   } else {
-  //     return redirect("/partner/dashboard");
-  //   }
-  // } else {
-  //   return null;
-  // }
   const firebaseConfig = getFirebaseConfig();
   return json({ firebaseConfig: firebaseConfig });
 };
@@ -123,6 +95,7 @@ export default function Login() {
 
   const [id, setId] = useState<string>("");
   const [password, setPassword] = useState<string>("");
+  const [errorMessage, setErrorMessage] = useState<string>("");
 
   const transition = useTransition();
   const loaderData = useLoaderData();
@@ -132,7 +105,7 @@ export default function Login() {
 
   async function handleLogin() {
     if (id.length == 0 || password.length == 0) {
-      console.log("아이디 패스워드 입력");
+      setErrorMessage("아이디와 패스워드를 입력하세요.");
       return null;
     }
     const resp = await getSignInToken(id, password, loaderData.firebaseConfig);
@@ -143,7 +116,16 @@ export default function Login() {
       formData.set("email", resp.email ?? "");
       submit(formData, { method: "post" });
     } else {
-      console.log(resp);
+      switch (resp.errorCode) {
+        case "auth/user-not-found":
+        case "auth/invalid-password":
+          setErrorMessage("아이디와 비밀번호를 확인해주세요.");
+          break;
+        default:
+          setErrorMessage("로그인 중 오류가 발생했습니다.");
+          break;
+      }
+      return null;
     }
   }
 
@@ -185,6 +167,7 @@ export default function Login() {
           ) : (
             <></>
           )}
+          <p>{errorMessage}</p>
         </div>
       </LoginPage>
     </>
