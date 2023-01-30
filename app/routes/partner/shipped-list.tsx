@@ -23,8 +23,8 @@ import {
 import { OrderItem, OrderTable } from "~/components/order";
 import styled from "styled-components";
 import { editWaybills, getPartnerWaybills } from "~/services/firebase.server";
-import { getCurrentUser } from "~/services/auth.server";
 import { BasicModal, ModalButton } from "~/components/modal";
+import { requireUser } from "~/services/session.server";
 
 const EmptySettlementBox = styled.div`
   display: flex;
@@ -74,7 +74,7 @@ export const action: ActionFunction = async ({ request }) => {
 
 export const loader: LoaderFunction = async ({ request }) => {
   let partnerName: string;
-  let user = await getCurrentUser();
+  const user = await requireUser(request);
   if (user !== null) {
     partnerName = user.uid;
   } else {

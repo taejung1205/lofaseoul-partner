@@ -3,12 +3,12 @@ import { useLoaderData } from "@remix-run/react";
 import { json } from "react-router";
 import styled from "styled-components";
 import { PageLayout } from "~/components/page_layout";
-import { getCurrentUser } from "~/services/auth.server";
 import {
   getPartnerDelayedOrdersCount,
   getPartnerTodayOrdersCount,
-  getPartnerTodayWaybillsCount
+  getPartnerTodayWaybillsCount,
 } from "~/services/firebase.server";
+import { requireUser } from "~/services/session.server";
 
 const DashboardItemBox = styled.div`
   width: 40%;
@@ -26,15 +26,14 @@ const DashboardItemBox = styled.div`
 `;
 
 export const loader: LoaderFunction = async ({ request }) => {
-
   let partnerName: string;
-  let user = await getCurrentUser();
+  const user = await requireUser(request);
   if (user !== null) {
     partnerName = user.uid;
   } else {
     return redirect("/login");
   }
-  
+
   const ordersCount = await getPartnerTodayOrdersCount(partnerName);
   const waybillsCount = await getPartnerTodayWaybillsCount(partnerName);
   const delayedOrdersCount = await getPartnerDelayedOrdersCount(3, partnerName);

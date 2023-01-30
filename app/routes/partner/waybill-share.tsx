@@ -30,10 +30,10 @@ import {
 import styled from "styled-components";
 import { getPartnerOrders, addWaybills } from "~/services/firebase.server";
 import writeXlsxFile from "write-excel-file";
-import { getCurrentUser } from "~/services/auth.server";
 import * as xlsx from "xlsx";
 import { BasicModal, ModalButton } from "~/components/modal";
 import { PossibleShippingCompanies } from "~/components/shipping_company";
+import { requireUser } from "~/services/session.server";
 
 const FileNameBox = styled.div`
   border: 3px solid #000000;
@@ -116,7 +116,7 @@ export const action: ActionFunction = async ({ request }) => {
 
 export const loader: LoaderFunction = async ({ request }) => {
   let partnerName: string;
-  let user = await getCurrentUser();
+  const user = await requireUser(request);
   if (user !== null) {
     partnerName = user.uid;
   } else {

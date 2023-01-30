@@ -1,5 +1,5 @@
 import { LoaderFunction, redirect } from "@remix-run/node";
-import { isCurrentUserAdmin } from "~/services/auth.server";
+import { requireUser } from "~/services/session.server";
 
 /**
  * check the user to see if there is an active session, if not
@@ -9,9 +9,13 @@ import { isCurrentUserAdmin } from "~/services/auth.server";
  * @returns
  */
 export let loader: LoaderFunction = async ({ request }) => {
-  const userAdmin = await isCurrentUserAdmin(); //로그인 안됐을 경우 null, 했을 경우 admin 여부
-  if (userAdmin !== null) {
-    if (userAdmin) {
+  const user = await requireUser(request);
+  if (user == null) {
+    return redirect("/login");
+  }
+
+  if (user.isAdmin !== undefined) {
+    if (user.isAdmin) {
       return redirect("/admin/dashboard");
     } else {
       return redirect("/partner/dashboard");
