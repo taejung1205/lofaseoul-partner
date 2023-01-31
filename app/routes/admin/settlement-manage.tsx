@@ -53,7 +53,7 @@ export default function AdminSettlementManage() {
   const loaderData = useLoaderData();
 
   const selectedMonthNumeral = useMemo(
-    () => dateToNumeralMonth(selectedDate ?? getTimezoneDate(new Date())),
+    () => dateToNumeralMonth(selectedDate ?? new Date()),
     [selectedDate]
   );
 

@@ -3,7 +3,7 @@ import { useActionData, useLoaderData, useSubmit } from "@remix-run/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import styled from "styled-components";
 import * as xlsx from "xlsx";
-import { dateToKoreanMonth, MonthSelectPopover } from "~/components/date";
+import { dateToKoreanMonth, getTimezoneDate, MonthSelectPopover } from "~/components/date";
 import { BasicModal, ModalButton } from "~/components/modal";
 import { PageLayout } from "~/components/page_layout";
 import { PartnerProfile } from "~/components/partner_profile";
@@ -115,7 +115,7 @@ export default function AdminSettlementShare() {
   const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
-    setSelectedDate(new Date());
+    setSelectedDate(getTimezoneDate(new Date()));
   }, []);
 
   useEffect(() => {

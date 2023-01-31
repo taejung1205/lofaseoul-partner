@@ -7,6 +7,7 @@ import {
   dateToDayStr,
   DaySelectPopover,
   dayStrToDate,
+  getTimezoneDate,
 } from "~/components/date";
 import { GetListButton } from "~/components/button";
 import { json, LoaderFunction } from "@remix-run/node";
@@ -142,7 +143,7 @@ export default function AdminShippedList() {
   //날짜 수신
   useEffect(() => {
     if (loaderData.error !== undefined) {
-      setSelectedDate(new Date());
+      setSelectedDate(getTimezoneDate(new Date()));
     } else {
       setSelectedDate(dayStrToDate(loaderData.day));
     }
