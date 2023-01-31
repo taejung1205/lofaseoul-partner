@@ -13,7 +13,7 @@ export let loader: LoaderFunction = async ({ request }) => {
     const profileDoc = await getPartnerProfile({ name: partnerName });
     return profileDoc;
   } else {
-    return redirect("/login");
+    return redirect("/logout");
   }
 };
 

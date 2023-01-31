@@ -36,7 +36,7 @@ const PartnerPage = styled.div`
 export let loader: LoaderFunction = async ({ request }) => {
   const user = await requireUser(request);
   if (user == null) {
-    return redirect("/login");
+    return redirect("/logout");
   }
 
   if (user.isAdmin !== null) {
@@ -46,7 +46,7 @@ export let loader: LoaderFunction = async ({ request }) => {
       return json({ name: user.uid });
     }
   } else {
-    return redirect("/login");
+    return redirect("/logout");
   }
 };
 

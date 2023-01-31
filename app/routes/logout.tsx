@@ -3,7 +3,7 @@ import { destroyUserSession } from "~/services/session.server";
 
 export const loader: LoaderFunction = async () => {
   // not expecting direct access, so redirect away
-  return redirect("/");
+  return redirect("/login");
 };
 
 export const action: ActionFunction = async ({ request }) => {

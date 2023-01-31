@@ -27,7 +27,7 @@ const AdminPage = styled.div`
 export let loader: LoaderFunction = async ({ request }) => {
   const user = await requireUser(request);
   if (user == null) {
-    return redirect("/login");
+    return redirect("/logout");
   }
 
   if (!user.isAdmin) {

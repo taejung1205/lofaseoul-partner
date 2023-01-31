@@ -1,6 +1,16 @@
-import { json, LoaderFunction, redirect } from "@remix-run/node";
-import { Link, useLoaderData } from "@remix-run/react";
-import { useEffect, useMemo, useState } from "react";
+import {
+  ActionFunction,
+  json,
+  LoaderFunction,
+  redirect,
+} from "@remix-run/node";
+import {
+  Link,
+  useActionData,
+  useLoaderData,
+  useSubmit,
+} from "@remix-run/react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import styled from "styled-components";
 import {
   dateToKoreanMonth,
@@ -22,6 +32,8 @@ import { getSettlements, getSettlementSum } from "~/services/firebase.server";
 import { PageLayout } from "~/components/page_layout";
 import { GetListButton } from "~/components/button";
 import { requireUser } from "~/services/session.server";
+import { sendAligoMessage } from "~/services/aligo.server";
+import { BasicModal, ModalButton } from "~/components/modal";
 
 const EmptySettlementBox = styled.div`
   display: flex;
@@ -46,13 +58,35 @@ const ReportButton = styled.button`
   cursor: pointer;
 `;
 
+export const action: ActionFunction = async ({ request }) => {
+  const body = await request.formData();
+  const actionType = body.get("action")?.toString();
+  if (actionType === "send") {
+    const text = body.get("text")?.toString();
+    const receiver = "01021629843";
+    if (text !== undefined) {
+      const response = await sendAligoMessage({
+        text: text,
+        receiver: receiver,
+      });
+      if (response.result_code !== undefined && response.result_code == 1) {
+        return json({ message: `메세지가 전송되었습니다.` });
+      } else {
+        return json({ message: `메세지 전송 중 오류가 발생했습니다.` });
+      }
+    }
+  }
+
+  return null;
+};
+
 export const loader: LoaderFunction = async ({ request }) => {
   let partnerName: string;
   const user = await requireUser(request);
   if (user !== null) {
     partnerName = user.uid;
   } else {
-    return redirect("/login");
+    return redirect("/logout");
   }
 
   const url = new URL(request.url);
@@ -67,7 +101,12 @@ export const loader: LoaderFunction = async ({ request }) => {
       partnerName: partnerName,
       monthStr: monthStr,
     });
-    return json({ settlements: settlements, sums: sums });
+    return json({
+      settlements: settlements,
+      sums: sums,
+      partnerName: partnerName,
+      monthStr: monthStr,
+    });
   } else {
     return null;
   }
@@ -79,7 +118,17 @@ export default function AdminSettlementShare() {
   const [itemsChecked, setItemsChecked] = useState<boolean[]>([]);
   const [items, setItems] = useState<SettlementItem[]>([]);
   const [seller, setSeller] = useState<string>("all");
+
+  const [noticeModalStr, setNoticeModalStr] = useState<string>("");
+
+  const [isNoticeModalOpened, setIsNoticeModalOpened] =
+    useState<boolean>(false);
+  const [isSendModalOpened, setIsSendModalOpened] = useState<boolean>(false);
+
+  const actionData = useActionData();
   const loaderData = useLoaderData();
+  const submit = useSubmit();
+  const formRef = useRef<HTMLFormElement>(null);
 
   const monthNumeral = useMemo(
     () => dateToNumeralMonth(selectedDate ?? new Date()),
@@ -138,6 +187,13 @@ export default function AdminSettlementShare() {
     }
   }, [selectedDate]);
 
+  useEffect(() => {
+    if (actionData !== undefined && actionData !== null) {
+      setNoticeModalStr(actionData.message);
+      setIsNoticeModalOpened(true);
+    }
+  }, [actionData]);
+
   function onItemCheck(index: number, isChecked: boolean) {
     itemsChecked[index] = isChecked;
   }
@@ -146,8 +202,83 @@ export default function AdminSettlementShare() {
     setItemsChecked(Array(items.length ?? 0).fill(isChecked));
   }
 
+  function sendMessage() {
+    let orderNumberList: string[] = [];
+    for (let i = 0; i < items.length; i++) {
+      if (itemsChecked[i]) {
+        orderNumberList.push(items[i].orderNumber);
+      }
+    }
+    if (orderNumberList.length == 0) {
+      setNoticeModalStr("선택된 운송장이 없습니다.");
+      setIsNoticeModalOpened(true);
+      return null;
+    }
+
+    let orderNumberListStr = `${orderNumberList[0]}`;
+    for (let i = 1; i < orderNumberList.length; i++) {
+      orderNumberListStr += `, ${orderNumberList[i]}`;
+    }
+    const text = `[${loaderData.partnerName}]이 ${loaderData.monthStr}에 공유된 정산건 중 [${orderNumberListStr}]에 대해 오류를 보고하였습니다. 내용을 확인 부탁드립니다.`;
+    const formData = new FormData(formRef.current ?? undefined);
+    formData.set("text", text);
+    formData.set("action", "send");
+    submit(formData, { method: "post" });
+  }
+
   return (
     <>
+      <BasicModal
+        opened={isNoticeModalOpened}
+        onClose={() => setIsNoticeModalOpened(false)}
+      >
+        <div
+          style={{
+            justifyContent: "center",
+            textAlign: "center",
+            fontWeight: "700",
+          }}
+        >
+          {noticeModalStr}
+          <div style={{ height: "20px" }} />
+          <div style={{ display: "flex", justifyContent: "center" }}>
+            <ModalButton onClick={() => setIsNoticeModalOpened(false)}>
+              확인
+            </ModalButton>
+          </div>
+        </div>
+      </BasicModal>
+
+      <BasicModal
+        opened={isSendModalOpened}
+        onClose={() => setIsSendModalOpened}
+      >
+        <div
+          style={{
+            justifyContent: "center",
+            textAlign: "center",
+            fontWeight: "700",
+          }}
+        >
+          {`선택된 정산건에 대해 오류를 보고하시겠습니까?`}
+
+          <div style={{ height: "20px" }} />
+          <div style={{ display: "flex", justifyContent: "center" }}>
+            <ModalButton onClick={() => setIsSendModalOpened(false)}>
+              취소
+            </ModalButton>
+            <ModalButton
+              onClick={() => {
+                sendMessage();
+                setIsSendModalOpened(false);
+              }}
+            >
+              공유
+            </ModalButton>
+          </div>
+        </div>
+      </BasicModal>
+
       <PageLayout>
         <div
           style={{
@@ -220,14 +351,23 @@ export default function AdminSettlementShare() {
         {items.length > 0 && allSum !== null ? (
           <>
             <div style={{ height: "20px" }} />
-            <ReportButton
-              onClick={() => {
-                //TODO: 알리고
-              }}
-            >
-              오류 보고
-            </ReportButton>
+
+            <div style={{ display: "flex", alignItems: "center" }}>
+              <ReportButton
+                onClick={() => {
+                  setIsSendModalOpened(true);
+                }}
+              >
+                오류 보고
+              </ReportButton>
+              <div style={{ marginLeft: "30px" }}>
+                다량의 오류가 보일 시에는 kyj@tabacpress.xyz로 문의
+                부탁드립니다.
+              </div>
+            </div>
+
             <div style={{ height: "40px" }} />
+
             <SettlementSumBar
               seller={seller ?? "all"}
               settlement={
