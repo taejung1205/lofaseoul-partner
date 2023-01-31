@@ -63,7 +63,7 @@ export const loader: LoaderFunction = async ({ request }) => {
   if (user !== null) {
     partnerName = user.uid;
   } else {
-    return redirect("/login");
+    return redirect("/logout");
   }
 
   const orders = await getPartnerDelayedOrders(partnerName);

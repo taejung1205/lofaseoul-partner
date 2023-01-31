@@ -129,6 +129,7 @@ export async function requireUser(
     const decodedClaims = await auth.verifySessionCookie(tokenId);
     return {...decodedClaims, isAdmin: isAdmin};
   } catch (error: any) {
+    console.log(error);
     destroyUserSession(request);
     return null;
   }
