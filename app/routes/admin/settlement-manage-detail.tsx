@@ -217,7 +217,7 @@ export default function AdminSettlementShare() {
   //선택중인 날짜를 주소로 넣기 위한 숫자 변환
   //TODO: 불필요하므로 이 과정 없애야
   const monthNumeral = useMemo(
-    () => dateToNumeralMonth(selectedDate ?? getTimezoneDate(new Date())),
+    () => dateToNumeralMonth(selectedDate ?? new Date()),
     [selectedDate]
   );
 

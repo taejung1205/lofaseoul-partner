@@ -1133,7 +1133,7 @@ export async function getPartnerTodayWaybillsCount(partnerName: string) {
  * @returns
  */
 export async function getDelayedOrdersCount(day: number) {
-  const date = getTimezoneDate(new Date())
+  const date = new Date();
   date.setDate(date.getDate() - day);
   const timestamp = Timestamp.fromDate(date);
 
@@ -1155,7 +1155,7 @@ export async function getPartnerDelayedOrdersCount(
   day: number,
   partnerName: string
 ) {
-  const date = getTimezoneDate(new Date());
+  const date = new Date();
   date.setDate(date.getDate() - day);
   const timestamp = Timestamp.fromDate(date);
 

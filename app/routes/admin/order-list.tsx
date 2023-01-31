@@ -76,7 +76,7 @@ export const loader: LoaderFunction = async ({ request }) => {
     const orders = await getAllOrders(day);
     return json({ day: day, orders: orders });
   } else {
-    const today = dateToDayStr(getTimezoneDate(new Date()));
+    const today = dateToDayStr(new Date());
     const orders = await getAllOrders(today);
     return json({ day: today, orders: orders });
   }
