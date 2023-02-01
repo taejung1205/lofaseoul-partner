@@ -61,6 +61,8 @@ export function getAllSellerSettlementSum(sums: any) {
     settlement += sums[`settlement_${seller}`];
     shippingFee += sums[`shipping_${seller}`];
   });
+  settlement += sums[`settlement_etc`];
+  shippingFee += sums[`shipping_etc`];
   return { settlement: settlement, shippingFee: shippingFee };
 }
 
