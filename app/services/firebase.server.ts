@@ -234,7 +234,8 @@ export async function addSettlements({
   settlements: SettlementItem[];
   monthStr: string;
 }) {
-  const batch = writeBatch(firestore);
+
+  let settlementBatch = writeBatch(firestore);
   const time = new Date().getTime();
   let partnersJson: any = {};
 
@@ -255,7 +256,8 @@ export async function addSettlements({
     partnerSums.set(partners[i], sumItem);
   }
 
-  settlements.forEach((item, index) => {
+  for(let i = 0; i < settlements.length; i++){
+    const item = settlements[i];
     let seller = "etc";
     if (PossibleSellers.includes(item.seller)) {
       seller = item.seller;
@@ -299,14 +301,23 @@ export async function addSettlements({
     partnersJson[item.partnerName].orderNumbers.push(item.orderNumber);
 
     //items에 해당 정산아이템 추가
-    const itemDocName = `${time}_${index}`;
+    const itemDocName = `${time}_${i}`;
     let itemDocRef = doc(
       firestore,
       `settlements/${monthStr}/items`,
       itemDocName
     );
-    batch.set(itemDocRef, item);
-  });
+    settlementBatch.set(itemDocRef, item);
+
+    if(0 == i % 400 || i == settlements.length - 1){
+      await settlementBatch.commit();
+      if(i < settlements.length){
+        settlementBatch = writeBatch(firestore);
+      }
+    }
+  }
+
+  let partnerBatch = writeBatch(firestore);
 
   //partners에 각 파트너의 총계 추가
   for (let partnerName in partnersJson) {
@@ -321,7 +332,7 @@ export async function addSettlements({
     );
     //기존 정산합이 없을 경우
     if (prevSum == null) {
-      batch.set(partnerDocRef, partnersJson[partnerName]);
+      partnerBatch.set(partnerDocRef, partnersJson[partnerName]);
     } else {
       //기존 정산합이 있을 경우
       let newSum: any = {};
@@ -341,11 +352,11 @@ export async function addSettlements({
         prevSum["settlement_etc"] + partnersJson[partnerName][`settlement_etc`];
       newSum[`shipping_etc`] =
         prevSum["shipping_etc"] + partnersJson[partnerName][`shipping_etc`];
-      batch.set(partnerDocRef, newSum);
+        partnerBatch.set(partnerDocRef, newSum);
     }
   }
 
-  await batch.commit();
+  await partnerBatch.commit();
 
   await setDoc(doc(firestore, `settlements/${monthStr}`), {
     isShared: true,
@@ -450,7 +461,7 @@ export async function deleteSettlements({
     return null;
   }
 
-  const batch = writeBatch(firestore);
+  let deleteBatch = writeBatch(firestore);
 
   function subtractArray(a: string[], b: string[]) {
     let hash = Object.create(null);
@@ -524,20 +535,22 @@ export async function deleteSettlements({
     );
     const querySnap = await getDocs(idQuery);
     querySnap.forEach(async (doc) => {
-      batch.delete(doc.ref);
+      deleteBatch.delete(doc.ref);
     });
+
+    if(0 == i % 400 || i == settlements.length - 1){
+      await deleteBatch.commit();
+      if(i < settlements.length){
+        deleteBatch = writeBatch(firestore);
+      }
+    }
   }
 
-  const docRef = doc(
+  await setDoc(doc(
     firestore,
     `settlements/${monthStr}/partners`,
     partnerName
-  );
-
-  //새 정산합 적용
-  batch.set(docRef, newSum);
-
-  batch.commit();
+  ), newSum);
 }
 
 /**
