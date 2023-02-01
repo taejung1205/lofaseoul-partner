@@ -77,7 +77,6 @@ export const action: ActionFunction = async ({ request }) => {
     const month = body.get("month")?.toString();
     if (settlement !== undefined && month !== undefined) {
       const jsonArr: SettlementItem[] = JSON.parse(settlement);
-      console.log(jsonArr);
       const result = await addSettlements({
         settlements: jsonArr,
         monthStr: month,
@@ -194,8 +193,10 @@ export default function AdminSettlementShare() {
           };
 
           let isValid = isSettlementItemValid(item);
+          
           if (!isValid) {
-            setNoticeModalStr("유효하지 않은 엑셀 파일입니다.");
+            
+            setNoticeModalStr(`유효하지 않은 엑셀 파일입니다. ${JSON.stringify(item)}`);
             setIsNoticeModalOpened(true);
             setFileName("");
             setItems([]);
