@@ -81,10 +81,12 @@ export const action: ActionFunction = async ({ request }) => {
         settlements: jsonArr,
         monthStr: month,
       });
-      if (result == null) {
+      if (result == true) {
         return json({ message: `${month} 정산내역 공유가 완료되었습니다.` });
       } else {
-        return json({ message: result });
+        return json({
+          message: `정산내역 공유 중 문제가 발생했습니다.${"\n"}${result}`,
+        });
       }
     }
   }
@@ -193,10 +195,11 @@ export default function AdminSettlementShare() {
           };
 
           let isValid = isSettlementItemValid(item);
-          
+
           if (!isValid) {
-            
-            setNoticeModalStr(`유효하지 않은 엑셀 파일입니다. ${JSON.stringify(item)}`);
+            setNoticeModalStr(
+              `유효하지 않은 엑셀 파일입니다. ${JSON.stringify(item)}`
+            );
             setIsNoticeModalOpened(true);
             setFileName("");
             setItems([]);

@@ -365,10 +365,9 @@ export async function addSettlements({
       isShared: true,
     });
 
-    return null;
+    return true;
   } catch (error: any) {
-    const message: string = error.message;
-    return message;
+    return error.message ?? error;
   }
 }
 
@@ -465,100 +464,189 @@ export async function deleteSettlements({
   monthStr: string;
   partnerName: string;
 }) {
-  if (settlements.length == 0) {
-    console.log("error: settlement length = 0");
-    return null;
-  }
-
-  let deleteBatch = writeBatch(firestore);
-
-  function subtractArray(a: string[], b: string[]) {
-    let hash = Object.create(null);
-    b.forEach((val) => {
-      hash[val] = (hash[val] || 0) + 1;
-    });
-    return a.filter((val) => {
-      return !hash[val] || (hash[val]--, false);
-    });
-  }
-
-  let prevSum = await getSettlementSum({
-    partnerName: partnerName,
-    monthStr: monthStr,
-  });
-
-  let newSum = prevSum;
-
-  if (prevSum == null) {
-    console.log("error: cannot get partner sum");
-    return null;
-  }
-
-  // 주문번호 제거
-  let deletingOrderNumbers = settlements.map((item) => item.orderNumber);
-  let newOrderNumbers = subtractArray(
-    prevSum.orderNumbers,
-    deletingOrderNumbers
-  );
-
-  newSum!.orderNumbers = newOrderNumbers;
-
-  for (let i = 0; i < settlements.length; i++) {
-    let item = settlements[i];
-    let seller = "etc";
-    if (PossibleSellers.includes(item.seller)) {
-      seller = item.seller;
+  try {
+    if (settlements.length == 0) {
+      throw Error("들어온 정산내역이 없습니다.");
     }
 
-    /* partners에 총계 계산 */
+    let deleteBatch = writeBatch(firestore);
 
-    //정산금액: (가격 * 수량)의 (100 - 수수료)%
-    const deletingAmount = Math.round(
-      (item.price * item.amount * (100 - item.fee)) / 100.0
-    );
+    function subtractArray(a: string[], b: string[]) {
+      let hash = Object.create(null);
+      b.forEach((val) => {
+        hash[val] = (hash[val] || 0) + 1;
+      });
+      return a.filter((val) => {
+        return !hash[val] || (hash[val]--, false);
+      });
+    }
 
-    //현재 정산합에서 감산
-    newSum![`settlement_${seller}`] -= deletingAmount;
-    newSum![`shipping_${seller}`] -= item.shippingFee;
-
-    //items에 해당 정산아이템 삭제
-    const settlementsRef = collection(
-      firestore,
-      `settlements/${monthStr}/items`
-    );
-
-    const idQuery = query(
-      settlementsRef,
-      where("partnerName", "==", item.partnerName),
-      where("productName", "==", item.productName),
-      where("price", "==", item.price),
-      where("receiver", "==", item.receiver),
-      where("seller", "==", item.seller),
-      where("optionName", "==", item.optionName),
-      where("fee", "==", item.fee),
-      where("orderer", "==", item.orderer),
-      where("orderNumber", "==", item.orderNumber),
-      where("shippingFee", "==", item.shippingFee),
-      where("amount", "==", item.amount),
-      limit(1)
-    );
-    const querySnap = await getDocs(idQuery);
-    querySnap.forEach(async (doc) => {
-      deleteBatch.delete(doc.ref);
+    let prevSum = await getSettlementSum({
+      partnerName: partnerName,
+      monthStr: monthStr,
     });
 
-    if (0 == i % 400 || i == settlements.length - 1) {
-      await deleteBatch.commit();
-      if (i < settlements.length) {
-        deleteBatch = writeBatch(firestore);
+    let newSum = prevSum;
+
+    if (prevSum == null) {
+      throw Error("기존 정산 합산 내역을 불러올 수 없습니다.");
+    }
+
+    // 주문번호 제거
+    let deletingOrderNumbers = settlements.map((item) => item.orderNumber);
+    let newOrderNumbers = subtractArray(
+      prevSum.orderNumbers,
+      deletingOrderNumbers
+    );
+
+    newSum!.orderNumbers = newOrderNumbers;
+
+    for (let i = 0; i < settlements.length; i++) {
+      let item = settlements[i];
+      let seller = "etc";
+      if (PossibleSellers.includes(item.seller)) {
+        seller = item.seller;
+      }
+
+      /* partners에 총계 계산 */
+
+      //정산금액: (가격 * 수량)의 (100 - 수수료)%
+      const deletingAmount = Math.round(
+        (item.price * item.amount * (100 - item.fee)) / 100.0
+      );
+
+      //현재 정산합에서 감산
+      newSum![`settlement_${seller}`] -= deletingAmount;
+      newSum![`shipping_${seller}`] -= item.shippingFee;
+
+      //items에 해당 정산아이템 삭제
+      const settlementsRef = collection(
+        firestore,
+        `settlements/${monthStr}/items`
+      );
+
+      const idQuery = query(
+        settlementsRef,
+        where("partnerName", "==", item.partnerName),
+        where("productName", "==", item.productName),
+        where("price", "==", item.price),
+        where("receiver", "==", item.receiver),
+        where("seller", "==", item.seller),
+        where("optionName", "==", item.optionName),
+        where("fee", "==", item.fee),
+        where("orderer", "==", item.orderer),
+        where("orderNumber", "==", item.orderNumber),
+        where("shippingFee", "==", item.shippingFee),
+        where("amount", "==", item.amount),
+        limit(1)
+      );
+      const querySnap = await getDocs(idQuery);
+      querySnap.forEach(async (doc) => {
+        deleteBatch.delete(doc.ref);
+      });
+
+      if (0 == i % 400 || i == settlements.length - 1) {
+        await deleteBatch.commit();
+        if (i < settlements.length) {
+          deleteBatch = writeBatch(firestore);
+        }
       }
     }
-  }
 
-  await setDoc(
-    doc(firestore, `settlements/${monthStr}/partners`, partnerName),
-    newSum
-  );
+    await setDoc(
+      doc(firestore, `settlements/${monthStr}/partners`, partnerName),
+      newSum
+    );
+    return true;
+  } catch (error: any) {
+    return error.message ?? error;
+  }
+}
+
+/**
+ * 해당 정산내역들의 배송비를 0원으로 만듭니다.
+ * @param monthStr: 월, settlements: 정산내역 (같은 파트너의 정산내역), partnerName: 파트너이름
+ */
+export async function deleteSettlementsShippingFee({
+  settlements,
+  monthStr,
+  partnerName,
+}: {
+  settlements: SettlementItem[];
+  monthStr: string;
+  partnerName: string;
+}) {
+  try {
+    if (settlements.length == 0) {
+      throw Error("들어온 정산내역이 없습니다.");
+    }
+
+    let shippingFeeBatch = writeBatch(firestore);
+
+    let prevSum = await getSettlementSum({
+      partnerName: partnerName,
+      monthStr: monthStr,
+    });
+
+    let newSum = prevSum;
+
+    if (prevSum == null) {
+      throw Error("기존 정산 합산 내역을 불러올 수 없습니다.");
+    }
+
+    for (let i = 0; i < settlements.length; i++) {
+      let item = settlements[i];
+      let seller = "etc";
+      if (PossibleSellers.includes(item.seller)) {
+        seller = item.seller;
+      }
+
+      /* partners에 총계 계산 */
+
+      newSum![`shipping_${seller}`] -= item.shippingFee;
+
+      //items에 해당 정산아이템의 배송비 수정
+      const settlementsRef = collection(
+        firestore,
+        `settlements/${monthStr}/items`
+      );
+
+      const idQuery = query(
+        settlementsRef,
+        where("partnerName", "==", item.partnerName),
+        where("productName", "==", item.productName),
+        where("price", "==", item.price),
+        where("receiver", "==", item.receiver),
+        where("seller", "==", item.seller),
+        where("optionName", "==", item.optionName),
+        where("fee", "==", item.fee),
+        where("orderer", "==", item.orderer),
+        where("orderNumber", "==", item.orderNumber),
+        where("shippingFee", "==", item.shippingFee),
+        where("amount", "==", item.amount),
+        limit(1)
+      );
+      const querySnap = await getDocs(idQuery);
+      querySnap.forEach(async (doc) => {
+        shippingFeeBatch.update(doc.ref, { shippingFee: 0 });
+      });
+
+      if (0 == i % 400 || i == settlements.length - 1) {
+        await shippingFeeBatch.commit();
+        if (i < settlements.length) {
+          shippingFeeBatch = writeBatch(firestore);
+        }
+      }
+    }
+
+    await setDoc(
+      doc(firestore, `settlements/${monthStr}/partners`, partnerName),
+      newSum
+    );
+    return true;
+  } catch (error: any) {
+    return error.message ?? error;
+  }
 }
 
 /**

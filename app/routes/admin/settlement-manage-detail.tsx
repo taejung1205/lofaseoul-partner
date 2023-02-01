@@ -30,6 +30,7 @@ import {
 import {
   addSettlements,
   deleteSettlements,
+  deleteSettlementsShippingFee,
   getPartnerProfile,
   getPartnerProfiles,
   getSettlements,
@@ -87,7 +88,20 @@ const EditDeleteButton = styled.button`
   color: white;
   font-size: 24px;
   font-weight: 700;
-  width: 220px;
+  width: 240px;
+  height: 50px;
+  line-height: 1;
+  padding: 6px 6px 6px 6px;
+  margin-right: 40px;
+  cursor: pointer;
+`;
+
+const DeleteShippingFeeButton = styled.button`
+  background-color: black;
+  color: white;
+  font-size: 20px;
+  font-weight: 700;
+  width: 240px;
   height: 50px;
   line-height: 1;
   padding: 6px 6px 6px 6px;
@@ -108,12 +122,18 @@ export const action: ActionFunction = async ({ request }) => {
       partnerName !== undefined
     ) {
       const jsonArr: SettlementItem[] = JSON.parse(settlement);
-      await deleteSettlements({
+      const result = await deleteSettlements({
         settlements: jsonArr,
         monthStr: month,
         partnerName: partnerName,
       });
-      return json({ message: `삭제가 완료되었습니다.` });
+      if (result == true) {
+        return json({ message: `삭제가 완료되었습니다.` });
+      } else {
+        return json({
+          message: `삭제 중 문제가 발생했습니다.${"\n"}${result}`,
+        });
+      }
     }
   } else if (actionType === "edit") {
     const deletingItem = body.get("deleting-item")?.toString();
@@ -128,16 +148,52 @@ export const action: ActionFunction = async ({ request }) => {
     ) {
       const jsonDelete: SettlementItem = JSON.parse(deletingItem);
       const jsonNew: SettlementItem = JSON.parse(newItem);
-      await deleteSettlements({
+      const result_1 = await deleteSettlements({
         settlements: [jsonDelete],
         monthStr: month,
         partnerName: partnerName,
       });
-      await addSettlements({
+
+      if (result_1 !== true) {
+        return json({
+          message: `수정의 삭제 과정 중 문제가 발생했습니다.${"\n"}${result_1}`,
+        });
+      }
+      const result_2 = await addSettlements({
         settlements: [jsonNew],
         monthStr: month,
       });
-      return json({ message: `수정이 완료되었습니다.` });
+
+      if (result_2 == true) {
+        return json({ message: `수정이 완료되었습니다.` });
+      } else {
+        return json({
+          message: `수정의 추가 과정 중 문제가 발생했습니다.${"\n"}${result_2}`,
+        });
+      }
+    }
+  } else if (actionType == "shipping-delete") {
+    const settlement = body.get("settlement")?.toString();
+    const month = body.get("month")?.toString();
+    const partnerName = body.get("partner")?.toString();
+    if (
+      settlement !== undefined &&
+      month !== undefined &&
+      partnerName !== undefined
+    ) {
+      const jsonArr: SettlementItem[] = JSON.parse(settlement);
+      const result = await deleteSettlementsShippingFee({
+        settlements: jsonArr,
+        monthStr: month,
+        partnerName: partnerName,
+      });
+      if (result == true) {
+        return json({ message: `삭제가 완료되었습니다.` });
+      } else {
+        return json({
+          message: `삭제 중 문제가 발생했습니다.${"\n"}${result}`,
+        });
+      }
     }
   }
 
@@ -203,6 +259,8 @@ export default function AdminSettlementShare() {
   const [receiverEdit, setReceiverEdit] = useState<string>("");
 
   // 모달 열림 여부
+  const [isDeleteShippingFeeModalOpened, setIsDeleteShippingFeeModalOpened] =
+    useState<boolean>(false);
   const [isDeleteModalOpened, setIsDeleteModalOpened] =
     useState<boolean>(false);
   const [isNoticeModalOpened, setIsNoticeModalOpened] =
@@ -364,6 +422,17 @@ export default function AdminSettlementShare() {
     submit(formData, { method: "post" });
   }
 
+  //정산건 배송비 제거를 post합니다.
+  function submitShippingFeeDelete(settlementList: SettlementItem[]) {
+    const json = JSON.stringify(settlementList);
+    const formData = new FormData(formRef.current ?? undefined);
+    formData.set("settlement", json);
+    formData.set("month", monthStr);
+    formData.set("partner", loaderData.partnerName);
+    formData.set("action", "shipping-delete");
+    submit(formData, { method: "post" });
+  }
+
   //수정 시작시 기본 입력값을 선택한 정산건으로 맞춥니다.
   function updateEditItems(settlement: SettlementItem) {
     setSellerEdit(settlement.seller);
@@ -488,6 +557,38 @@ export default function AdminSettlementShare() {
               onClick={async () => {
                 submitDelete(selectedItems);
                 setIsDeleteModalOpened(false);
+              }}
+            >
+              삭제
+            </ModalButton>
+          </div>
+        </div>
+      </BasicModal>
+
+      {/* 정산내역 배송비 제거 모달 */}
+      <BasicModal
+        opened={isDeleteShippingFeeModalOpened}
+        onClose={() => setIsDeleteShippingFeeModalOpened(false)}
+      >
+        <div
+          style={{
+            justifyContent: "center",
+            textAlign: "center",
+            fontWeight: "700",
+          }}
+        >
+          {`선택된 정산내역 ${selectedItems.length}건의 배송비를 삭제하시겠습니까?`}
+          <div style={{ height: "20px" }} />
+          <div style={{ display: "flex", justifyContent: "center" }}>
+            <ModalButton
+              onClick={() => setIsDeleteShippingFeeModalOpened(false)}
+            >
+              취소
+            </ModalButton>
+            <ModalButton
+              onClick={async () => {
+                submitShippingFeeDelete(selectedItems);
+                setIsDeleteShippingFeeModalOpened(false);
               }}
             >
               삭제
@@ -753,6 +854,19 @@ export default function AdminSettlementShare() {
               >
                 선택 정산건 수정
               </EditDeleteButton>
+              <DeleteShippingFeeButton
+                onClick={() => {
+                  const updatedList = updateCheckedItems();
+                  if (updatedList.length > 0) {
+                    setIsDeleteShippingFeeModalOpened(true);
+                  } else {
+                    setNoticeModalStr("선택된 정산내역이 없습니다.");
+                    setIsNoticeModalOpened(true);
+                  }
+                }}
+              >
+                선택 정산건 배송비 제거
+              </DeleteShippingFeeButton>
             </div>
             <div style={{ height: "40px" }} />
             <SettlementSumBar
