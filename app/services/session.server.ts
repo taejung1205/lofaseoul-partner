@@ -52,7 +52,7 @@ export async function createUserSession({
     );
   }
   // expires in 5 days
-  const expiresIn = 60 * 60 * 24 * 5;
+  const expiresIn = 60 * 60 * 24 * 5 * 1000;
   // Create the session cookie. This will also verify the ID token in the process.
   // The session cookie will have the same claims as the ID token.
 
