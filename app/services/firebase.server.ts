@@ -132,7 +132,7 @@ export async function addPartnerProfile({
   const docSnap = await getDoc(docRef);
   if (docSnap.exists()) {
     const result = await updateAuthAccount(
-      docSnap.data().id,
+      docSnap.id,
       partnerProfile.id,
       partnerProfile.password
     );
