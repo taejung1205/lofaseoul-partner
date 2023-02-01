@@ -3,7 +3,11 @@ import { useActionData, useLoaderData, useSubmit } from "@remix-run/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import styled from "styled-components";
 import * as xlsx from "xlsx";
-import { dateToKoreanMonth, getTimezoneDate, MonthSelectPopover } from "~/components/date";
+import {
+  dateToKoreanMonth,
+  getTimezoneDate,
+  MonthSelectPopover,
+} from "~/components/date";
 import { BasicModal, ModalButton } from "~/components/modal";
 import { PageLayout } from "~/components/page_layout";
 import { PartnerProfile } from "~/components/partner_profile";
@@ -74,8 +78,15 @@ export const action: ActionFunction = async ({ request }) => {
     if (settlement !== undefined && month !== undefined) {
       const jsonArr: SettlementItem[] = JSON.parse(settlement);
       console.log(jsonArr);
-      await addSettlements({ settlements: jsonArr, monthStr: month });
-      return json({ message: `${month} 정산내역 공유가 완료되었습니다.` });
+      const result = await addSettlements({
+        settlements: jsonArr,
+        monthStr: month,
+      });
+      if (result == null) {
+        return json({ message: `${month} 정산내역 공유가 완료되었습니다.` });
+      } else {
+        return json({ message: result });
+      }
     }
   }
 

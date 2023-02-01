@@ -53,10 +53,10 @@ if (!firebaseApp?.apps.length || !firestore.apps.length) {
 }
 
 /**
- * Firebase를 위한 설정입니다. Client side에서 로그인하기 위해 사용합니다. 
+ * Firebase를 위한 설정입니다. Client side에서 로그인하기 위해 사용합니다.
  * @returns firebaseConfig
  */
-export function getFirebaseConfig(){
+export function getFirebaseConfig() {
   return firebaseConfig;
 }
 
@@ -234,133 +234,142 @@ export async function addSettlements({
   settlements: SettlementItem[];
   monthStr: string;
 }) {
+  try {
+    let settlementBatch = writeBatch(firestore);
+    const time = new Date().getTime();
+    let partnersJson: any = {};
 
-  let settlementBatch = writeBatch(firestore);
-  const time = new Date().getTime();
-  let partnersJson: any = {};
-
-  const partners: string[] = [];
-  settlements.forEach((item) => {
-    if (!partners.includes(item.partnerName)) {
-      partners.push(item.partnerName);
-    }
-  });
-
-  const partnerSums = new Map<string, any>();
-
-  for (let i = 0; i < partners.length; i++) {
-    let sumItem = await getSettlementSum({
-      partnerName: partners[i],
-      monthStr: monthStr,
+    const partners: string[] = [];
+    settlements.forEach((item) => {
+      if (!partners.includes(item.partnerName)) {
+        partners.push(item.partnerName);
+      }
     });
-    partnerSums.set(partners[i], sumItem);
-  }
 
-  for(let i = 0; i < settlements.length; i++){
-    const item = settlements[i];
-    let seller = "etc";
-    if (PossibleSellers.includes(item.seller)) {
-      seller = item.seller;
-    }
+    const partnerSums = new Map<string, any>();
 
-    //현재 작업에서 해당 파트너의 정산합 추가한적 없으면 초기화
-    if (partnersJson[item.partnerName] == undefined) {
-      partnersJson[item.partnerName] = {
-        settlement_etc: 0,
-        shipping_etc: 0,
-        orderNumbers: [],
-      };
-
-      PossibleSellers.forEach((seller) => {
-        partnersJson[item.partnerName][`settlement_${seller}`] = 0;
-        partnersJson[item.partnerName][`shipping_${seller}`] = 0;
+    for (let i = 0; i < partners.length; i++) {
+      let sumItem = await getSettlementSum({
+        partnerName: partners[i],
+        monthStr: monthStr,
       });
+      partnerSums.set(partners[i], sumItem);
     }
 
-    //현재 올리는 정산 + 기존 정산내역에 해당 주문번호 있으면 배송비 0원
-    const partnerSum = partnerSums.get(item.partnerName);
+    for (let i = 0; i < settlements.length; i++) {
+      const item = settlements[i];
+      let seller = "etc";
+      if (PossibleSellers.includes(item.seller)) {
+        seller = item.seller;
+      }
 
-    if (
-      partnersJson[item.partnerName].orderNumbers.includes(item.orderNumber) ||
-      partnerSum?.orderNumbers.includes(item.orderNumber)
-    ) {
-      item.shippingFee = 0;
-    }
+      //현재 작업에서 해당 파트너의 정산합 추가한적 없으면 초기화
+      if (partnersJson[item.partnerName] == undefined) {
+        partnersJson[item.partnerName] = {
+          settlement_etc: 0,
+          shipping_etc: 0,
+          orderNumbers: [],
+        };
 
-    /* partners에 총계 넣기 위한 계산 */
+        PossibleSellers.forEach((seller) => {
+          partnersJson[item.partnerName][`settlement_${seller}`] = 0;
+          partnersJson[item.partnerName][`shipping_${seller}`] = 0;
+        });
+      }
 
-    //정산금액: (가격 * 수량)의 (100 - 수수료)%
-    const newSettlement = Math.round(
-      (item.price * item.amount * (100 - item.fee)) / 100.0
-    );
+      //현재 올리는 정산 + 기존 정산내역에 해당 주문번호 있으면 배송비 0원
+      const partnerSum = partnerSums.get(item.partnerName);
 
-    //현재 정산합에 추가
-    partnersJson[item.partnerName][`settlement_${seller}`] += newSettlement;
-    partnersJson[item.partnerName][`shipping_${seller}`] += item.shippingFee;
+      if (
+        partnersJson[item.partnerName].orderNumbers.includes(
+          item.orderNumber
+        ) ||
+        partnerSum?.orderNumbers.includes(item.orderNumber)
+      ) {
+        item.shippingFee = 0;
+      }
 
-    partnersJson[item.partnerName].orderNumbers.push(item.orderNumber);
+      /* partners에 총계 넣기 위한 계산 */
 
-    //items에 해당 정산아이템 추가
-    const itemDocName = `${time}_${i}`;
-    let itemDocRef = doc(
-      firestore,
-      `settlements/${monthStr}/items`,
-      itemDocName
-    );
-    settlementBatch.set(itemDocRef, item);
+      //정산금액: (가격 * 수량)의 (100 - 수수료)%
+      const newSettlement = Math.round(
+        (item.price * item.amount * (100 - item.fee)) / 100.0
+      );
 
-    if(0 == i % 400 || i == settlements.length - 1){
-      await settlementBatch.commit();
-      if(i < settlements.length){
-        settlementBatch = writeBatch(firestore);
+      //현재 정산합에 추가
+      partnersJson[item.partnerName][`settlement_${seller}`] += newSettlement;
+      partnersJson[item.partnerName][`shipping_${seller}`] += item.shippingFee;
+
+      partnersJson[item.partnerName].orderNumbers.push(item.orderNumber);
+
+      //items에 해당 정산아이템 추가
+      const itemDocName = `${time}_${i}`;
+      let itemDocRef = doc(
+        firestore,
+        `settlements/${monthStr}/items`,
+        itemDocName
+      );
+      settlementBatch.set(itemDocRef, item);
+
+      if (0 == i % 400 || i == settlements.length - 1) {
+        await settlementBatch.commit();
+        if (i < settlements.length) {
+          settlementBatch = writeBatch(firestore);
+        }
       }
     }
-  }
 
-  let partnerBatch = writeBatch(firestore);
+    let partnerBatch = writeBatch(firestore);
 
-  //partners에 각 파트너의 총계 추가
-  for (let partnerName in partnersJson) {
-    let prevSum = await getSettlementSum({
-      partnerName: partnerName,
-      monthStr: monthStr,
-    });
-    let partnerDocRef = doc(
-      firestore,
-      `settlements/${monthStr}/partners`,
-      partnerName
-    );
-    //기존 정산합이 없을 경우
-    if (prevSum == null) {
-      partnerBatch.set(partnerDocRef, partnersJson[partnerName]);
-    } else {
-      //기존 정산합이 있을 경우
-      let newSum: any = {};
-      if (prevSum["orderNumbers"].includes)
-        newSum["orderNumbers"] = prevSum["orderNumbers"].concat(
-          partnersJson[partnerName]["orderNumbers"]
-        );
-      PossibleSellers.forEach((seller) => {
-        newSum[`settlement_${seller}`] =
-          prevSum![`settlement_${seller}`] +
-          partnersJson[partnerName][`settlement_${seller}`];
-        newSum[`shipping_${seller}`] =
-          prevSum![`shipping_${seller}`] +
-          partnersJson[partnerName][`shipping_${seller}`];
+    //partners에 각 파트너의 총계 추가
+    for (let partnerName in partnersJson) {
+      let prevSum = await getSettlementSum({
+        partnerName: partnerName,
+        monthStr: monthStr,
       });
-      newSum[`settlement_etc`] =
-        prevSum["settlement_etc"] + partnersJson[partnerName][`settlement_etc`];
-      newSum[`shipping_etc`] =
-        prevSum["shipping_etc"] + partnersJson[partnerName][`shipping_etc`];
+      let partnerDocRef = doc(
+        firestore,
+        `settlements/${monthStr}/partners`,
+        partnerName
+      );
+      //기존 정산합이 없을 경우
+      if (prevSum == null) {
+        partnerBatch.set(partnerDocRef, partnersJson[partnerName]);
+      } else {
+        //기존 정산합이 있을 경우
+        let newSum: any = {};
+        if (prevSum["orderNumbers"].includes)
+          newSum["orderNumbers"] = prevSum["orderNumbers"].concat(
+            partnersJson[partnerName]["orderNumbers"]
+          );
+        PossibleSellers.forEach((seller) => {
+          newSum[`settlement_${seller}`] =
+            prevSum![`settlement_${seller}`] +
+            partnersJson[partnerName][`settlement_${seller}`];
+          newSum[`shipping_${seller}`] =
+            prevSum![`shipping_${seller}`] +
+            partnersJson[partnerName][`shipping_${seller}`];
+        });
+        newSum[`settlement_etc`] =
+          prevSum["settlement_etc"] +
+          partnersJson[partnerName][`settlement_etc`];
+        newSum[`shipping_etc`] =
+          prevSum["shipping_etc"] + partnersJson[partnerName][`shipping_etc`];
         partnerBatch.set(partnerDocRef, newSum);
+      }
     }
+
+    await partnerBatch.commit();
+
+    await setDoc(doc(firestore, `settlements/${monthStr}`), {
+      isShared: true,
+    });
+
+    return null;
+  } catch (error: any) {
+    const message: string = error.message;
+    return message;
   }
-
-  await partnerBatch.commit();
-
-  await setDoc(doc(firestore, `settlements/${monthStr}`), {
-    isShared: true,
-  });
 }
 
 /**
@@ -538,19 +547,18 @@ export async function deleteSettlements({
       deleteBatch.delete(doc.ref);
     });
 
-    if(0 == i % 400 || i == settlements.length - 1){
+    if (0 == i % 400 || i == settlements.length - 1) {
       await deleteBatch.commit();
-      if(i < settlements.length){
+      if (i < settlements.length) {
         deleteBatch = writeBatch(firestore);
       }
     }
   }
 
-  await setDoc(doc(
-    firestore,
-    `settlements/${monthStr}/partners`,
-    partnerName
-  ), newSum);
+  await setDoc(
+    doc(firestore, `settlements/${monthStr}/partners`, partnerName),
+    newSum
+  );
 }
 
 /**
@@ -883,7 +891,7 @@ export async function editWaybills({
 
   const batch = writeBatch(firestore);
 
-  let nextDay =getTimezoneDate(new Date());
+  let nextDay = getTimezoneDate(new Date());
   nextDay.setDate(nextDay.getDate() + 1);
   const nextDayStr = dateToDayStr(nextDay);
 
