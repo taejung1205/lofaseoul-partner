@@ -311,7 +311,7 @@ export async function addSettlements({
       );
       settlementBatch.set(itemDocRef, item);
 
-      if (0 == i % 400 || i == settlements.length - 1) {
+      if (i % 400 == 1 || i == settlements.length - 1) {
         await settlementBatch.commit();
         if (i < settlements.length) {
           settlementBatch = writeBatch(firestore);
@@ -320,6 +320,7 @@ export async function addSettlements({
     }
 
     let partnerBatch = writeBatch(firestore);
+    let batchCount = 0;
 
     //partners에 각 파트너의 총계 추가
     for (let partnerName in partnersJson) {
@@ -357,6 +358,12 @@ export async function addSettlements({
           prevSum["shipping_etc"] + partnersJson[partnerName][`shipping_etc`];
         partnerBatch.set(partnerDocRef, newSum);
       }
+      if (batchCount % 400 == 1) {
+        await partnerBatch.commit();
+        batchCount = 0;
+        partnerBatch = writeBatch(firestore);
+      }
+      batchCount++;
     }
 
     await partnerBatch.commit();
@@ -545,7 +552,7 @@ export async function deleteSettlements({
         deleteBatch.delete(doc.ref);
       });
 
-      if (0 == i % 400 || i == settlements.length - 1) {
+      if (i % 400 == 1 || i == settlements.length - 1) {
         await deleteBatch.commit();
         if (i < settlements.length) {
           deleteBatch = writeBatch(firestore);
@@ -631,7 +638,7 @@ export async function deleteSettlementsShippingFee({
         shippingFeeBatch.update(doc.ref, { shippingFee: 0 });
       });
 
-      if (0 == i % 400 || i == settlements.length - 1) {
+      if (i % 400 == 1 || i == settlements.length - 1) {
         await shippingFeeBatch.commit();
         if (i < settlements.length) {
           shippingFeeBatch = writeBatch(firestore);
@@ -679,33 +686,48 @@ export async function addOrders({
   orders: OrderItem[];
   dayStr: string;
 }) {
-  const batch = writeBatch(firestore);
-  const time = new Date().getTime();
+  try {
+    let orderBatch = writeBatch(firestore);
+    const time = new Date().getTime();
 
-  orders.forEach((item, index) => {
-    //orders의 해당 날짜 items에 해당 주문건 아이템 추가
-    const itemDocName = `${time}_${index}`;
-    let itemDocRef = doc(firestore, `orders/${dayStr}/items`, itemDocName);
-    batch.set(itemDocRef, { ...item, orderSharedDate: dayStr });
+    for (let i = 0; i < orders.length; i++) {
+      const item = orders[i];
+      const itemDocName = `${time}_${i}`;
+      let itemDocRef = doc(firestore, `orders/${dayStr}/items`, itemDocName);
+      orderBatch.set(itemDocRef, { ...item, orderSharedDate: dayStr });
 
-    //지연주문건에, 주문건 등록 날짜 (Timestamp) 추가해 해당 아이템 추가
-    // (id를 똑같이 쓰므로 함께 삭제하거나 운송장 기입할 때 같은 id 삭제하면 됨)
-    const date = dayStrToDate(dayStr);
-    const timestamp = Timestamp.fromDate(date);
-    const delayedOrderItem = {
-      ...item,
-      orderSharedDate: dayStr,
-      orderTimestamp: timestamp,
-    };
-    let delayedOrderItemDocRef = doc(firestore, `delayed-orders`, itemDocName);
-    batch.set(delayedOrderItemDocRef, delayedOrderItem);
-  });
+      //지연주문건에, 주문건 등록 날짜 (Timestamp) 추가해 해당 아이템 추가
+      // (id를 똑같이 쓰므로 함께 삭제하거나 운송장 기입할 때 같은 id 삭제하면 됨)
+      const date = dayStrToDate(dayStr);
+      const timestamp = Timestamp.fromDate(date);
+      const delayedOrderItem = {
+        ...item,
+        orderSharedDate: dayStr,
+        orderTimestamp: timestamp,
+      };
+      let delayedOrderItemDocRef = doc(
+        firestore,
+        `delayed-orders`,
+        itemDocName
+      );
+      orderBatch.set(delayedOrderItemDocRef, delayedOrderItem);
 
-  await batch.commit();
+      if (i % 200 == 1 || i == orders.length - 1) {
+        await orderBatch.commit();
+        if (i < orders.length) {
+          orderBatch = writeBatch(firestore);
+        }
+      }
+    }
 
-  await setDoc(doc(firestore, `orders/${dayStr}`), {
-    isShared: true,
-  });
+    await setDoc(doc(firestore, `orders/${dayStr}`), {
+      isShared: true,
+    });
+
+    return true;
+  } catch (error: any) {
+    return error.message ?? error;
+  }
 }
 
 /**
@@ -759,62 +781,70 @@ export async function deleteOrders({
   dayStr: string;
 }) {
   if (orders.length == 0) {
-    console.log("error: settlement length = 0");
-    return null;
+    return "오류: 입력된 주문이 없습니다.";
   }
 
-  const batch = writeBatch(firestore);
+  try {
+    let deleteBatch = writeBatch(firestore);
 
-  for (let i = 0; i < orders.length; i++) {
-    const item = orders[i];
+    for (let i = 0; i < orders.length; i++) {
+      const item = orders[i];
 
-    //order items에 해당 정산아이템 삭제
-    const ordersRef = collection(firestore, `orders/${dayStr}/items`);
+      //order items에 해당 정산아이템 삭제
+      const ordersRef = collection(firestore, `orders/${dayStr}/items`);
 
-    const idQuery = query(
-      ordersRef,
-      where("amount", "==", item.amount),
-      where("customsCode", "==", item.customsCode),
-      where("deliveryRequest", "==", item.deliveryRequest),
-      where("managementNumber", "==", item.managementNumber),
-      where("optionName", "==", item.optionName),
-      where("orderNumber", "==", item.orderNumber),
-      where("orderer", "==", item.orderer),
-      where("ordererPhone", "==", item.ordererPhone),
-      where("partnerName", "==", item.partnerName),
-      where("phone", "==", item.phone),
-      where("productName", "==", item.productName),
-      where("receiver", "==", item.receiver),
-      where("seller", "==", item.seller),
-      where("shippingCompany", "==", item.shippingCompany),
-      where("waybillNumber", "==", item.waybillNumber),
-      where("zipCode", "==", item.zipCode),
-      limit(1)
-    );
-    const querySnap = await getDocs(idQuery);
-    querySnap.forEach(async (document) => {
-      const docName = document.id;
-      batch.delete(document.ref);
+      const idQuery = query(
+        ordersRef,
+        where("amount", "==", item.amount),
+        where("customsCode", "==", item.customsCode),
+        where("deliveryRequest", "==", item.deliveryRequest),
+        where("managementNumber", "==", item.managementNumber),
+        where("optionName", "==", item.optionName),
+        where("orderNumber", "==", item.orderNumber),
+        where("orderer", "==", item.orderer),
+        where("ordererPhone", "==", item.ordererPhone),
+        where("partnerName", "==", item.partnerName),
+        where("phone", "==", item.phone),
+        where("productName", "==", item.productName),
+        where("receiver", "==", item.receiver),
+        where("seller", "==", item.seller),
+        where("shippingCompany", "==", item.shippingCompany),
+        where("waybillNumber", "==", item.waybillNumber),
+        where("zipCode", "==", item.zipCode),
+        limit(1)
+      );
+      const querySnap = await getDocs(idQuery);
+      querySnap.forEach(async (document) => {
+        const docName = document.id;
+        deleteBatch.delete(document.ref);
 
-      //지연주문건에서도 삭제
-      let delayedOrderItemDocRef = doc(firestore, `delayed-orders`, docName);
-      batch.delete(delayedOrderItemDocRef);
+        //지연주문건에서도 삭제
+        let delayedOrderItemDocRef = doc(firestore, `delayed-orders`, docName);
+        deleteBatch.delete(delayedOrderItemDocRef);
 
-      //완료운송장도 있으면 삭제
-      const waybillSharedDate = document.data().waybillSharedDate;
+        //완료운송장도 있으면 삭제
+        const waybillSharedDate = document.data().waybillSharedDate;
 
-      if (waybillSharedDate.length > 0) {
-        let waybillItemDocRef = doc(
-          firestore,
-          `waybills/${waybillSharedDate}/items`,
-          docName
-        );
-        batch.delete(waybillItemDocRef);
+        if (waybillSharedDate.length > 0) {
+          let waybillItemDocRef = doc(
+            firestore,
+            `waybills/${waybillSharedDate}/items`,
+            docName
+          );
+          deleteBatch.delete(waybillItemDocRef);
+        }
+      });
+      if (i % 130 == 1 || i == orders.length - 1) {
+        await deleteBatch.commit();
+        if (i < orders.length - 1) {
+          deleteBatch = writeBatch(firestore);
+        }
       }
-    });
+    }
+    return true;
+  } catch (error: any) {
+    return error.message ?? error;
   }
-
-  batch.commit();
 }
 
 /**
@@ -835,91 +865,103 @@ export async function addWaybills({
     return "오류: 입력된 운송장이 없습니다.";
   }
 
-  const batch = writeBatch(firestore);
+  try {
+    let waybillBatch = writeBatch(firestore);
 
-  let nextDay = getTimezoneDate(new Date());
-  nextDay.setDate(nextDay.getDate() + 1);
-  const nextDayStr = dateToDayStr(nextDay);
+    let nextDay = getTimezoneDate(new Date());
+    nextDay.setDate(nextDay.getDate() + 1);
+    const nextDayStr = dateToDayStr(nextDay);
 
-  for (let i = 0; i < orders.length; i++) {
-    const item = orders[i];
+    for (let i = 0; i < orders.length; i++) {
+      const item = orders[i];
 
-    //items에 해당 주문서 아이템 찾은 후 택배사, 송장번호 정보 기입
-    const ordersRef = collection(firestore, `orders/${dayStr}/items`);
+      //items에 해당 주문서 아이템 찾은 후 택배사, 송장번호 정보 기입
+      const ordersRef = collection(firestore, `orders/${dayStr}/items`);
 
-    //기존 주문서 탐색
-    const idQuery = query(
-      ordersRef,
-      where("amount", "==", item.amount),
-      where("customsCode", "==", item.customsCode),
-      where("deliveryRequest", "==", item.deliveryRequest),
-      where("managementNumber", "==", item.managementNumber),
-      where("optionName", "==", item.optionName),
-      where("orderNumber", "==", item.orderNumber),
-      where("orderer", "==", item.orderer),
-      where("ordererPhone", "==", item.ordererPhone),
-      where("partnerName", "==", item.partnerName),
-      where("phone", "==", item.phone),
-      where("productName", "==", item.productName),
-      where("receiver", "==", item.receiver),
-      where("seller", "==", item.seller),
-      where("zipCode", "==", item.zipCode),
-      limit(1)
-    );
-    const querySnap = await getDocs(idQuery);
+      //기존 주문서 탐색
+      const idQuery = query(
+        ordersRef,
+        where("amount", "==", item.amount),
+        where("customsCode", "==", item.customsCode),
+        where("deliveryRequest", "==", item.deliveryRequest),
+        where("managementNumber", "==", item.managementNumber),
+        where("optionName", "==", item.optionName),
+        where("orderNumber", "==", item.orderNumber),
+        where("orderer", "==", item.orderer),
+        where("ordererPhone", "==", item.ordererPhone),
+        where("partnerName", "==", item.partnerName),
+        where("phone", "==", item.phone),
+        where("productName", "==", item.productName),
+        where("receiver", "==", item.receiver),
+        where("seller", "==", item.seller),
+        where("zipCode", "==", item.zipCode),
+        limit(1)
+      );
+      const querySnap = await getDocs(idQuery);
 
-    if (querySnap.empty) {
-      console.log("error: not found");
-      return "오류: 입력한 운송장에 해당하는 주문건을 찾을 수 없습니다.";
-    }
-
-    querySnap.forEach(async (document) => {
-      const docName = document.id;
-
-      //기존에 운송장 입력한 기록이 있으면 날짜 확인
-      const prevWaybillSharedDate = document.data().waybillSharedDate;
-
-      //주문서에 운송장 내용 기입
-      batch.update(document.ref, {
-        shippingCompany: item.shippingCompany,
-        waybillNumber: item.waybillNumber,
-        waybillSharedDate: nextDayStr,
-      });
-
-      //지연주문건에서도 삭제
-      let delayedOrderItemDocRef = doc(firestore, `delayed-orders`, docName);
-      batch.delete(delayedOrderItemDocRef);
-
-      //다른 날짜에 운송장이 이미 있으면 삭제
-      if (
-        prevWaybillSharedDate !== undefined &&
-        prevWaybillSharedDate.length > 0 &&
-        prevWaybillSharedDate !== nextDayStr
-      ) {
-        let prevWaybillDocRef = doc(
-          firestore,
-          `waybills/${prevWaybillSharedDate}/items`,
-          docName
-        );
-        batch.delete(prevWaybillDocRef);
+      if (querySnap.empty) {
+        return "오류: 입력한 운송장에 해당하는 주문건을 찾을 수 없습니다.";
       }
 
-      //완료운송장에 추가
-      let waybillItemDocRef = doc(
-        firestore,
-        `waybills/${nextDayStr}/items`,
-        docName
-      );
-      batch.set(waybillItemDocRef, { ...item, waybillSharedDate: nextDayStr });
+      querySnap.forEach(async (document) => {
+        const docName = document.id;
+
+        //기존에 운송장 입력한 기록이 있으면 날짜 확인
+        const prevWaybillSharedDate = document.data().waybillSharedDate;
+
+        //주문서에 운송장 내용 기입
+        waybillBatch.update(document.ref, {
+          shippingCompany: item.shippingCompany,
+          waybillNumber: item.waybillNumber,
+          waybillSharedDate: nextDayStr,
+        });
+
+        //지연주문건에서도 삭제
+        let delayedOrderItemDocRef = doc(firestore, `delayed-orders`, docName);
+        waybillBatch.delete(delayedOrderItemDocRef);
+
+        //다른 날짜에 운송장이 이미 있으면 삭제
+        if (
+          prevWaybillSharedDate !== undefined &&
+          prevWaybillSharedDate.length > 0 &&
+          prevWaybillSharedDate !== nextDayStr
+        ) {
+          let prevWaybillDocRef = doc(
+            firestore,
+            `waybills/${prevWaybillSharedDate}/items`,
+            docName
+          );
+          waybillBatch.delete(prevWaybillDocRef);
+        }
+
+        //완료운송장에 추가
+        let waybillItemDocRef = doc(
+          firestore,
+          `waybills/${nextDayStr}/items`,
+          docName
+        );
+        waybillBatch.set(waybillItemDocRef, {
+          ...item,
+          waybillSharedDate: nextDayStr,
+        });
+      });
+
+      if (i % 100 == 1 || i == orders.length - 1) {
+        await waybillBatch.commit();
+        if (i < orders.length) {
+          waybillBatch = writeBatch(firestore);
+        }
+      }
+    }
+
+    await setDoc(doc(firestore, `waybills/${nextDayStr}`), {
+      isShared: true,
     });
+
+    return true;
+  } catch (error: any) {
+    return error.message ?? error;
   }
-
-  await setDoc(doc(firestore, `waybills/${nextDayStr}`), {
-    isShared: true,
-  });
-
-  batch.commit();
-  return true;
 }
 
 /**
@@ -977,85 +1019,98 @@ export async function editWaybills({
     return "오류: 입력된 운송장이 없습니다.";
   }
 
-  const batch = writeBatch(firestore);
+  try {
+    let waybillBatch = writeBatch(firestore);
 
-  let nextDay = getTimezoneDate(new Date());
-  nextDay.setDate(nextDay.getDate() + 1);
-  const nextDayStr = dateToDayStr(nextDay);
+    let nextDay = getTimezoneDate(new Date());
+    nextDay.setDate(nextDay.getDate() + 1);
+    const nextDayStr = dateToDayStr(nextDay);
 
-  for (let i = 0; i < waybills.length; i++) {
-    const item = waybills[i];
+    for (let i = 0; i < waybills.length; i++) {
+      const item = waybills[i];
 
-    const waybillsRef = collection(firestore, `waybills/${dayStr}/items`);
+      const waybillsRef = collection(firestore, `waybills/${dayStr}/items`);
 
-    //기존 운송장 탐색
-    const idQuery = query(
-      waybillsRef,
-      where("amount", "==", item.amount),
-      where("customsCode", "==", item.customsCode),
-      where("deliveryRequest", "==", item.deliveryRequest),
-      where("managementNumber", "==", item.managementNumber),
-      where("optionName", "==", item.optionName),
-      where("orderNumber", "==", item.orderNumber),
-      where("orderer", "==", item.orderer),
-      where("ordererPhone", "==", item.ordererPhone),
-      where("partnerName", "==", item.partnerName),
-      where("phone", "==", item.phone),
-      where("productName", "==", item.productName),
-      where("receiver", "==", item.receiver),
-      where("seller", "==", item.seller),
-      where("zipCode", "==", item.zipCode),
-      limit(1)
-    );
-    const querySnap = await getDocs(idQuery);
+      //기존 운송장 탐색
+      const idQuery = query(
+        waybillsRef,
+        where("amount", "==", item.amount),
+        where("customsCode", "==", item.customsCode),
+        where("deliveryRequest", "==", item.deliveryRequest),
+        where("managementNumber", "==", item.managementNumber),
+        where("optionName", "==", item.optionName),
+        where("orderNumber", "==", item.orderNumber),
+        where("orderer", "==", item.orderer),
+        where("ordererPhone", "==", item.ordererPhone),
+        where("partnerName", "==", item.partnerName),
+        where("phone", "==", item.phone),
+        where("productName", "==", item.productName),
+        where("receiver", "==", item.receiver),
+        where("seller", "==", item.seller),
+        where("zipCode", "==", item.zipCode),
+        limit(1)
+      );
+      const querySnap = await getDocs(idQuery);
 
-    if (querySnap.empty) {
-      console.log("error: not found");
-      return "오류: 수정을 요청한 운송장을 찾을 수 없습니다.";
-    }
-
-    querySnap.forEach(async (document) => {
-      const docName = document.id;
-
-      //운송장의 원 주문서가 공유된 날짜
-      const orderSharedDate = document.data().orderSharedDate;
-
-      //기존 운송장이 공유된 날짜가 다르면 그 운송장 삭제
-      if (dayStr !== nextDayStr) {
-        batch.delete(document.ref);
+      if (querySnap.empty) {
+        console.log("error: not found");
+        return "오류: 수정을 요청한 운송장을 찾을 수 없습니다.";
       }
 
-      //완료운송장에 추가(수정)
-      let waybillItemDocRef = doc(
-        firestore,
-        `waybills/${nextDayStr}/items`,
-        docName
-      );
+      querySnap.forEach(async (document) => {
+        const docName = document.id;
 
-      batch.set(waybillItemDocRef, { ...item, waybillSharedDate: nextDayStr });
+        //운송장의 원 주문서가 공유된 날짜
+        const orderSharedDate = document.data().orderSharedDate;
 
-      //원 주문서 수정
+        //기존 운송장이 공유된 날짜가 다르면 그 운송장 삭제
+        if (dayStr !== nextDayStr) {
+          waybillBatch.delete(document.ref);
+        }
 
-      let orderItemDocRef = doc(
-        firestore,
-        `orders/${orderSharedDate}/items`,
-        docName
-      );
+        //완료운송장에 추가(수정)
+        let waybillItemDocRef = doc(
+          firestore,
+          `waybills/${nextDayStr}/items`,
+          docName
+        );
 
-      batch.update(orderItemDocRef, {
-        shippingCompany: item.shippingCompany,
-        waybillNumber: item.waybillNumber,
-        waybillSharedDate: nextDayStr,
+        waybillBatch.set(waybillItemDocRef, {
+          ...item,
+          waybillSharedDate: nextDayStr,
+        });
+
+        //원 주문서 수정
+
+        let orderItemDocRef = doc(
+          firestore,
+          `orders/${orderSharedDate}/items`,
+          docName
+        );
+
+        waybillBatch.update(orderItemDocRef, {
+          shippingCompany: item.shippingCompany,
+          waybillNumber: item.waybillNumber,
+          waybillSharedDate: nextDayStr,
+        });
       });
+
+      if (i % 130 == 1 || i == waybills.length - 1) {
+        await waybillBatch.commit();
+        if (i < waybills.length - 1) {
+          waybillBatch = writeBatch(firestore);
+        }
+      }
+    }
+
+    await setDoc(doc(firestore, `waybills/${nextDayStr}`), {
+      isShared: true,
     });
+
+    return true;
+  } catch (error: any) {
+    return error.message ?? error;
   }
-
-  await setDoc(doc(firestore, `waybills/${nextDayStr}`), {
-    isShared: true,
-  });
-
-  batch.commit();
-  return true;
 }
 
 /**
@@ -1106,83 +1161,96 @@ export async function shareDelayedWaybills({
     return "오류: 입력된 운송장이 없습니다.";
   }
 
-  const batch = writeBatch(firestore);
+  try {
+    let waybillBatch = writeBatch(firestore);
 
-  let nextDay = getTimezoneDate(new Date());
-  nextDay.setDate(nextDay.getDate() + 1);
-  const nextDayStr = dateToDayStr(nextDay);
+    let nextDay = getTimezoneDate(new Date());
+    nextDay.setDate(nextDay.getDate() + 1);
+    const nextDayStr = dateToDayStr(nextDay);
 
-  for (let i = 0; i < waybills.length; i++) {
-    const item = waybills[i];
+    for (let i = 0; i < waybills.length; i++) {
+      const item = waybills[i];
 
-    const waybillsRef = collection(firestore, `delayed-orders`);
+      const waybillsRef = collection(firestore, `delayed-orders`);
 
-    //기존 운송장 탐색
-    const idQuery = query(
-      waybillsRef,
-      where("amount", "==", item.amount),
-      where("customsCode", "==", item.customsCode),
-      where("deliveryRequest", "==", item.deliveryRequest),
-      where("managementNumber", "==", item.managementNumber),
-      where("optionName", "==", item.optionName),
-      where("orderNumber", "==", item.orderNumber),
-      where("orderer", "==", item.orderer),
-      where("ordererPhone", "==", item.ordererPhone),
-      where("partnerName", "==", item.partnerName),
-      where("phone", "==", item.phone),
-      where("productName", "==", item.productName),
-      where("receiver", "==", item.receiver),
-      where("seller", "==", item.seller),
-      where("zipCode", "==", item.zipCode),
-      limit(1)
-    );
-    const querySnap = await getDocs(idQuery);
-
-    if (querySnap.empty) {
-      console.log("error: not found");
-      return "오류: 수정을 요청한 운송장을 찾을 수 없습니다.";
-    }
-
-    querySnap.forEach(async (document) => {
-      const docName = document.id;
-
-      //운송장의 원 주문서가 공유된 날짜
-      const orderSharedDate = document.data().orderSharedDate;
-
-      //지연주문건에서 삭제
-      batch.delete(document.ref);
-
-      //원 주문서 수정
-
-      let orderItemDocRef = doc(
-        firestore,
-        `orders/${orderSharedDate}/items`,
-        docName
+      //기존 운송장 탐색
+      const idQuery = query(
+        waybillsRef,
+        where("amount", "==", item.amount),
+        where("customsCode", "==", item.customsCode),
+        where("deliveryRequest", "==", item.deliveryRequest),
+        where("managementNumber", "==", item.managementNumber),
+        where("optionName", "==", item.optionName),
+        where("orderNumber", "==", item.orderNumber),
+        where("orderer", "==", item.orderer),
+        where("ordererPhone", "==", item.ordererPhone),
+        where("partnerName", "==", item.partnerName),
+        where("phone", "==", item.phone),
+        where("productName", "==", item.productName),
+        where("receiver", "==", item.receiver),
+        where("seller", "==", item.seller),
+        where("zipCode", "==", item.zipCode),
+        limit(1)
       );
+      const querySnap = await getDocs(idQuery);
 
-      batch.update(orderItemDocRef, {
-        shippingCompany: item.shippingCompany,
-        waybillNumber: item.waybillNumber,
-        waybillSharedDate: nextDayStr,
+      if (querySnap.empty) {
+        console.log("error: not found");
+        return "오류: 수정을 요청한 운송장을 찾을 수 없습니다.";
+      }
+
+      querySnap.forEach(async (document) => {
+        const docName = document.id;
+
+        //운송장의 원 주문서가 공유된 날짜
+        const orderSharedDate = document.data().orderSharedDate;
+
+        //지연주문건에서 삭제
+        waybillBatch.delete(document.ref);
+
+        //원 주문서 수정
+
+        let orderItemDocRef = doc(
+          firestore,
+          `orders/${orderSharedDate}/items`,
+          docName
+        );
+
+        waybillBatch.update(orderItemDocRef, {
+          shippingCompany: item.shippingCompany,
+          waybillNumber: item.waybillNumber,
+          waybillSharedDate: nextDayStr,
+        });
+
+        //완료운송장에 추가
+        let waybillItemDocRef = doc(
+          firestore,
+          `waybills/${nextDayStr}/items`,
+          docName
+        );
+
+        waybillBatch.set(waybillItemDocRef, {
+          ...item,
+          waybillSharedDate: nextDayStr,
+        });
       });
 
-      //완료운송장에 추가
-      let waybillItemDocRef = doc(
-        firestore,
-        `waybills/${nextDayStr}/items`,
-        docName
-      );
+      if (i % 130 == 1 || i == waybills.length - 1) {
+        await waybillBatch.commit();
+        if (i < waybills.length - 1) {
+          waybillBatch = writeBatch(firestore);
+        }
+      }
+    }
 
-      batch.set(waybillItemDocRef, { ...item, waybillSharedDate: nextDayStr });
+    await setDoc(doc(firestore, `waybills/${nextDayStr}`), {
+      isShared: true,
     });
+
+    return true;
+  } catch (error: any) {
+    return error.message ?? error;
   }
-
-  await setDoc(doc(firestore, `waybills/${nextDayStr}`), {
-    isShared: true,
-  });
-
-  batch.commit();
-  return true;
 }
 
 /**

@@ -104,11 +104,17 @@ export const action: ActionFunction = async ({ request }) => {
     const day = body.get("day")?.toString();
     if (orders !== undefined && day !== undefined) {
       const jsonArr: OrderItem[] = JSON.parse(orders);
-      await addWaybills({
+      const result = await addWaybills({
         orders: jsonArr,
         dayStr: day,
       });
-      return json({ message: `운송장이 공유되었습니다.` });
+      if (result == true) {
+        return json({ message: `운송장이 공유되었습니다.` });
+      } else {
+        return json({
+          message: `운송장 공유 중 문제가 발생했습니다.${"\n"}${result}`,
+        });
+      }
     }
   }
 
@@ -584,9 +590,7 @@ export default function AdminOrderList() {
               </div>
             </>
           ) : (
-            <EmptySettlementBox>
-              주문건이 존재하지 않습니다.
-            </EmptySettlementBox>
+            <EmptySettlementBox>주문건이 존재하지 않습니다.</EmptySettlementBox>
           )
         ) : (
           <EmptySettlementBox>{errorOrderStr}</EmptySettlementBox>

@@ -62,11 +62,18 @@ export const action: ActionFunction = async ({ request }) => {
     const day = body.get("day")?.toString();
     if (waybills !== undefined && day !== undefined) {
       const jsonArr: OrderItem[] = JSON.parse(waybills);
-      await editWaybills({
+      const result = await editWaybills({
         waybills: jsonArr,
         dayStr: day,
       });
-      return json({ message: `운송장 수정이 완료되었습니다.` });
+
+      if (result == true) {
+        return json({ message: `운송장 수정이 완료되었습니다.` });
+      } else {
+        return json({
+          message: `운송장 수정 중 문제가 발생했습니다.${"\n"}${result}`,
+        });
+      }
     }
   }
 
