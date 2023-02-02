@@ -311,7 +311,7 @@ export async function addSettlements({
       );
       settlementBatch.set(itemDocRef, item);
 
-      if (0 == i % 400 || i == settlements.length - 1) {
+      if (i % 400 == 1 || i == settlements.length - 1) {
         await settlementBatch.commit();
         if (i < settlements.length) {
           settlementBatch = writeBatch(firestore);
@@ -320,6 +320,7 @@ export async function addSettlements({
     }
 
     let partnerBatch = writeBatch(firestore);
+    let batchCount = 0;
 
     //partners에 각 파트너의 총계 추가
     for (let partnerName in partnersJson) {
@@ -357,6 +358,12 @@ export async function addSettlements({
           prevSum["shipping_etc"] + partnersJson[partnerName][`shipping_etc`];
         partnerBatch.set(partnerDocRef, newSum);
       }
+      if (batchCount % 400 == 1) {
+        await partnerBatch.commit();
+        batchCount = 0;
+        partnerBatch = writeBatch(firestore);
+      }
+      batchCount++;
     }
 
     await partnerBatch.commit();
@@ -545,7 +552,7 @@ export async function deleteSettlements({
         deleteBatch.delete(doc.ref);
       });
 
-      if (0 == i % 400 || i == settlements.length - 1) {
+      if (i % 400 == 1 || i == settlements.length - 1) {
         await deleteBatch.commit();
         if (i < settlements.length) {
           deleteBatch = writeBatch(firestore);
@@ -631,7 +638,7 @@ export async function deleteSettlementsShippingFee({
         shippingFeeBatch.update(doc.ref, { shippingFee: 0 });
       });
 
-      if (0 == i % 400 || i == settlements.length - 1) {
+      if (i % 400 == 1 || i == settlements.length - 1) {
         await shippingFeeBatch.commit();
         if (i < settlements.length) {
           shippingFeeBatch = writeBatch(firestore);
@@ -705,7 +712,7 @@ export async function addOrders({
       );
       orderBatch.set(delayedOrderItemDocRef, delayedOrderItem);
 
-      if (0 == i % 200 || i == orders.length - 1) {
+      if (i % 200 == 1 || i == orders.length - 1) {
         await orderBatch.commit();
         if (i < orders.length) {
           orderBatch = writeBatch(firestore);
@@ -827,7 +834,7 @@ export async function deleteOrders({
           deleteBatch.delete(waybillItemDocRef);
         }
       });
-      if (i % 130 == 0 || i == orders.length - 1) {
+      if (i % 130 == 1 || i == orders.length - 1) {
         await deleteBatch.commit();
         if (i < orders.length - 1) {
           deleteBatch = writeBatch(firestore);
@@ -893,7 +900,6 @@ export async function addWaybills({
       const querySnap = await getDocs(idQuery);
 
       if (querySnap.empty) {
-        console.log("error: not found");
         return "오류: 입력한 운송장에 해당하는 주문건을 찾을 수 없습니다.";
       }
 
@@ -940,7 +946,7 @@ export async function addWaybills({
         });
       });
 
-      if (i % 100 == 0 || i == orders.length - 1) {
+      if (i % 100 == 1 || i == orders.length - 1) {
         await waybillBatch.commit();
         if (i < orders.length) {
           waybillBatch = writeBatch(firestore);
@@ -1089,7 +1095,7 @@ export async function editWaybills({
         });
       });
 
-      if (i % 130 == 0 || i == waybills.length - 1) {
+      if (i % 130 == 1 || i == waybills.length - 1) {
         await waybillBatch.commit();
         if (i < waybills.length - 1) {
           waybillBatch = writeBatch(firestore);
@@ -1229,7 +1235,7 @@ export async function shareDelayedWaybills({
         });
       });
 
-      if (i % 130 == 0 || i == waybills.length - 1) {
+      if (i % 130 == 1 || i == waybills.length - 1) {
         await waybillBatch.commit();
         if (i < waybills.length - 1) {
           waybillBatch = writeBatch(firestore);
