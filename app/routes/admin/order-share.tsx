@@ -78,8 +78,12 @@ export const action: ActionFunction = async ({ request }) => {
     const day = body.get("day")?.toString();
     if (order !== undefined && day !== undefined) {
       const jsonArr: OrderItem[] = JSON.parse(order);
-      await addOrders({ orders: jsonArr, dayStr: day });
-      return json({ message: `${day} 주문 공유가 완료되었습니다.` });
+      const result = await addOrders({ orders: jsonArr, dayStr: day });
+      if(result == true){
+        return json({ message: `${day} 주문 공유가 완료되었습니다.` });
+      } else {
+        return json({ message: `주문 공유 중 오류가 발생했습니다.${"\n"}${result}` });
+      }
     }
   }
 

@@ -56,11 +56,17 @@ export const action: ActionFunction = async ({ request }) => {
     const day = body.get("day")?.toString();
     if (orders !== undefined && day !== undefined) {
       const jsonArr: OrderItem[] = JSON.parse(orders);
-      await deleteOrders({
+      const result = await deleteOrders({
         orders: jsonArr,
         dayStr: day,
       });
-      return json({ message: "삭제가 완료되었습니다." });
+      if (result == true) {
+        return json({ message: "삭제가 완료되었습니다." });
+      } else {
+        return json({
+          message: `삭제 중 문제가 발생했습니다.${"\n"}${result}`,
+        });
+      }
     }
   }
 

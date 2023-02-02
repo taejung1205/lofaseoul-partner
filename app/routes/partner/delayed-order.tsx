@@ -47,10 +47,16 @@ export const action: ActionFunction = async ({ request }) => {
     const waybills = body.get("waybill")?.toString();
     if (waybills !== undefined) {
       const jsonArr: OrderItem[] = JSON.parse(waybills);
-      await shareDelayedWaybills({
+      const result = await shareDelayedWaybills({
         waybills: jsonArr,
       });
-      return json({ message: `운송장 입력이 완료되었습니다.` });
+      if (result == true) {
+        return json({ message: `운송장 입력이 완료되었습니다.` });
+      } else {
+        return json({
+          message: `운송장 입력 중 문제가 발생했습니다.${"\n"}${result}`,
+        });
+      }
     }
   }
 
