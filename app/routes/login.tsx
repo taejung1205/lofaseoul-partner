@@ -119,11 +119,11 @@ export default function Login() {
     } else {
       switch (resp.errorCode) {
         case "auth/user-not-found":
-        case "auth/invalid-password":
+        case "auth/wrong-password":
           setErrorMessage("아이디와 비밀번호를 확인해주세요.");
           break;
         default:
-          setErrorMessage("로그인 중 오류가 발생했습니다.");
+          setErrorMessage(`로그인 중 오류가 발생했습니다. ${resp.errorCode}`);
           break;
       }
       return null;
