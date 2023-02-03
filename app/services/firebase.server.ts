@@ -755,7 +755,7 @@ export async function addOrders({
       if(orderCount == undefined){
         throw Error("오류: 알리고 발신 과정에서 문제가 발생했습니다.");
       }
-      const response = await sendAligoMessage({text: `[로파파트너] ${dayStr} 주문이 ${orderCount}건 전달되었습니다.`, receiver: phone});
+      const response = await sendAligoMessage({text: `[로파파트너] ${dayStr} 주문이 ${orderCount}건 전달되었습니다. 확인 부탁드립니다.`, receiver: phone});
       if(response.result_code != 1){
         throw Error(`ALIGO 오류: ${response.message}`);
       }
