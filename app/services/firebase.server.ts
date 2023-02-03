@@ -27,6 +27,7 @@ import {
   updateAuthAccount,
 } from "./firebaseAdmin.server";
 import { emailToId } from "~/utils/account";
+import { sendAligoMessage } from "./aligo.server";
 
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
@@ -687,15 +688,37 @@ export async function addOrders({
   dayStr: string;
 }) {
   try {
+    let partnerMap : Map<string, PartnerProfile> = await getPartnerProfiles();
+    const phoneList: string[] = [];
+    const phoneOrderCount: Map<string, number> = new Map();
     let orderBatch = writeBatch(firestore);
     const time = new Date().getTime();
 
     for (let i = 0; i < orders.length; i++) {
+      
       const item = orders[i];
+
+      //연락 돌릴 연락처 && 건수 추가
+      const partner = partnerMap.get(item.partnerName);
+      if(partner == undefined){
+        throw Error("오류: 존재하지 않는 파트너입니다.");
+      }
+
+      const phone = partner.phone;
+      if(phone.length > 0 && !phoneList.includes(phone)){
+        phoneList.push(phone);
+        const orderCount = phoneOrderCount.get(phone);
+        if(orderCount == undefined){
+          phoneOrderCount.set(phone, 1);
+        } else {
+          phoneOrderCount.set(phone, orderCount + 1);
+        }
+      }
+
       const itemDocName = `${time}_${i}`;
       let itemDocRef = doc(firestore, `orders/${dayStr}/items`, itemDocName);
       orderBatch.set(itemDocRef, { ...item, orderSharedDate: dayStr });
-
+      
       //지연주문건에, 주문건 등록 날짜 (Timestamp) 추가해 해당 아이템 추가
       // (id를 똑같이 쓰므로 함께 삭제하거나 운송장 기입할 때 같은 id 삭제하면 됨)
       const date = dayStrToDate(dayStr);
@@ -718,11 +741,25 @@ export async function addOrders({
           orderBatch = writeBatch(firestore);
         }
       }
+
+      
     }
 
     await setDoc(doc(firestore, `orders/${dayStr}`), {
       isShared: true,
     });
+
+    for(let i = 0; i < phoneList.length; i++){
+      const phone = phoneList[i];
+      const orderCount = phoneOrderCount.get(phone);
+      if(orderCount == undefined){
+        throw Error("오류: 알리고 발신 과정에서 문제가 발생했습니다.");
+      }
+      const response = await sendAligoMessage({text: `[로파파트너] ${dayStr} 주문이 ${orderCount}건 전달되었습니다. 확인 부탁드립니다.`, receiver: phone});
+      if(response.result_code != 1){
+        throw Error(`ALIGO 오류: ${response.message}`);
+      }
+    }
 
     return true;
   } catch (error: any) {
