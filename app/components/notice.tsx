@@ -2,6 +2,7 @@ import { Select } from "@mantine/core";
 import { Form } from "@remix-run/react";
 import { useState } from "react";
 import styled from "styled-components";
+import { BlackButton } from "./button";
 import { BasicModal, ModalButton } from "./modal";
 
 export type NoticeItem = {
@@ -10,7 +11,7 @@ export type NoticeItem = {
   sharedDate: string | undefined;
   topic: NoticeTopic;
   detail: string;
-  replyList: string[];
+  replies: string[];
 };
 
 type NoticeTopic =
@@ -28,7 +29,7 @@ const NoticeBox = styled.div`
   background-color: #d9d9d9;
   border: 1px solid black;
   width: inherit;
-  margin-bottom: 40px;
+  margin-top: 40px;
 `;
 
 const NoticeGridContainer = styled.div`
@@ -56,6 +57,15 @@ const LongEditInputBox = styled.textarea`
   font-weight: 700;
   width: 612px;
   margin: 4px;
+`;
+
+const ReplyInputBox = styled.textarea`
+  font-size: 20px;
+  font-weight: 700;
+  width: 100%;
+  margin: 10px;
+  padding: 10px;
+  min-height: 100px;
 `;
 
 export function TopicSelect({
@@ -190,8 +200,18 @@ export function AdminNotice({
                 required
               />
               <input type="hidden" value={monthStr} name="month" required />
-              <input type="hidden" value={noticeItem.partnerName} name="partner" required />
-              <input type="hidden" value={noticeItem.topic} name="topic" required />
+              <input
+                type="hidden"
+                value={noticeItem.partnerName}
+                name="partner"
+                required
+              />
+              <input
+                type="hidden"
+                value={noticeItem.topic}
+                name="topic"
+                required
+              />
               <ModalButton
                 type="submit"
                 onClick={() => setIsShareModalOpened(false)}
@@ -324,7 +344,12 @@ export function AdminNotice({
         <NoticeGridContainer>
           <NoticeGridItem>
             <div style={{ padding: "13px", width: "120px" }}>공유 날짜</div>
-            <div style={{ padding: "13px" }}>
+            <div
+              style={{
+                padding: "13px",
+                color: noticeItem.sharedDate == undefined ? "red" : "black",
+              }}
+            >
               {noticeItem.sharedDate ?? "공유되지 않음"}
             </div>
           </NoticeGridItem>
@@ -336,7 +361,95 @@ export function AdminNotice({
             <div style={{ padding: "13px", width: "120px" }}>상세 사유</div>
             <div style={{ padding: "13px" }}>{noticeItem.detail}</div>
           </NoticeGridItem>
+          {noticeItem.replies.length > 0 ? (
+            <NoticeGridItem style={{ gridColumnStart: "span 2" }}>
+              <div
+                style={{ padding: "13px", width: "120px", color: "#1859FF" }}
+              >
+                업체 회신
+              </div>
+              <div>
+                {noticeItem.replies.map((reply: string, index: number) => {
+                  return <div style={{ padding: "13px" }}>{reply}</div>;
+                })}
+              </div>
+            </NoticeGridItem>
+          ) : (
+            <></>
+          )}
         </NoticeGridContainer>
+      </NoticeBox>
+      {noticeItem.replies.length == 0 && noticeItem.sharedDate != undefined ? (
+        <div style={{ padding: "13px", width: "120px", color: "#FF0000" }}>
+          미회신
+        </div>
+      ) : (
+        <></>
+      )}
+    </>
+  );
+}
+
+export function PartnerNotice({
+  noticeItem,
+  monthStr,
+}: {
+  noticeItem: NoticeItem;
+  monthStr: string;
+}) {
+  return (
+    <>
+      <NoticeBox>
+        <Form method="post" id="reply-form">
+          <NoticeGridContainer>
+            <NoticeGridItem>
+              <div style={{ padding: "13px", width: "120px" }}>공유 날짜</div>
+              <div style={{ padding: "13px" }}>
+                {noticeItem.sharedDate ?? "공유되지 않음"}
+              </div>
+            </NoticeGridItem>
+            <NoticeGridItem>
+              <div style={{ padding: "13px", width: "120px" }}>공유 주제</div>
+              <div style={{ padding: "13px" }}>{noticeItem.topic}</div>
+            </NoticeGridItem>
+            <NoticeGridItem style={{ gridColumnStart: "span 2" }}>
+              <div style={{ padding: "13px", width: "120px" }}>상세 사유</div>
+              <div style={{ padding: "13px" }}>{noticeItem.detail}</div>
+            </NoticeGridItem>
+            {noticeItem.replies.length > 0 ? (
+              <NoticeGridItem style={{ gridColumnStart: "span 2" }}>
+                <div
+                  style={{ padding: "13px", width: "120px", color: "#1859FF" }}
+                >
+                  회신 완료
+                </div>
+                <div>
+                  {noticeItem.replies.map((reply: string, index: number) => {
+                    return <div style={{ padding: "13px" }}>{reply}</div>;
+                  })}
+                </div>
+              </NoticeGridItem>
+            ) : (
+              <></>
+            )}
+            <NoticeGridItem
+              style={{ gridColumnStart: "span 2", alignItems: "end" }}
+            >
+              <ReplyInputBox name="reply" form="reply-form" />
+              <input type="hidden" value={"reply"} name="action" required />
+              <input
+                type="hidden"
+                value={noticeItem.docId}
+                name="id"
+                required
+              />
+              <input type="hidden" value={monthStr} name="month" required />
+              <BlackButton type="submit">
+                {noticeItem.replies.length > 0 ? "추가답신" : "답신하기"}
+              </BlackButton>
+            </NoticeGridItem>
+          </NoticeGridContainer>
+        </Form>
       </NoticeBox>
     </>
   );

@@ -26,6 +26,16 @@ import {
   shareNotice,
 } from "~/services/firebase.server";
 
+const EmptyNoticeBox = styled.div`
+  display: flex;
+  text-align: center;
+  font-size: 24px;
+  height: 100px;
+  align-items: center;
+  justify-content: center;
+  width: inherit;
+`;
+
 const PartnerNameInputBox = styled.input`
   width: 140px;
   height: 40px;
@@ -385,6 +395,7 @@ export default function AdminAlert() {
               type="text"
               name="name"
               value={partnerName}
+              placeholder="파트너명"
               onChange={(e) => setPartnerName(e.target.value)}
               required
             />
@@ -402,8 +413,24 @@ export default function AdminAlert() {
             신규 생성
           </NewNoticeButton>
         </div>
-        <div style={{ height: "20px" }} />
-        {loaderData.notices ? NoticeItems(loaderData.notices, monthStr) : <></>}
+        {loaderData.notices != undefined && loaderData.notices.length > 0 ? (
+          NoticeItems(loaderData.notices, monthStr)
+        ) : (
+          <EmptyNoticeBox
+            style={{
+              display: "flex",
+              textAlign: "center",
+              fontSize: "30px",
+              height: "100px",
+              alignItems: "center",
+              justifyContent: "center",
+              width: "inherit",
+            }}
+          >
+            공유한 알림이 없습니다.
+          </EmptyNoticeBox>
+        )}
+        <div style={{ minHeight: "70px" }} />
       </PageLayout>
     </>
   );
