@@ -22,6 +22,7 @@ const NewProfileButton = styled.button`
   cursor: pointer;
 `;
 
+
 export const action: ActionFunction = async ({ request }) => {
   const body = await request.formData();
   let error = "";

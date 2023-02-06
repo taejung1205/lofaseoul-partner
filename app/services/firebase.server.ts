@@ -1,6 +1,7 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
 import {
+  arrayUnion,
   collection,
   deleteDoc,
   doc,
@@ -13,6 +14,7 @@ import {
   query,
   setDoc,
   Timestamp,
+  updateDoc,
   where,
   writeBatch,
 } from "firebase/firestore";
@@ -28,6 +30,7 @@ import {
 } from "./firebaseAdmin.server";
 import { emailToId } from "~/utils/account";
 import { sendAligoMessage } from "./aligo.server";
+import { NoticeItem } from "~/components/notice";
 
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
@@ -688,27 +691,26 @@ export async function addOrders({
   dayStr: string;
 }) {
   try {
-    let partnerMap : Map<string, PartnerProfile> = await getPartnerProfiles();
+    let partnerMap: Map<string, PartnerProfile> = await getPartnerProfiles();
     const phoneList: string[] = [];
     const phoneOrderCount: Map<string, number> = new Map();
     let orderBatch = writeBatch(firestore);
     const time = new Date().getTime();
 
     for (let i = 0; i < orders.length; i++) {
-      
       const item = orders[i];
 
       //연락 돌릴 연락처 && 건수 추가
       const partner = partnerMap.get(item.partnerName);
-      if(partner == undefined){
+      if (partner == undefined) {
         throw Error("오류: 존재하지 않는 파트너입니다.");
       }
 
       const phone = partner.phone;
-      if(phone.length > 0 && !phoneList.includes(phone)){
+      if (phone.length > 0 && !phoneList.includes(phone)) {
         phoneList.push(phone);
         const orderCount = phoneOrderCount.get(phone);
-        if(orderCount == undefined){
+        if (orderCount == undefined) {
           phoneOrderCount.set(phone, 1);
         } else {
           phoneOrderCount.set(phone, orderCount + 1);
@@ -718,7 +720,7 @@ export async function addOrders({
       const itemDocName = `${time}_${i}`;
       let itemDocRef = doc(firestore, `orders/${dayStr}/items`, itemDocName);
       orderBatch.set(itemDocRef, { ...item, orderSharedDate: dayStr });
-      
+
       //지연주문건에, 주문건 등록 날짜 (Timestamp) 추가해 해당 아이템 추가
       // (id를 똑같이 쓰므로 함께 삭제하거나 운송장 기입할 때 같은 id 삭제하면 됨)
       const date = dayStrToDate(dayStr);
@@ -741,22 +743,23 @@ export async function addOrders({
           orderBatch = writeBatch(firestore);
         }
       }
-
-      
     }
 
     await setDoc(doc(firestore, `orders/${dayStr}`), {
       isShared: true,
     });
 
-    for(let i = 0; i < phoneList.length; i++){
+    for (let i = 0; i < phoneList.length; i++) {
       const phone = phoneList[i];
       const orderCount = phoneOrderCount.get(phone);
-      if(orderCount == undefined){
+      if (orderCount == undefined) {
         throw Error("오류: 알리고 발신 과정에서 문제가 발생했습니다.");
       }
-      const response = await sendAligoMessage({text: `[로파파트너] ${dayStr} 주문이 ${orderCount}건 전달되었습니다. 확인 부탁드립니다.`, receiver: phone});
-      if(response.result_code != 1){
+      const response = await sendAligoMessage({
+        text: `[로파파트너] ${dayStr} 주문이 ${orderCount}건 전달되었습니다. 확인 부탁드립니다.`,
+        receiver: phone,
+      });
+      if (response.result_code != 1) {
         throw Error(`ALIGO 오류: ${response.message}`);
       }
     }
@@ -1381,4 +1384,257 @@ export async function getPartnerDelayedOrdersCount(
   );
   const snapshot = await getCountFromServer(delayQuery);
   return snapshot.data().count;
+}
+
+/**
+ * 알림을 추가합니다
+ * @param month: 월, partnerName: 파트너명, detail: 상세 내용, topic: 공유주제
+ * @returns
+ * 성공하면 true 실패시 error message
+ *
+ */
+export async function addNotice({
+  partnerName,
+  topic,
+  detail,
+  monthStr,
+}: {
+  partnerName: string;
+  topic: string;
+  detail: string;
+  monthStr: string;
+}) {
+  try {
+    const docName = `${new Date().getTime()}`;
+    await setDoc(doc(firestore, `notices/${monthStr}/items/${docName}`), {
+      partnerName: partnerName,
+      topic: topic,
+      detail: detail,
+      isShared: false,
+    });
+
+    await setDoc(doc(firestore, `notices/${monthStr}`), { isShared: "true" });
+    return true;
+  } catch (error: any) {
+    return error.message ?? error;
+  }
+}
+
+/**
+ * 알림을 수정합니다.
+ * @param month: 월, partnerName: 파트너명, detail: 상세 내용, topic: 공유주제, id: 해당 doc id
+ * @returns
+ * 성공하면 true 실패시 error message
+ *
+ */
+export async function editNotice({
+  partnerName,
+  topic,
+  detail,
+  monthStr,
+  id,
+}: {
+  partnerName: string;
+  topic: string;
+  detail: string;
+  monthStr: string;
+  id: string;
+}) {
+  try {
+    await setDoc(doc(firestore, `notices/${monthStr}/items/${id}`), {
+      partnerName: partnerName,
+      topic: topic,
+      detail: detail,
+      isShared: false,
+    });
+    return true;
+  } catch (error: any) {
+    return error.message ?? error;
+  }
+}
+
+/**
+ * 알림을 공유합니다..
+ * @param month: 월, id: 해당 doc id
+ * @returns
+ * 성공하면 true 실패시 error message
+ *
+ */
+export async function shareNotice({
+  monthStr,
+  id,
+  partnerName,
+  topic,
+}: {
+  monthStr: string;
+  id: string;
+  partnerName: string;
+  topic: string;
+}) {
+  try {
+    const timestamp = Timestamp.fromDate(new Date());
+    await updateDoc(doc(firestore, `notices/${monthStr}/items/${id}`), {
+      isShared: true,
+      sharedDate: timestamp,
+    });
+
+    const profile = await getPartnerProfile({ name: partnerName });
+    const phone = profile?.phone ?? "";
+    if (phone.length > 0) {
+      const response = await sendAligoMessage({
+        text: `[로파파트너] [${topic}]에 대하여 긴급알림이 있습니다. 파트너사이트의 '발신함 / 수신함'을 확인 부탁드립니다.`,
+        receiver: phone,
+      });
+      if (response.result_code != 1) {
+        throw Error(`ALIGO 오류: ${response.message}`);
+      }
+    }
+
+    return true;
+  } catch (error: any) {
+    return error.message ?? error;
+  }
+}
+
+/**
+ * 알림들을 불러옵니다
+ * @param month: 월, partnerName: 파트너명 (비어있을 경우 모든 파트너)
+ * @returns
+ *  List of NoticeItem
+ */
+export async function getNotices({
+  monthStr: month,
+  partnerName,
+}: {
+  monthStr: string;
+  partnerName: string;
+}) {
+  const noticesRef = collection(firestore, `notices/${month}/items`);
+  let querySnap;
+  if (partnerName.length > 0) {
+    const noticeQuery = query(
+      noticesRef,
+      where("partnerName", "==", partnerName)
+    );
+    querySnap = await getDocs(noticeQuery);
+  } else {
+    querySnap = await getDocs(noticesRef);
+  }
+
+  const list: NoticeItem[] = [];
+  querySnap.docs.forEach((doc) => {
+    const data = doc.data();
+    const timestamp: Timestamp | undefined = data.sharedDate;
+    let sharedDate;
+    if (timestamp != undefined) {
+      sharedDate = dateToDayStr(timestamp.toDate());
+    }
+    list.push({
+      partnerName: data.partnerName,
+      docId: doc.id,
+      sharedDate: sharedDate,
+      topic: data.topic,
+      detail: data.detail,
+      replies: data.replies ?? [],
+    });
+  });
+  return list;
+}
+
+/**
+ * 공유된 알림들에 한하여 불러옵니다 (파트너 전용)
+ * @param month: 월, partnerName: 파트너명
+ * @returns
+ *  List of NoticeItem
+ */
+export async function getSharedNotices({
+  monthStr: month,
+  partnerName,
+}: {
+  monthStr: string;
+  partnerName: string;
+}) {
+  const noticesRef = collection(firestore, `notices/${month}/items`);
+  let querySnap;
+  const noticeQuery = query(
+    noticesRef,
+    where("partnerName", "==", partnerName),
+    where("isShared", "==", true)
+  );
+  querySnap = await getDocs(noticeQuery);
+
+  const list: NoticeItem[] = [];
+  querySnap.docs.forEach((doc) => {
+    const data = doc.data();
+    const timestamp: Timestamp | undefined = data.sharedDate;
+    let sharedDate;
+    if (timestamp != undefined) {
+      sharedDate = dateToDayStr(timestamp.toDate());
+    }
+    list.push({
+      partnerName: data.partnerName,
+      docId: doc.id,
+      sharedDate: sharedDate,
+      topic: data.topic,
+      detail: data.detail,
+      replies: data.replies ?? [],
+    });
+  });
+  return list;
+}
+
+/**
+ * 알림을 삭제합니다.
+ * @param month: 월, id: 삭제할 알림 문서 아이디
+ * @returns
+ */
+export async function deleteNotice({
+  monthStr,
+  id,
+}: {
+  monthStr: string;
+  id: string;
+}) {
+  try {
+    await deleteDoc(doc(firestore, `notices/${monthStr}/items/${id}`)).catch(
+      (error) => {
+        return error.message;
+      }
+    );
+    return true;
+  } catch (error: any) {
+    return error.message ?? error;
+  }
+}
+
+/**
+ * 알림에 대해 답신합니다.
+ * @param month: 월, id: 해당 doc id, reply: 답신
+ * @returns
+ * 성공하면 true 실패시 error message
+ *
+ */
+export async function replyNotice({
+  monthStr,
+  id,
+  reply,
+}: {
+  monthStr: string;
+  id: string;
+  reply: string;
+}) {
+  try {
+    const time = getTimezoneDate(new Date());
+    const timeStr = `${dateToDayStr(
+      new Date()
+    )} ${time.getHours()}:${time.getMinutes()}`;
+    const replyStr = `[${timeStr}] ${reply}`;
+    await updateDoc(doc(firestore, `notices/${monthStr}/items/${id}`), {
+      replies: arrayUnion(replyStr),
+    });
+
+    return true;
+  } catch (error: any) {
+    return error.message ?? error;
+  }
 }
