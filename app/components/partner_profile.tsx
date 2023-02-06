@@ -268,7 +268,6 @@ export function PartnerProfile({
                 name="phone"
                 value={phoneEdit}
                 onChange={(e) => setPhoneEdit(e.target.value)}
-                required
               />
             </ProfileGridItem>
             <ProfileGridItem>

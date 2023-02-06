@@ -122,6 +122,9 @@ export default function Login() {
         case "auth/wrong-password":
           setErrorMessage("아이디와 비밀번호를 확인해주세요.");
           break;
+        case "auth/too-many-requests":
+          setErrorMessage("로그인 시도 가능 횟수가 초과하였습니다. 관리자에게 문의해주세요.");
+          break;
         default:
           setErrorMessage(`로그인 중 오류가 발생했습니다. ${resp.errorCode}`);
           break;
