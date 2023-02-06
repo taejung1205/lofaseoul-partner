@@ -139,23 +139,6 @@ export function PartnerProfile({
                     cursor: "pointer",
                   }}
                 />
-                {/* <Form method="post">
-                  <input
-                    type="hidden"
-                    value={"delete"}
-                    name="action"
-                    required
-                  />
-                  <input type="hidden" value={name} name="name" required />
-                  <input
-                    type="image"
-                    src="/images/icon_trash.png"
-                    style={{
-                      width: "30px",
-                      height: "30px",
-                    }}
-                  />
-                </Form> */}
               </div>
             )}
           </div>

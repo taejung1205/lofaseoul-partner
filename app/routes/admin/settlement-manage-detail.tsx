@@ -50,7 +50,7 @@ const EmptySettlementBox = styled.div`
   width: inherit;
 `;
 
-const SellerInputBox = styled.input`
+const PartnerNameInputBox = styled.input`
   width: 140px;
   height: 40px;
   border: 3px solid black;
@@ -782,7 +782,7 @@ export default function AdminSettlementShare() {
               }
               monthStr={selectedMonthStr ?? ""}
             />
-            <SellerInputBox
+            <PartnerNameInputBox
               type="text"
               name="name"
               value={partnerName}
