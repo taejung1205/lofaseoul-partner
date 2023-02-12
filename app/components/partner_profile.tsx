@@ -120,7 +120,7 @@ export function PartnerProfile({
             ) : (
               <div style={{ display: "flex" }}>
                 <img
-                  src={"/images/icon_edit.png"}
+                  src={"/images/icon_edit.svg"}
                   onClick={onEditClick}
                   style={{
                     width: "30px",
@@ -130,7 +130,7 @@ export function PartnerProfile({
                   }}
                 />
                 <img
-                  src={"/images/icon_trash.png"}
+                  src={"/images/icon_trash.svg"}
                   onClick={() => setIsDeleteModalOpened(true)}
                   style={{
                     width: "30px",
@@ -224,7 +224,7 @@ export function PartnerProfile({
 
             <input
               type="image"
-              src="/images/icon_save.png"
+              src="/images/icon_save.svg"
               style={{
                 width: "30px",
                 height: "30px",

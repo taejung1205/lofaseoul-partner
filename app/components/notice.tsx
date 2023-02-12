@@ -307,7 +307,7 @@ export function AdminNotice({
           {noticeItem.sharedDate == undefined ? (
             <div style={{ display: "flex" }}>
               <img
-                src={"/images/icon_edit.png"}
+                src={"/images/icon_edit.svg"}
                 onClick={() => setIsEditModalOpened(true)}
                 style={{
                   width: "30px",
@@ -317,7 +317,7 @@ export function AdminNotice({
                 }}
               />
               <img
-                src={"/images/icon_trash.png"}
+                src={"/images/icon_trash.svg"}
                 onClick={() => setIsDeleteModalOpened(true)}
                 style={{
                   width: "30px",

@@ -28,7 +28,7 @@ export function AdminHeader({ onLogoutClick }: { onLogoutClick: () => void }) {
         로그아웃
       </div>
       <div style={{ width: "10px" }} />
-      <img src="/images/icon_person.png" />
+      <img src="/images/icon_person.svg" />
       <div style={{ width: "10px" }} />
       ADMIN
     </HeaderBox>
@@ -55,7 +55,7 @@ export function PartnerHeader({
         로그아웃
       </div>
       <div style={{ width: "10px" }} />
-      <img src="/images/icon_person.png" />
+      <img src="/images/icon_person.svg" />
       <div style={{ width: "10px" }} />
       {username}
     </HeaderBox>
