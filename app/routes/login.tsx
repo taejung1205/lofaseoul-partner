@@ -1,4 +1,5 @@
 import {
+  Form,
   useActionData,
   useLoaderData,
   useSubmit,
@@ -107,7 +108,7 @@ export default function Login() {
   async function handleLogin() {
     if (id.length == 0 || password.length == 0) {
       setErrorMessage("아이디와 패스워드를 입력하세요.");
-      return null;
+      return false;
     }
     const resp = await getSignInToken(id, password, loaderData.firebaseConfig);
     if (resp.result == "success") {
@@ -116,6 +117,7 @@ export default function Login() {
       formData.set("uid", resp.uid ?? "");
       formData.set("email", resp.email ?? "");
       submit(formData, { method: "post" });
+      return false;
     } else {
       switch (resp.errorCode) {
         case "auth/user-not-found":
@@ -123,13 +125,15 @@ export default function Login() {
           setErrorMessage("아이디와 비밀번호를 확인해주세요.");
           break;
         case "auth/too-many-requests":
-          setErrorMessage("로그인 시도 가능 횟수가 초과하였습니다. 관리자에게 문의해주세요.");
+          setErrorMessage(
+            "로그인 시도 가능 횟수가 초과하였습니다. 관리자에게 문의해주세요."
+          );
           break;
         default:
           setErrorMessage(`로그인 중 오류가 발생했습니다. ${resp.errorCode}`);
           break;
       }
-      return null;
+      return false;
     }
   }
 
@@ -146,25 +150,25 @@ export default function Login() {
         <div style={{ height: "100px" }} />
         로파 서울 파트너사이트입니다.
         <div style={{ height: "150px" }} />
-        <InputBox
-          type="string"
-          name="id"
-          placeholder="ID"
-          required
-          value={id}
-          onChange={(event) => setId(event.target.value)}
-        />
-        <div style={{ height: "40px" }} />
-        <InputBox
-          type="password"
-          name="password"
-          placeholder="PW"
-          autoComplete="current-password"
-          value={password}
-          onChange={(event) => setPassword(event.target.value)}
-        />
-        <div style={{ height: "100px" }} />
-        <LoginButton onClick={handleLogin}>로그인</LoginButton>
+        <Form onSubmit={handleLogin}>
+          <InputBox
+            type="string"
+            placeholder="ID"
+            required
+            value={id}
+            onChange={(event) => setId(event.target.value)}
+          />
+          <div style={{ height: "40px" }} />
+          <InputBox
+            type="password"
+            placeholder="PW"
+            autoComplete="current-password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+          />
+          <div style={{ height: "100px" }} />
+          <LoginButton type="submit">로그인</LoginButton>
+        </Form>
         <div>
           {actionData?.errorCode ? (
             <p>Login Failed: {actionData?.errorMessage}</p>
