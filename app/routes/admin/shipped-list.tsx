@@ -228,7 +228,7 @@ export default function AdminShippedList() {
         width: 10,
       },
       {
-        column: "배송사코드",
+        column: "택배사명",
         type: String,
         value: (item: OrderItem) => item.shippingCompany,
         width: 15,

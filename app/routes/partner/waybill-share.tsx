@@ -285,7 +285,7 @@ export default function AdminOrderList() {
             customsCode: element.통관부호 ?? "",
             deliveryRequest: element.배송요청사항 ?? "",
             managementNumber: element.관리번호?.toString(),
-            shippingCompany: element.배송사코드 ?? "",
+            shippingCompany: element.택배사명 ?? "",
             waybillNumber: element.송장번호 ?? "",
             waybillSharedDate: "",
             orderSharedDate: "",
@@ -408,7 +408,7 @@ export default function AdminOrderList() {
         width: 10,
       },
       {
-        column: "배송사코드",
+        column: "택배사명",
         type: String,
         value: (item: OrderItem) => item.shippingCompany,
         width: 15,
