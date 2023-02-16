@@ -15,6 +15,7 @@ import { OrderItem, OrderTable } from "~/components/order";
 import styled from "styled-components";
 import {
   getAllWaybills,
+  getMonthWaybills,
   getPartnerProfile,
   getPartnerWaybills,
 } from "~/services/firebase.server";
@@ -71,9 +72,17 @@ export const loader: LoaderFunction = async ({ request }) => {
   const url = new URL(request.url);
   let day = url.searchParams.get("day");
   const partnerName = url.searchParams.get("partner");
+  const isGetMonth = url.searchParams.get("getmonth");
 
   if (day == null) {
     day = dateToDayStr(new Date());
+  }
+
+  let monthList: any[] | null = null;
+
+  if (isGetMonth !== null) {
+    //월간 조회시
+    monthList = await getMonthWaybills(day.slice(0, 7));
   }
 
   if (partnerName !== null) {
@@ -91,11 +100,21 @@ export const loader: LoaderFunction = async ({ request }) => {
       partnerName: partnerName,
     });
 
-    return json({ day: day, waybills: waybills, partnerName: partnerName });
+    return json({
+      day: day,
+      waybills: waybills,
+      partnerName: partnerName,
+      monthList: monthList,
+    });
   } else {
     const waybills = await getAllWaybills(day);
 
-    return json({ day: day, waybills: waybills, partnerName: partnerName });
+    return json({
+      day: day,
+      waybills: waybills,
+      partnerName: partnerName,
+      monthList: monthList,
+    });
   }
 };
 
@@ -167,111 +186,23 @@ export default function AdminShippedList() {
     }
   }, [loaderData, seller]);
 
-  async function writeExcel() {
-    const schema = [
-      {
-        column: "판매처",
-        type: String,
-        value: (item: OrderItem) => item.seller,
-        width: 15,
-        wrap: true,
-      },
-      {
-        column: "주문번호",
-        type: String,
-        value: (item: OrderItem) => item.orderNumber,
-        width: 30,
-        wrap: true,
-      },
-      {
-        column: "상품명",
-        type: String,
-        value: (item: OrderItem) => item.productName,
-        width: 60,
-        wrap: true,
-      },
-      {
-        column: "옵션명",
-        type: String,
-        value: (item: OrderItem) => item.optionName,
-        width: 30,
-      },
-      {
-        column: "배송수량",
-        type: Number,
-        value: (item: OrderItem) => item.amount,
-        width: 10,
-      },
-      {
-        column: "우편번호",
-        type: String,
-        value: (item: OrderItem) => item.zipCode,
-        width: 10,
-      },
-      {
-        column: "주소",
-        type: String,
-        value: (item: OrderItem) => item.address,
-        width: 60,
-        wrap: true,
-      },
-      {
-        column: "연락처",
-        type: String,
-        value: (item: OrderItem) => item.phone,
-        width: 15,
-      },
-      {
-        column: "수취인",
-        type: String,
-        value: (item: OrderItem) => item.receiver,
-        width: 10,
-      },
-      {
-        column: "택배사명",
-        type: String,
-        value: (item: OrderItem) => item.shippingCompany,
-        width: 15,
-      },
-      {
-        column: "송장번호",
-        type: String,
-        value: (item: OrderItem) => item.waybillNumber,
-        width: 15,
-      },
-      {
-        column: "주문자명",
-        type: String,
-        value: (item: OrderItem) => item.orderer,
-        width: 10,
-      },
-      {
-        column: "주문자 전화번호",
-        type: String,
-        value: (item: OrderItem) => item.ordererPhone,
-        width: 15,
-      },
-      {
-        column: "통관부호",
-        type: String,
-        value: (item: OrderItem) => item.customsCode,
-        width: 15,
-      },
-      {
-        column: "배송요청사항",
-        type: String,
-        value: (item: OrderItem) => item.deliveryRequest,
-        width: 30,
-        wrap: true,
-      },
-      {
-        column: "관리번호",
-        type: String,
-        value: (item: OrderItem) => item.managementNumber,
-        width: 15,
-      },
-    ];
+  //월간 이력 출력
+  useEffect(() => {
+    if (loaderData.monthList !== null && loaderData.monthList !== undefined) {
+      writeXlsxFile(loaderData.monthList, {
+        schema,
+        headerStyle: {
+          fontWeight: "bold",
+          align: "center",
+        },
+        fileName: `배송완료내역_${loaderData.day.slice(0, 7)}.xlsx`,
+        fontFamily: "맑은 고딕",
+        fontSize: 10,
+      });
+    }
+  }, [loaderData]);
 
+  async function writeExcel() {
     await writeXlsxFile(items, {
       schema,
       headerStyle: {
@@ -317,6 +248,17 @@ export default function AdminShippedList() {
             >
               <GetListButton>조회하기</GetListButton>
             </Link>
+            <Link
+              to={
+                partnerName.length > 0
+                  ? `/admin/shipped-list?day=${selectedDayStr}&partner=${partnerName}&getmonth=true`
+                  : `/admin/shipped-list?day=${selectedDayStr}&getmonth=true`
+              }
+            >
+              <GetListButton style={{ width: "200px" }}>
+                월간 이력 다운로드
+              </GetListButton>
+            </Link>
           </div>
           <SellerSelect seller={seller} setSeller={setSeller} />
         </div>
@@ -351,9 +293,7 @@ export default function AdminShippedList() {
               </div>
             </>
           ) : (
-            <EmptySettlementBox>
-              주문건 존재하지 않습니다.
-            </EmptySettlementBox>
+            <EmptySettlementBox>주문건이 존재하지 않습니다.</EmptySettlementBox>
           )
         ) : (
           <EmptySettlementBox>{errorOrderStr}</EmptySettlementBox>
@@ -362,3 +302,121 @@ export default function AdminShippedList() {
     </>
   );
 }
+
+const schema = [
+  {
+    column: "판매처",
+    type: String,
+    value: (item: OrderItem) => item.seller,
+    width: 15,
+    wrap: true,
+  },
+  {
+    column: "주문번호",
+    type: String,
+    value: (item: OrderItem) => item.orderNumber,
+    width: 30,
+    wrap: true,
+  },
+  {
+    column: "주문공유일자",
+    type: String,
+    value: (item: OrderItem) => item.orderSharedDate,
+    width: 15,
+    wrap: true,
+  },
+  {
+    column: "운송장기입일자",
+    type: String,
+    value: (item: OrderItem) => item.waybillSharedDate,
+    width: 15,
+    wrap: true,
+  },
+  {
+    column: "상품명",
+    type: String,
+    value: (item: OrderItem) => item.productName,
+    width: 60,
+    wrap: true,
+  },
+  {
+    column: "옵션명",
+    type: String,
+    value: (item: OrderItem) => item.optionName,
+    width: 30,
+  },
+  {
+    column: "배송수량",
+    type: Number,
+    value: (item: OrderItem) => item.amount,
+    width: 10,
+  },
+  {
+    column: "우편번호",
+    type: String,
+    value: (item: OrderItem) => item.zipCode,
+    width: 10,
+  },
+  {
+    column: "주소",
+    type: String,
+    value: (item: OrderItem) => item.address,
+    width: 60,
+    wrap: true,
+  },
+  {
+    column: "연락처",
+    type: String,
+    value: (item: OrderItem) => item.phone,
+    width: 15,
+  },
+  {
+    column: "수취인",
+    type: String,
+    value: (item: OrderItem) => item.receiver,
+    width: 10,
+  },
+  {
+    column: "택배사명",
+    type: String,
+    value: (item: OrderItem) => item.shippingCompany,
+    width: 15,
+  },
+  {
+    column: "송장번호",
+    type: String,
+    value: (item: OrderItem) => item.waybillNumber,
+    width: 15,
+  },
+  {
+    column: "주문자명",
+    type: String,
+    value: (item: OrderItem) => item.orderer,
+    width: 10,
+  },
+  {
+    column: "주문자 전화번호",
+    type: String,
+    value: (item: OrderItem) => item.ordererPhone,
+    width: 15,
+  },
+  {
+    column: "통관부호",
+    type: String,
+    value: (item: OrderItem) => item.customsCode,
+    width: 15,
+  },
+  {
+    column: "배송요청사항",
+    type: String,
+    value: (item: OrderItem) => item.deliveryRequest,
+    width: 30,
+    wrap: true,
+  },
+  {
+    column: "관리번호",
+    type: String,
+    value: (item: OrderItem) => item.managementNumber,
+    width: 15,
+  },
+];
