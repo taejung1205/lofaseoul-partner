@@ -181,14 +181,14 @@ export default function AdminSettlementShare() {
         for (let i = 0; i < json.length; i++) {
           let element = json[i];
           let item: SettlementItem = {
-            seller: element.판매처,
-            orderNumber: element.주문번호,
-            productName: element.상품명,
-            optionName: element.옵션명 ?? "",
+            seller: element.판매처?.toString(),
+            orderNumber: element.주문번호?.toString(),
+            productName: element.상품명?.toString(),
+            optionName: element.옵션명?.toString() ?? "",
             price: element.판매단가,
             amount: element.수량,
-            orderer: element.주문자,
-            receiver: element.수령자,
+            orderer: element.주문자?.toString(),
+            receiver: element.수령자?.toString(),
             partnerName: "",
             fee: -1,
             shippingFee: -1,
