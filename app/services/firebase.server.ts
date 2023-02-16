@@ -5,6 +5,7 @@ import {
   collection,
   deleteDoc,
   doc,
+  DocumentData,
   getCountFromServer,
   getDoc,
   getDocs,
@@ -1015,6 +1016,25 @@ export async function getAllWaybills(dayStr: string) {
   const ordersQuery = query(ordersRef, orderBy("managementNumber"));
   const querySnap = await getDocs(ordersQuery);
   return querySnap.docs.map((doc) => doc.data());
+}
+
+/**
+ * 해당 개월 모든 운송장 정보를 불러옵니다
+ * @param dayStr: 개월 (XXXX-XX)
+ * @returns
+ *  Array of OrderItem
+ */
+export async function getMonthWaybills(month: string) {
+  const dataList: DocumentData[] = [];
+  for (let i = 1; i <= 31; i++) {
+    const day = i.toString().padStart(2, "0");
+    const dayStr = month + "-" + day;
+    const ordersRef = collection(firestore, `waybills/${dayStr}/items`);
+    const ordersQuery = query(ordersRef, orderBy("managementNumber"));
+    const querySnap = await getDocs(ordersQuery);
+    querySnap.docs.forEach((doc) => dataList.push(doc.data()));
+  }
+  return dataList;
 }
 
 /**
