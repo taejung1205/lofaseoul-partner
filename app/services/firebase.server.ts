@@ -911,8 +911,7 @@ export async function addWaybills({
 
     let day = new Date();
     day.setDate(day.getDate() + 1)
-    let nextDay = getTimezoneDate(day);
-    const nextDayStr = dateToDayStr(nextDay);
+    const nextDayStr = dateToDayStr(day);
 
     for (let i = 0; i < orders.length; i++) {
       const item = orders[i];
