@@ -909,8 +909,9 @@ export async function addWaybills({
   try {
     let waybillBatch = writeBatch(firestore);
 
-    let nextDay = getTimezoneDate(new Date());
-    nextDay.setDate(nextDay.getDate() + 1);
+    let day = new Date();
+    day.setDate(day.getDate() + 1)
+    let nextDay = getTimezoneDate(day);
     const nextDayStr = dateToDayStr(nextDay);
 
     for (let i = 0; i < orders.length; i++) {
