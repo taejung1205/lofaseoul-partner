@@ -1082,7 +1082,7 @@ export async function editWaybills({
   try {
     let waybillBatch = writeBatch(firestore);
 
-    let nextDay = getTimezoneDate(new Date());
+    let nextDay = new Date();
     nextDay.setDate(nextDay.getDate() + 1);
     const nextDayStr = dateToDayStr(nextDay);
 
@@ -1224,7 +1224,7 @@ export async function shareDelayedWaybills({
   try {
     let waybillBatch = writeBatch(firestore);
 
-    let nextDay = getTimezoneDate(new Date());
+    let nextDay = new Date();
     nextDay.setDate(nextDay.getDate() + 1);
     const nextDayStr = dateToDayStr(nextDay);
 
