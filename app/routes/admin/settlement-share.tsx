@@ -81,7 +81,7 @@ export const action: ActionFunction = async ({ request }) => {
         settlements: jsonArr,
         monthStr: month,
       });
-      if (result == true) {
+      if (result === true) {
         return json({ message: `${month} 정산내역 공유가 완료되었습니다.` });
       } else {
         return json({
