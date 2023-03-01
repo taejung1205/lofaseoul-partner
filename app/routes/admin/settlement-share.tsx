@@ -149,12 +149,14 @@ export default function AdminSettlementShare() {
   }, [selectedDate]);
 
   useEffect(() => {
-    if (actionData !== undefined && actionData !== null) {
+    if (actionData.message !== undefined && actionData.message !== null) {
       console.log(actionData.message);
       setNoticeModalStr(actionData.message);
       setIsNoticeModalOpened(true);
+    } else {
+      console.log(actionData);
     }
-  }, [actionData.message]);
+  }, [actionData]);
 
   function onItemCheck(index: number, isChecked: boolean) {
     itemsChecked[index] = isChecked;
