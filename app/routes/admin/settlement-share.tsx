@@ -149,10 +149,14 @@ export default function AdminSettlementShare() {
   }, [selectedDate]);
 
   useEffect(() => {
-    if (actionData.message !== undefined && actionData.message !== null) {
-      console.log(actionData.message);
-      setNoticeModalStr(actionData.message);
-      setIsNoticeModalOpened(true);
+    if (actionData !== undefined && actionData !== null) {
+      if("message" in actionData){
+        console.log(actionData.message);
+        setNoticeModalStr(actionData.message);
+        setIsNoticeModalOpened(true);
+      } else {
+       console.log(actionData); 
+      }
     } else {
       console.log(actionData);
     }
