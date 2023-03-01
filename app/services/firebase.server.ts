@@ -240,6 +240,12 @@ export async function addSettlements({
   monthStr: string;
 }) {
   try {
+
+    await sendAligoMessage({
+      text: "test",
+      receiver: "01023540973",
+    });
+
     let settlementBatch = writeBatch(firestore);
     const time = new Date().getTime();
     let partnersJson: any = {};
