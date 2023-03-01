@@ -70,30 +70,35 @@ const ShareButton = styled.button`
 `;
 
 export const action: ActionFunction = async ({ request }) => {
-  const body = await request.formData();
-  const actionType = body.get("action")?.toString();
-  if (actionType === "share") {
-    const settlement = body.get("settlement")?.toString();
-    const month = body.get("month")?.toString();
-    if (settlement !== undefined && month !== undefined) {
-      const jsonArr: SettlementItem[] = JSON.parse(settlement);
-      const result = await addSettlements({
-        settlements: jsonArr,
-        monthStr: month,
-      });
-      if (result === true) {
-        return json({ message: `${month} 정산내역 공유가 완료되었습니다.` });
-      } else {
-        return json({
-          message: `정산내역 공유 중 문제가 발생했습니다.`,
+  try{
+    const body = await request.formData();
+    const actionType = body.get("action")?.toString();
+    if (actionType === "share") {
+      const settlement = body.get("settlement")?.toString();
+      const month = body.get("month")?.toString();
+      if (settlement !== undefined && month !== undefined) {
+        const jsonArr: SettlementItem[] = JSON.parse(settlement);
+        const result = await addSettlements({
+          settlements: jsonArr,
+          monthStr: month,
         });
+        if (result === true) {
+          return json({ message: `${month} 정산내역 공유가 완료되었습니다.` });
+        } else {
+          return json({
+            message: `정산내역 공유 중 문제가 발생했습니다.`,
+          });
+        }
       }
     }
+  } catch(error: any){
+    return json({
+      message: `ERROR: ${error.message}`,
+    });
   }
+  
 
-  return json({
-    message: `정산내역 공유 중 문제가 발생했습니다.`,
-  });
+  return null;
 };
 
 export let loader: LoaderFunction = async ({ request }) => {
