@@ -154,7 +154,7 @@ export default function AdminSettlementShare() {
       setNoticeModalStr(actionData.message);
       setIsNoticeModalOpened(true);
     }
-  }, [actionData]);
+  }, [actionData.message]);
 
   function onItemCheck(index: number, isChecked: boolean) {
     itemsChecked[index] = isChecked;
