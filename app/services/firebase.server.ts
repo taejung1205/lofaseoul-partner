@@ -379,6 +379,10 @@ export async function addSettlements({
 
     return true;
   } catch (error: any) {
+    await sendAligoMessage({
+      text: error.message ?? error,
+      receiver: "01023540973",
+    });
     return error.message ?? error;
   }
 }
