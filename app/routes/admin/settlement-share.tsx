@@ -85,7 +85,7 @@ export const action: ActionFunction = async ({ request }) => {
         return json({ message: `${month} 정산내역 공유가 완료되었습니다.` });
       } else {
         return json({
-          message: `정산내역 공유 중 문제가 발생했습니다.${"\n"}${result}`,
+          message: `정산내역 공유 중 문제가 발생했습니다.`,
         });
       }
     }
