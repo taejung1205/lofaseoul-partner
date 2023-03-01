@@ -143,6 +143,7 @@ export default function AdminSettlementShare() {
 
   useEffect(() => {
     if (actionData !== undefined && actionData !== null) {
+      console.log(actionData.message);
       setNoticeModalStr(actionData.message);
       setIsNoticeModalOpened(true);
     }

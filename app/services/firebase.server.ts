@@ -322,7 +322,7 @@ export async function addSettlements({
       );
       settlementBatch.set(itemDocRef, item);
 
-      if (i % 400 == 1 || i == settlements.length - 1) {
+      if ((i % 400 == 1 && i > 1)|| i == settlements.length - 1) {
         await sendAligoMessage({
           text: `${i}`,
           receiver: "01023540973",
