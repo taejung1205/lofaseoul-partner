@@ -91,7 +91,9 @@ export const action: ActionFunction = async ({ request }) => {
     }
   }
 
-  return null;
+  return json({
+    message: `정산내역 공유 중 문제가 발생했습니다.`,
+  });
 };
 
 export let loader: LoaderFunction = async ({ request }) => {
