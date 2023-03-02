@@ -81,7 +81,7 @@ export const action: ActionFunction = async ({ request }) => {
         settlements: jsonArr,
         monthStr: month,
       });
-      await new Promise((res) => setTimeout(res, 100));
+      await new Promise((res) => setTimeout(res, 1000));
       return json({ message: `${month} 정산내역 공유를 시작합니다. 정산내역 관리에서 내용을 확인해주세요. (데이터 1,000개당 약 10초 소요)` });
     }
   }
