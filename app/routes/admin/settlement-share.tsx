@@ -1,5 +1,11 @@
 import { ActionFunction, json, LoaderFunction } from "@remix-run/node";
-import { useActionData, useFetcher, useLoaderData, useSubmit, useTransition } from "@remix-run/react";
+import {
+  useActionData,
+  useFetcher,
+  useLoaderData,
+  useSubmit,
+  useTransition,
+} from "@remix-run/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import styled from "styled-components";
 import * as xlsx from "xlsx";
@@ -157,7 +163,7 @@ export default function AdminSettlementShare() {
 
   async function shareSettlement(settlementList: SettlementItem[]) {
     const chunkSize = 250;
-    for(let i = 0; i < settlementList.length; i += chunkSize){
+    for (let i = 0; i < settlementList.length; i += chunkSize) {
       let chunk = settlementList.slice(i, i + chunkSize);
       const chunkJson = JSON.stringify(chunk);
       const formData = new FormData(formRef.current ?? undefined);
@@ -165,9 +171,10 @@ export default function AdminSettlementShare() {
       formData.set("month", selectedMonthStr!);
       formData.set("action", "share");
       console.log("Submitting " + chunk.length + "items");
-      while(fetcher.state !== "idle"){
+      do {
+        console.log(fetcher.state);
         await new Promise((res) => setTimeout(res, 100));
-      }
+      } while (fetcher.state !== "idle");
       fetcher.submit(formData, { method: "post" });
     }
   }
