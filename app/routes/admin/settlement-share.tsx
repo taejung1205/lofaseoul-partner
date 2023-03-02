@@ -165,8 +165,10 @@ export default function AdminSettlementShare() {
       formData.set("month", selectedMonthStr!);
       formData.set("action", "share");
       console.log("Submitting " + chunk.length + "items");
+      while(fetcher.state !== "idle"){
+        await new Promise((res) => setTimeout(res, 100));
+      }
       fetcher.submit(formData, { method: "post" });
-      await new Promise((res) => setTimeout(res, 100));
     }
   }
 
