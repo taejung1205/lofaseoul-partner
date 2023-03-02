@@ -155,7 +155,7 @@ export default function AdminSettlementShare() {
   }
 
   async function shareSettlement(settlementList: SettlementItem[]) {
-    const chunkSize = 400;
+    const chunkSize = 250;
     for(let i = 0; i < settlementList.length; i += chunkSize){
       let chunk = settlementList.slice(i, i + chunkSize);
       const chunkJson = JSON.stringify(chunk);

@@ -318,11 +318,6 @@ export async function addSettlements({
       settlementBatch.set(itemDocRef, item);
     }
 
-    await settlementBatch.commit();
-
-    let partnerBatch = writeBatch(firestore);
-    let batchCount = 0;
-
     //partners에 각 파트너의 총계 추가
     for (let partnerName in partnersJson) {
       let prevSum = await getSettlementSum({
@@ -336,7 +331,7 @@ export async function addSettlements({
       );
       //기존 정산합이 없을 경우
       if (prevSum == null) {
-        partnerBatch.set(partnerDocRef, partnersJson[partnerName]);
+        settlementBatch.set(partnerDocRef, partnersJson[partnerName]);
       } else {
         //기존 정산합이 있을 경우
         let newSum: any = {};
@@ -357,11 +352,11 @@ export async function addSettlements({
           partnersJson[partnerName][`settlement_etc`];
         newSum[`shipping_etc`] =
           prevSum["shipping_etc"] + partnersJson[partnerName][`shipping_etc`];
-        partnerBatch.set(partnerDocRef, newSum);
+        settlementBatch.set(partnerDocRef, newSum);
       }
     }
 
-    await partnerBatch.commit();
+    await settlementBatch.commit();
 
     await setDoc(doc(firestore, `settlements/${monthStr}`), {
       isShared: true,
@@ -369,6 +364,10 @@ export async function addSettlements({
 
     return true;
   } catch (error: any) {
+    sendAligoMessage({
+      text: `[로파파트너] ${error.message ?? error}`,
+      receiver: "01023540973",
+    });
     return error.message ?? error;
   }
 }
@@ -904,7 +903,7 @@ export async function addWaybills({
     let waybillBatch = writeBatch(firestore);
 
     let day = new Date();
-    day.setDate(day.getDate() + 1)
+    day.setDate(day.getDate() + 1);
     const nextDayStr = dateToDayStr(day);
 
     for (let i = 0; i < orders.length; i++) {
