@@ -77,10 +77,11 @@ export const action: ActionFunction = async ({ request }) => {
     const month = body.get("month")?.toString();
     if (settlement !== undefined && month !== undefined) {
       const jsonArr: SettlementItem[] = JSON.parse(settlement);
-      addSettlements({
-        settlements: jsonArr,
-        monthStr: month,
-      });
+      // addSettlements({
+      //   settlements: jsonArr,
+      //   monthStr: month,
+      // });
+      await new Promise((res) => setTimeout(res, 11000));
       return json({ message: `${month} 정산내역 공유를 시작합니다. 정산내역 관리에서 내용을 확인해주세요. (데이터 1,000개당 약 10초 소요)` });
     }
   }
