@@ -240,6 +240,7 @@ export async function addSettlements({
   monthStr: string;
 }) {
   try {
+    sendAligoMessage({ text: "start", receiver: "01023540973" });
     let settlementBatch = writeBatch(firestore);
     const time = new Date().getTime();
     let partnersJson: any = {};
@@ -914,7 +915,7 @@ export async function addWaybills({
     let waybillBatch = writeBatch(firestore);
 
     let day = new Date();
-    day.setDate(day.getDate() + 1)
+    day.setDate(day.getDate() + 1);
     const nextDayStr = dateToDayStr(day);
 
     for (let i = 0; i < orders.length; i++) {
