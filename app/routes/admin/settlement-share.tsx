@@ -1,5 +1,5 @@
 import { ActionFunction, json, LoaderFunction } from "@remix-run/node";
-import { useActionData, useLoaderData, useSubmit } from "@remix-run/react";
+import { useActionData, useFetcher, useLoaderData, useSubmit, useTransition } from "@remix-run/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import styled from "styled-components";
 import * as xlsx from "xlsx";
@@ -114,6 +114,7 @@ export default function AdminSettlementShare() {
   const submit = useSubmit();
   const loaderData = useLoaderData();
   const actionData = useActionData();
+  const fetcher = useFetcher();
   const sharedMonthes: string[] = loaderData.monthes;
   const partnerProfiles = useMemo(() => {
     let map = new Map();
@@ -164,7 +165,7 @@ export default function AdminSettlementShare() {
       formData.set("month", selectedMonthStr!);
       formData.set("action", "share");
       console.log("Submitting " + chunk.length + "items");
-      submit(formData, { method: "post" });
+      fetcher.submit(formData, { method: "post" });
       await new Promise((res) => setTimeout(res, 100));
     }
   }
