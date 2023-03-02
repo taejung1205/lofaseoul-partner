@@ -241,6 +241,7 @@ export async function addSettlements({
 }) {
   try {
     let settlementBatch = writeBatch(firestore);
+
     const time = new Date().getTime();
     let partnersJson: any = {};
 
@@ -315,14 +316,9 @@ export async function addSettlements({
         itemDocName
       );
       settlementBatch.set(itemDocRef, item);
-
-      if (i % 400 == 1 || i == settlements.length - 1) {
-        await settlementBatch.commit();
-        if (i < settlements.length) {
-          settlementBatch = writeBatch(firestore);
-        }
-      }
     }
+
+    await settlementBatch.commit();
 
     let partnerBatch = writeBatch(firestore);
     let batchCount = 0;
@@ -363,12 +359,6 @@ export async function addSettlements({
           prevSum["shipping_etc"] + partnersJson[partnerName][`shipping_etc`];
         partnerBatch.set(partnerDocRef, newSum);
       }
-      if (batchCount % 400 == 1) {
-        await partnerBatch.commit();
-        batchCount = 0;
-        partnerBatch = writeBatch(firestore);
-      }
-      batchCount++;
     }
 
     await partnerBatch.commit();

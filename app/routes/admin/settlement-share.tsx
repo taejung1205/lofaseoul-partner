@@ -84,9 +84,7 @@ export const action: ActionFunction = async ({ request }) => {
       if (result === true) {
         return json({ message: `${month} 정산내역 공유가 완료되었습니다.` });
       } else {
-        return json({
-          message: `정산내역 공유 중 문제가 발생했습니다. ${result}`,
-        });
+        throw Error(result);
       }
     }
   }
@@ -165,7 +163,7 @@ export default function AdminSettlementShare() {
       formData.set("settlement", chunkJson);
       formData.set("month", selectedMonthStr!);
       formData.set("action", "share");
-      console.log(chunk.length);
+      console.log("Submitting " + chunk.length + "items");
       submit(formData, { method: "post" });
       await new Promise((res) => setTimeout(res, 100));
     }
