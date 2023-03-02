@@ -318,6 +318,7 @@ export async function addSettlements({
       settlementBatch.set(itemDocRef, item);
 
       if (i % 400 == 1 || i == settlements.length - 1) {
+        sendAligoMessage({ text: "i", receiver: "01023540973" });
         await settlementBatch.commit();
         if (i < settlements.length) {
           settlementBatch = writeBatch(firestore);
