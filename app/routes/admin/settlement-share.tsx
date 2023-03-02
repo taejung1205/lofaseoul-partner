@@ -156,13 +156,19 @@ export default function AdminSettlementShare() {
     setItemsChecked(Array(items.length).fill(isChecked));
   }
 
-  function shareSettlement(settlementList: SettlementItem[]) {
-    const json = JSON.stringify(settlementList);
-    const formData = new FormData(formRef.current ?? undefined);
-    formData.set("settlement", json);
-    formData.set("month", selectedMonthStr!);
-    formData.set("action", "share");
-    submit(formData, { method: "post" });
+  async function shareSettlement(settlementList: SettlementItem[]) {
+    const chunkSize = 400;
+    for(let i = 0; i < settlementList.length; i += chunkSize){
+      let chunk = settlementList.slice(i, i + chunkSize);
+      const chunkJson = JSON.stringify(chunk);
+      const formData = new FormData(formRef.current ?? undefined);
+      formData.set("settlement", chunkJson);
+      formData.set("month", selectedMonthStr!);
+      formData.set("action", "share");
+      console.log(chunk.length);
+      submit(formData, { method: "post" });
+      await new Promise((res) => setTimeout(res, 100));
+    }
   }
 
   const readExcel = (e: any) => {
