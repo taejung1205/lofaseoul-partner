@@ -117,10 +117,12 @@ export default function AdminSettlementShare() {
 
   const [noticeModalStr, setNoticeModalStr] = useState<string>("에러");
 
+  const [pendingItems, setPendingItems] = useState<SettlementItem[][]>();
+
   const submit = useSubmit();
   const loaderData = useLoaderData();
   const actionData = useActionData();
-  const fetcher = useFetcher();
+  const transition = useTransition();
   const sharedMonthes: string[] = loaderData.monthes;
   const partnerProfiles = useMemo(() => {
     let map = new Map();
@@ -130,6 +132,7 @@ export default function AdminSettlementShare() {
     return map;
   }, [loaderData]);
   const formRef = useRef<HTMLFormElement>(null);
+
 
   useEffect(() => {
     setSelectedDate(getTimezoneDate(new Date()));
@@ -146,12 +149,33 @@ export default function AdminSettlementShare() {
     }
   }, [selectedDate]);
 
+  // useEffect(() => {
+  //   if (actionData !== undefined && actionData !== null) {
+  //     setNoticeModalStr(actionData.message);
+  //     setIsNoticeModalOpened(true);
+  //   }
+  //   console.log("pending items: ", pendingItems);
+  // }, [actionData]);
+
   useEffect(() => {
-    if (actionData !== undefined && actionData !== null) {
-      setNoticeModalStr(actionData.message);
-      setIsNoticeModalOpened(true);
+    if(pendingItems !== undefined && pendingItems.length > 0){
+      let chunk = pendingItems[0];
+      const newPendingItems = pendingItems.slice(1);
+      setPendingItems(newPendingItems);
+      const chunkJson = JSON.stringify(chunk);
+      const formData = new FormData(formRef.current ?? undefined);
+      formData.set("settlement", chunkJson);
+      formData.set("month", selectedMonthStr!);
+      formData.set("action", "share");
+      console.log("Submitting " + chunk.length + "items, left : " + newPendingItems.length);
+      submit(formData, { method: "post" });
     }
-  }, [actionData]);
+  }, [actionData])
+
+  useEffect(()=>{
+    console.log(transition.state);
+    console.log(transition.submission?.formData);
+  }, [transition]);
 
   function onItemCheck(index: number, isChecked: boolean) {
     itemsChecked[index] = isChecked;
@@ -163,21 +187,20 @@ export default function AdminSettlementShare() {
 
   async function shareSettlement(settlementList: SettlementItem[]) {
     const chunkSize = 250;
+    let pending : SettlementItem[][] = [];
     for (let i = 0; i < settlementList.length; i += chunkSize) {
       let chunk = settlementList.slice(i, i + chunkSize);
-      const chunkJson = JSON.stringify(chunk);
-      const formData = new FormData(formRef.current ?? undefined);
-      formData.set("settlement", chunkJson);
-      formData.set("month", selectedMonthStr!);
-      formData.set("action", "share");
-      console.log("Submitting " + chunk.length + "items");
-      await new Promise((res) => setTimeout(res, 1000));
-      do {
-        console.log(fetcher.state);
-        await new Promise((res) => setTimeout(res, 100));
-      } while (fetcher.state !== "idle");
-      fetcher.submit(formData, { method: "post" });
+      // const chunkJson = JSON.stringify(chunk);
+      // const formData = new FormData(formRef.current ?? undefined);
+      // formData.set("settlement", chunkJson);
+      // formData.set("month", selectedMonthStr!);
+      // formData.set("action", "share");
+      // console.log("Submitting " + chunk.length + "items");
+      // submit(formData, { method: "post" });
+      pending.push(chunk);
     }
+    setPendingItems(pending);
+    submit(null, {method: "post"});
   }
 
   const readExcel = (e: any) => {
