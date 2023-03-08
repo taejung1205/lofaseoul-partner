@@ -169,11 +169,6 @@ export default function AdminSettlementShare() {
     }
   }, [actionData]);
 
-  useEffect(() => {
-    console.log(transition.state);
-    console.log(transition.submission?.formData);
-  }, [transition]);
-
   function onItemCheck(index: number, isChecked: boolean) {
     itemsChecked[index] = isChecked;
   }
