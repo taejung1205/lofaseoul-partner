@@ -228,7 +228,7 @@ export async function deletePartnerProfile({ name }: { name: string }) {
 /**
  * 정산내역을 추가합니다.
  * 추가 후 정산합계 기록도 수정합니다.
- * @param settlements: SettlementItem[], monthStr: string (입력할 월)
+ * @param settlements: SettlementItem[] (length <= 250), monthStr: string (입력할 월)
  * @returns
  *
  */
@@ -240,6 +240,9 @@ export async function addSettlements({
   monthStr: string;
 }) {
   try {
+    if (settlements.length > 250) {
+      throw Error("addSettlements에 들어온 배열의 길이가 250을 넘습니다.");
+    }
     let settlementBatch = writeBatch(firestore);
 
     const time = new Date().getTime();
