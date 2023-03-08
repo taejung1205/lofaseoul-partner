@@ -1,5 +1,11 @@
 import { ActionFunction, json, LoaderFunction } from "@remix-run/node";
-import { useActionData, useLoaderData, useSubmit } from "@remix-run/react";
+import {
+  useActionData,
+  useFetcher,
+  useLoaderData,
+  useSubmit,
+  useTransition,
+} from "@remix-run/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import styled from "styled-components";
 import * as xlsx from "xlsx";
@@ -84,13 +90,10 @@ export const action: ActionFunction = async ({ request }) => {
       if (result === true) {
         return json({ message: `${month} 정산내역 공유가 완료되었습니다.` });
       } else {
-        return json({
-          message: `정산내역 공유 중 문제가 발생했습니다. ${result}`,
-        });
+        throw Error(result);
       }
     }
   }
-
   return null;
 };
 
@@ -113,9 +116,12 @@ export default function AdminSettlementShare() {
 
   const [noticeModalStr, setNoticeModalStr] = useState<string>("에러");
 
+  const [pendingItems, setPendingItems] = useState<SettlementItem[][]>();
+
   const submit = useSubmit();
   const loaderData = useLoaderData();
   const actionData = useActionData();
+  const transition = useTransition();
   const sharedMonthes: string[] = loaderData.monthes;
   const partnerProfiles = useMemo(() => {
     let map = new Map();
@@ -142,9 +148,24 @@ export default function AdminSettlementShare() {
   }, [selectedDate]);
 
   useEffect(() => {
-    if (actionData !== undefined && actionData !== null) {
-      setNoticeModalStr(actionData.message);
-      setIsNoticeModalOpened(true);
+    if (pendingItems !== undefined && pendingItems.length > 0) {
+      let chunk = pendingItems[0];
+      const newPendingItems = pendingItems.slice(1);
+      setPendingItems(newPendingItems);
+      const chunkJson = JSON.stringify(chunk);
+      const formData = new FormData(formRef.current ?? undefined);
+      formData.set("settlement", chunkJson);
+      formData.set("month", selectedMonthStr!);
+      formData.set("action", "share");
+      console.log(
+        "Submitting " + chunk.length + "items, left chunks: " + newPendingItems.length
+      );
+      submit(formData, { method: "post" });
+    } else {
+      if (actionData !== undefined && actionData !== null) {
+        setNoticeModalStr(actionData.message);
+        setIsNoticeModalOpened(true);
+      }
     }
   }, [actionData]);
 
@@ -156,13 +177,15 @@ export default function AdminSettlementShare() {
     setItemsChecked(Array(items.length).fill(isChecked));
   }
 
-  function shareSettlement(settlementList: SettlementItem[]) {
-    const json = JSON.stringify(settlementList);
-    const formData = new FormData(formRef.current ?? undefined);
-    formData.set("settlement", json);
-    formData.set("month", selectedMonthStr!);
-    formData.set("action", "share");
-    submit(formData, { method: "post" });
+  async function shareSettlement(settlementList: SettlementItem[]) {
+    const chunkSize = 250;
+    let pending: SettlementItem[][] = [];
+    for (let i = 0; i < settlementList.length; i += chunkSize) {
+      let chunk = settlementList.slice(i, i + chunkSize);
+      pending.push(chunk);
+    }
+    setPendingItems(pending);
+    submit(null, { method: "post" });
   }
 
   const readExcel = (e: any) => {

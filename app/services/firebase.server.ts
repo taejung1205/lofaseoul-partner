@@ -228,7 +228,7 @@ export async function deletePartnerProfile({ name }: { name: string }) {
 /**
  * 정산내역을 추가합니다.
  * 추가 후 정산합계 기록도 수정합니다.
- * @param settlements: SettlementItem[], monthStr: string (입력할 월)
+ * @param settlements: SettlementItem[] (length <= 250), monthStr: string (입력할 월)
  * @returns
  *
  */
@@ -240,7 +240,11 @@ export async function addSettlements({
   monthStr: string;
 }) {
   try {
+    if (settlements.length > 250) {
+      throw Error("addSettlements에 들어온 배열의 길이가 250을 넘습니다.");
+    }
     let settlementBatch = writeBatch(firestore);
+
     const time = new Date().getTime();
     let partnersJson: any = {};
 
@@ -315,17 +319,7 @@ export async function addSettlements({
         itemDocName
       );
       settlementBatch.set(itemDocRef, item);
-
-      if (i % 400 == 1 || i == settlements.length - 1) {
-        await settlementBatch.commit();
-        if (i < settlements.length) {
-          settlementBatch = writeBatch(firestore);
-        }
-      }
     }
-
-    let partnerBatch = writeBatch(firestore);
-    let batchCount = 0;
 
     //partners에 각 파트너의 총계 추가
     for (let partnerName in partnersJson) {
@@ -340,7 +334,7 @@ export async function addSettlements({
       );
       //기존 정산합이 없을 경우
       if (prevSum == null) {
-        partnerBatch.set(partnerDocRef, partnersJson[partnerName]);
+        settlementBatch.set(partnerDocRef, partnersJson[partnerName]);
       } else {
         //기존 정산합이 있을 경우
         let newSum: any = {};
@@ -361,17 +355,11 @@ export async function addSettlements({
           partnersJson[partnerName][`settlement_etc`];
         newSum[`shipping_etc`] =
           prevSum["shipping_etc"] + partnersJson[partnerName][`shipping_etc`];
-        partnerBatch.set(partnerDocRef, newSum);
+        settlementBatch.set(partnerDocRef, newSum);
       }
-      if (batchCount % 400 == 1) {
-        await partnerBatch.commit();
-        batchCount = 0;
-        partnerBatch = writeBatch(firestore);
-      }
-      batchCount++;
     }
 
-    await partnerBatch.commit();
+    await settlementBatch.commit();
 
     await setDoc(doc(firestore, `settlements/${monthStr}`), {
       isShared: true,
@@ -379,6 +367,10 @@ export async function addSettlements({
 
     return true;
   } catch (error: any) {
+    sendAligoMessage({
+      text: `[로파파트너] ${error.message ?? error}`,
+      receiver: "01023540973",
+    });
     return error.message ?? error;
   }
 }
@@ -914,7 +906,7 @@ export async function addWaybills({
     let waybillBatch = writeBatch(firestore);
 
     let day = new Date();
-    day.setDate(day.getDate() + 1)
+    day.setDate(day.getDate() + 1);
     const nextDayStr = dateToDayStr(day);
 
     for (let i = 0; i < orders.length; i++) {
