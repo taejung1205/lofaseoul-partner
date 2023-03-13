@@ -4,6 +4,7 @@ import {
   useActionData,
   useLoaderData,
   useSubmit,
+  useTransition,
 } from "@remix-run/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import styled from "styled-components";
@@ -39,6 +40,7 @@ import {
 import { BasicModal, ModalButton } from "~/components/modal";
 import { PageLayout } from "~/components/page_layout";
 import { GetListButton } from "~/components/button";
+import { LoadingOverlay } from "@mantine/core";
 
 const EmptySettlementBox = styled.div`
   display: flex;
@@ -130,9 +132,7 @@ export const action: ActionFunction = async ({ request }) => {
       if (result == true) {
         return json({ message: `삭제가 완료되었습니다.` });
       } else {
-        return json({
-          message: `삭제 중 문제가 발생했습니다.${"\n"}${result}`,
-        });
+        throw Error(result);
       }
     }
   } else if (actionType === "edit") {
@@ -155,9 +155,7 @@ export const action: ActionFunction = async ({ request }) => {
       });
 
       if (result_1 !== true) {
-        return json({
-          message: `수정의 삭제 과정 중 문제가 발생했습니다.${"\n"}${result_1}`,
-        });
+        throw Error(result_1);
       }
       const result_2 = await addSettlements({
         settlements: [jsonNew],
@@ -167,9 +165,7 @@ export const action: ActionFunction = async ({ request }) => {
       if (result_2 == true) {
         return json({ message: `수정이 완료되었습니다.` });
       } else {
-        return json({
-          message: `수정의 추가 과정 중 문제가 발생했습니다.${"\n"}${result_2}`,
-        });
+        throw Error(result_2);
       }
     }
   } else if (actionType == "shipping-delete") {
@@ -190,9 +186,7 @@ export const action: ActionFunction = async ({ request }) => {
       if (result == true) {
         return json({ message: `삭제가 완료되었습니다.` });
       } else {
-        return json({
-          message: `삭제 중 문제가 발생했습니다.${"\n"}${result}`,
-        });
+        throw Error(result);
       }
     }
   }
@@ -246,6 +240,12 @@ export default function AdminSettlementShare() {
   const [noticeModalStr, setNoticeModalStr] = useState<string>(""); //안내 모달창에서 뜨는 메세지
   const [editErrorStr, setEditErrorStr] = useState<string>(""); //수정 모달에서 뜨는 에러 메세지
 
+  const [pendingItems, setPendingItems] = useState<SettlementItem[][]>();
+  const [pendingLength, setPendingLength] = useState<number>(0);
+  const [pendingAction, setPendingAction] = useState<
+    "delete" | "shipping-delete" | "none"
+  >("none");
+
   //정산내역 수정시 입력창 내용물
   const [sellerEdit, setSellerEdit] = useState<string>("");
   const [orderNumberEdit, setOrderNumberEdit] = useState<string>("");
@@ -268,6 +268,7 @@ export default function AdminSettlementShare() {
   const [isEditModalOpened, setIsEditModalOpened] = useState<boolean>(false);
 
   const formRef = useRef<HTMLFormElement>(null);
+  const transition = useTransition();
   const actionData = useActionData();
   const loaderData = useLoaderData();
   const submit = useSubmit();
@@ -384,9 +385,24 @@ export default function AdminSettlementShare() {
   }, [loaderData]);
 
   useEffect(() => {
-    if (actionData !== undefined && actionData !== null) {
-      setNoticeModalStr(actionData.message);
-      setIsNoticeModalOpened(true);
+    if (pendingItems !== undefined && pendingItems.length > 0) {
+      let chunk = pendingItems[0];
+      const newPendingItems = pendingItems.slice(1);
+      setPendingItems(newPendingItems);
+      const chunkJson = JSON.stringify(chunk);
+      const formData = new FormData(formRef.current ?? undefined);
+      formData.set("settlement", chunkJson);
+      formData.set("month", monthStr);
+      formData.set("partner", loaderData.partnerName);
+      formData.set("action", pendingAction);
+      submit(formData, { method: "post" });
+    } else {
+      if (actionData !== undefined && actionData !== null) {
+        setNoticeModalStr(actionData.message ?? actionData);
+        setIsNoticeModalOpened(true);
+        setPendingLength(0);
+        setPendingAction("none");
+      }
     }
   }, [actionData]);
 
@@ -412,25 +428,31 @@ export default function AdminSettlementShare() {
   }
 
   //정산건 삭제를 post합니다.
-  function submitDelete(settlementList: SettlementItem[]) {
-    const json = JSON.stringify(settlementList);
-    const formData = new FormData(formRef.current ?? undefined);
-    formData.set("settlement", json);
-    formData.set("month", monthStr);
-    formData.set("partner", loaderData.partnerName);
-    formData.set("action", "delete");
-    submit(formData, { method: "post" });
+  function submitDeleteSettlements(settlementList: SettlementItem[]) {
+    const chunkSize = 20;
+    let pending: SettlementItem[][] = [];
+    for (let i = 0; i < settlementList.length; i += chunkSize) {
+      let chunk = settlementList.slice(i, i + chunkSize);
+      pending.push(chunk);
+    }
+    setPendingItems(pending);
+    setPendingLength(pending.length);
+    setPendingAction("delete");
+    submit(null, { method: "post" });
   }
 
   //정산건 배송비 제거를 post합니다.
   function submitShippingFeeDelete(settlementList: SettlementItem[]) {
-    const json = JSON.stringify(settlementList);
-    const formData = new FormData(formRef.current ?? undefined);
-    formData.set("settlement", json);
-    formData.set("month", monthStr);
-    formData.set("partner", loaderData.partnerName);
-    formData.set("action", "shipping-delete");
-    submit(formData, { method: "post" });
+    const chunkSize = 20;
+    let pending: SettlementItem[][] = [];
+    for (let i = 0; i < settlementList.length; i += chunkSize) {
+      let chunk = settlementList.slice(i, i + chunkSize);
+      pending.push(chunk);
+    }
+    setPendingItems(pending);
+    setPendingLength(pending.length);
+    setPendingAction("shipping-delete");
+    submit(null, { method: "post" });
   }
 
   //수정 시작시 기본 입력값을 선택한 정산건으로 맞춥니다.
@@ -496,7 +518,7 @@ export default function AdminSettlementShare() {
 
   //정산건 수정을 post합니다.
   //기존 정산건을 삭제하고 수정된 정산건을 추가하는 방식으로 진행됩니다.
-  function submitEdit(
+  function submitEditSettlement(
     deletingSettlement: SettlementItem,
     newSettlement: SettlementItem
   ) {
@@ -513,6 +535,10 @@ export default function AdminSettlementShare() {
 
   return (
     <>
+      <LoadingOverlay
+        visible={transition.state == "loading" && pendingLength == 0}
+        overlayBlur={2}
+      />
       {/* 안내용 모달 */}
       <BasicModal
         opened={isNoticeModalOpened}
@@ -555,7 +581,7 @@ export default function AdminSettlementShare() {
             </ModalButton>
             <ModalButton
               onClick={async () => {
-                submitDelete(selectedItems);
+                submitDeleteSettlements(selectedItems);
                 setIsDeleteModalOpened(false);
               }}
             >
@@ -747,7 +773,7 @@ export default function AdminSettlementShare() {
               onClick={async () => {
                 const checkResult = checkEdit();
                 if (checkResult !== null) {
-                  submitEdit(selectedItems[0], checkResult);
+                  submitEditSettlement(selectedItems[0], checkResult);
                   setIsEditModalOpened(false);
                 }
               }}
@@ -755,6 +781,23 @@ export default function AdminSettlementShare() {
               수정
             </ModalButton>
           </div>
+        </div>
+      </BasicModal>
+
+      {/* 작업 중 모달 */}
+      <BasicModal opened={pendingLength > 0} onClose={() => {}}>
+        <div
+          style={{
+            justifyContent: "center",
+            textAlign: "center",
+            fontWeight: "700",
+          }}
+        >
+          {`작업 진행 중 (${
+            Math.floor((pendingLength - (pendingItems?.length ?? 0))/ pendingLength * 100)
+          }%)`}
+          <br />
+          {`도중에 페이지를 닫을 경우 오류가 발생할 수 있습니다.`}
         </div>
       </BasicModal>
 

@@ -1,7 +1,7 @@
+import { LoadingOverlay } from "@mantine/core";
 import { ActionFunction, json, LoaderFunction } from "@remix-run/node";
 import {
   useActionData,
-  useFetcher,
   useLoaderData,
   useSubmit,
   useTransition,
@@ -110,18 +110,19 @@ export default function AdminSettlementShare() {
   const [selectedDate, setSelectedDate] = useState<Date>();
   const [selectedMonthStr, setSelectedMonthStr] = useState<string>();
   const [fileName, setFileName] = useState<string>("");
+
+  const [pendingItems, setPendingItems] = useState<SettlementItem[][]>();
+  const [pendingLength, setPendingLength] = useState<number>(0);
+
   const [isNoticeModalOpened, setIsNoticeModalOpened] =
     useState<boolean>(false);
   const [isShareModalOpened, setIsShareModalOpened] = useState<boolean>(false);
-
   const [noticeModalStr, setNoticeModalStr] = useState<string>("에러");
 
-  const [pendingItems, setPendingItems] = useState<SettlementItem[][]>();
-
+  const transition = useTransition();
   const submit = useSubmit();
   const loaderData = useLoaderData();
   const actionData = useActionData();
-  const transition = useTransition();
   const sharedMonthes: string[] = loaderData.monthes;
   const partnerProfiles = useMemo(() => {
     let map = new Map();
@@ -157,14 +158,12 @@ export default function AdminSettlementShare() {
       formData.set("settlement", chunkJson);
       formData.set("month", selectedMonthStr!);
       formData.set("action", "share");
-      console.log(
-        "Submitting " + chunk.length + "items, left chunks: " + newPendingItems.length
-      );
       submit(formData, { method: "post" });
     } else {
       if (actionData !== undefined && actionData !== null) {
-        setNoticeModalStr(actionData.message);
+        setNoticeModalStr(actionData.message ?? actionData);
         setIsNoticeModalOpened(true);
+        setPendingLength(0);
       }
     }
   }, [actionData]);
@@ -177,14 +176,15 @@ export default function AdminSettlementShare() {
     setItemsChecked(Array(items.length).fill(isChecked));
   }
 
-  async function shareSettlement(settlementList: SettlementItem[]) {
-    const chunkSize = 250;
+  async function submitAddSettlements(settlementList: SettlementItem[]) {
+    const chunkSize = 20;
     let pending: SettlementItem[][] = [];
     for (let i = 0; i < settlementList.length; i += chunkSize) {
       let chunk = settlementList.slice(i, i + chunkSize);
       pending.push(chunk);
     }
     setPendingItems(pending);
+    setPendingLength(pending.length);
     submit(null, { method: "post" });
   }
 
@@ -266,6 +266,10 @@ export default function AdminSettlementShare() {
 
   return (
     <>
+      <LoadingOverlay
+        visible={transition.state == "loading" && pendingLength == 0}
+        overlayBlur={2}
+      />
       <BasicModal
         opened={isNoticeModalOpened}
         onClose={() => setIsNoticeModalOpened(false)}
@@ -315,7 +319,7 @@ export default function AdminSettlementShare() {
                   }
                 }
                 if (settlementList.length > 0) {
-                  shareSettlement(settlementList);
+                  submitAddSettlements(settlementList);
                 } else {
                   setNoticeModalStr("선택된 정산내역이 없습니다.");
                   setIsNoticeModalOpened(true);
@@ -327,6 +331,22 @@ export default function AdminSettlementShare() {
               공유
             </ModalButton>
           </div>
+        </div>
+      </BasicModal>
+
+      <BasicModal opened={pendingLength > 0} onClose={() => {}}>
+        <div
+          style={{
+            justifyContent: "center",
+            textAlign: "center",
+            fontWeight: "700",
+          }}
+        >
+          {`작업 진행 중 (${
+            Math.floor((pendingLength - (pendingItems?.length ?? 0))/ pendingLength * 100)
+          }%)`}
+          <br />
+          {`도중에 페이지를 닫을 경우 오류가 발생할 수 있습니다.`}
         </div>
       </BasicModal>
 

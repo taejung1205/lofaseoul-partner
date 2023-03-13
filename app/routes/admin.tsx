@@ -1,9 +1,8 @@
-import { Outlet, useSubmit, useTransition } from "@remix-run/react";
+import { Outlet, useSubmit } from "@remix-run/react";
 import { LoaderFunction, redirect } from "@remix-run/node";
 import styled from "styled-components";
 import { AdminHeader } from "~/components/header";
 import { AdminSidebar } from "~/components/sidebar";
-import { LoadingOverlay } from "@mantine/core";
 import { requireUser } from "~/services/session.server";
 
 const AdminPage = styled.div`
@@ -38,17 +37,10 @@ export let loader: LoaderFunction = async ({ request }) => {
 };
 
 export default function Admin() {
-  const transition = useTransition();
   const submit = useSubmit();
 
   return (
     <>
-      <LoadingOverlay
-        visible={
-          transition.state == "loading" || transition.state == "submitting"
-        }
-        overlayBlur={2}
-      />
       <AdminPage>
         <AdminHeader
           onLogoutClick={() => {

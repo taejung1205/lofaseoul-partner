@@ -240,7 +240,7 @@ export async function addSettlements({
   monthStr: string;
 }) {
   try {
-    if (settlements.length > 250) {
+    if (settlements.length > 20) {
       throw Error("addSettlements에 들어온 배열의 길이가 250을 넘습니다.");
     }
     let settlementBatch = writeBatch(firestore);
@@ -457,7 +457,7 @@ export async function getAllSettlementSum({ monthStr }: { monthStr: string }) {
 
 /**
  * 해당 정산내역들을 삭제합니다
- * @param monthStr: 월, settlements: 정산내역 (같은 파트너의 정산내역), partnerName: 파트너이름
+ * @param monthStr: 월, settlements: 정산내역 (같은 파트너의 정산내역, 길이 400 이하), partnerName: 파트너이름
  */
 export async function deleteSettlements({
   settlements,
@@ -471,6 +471,10 @@ export async function deleteSettlements({
   try {
     if (settlements.length == 0) {
       throw Error("들어온 정산내역이 없습니다.");
+    }
+
+    if (settlements.length > 20) {
+      throw Error("deleteSettlements에 들어온 배열의 길이가 400을 넘습니다.");
     }
 
     let deleteBatch = writeBatch(firestore);
@@ -548,14 +552,9 @@ export async function deleteSettlements({
       querySnap.forEach(async (doc) => {
         deleteBatch.delete(doc.ref);
       });
-
-      if (i % 400 == 1 || i == settlements.length - 1) {
-        await deleteBatch.commit();
-        if (i < settlements.length) {
-          deleteBatch = writeBatch(firestore);
-        }
-      }
     }
+
+    await deleteBatch.commit();
 
     await setDoc(
       doc(firestore, `settlements/${monthStr}/partners`, partnerName),
@@ -563,6 +562,10 @@ export async function deleteSettlements({
     );
     return true;
   } catch (error: any) {
+    sendAligoMessage({
+      text: `[로파파트너] ${error.message ?? error}`,
+      receiver: "01023540973",
+    });
     return error.message ?? error;
   }
 }
@@ -583,6 +586,12 @@ export async function deleteSettlementsShippingFee({
   try {
     if (settlements.length == 0) {
       throw Error("들어온 정산내역이 없습니다.");
+    }
+
+    if (settlements.length > 20) {
+      throw Error(
+        "deleteSettlementsShippingFee에 들어온 배열의 길이가 400을 넘습니다."
+      );
     }
 
     let shippingFeeBatch = writeBatch(firestore);
@@ -634,14 +643,9 @@ export async function deleteSettlementsShippingFee({
       querySnap.forEach(async (doc) => {
         shippingFeeBatch.update(doc.ref, { shippingFee: 0 });
       });
-
-      if (i % 400 == 1 || i == settlements.length - 1) {
-        await shippingFeeBatch.commit();
-        if (i < settlements.length) {
-          shippingFeeBatch = writeBatch(firestore);
-        }
-      }
     }
+
+    await shippingFeeBatch.commit();
 
     await setDoc(
       doc(firestore, `settlements/${monthStr}/partners`, partnerName),
@@ -649,6 +653,10 @@ export async function deleteSettlementsShippingFee({
     );
     return true;
   } catch (error: any) {
+    await sendAligoMessage({
+      text: error.message ?? error,
+      receiver: "01023540973",
+    });
     return error.message ?? error;
   }
 }
@@ -730,7 +738,7 @@ export async function addOrders({
       );
       orderBatch.set(delayedOrderItemDocRef, delayedOrderItem);
 
-      if (i % 200 == 1 || i == orders.length - 1) {
+      if ((i % 200 == 1 && i > 1) || i == orders.length - 1) {
         await orderBatch.commit();
         if (i < orders.length) {
           orderBatch = writeBatch(firestore);
@@ -871,7 +879,7 @@ export async function deleteOrders({
           deleteBatch.delete(waybillItemDocRef);
         }
       });
-      if (i % 130 == 1 || i == orders.length - 1) {
+      if ((i % 130 == 1 && i > 1) || i == orders.length - 1) {
         await deleteBatch.commit();
         if (i < orders.length - 1) {
           deleteBatch = writeBatch(firestore);
@@ -880,6 +888,10 @@ export async function deleteOrders({
     }
     return true;
   } catch (error: any) {
+    await sendAligoMessage({
+      text: error.message ?? error,
+      receiver: "01023540973",
+    });
     return error.message ?? error;
   }
 }
@@ -983,7 +995,7 @@ export async function addWaybills({
         });
       });
 
-      if (i % 100 == 1 || i == orders.length - 1) {
+      if ((i % 100 == 1 && i > 1) || i == orders.length - 1) {
         await waybillBatch.commit();
         if (i < orders.length) {
           waybillBatch = writeBatch(firestore);
@@ -997,6 +1009,10 @@ export async function addWaybills({
 
     return true;
   } catch (error: any) {
+    await sendAligoMessage({
+      text: error.message ?? error,
+      receiver: "01023540973",
+    });
     return error.message ?? error;
   }
 }
@@ -1151,7 +1167,7 @@ export async function editWaybills({
         });
       });
 
-      if (i % 130 == 1 || i == waybills.length - 1) {
+      if ((i % 130 == 1 && i > 1) || i == waybills.length - 1) {
         await waybillBatch.commit();
         if (i < waybills.length - 1) {
           waybillBatch = writeBatch(firestore);
@@ -1165,6 +1181,10 @@ export async function editWaybills({
 
     return true;
   } catch (error: any) {
+    await sendAligoMessage({
+      text: error.message ?? error,
+      receiver: "01023540973",
+    });
     return error.message ?? error;
   }
 }
@@ -1291,7 +1311,7 @@ export async function shareDelayedWaybills({
         });
       });
 
-      if (i % 130 == 1 || i == waybills.length - 1) {
+      if ((i % 130 == 1 && i > 1) || i == waybills.length - 1) {
         await waybillBatch.commit();
         if (i < waybills.length - 1) {
           waybillBatch = writeBatch(firestore);
@@ -1305,6 +1325,10 @@ export async function shareDelayedWaybills({
 
     return true;
   } catch (error: any) {
+    await sendAligoMessage({
+      text: error.message ?? error,
+      receiver: "01023540973",
+    });
     return error.message ?? error;
   }
 }
@@ -1465,6 +1489,10 @@ export async function editNotice({
     });
     return true;
   } catch (error: any) {
+    await sendAligoMessage({
+      text: error.message ?? error,
+      receiver: "01023540973",
+    });
     return error.message ?? error;
   }
 }
@@ -1508,6 +1536,10 @@ export async function shareNotice({
 
     return true;
   } catch (error: any) {
+    await sendAligoMessage({
+      text: error.message ?? error,
+      receiver: "01023540973",
+    });
     return error.message ?? error;
   }
 }
@@ -1619,6 +1651,10 @@ export async function deleteNotice({
     );
     return true;
   } catch (error: any) {
+    await sendAligoMessage({
+      text: error.message ?? error,
+      receiver: "01023540973",
+    });
     return error.message ?? error;
   }
 }
@@ -1651,6 +1687,10 @@ export async function replyNotice({
 
     return true;
   } catch (error: any) {
+    await sendAligoMessage({
+      text: error.message ?? error,
+      receiver: "01023540973",
+    });
     return error.message ?? error;
   }
 }
