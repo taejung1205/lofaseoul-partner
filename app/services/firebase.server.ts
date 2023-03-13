@@ -240,7 +240,7 @@ export async function addSettlements({
   monthStr: string;
 }) {
   try {
-    if (settlements.length > 250) {
+    if (settlements.length > 20) {
       throw Error("addSettlements에 들어온 배열의 길이가 250을 넘습니다.");
     }
     let settlementBatch = writeBatch(firestore);
@@ -473,7 +473,7 @@ export async function deleteSettlements({
       throw Error("들어온 정산내역이 없습니다.");
     }
 
-    if (settlements.length > 400) {
+    if (settlements.length > 20) {
       throw Error("deleteSettlements에 들어온 배열의 길이가 400을 넘습니다.");
     }
 
@@ -588,7 +588,7 @@ export async function deleteSettlementsShippingFee({
       throw Error("들어온 정산내역이 없습니다.");
     }
 
-    if (settlements.length > 400) {
+    if (settlements.length > 20) {
       throw Error(
         "deleteSettlementsShippingFee에 들어온 배열의 길이가 400을 넘습니다."
       );

@@ -429,7 +429,7 @@ export default function AdminSettlementShare() {
 
   //정산건 삭제를 post합니다.
   function submitDeleteSettlements(settlementList: SettlementItem[]) {
-    const chunkSize = 100;
+    const chunkSize = 20;
     let pending: SettlementItem[][] = [];
     for (let i = 0; i < settlementList.length; i += chunkSize) {
       let chunk = settlementList.slice(i, i + chunkSize);
@@ -443,7 +443,7 @@ export default function AdminSettlementShare() {
 
   //정산건 배송비 제거를 post합니다.
   function submitShippingFeeDelete(settlementList: SettlementItem[]) {
-    const chunkSize = 100;
+    const chunkSize = 20;
     let pending: SettlementItem[][] = [];
     for (let i = 0; i < settlementList.length; i += chunkSize) {
       let chunk = settlementList.slice(i, i + chunkSize);
@@ -794,8 +794,8 @@ export default function AdminSettlementShare() {
           }}
         >
           {`작업 진행 중 (${
-            pendingLength - (pendingItems?.length ?? 0)
-          } / ${pendingLength})`}{" "}
+            Math.floor((pendingLength - (pendingItems?.length ?? 0))/ pendingLength * 100)
+          }%)`}
           <br />
           {`도중에 페이지를 닫을 경우 오류가 발생할 수 있습니다.`}
         </div>
