@@ -158,12 +158,6 @@ export default function AdminSettlementShare() {
       formData.set("settlement", chunkJson);
       formData.set("month", selectedMonthStr!);
       formData.set("action", "share");
-      console.log(
-        "Submitting " +
-          chunk.length +
-          "items, left chunks: " +
-          newPendingItems.length
-      );
       submit(formData, { method: "post" });
     } else {
       if (actionData !== undefined && actionData !== null) {
@@ -183,7 +177,7 @@ export default function AdminSettlementShare() {
   }
 
   async function submitAddSettlements(settlementList: SettlementItem[]) {
-    const chunkSize = 250;
+    const chunkSize = 100;
     let pending: SettlementItem[][] = [];
     for (let i = 0; i < settlementList.length; i += chunkSize) {
       let chunk = settlementList.slice(i, i + chunkSize);

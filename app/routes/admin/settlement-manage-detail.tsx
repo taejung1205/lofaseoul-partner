@@ -429,7 +429,7 @@ export default function AdminSettlementShare() {
 
   //정산건 삭제를 post합니다.
   function submitDeleteSettlements(settlementList: SettlementItem[]) {
-    const chunkSize = 400;
+    const chunkSize = 100;
     let pending: SettlementItem[][] = [];
     for (let i = 0; i < settlementList.length; i += chunkSize) {
       let chunk = settlementList.slice(i, i + chunkSize);
@@ -443,7 +443,7 @@ export default function AdminSettlementShare() {
 
   //정산건 배송비 제거를 post합니다.
   function submitShippingFeeDelete(settlementList: SettlementItem[]) {
-    const chunkSize = 400;
+    const chunkSize = 100;
     let pending: SettlementItem[][] = [];
     for (let i = 0; i < settlementList.length; i += chunkSize) {
       let chunk = settlementList.slice(i, i + chunkSize);
