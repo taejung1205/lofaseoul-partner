@@ -398,7 +398,7 @@ export default function AdminSettlementShare() {
       submit(formData, { method: "post" });
     } else {
       if (actionData !== undefined && actionData !== null) {
-        setNoticeModalStr(actionData.message);
+        setNoticeModalStr(actionData.message ?? actionData);
         setIsNoticeModalOpened(true);
         setPendingLength(0);
         setPendingAction("none");
