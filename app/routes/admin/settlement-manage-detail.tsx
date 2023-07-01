@@ -482,7 +482,7 @@ export default function AdminSettlementShare() {
   //수정 시작시 기본 입력값을 선택한 정산건으로 맞춥니다.
   //파라미터로 null이 들어오면 정산건을 추가하는 요청으로 해석, 수수료 제외 전부 0 또는 공백으로 맞춥니다.
   function updateEditItems(settlement: SettlementItem | null) {
-    if(settlement !== null){
+    if (settlement !== null) {
       setSellerEdit(settlement.seller);
       setOrderNumberEdit(settlement.orderNumber);
       setProductNameEdit(settlement.productName);
@@ -570,9 +570,7 @@ export default function AdminSettlementShare() {
   }
 
   //정산건 추가를 post합니다.
-  function submitAddSettlement(
-    newSettlement: SettlementItem
-  ) {
+  function submitAddSettlement(newSettlement: SettlementItem) {
     const jsonNew = JSON.stringify(newSettlement);
     const formData = new FormData(formRef.current ?? undefined);
     formData.set("new-item", jsonNew);
@@ -822,7 +820,7 @@ export default function AdminSettlementShare() {
               onClick={async () => {
                 const checkResult = checkEdit();
                 if (checkResult !== null) {
-                  if(isEdit){
+                  if (isEdit) {
                     submitEditSettlement(selectedItems[0], checkResult);
                   } else {
                     submitAddSettlement(checkResult);
@@ -846,9 +844,10 @@ export default function AdminSettlementShare() {
             fontWeight: "700",
           }}
         >
-          {`작업 진행 중 (${
-            Math.floor((pendingLength - (pendingItems?.length ?? 0))/ pendingLength * 100)
-          }%)`}
+          {`작업 진행 중 (${Math.floor(
+            ((pendingLength - (pendingItems?.length ?? 0)) / pendingLength) *
+              100
+          )}%)`}
           <br />
           {`도중에 페이지를 닫을 경우 오류가 발생할 수 있습니다.`}
         </div>
