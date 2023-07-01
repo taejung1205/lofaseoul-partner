@@ -85,7 +85,7 @@ const LongEditInputBox = styled.input`
   margin: 4px;
 `;
 
-const EditDeleteButton = styled.button`
+const Button1 = styled.button`
   background-color: black;
   color: white;
   font-size: 24px;
@@ -98,7 +98,7 @@ const EditDeleteButton = styled.button`
   cursor: pointer;
 `;
 
-const DeleteShippingFeeButton = styled.button`
+const Button2 = styled.button`
   background-color: black;
   color: white;
   font-size: 20px;
@@ -189,6 +189,27 @@ export const action: ActionFunction = async ({ request }) => {
         throw Error(result);
       }
     }
+  } else if (actionType == "add") {
+    const newItem = body.get("new-item")?.toString();
+    const month = body.get("month")?.toString();
+    const partnerName = body.get("partner")?.toString();
+    if (
+      newItem !== undefined &&
+      month !== undefined &&
+      partnerName !== undefined
+    ) {
+      const jsonNew: SettlementItem = JSON.parse(newItem);
+      const result = await addSettlements({
+        settlements: [jsonNew],
+        monthStr: month,
+      });
+
+      if (result == true) {
+        return json({ message: `수정이 완료되었습니다.` });
+      } else {
+        throw Error(result);
+      }
+    }
   }
 
   return null;
@@ -266,6 +287,9 @@ export default function AdminSettlementShare() {
   const [isNoticeModalOpened, setIsNoticeModalOpened] =
     useState<boolean>(false);
   const [isEditModalOpened, setIsEditModalOpened] = useState<boolean>(false);
+
+  // EditModal 열린게 수정용인지 여부
+  const [isEdit, setIsEdit] = useState<boolean>(false);
 
   const formRef = useRef<HTMLFormElement>(null);
   const transition = useTransition();
@@ -456,17 +480,29 @@ export default function AdminSettlementShare() {
   }
 
   //수정 시작시 기본 입력값을 선택한 정산건으로 맞춥니다.
-  function updateEditItems(settlement: SettlementItem) {
-    setSellerEdit(settlement.seller);
-    setOrderNumberEdit(settlement.orderNumber);
-    setProductNameEdit(settlement.productName);
-    setOptionNameEdit(settlement.optionName);
-    setPriceEdit(settlement.price);
-    setAmountEdit(settlement.amount);
-    setFeeEdit(settlement.fee);
-    setShippingFeeEdit(settlement.shippingFee);
-    setOrdererEdit(settlement.orderer);
-    setReceiverEdit(settlement.receiver);
+  //파라미터로 null이 들어오면 정산건을 추가하는 요청으로 해석, 수수료 제외 전부 0 또는 공백으로 맞춥니다.
+  function updateEditItems(settlement: SettlementItem | null) {
+    if (settlement !== null) {
+      setSellerEdit(settlement.seller);
+      setOrderNumberEdit(settlement.orderNumber);
+      setProductNameEdit(settlement.productName);
+      setOptionNameEdit(settlement.optionName);
+      setPriceEdit(settlement.price);
+      setAmountEdit(settlement.amount);
+      setFeeEdit(settlement.fee);
+      setShippingFeeEdit(settlement.shippingFee);
+      setOrdererEdit(settlement.orderer);
+      setReceiverEdit(settlement.receiver);
+    } else {
+      setSellerEdit("");
+      setOrderNumberEdit("");
+      setProductNameEdit(`[${partnerName}]`);
+      setOptionNameEdit("");
+      setPriceEdit(0);
+      setAmountEdit(0);
+      setOrdererEdit("");
+      setReceiverEdit("");
+    }
   }
 
   //수정 입력창에 입력된 정산건 내역을 검증합니다.
@@ -489,7 +525,7 @@ export default function AdminSettlementShare() {
 
     const isValid = isSettlementItemValid(newSettlement);
     if (!isValid) {
-      setEditErrorStr("잘못된 정산내역입니다. 수정내역을 확인해주세요.");
+      setEditErrorStr("잘못된 정산내역입니다. 내역을 확인해주세요.");
       return null;
     }
 
@@ -530,6 +566,17 @@ export default function AdminSettlementShare() {
     formData.set("month", monthStr);
     formData.set("partner", loaderData.partnerName);
     formData.set("action", "edit");
+    submit(formData, { method: "post" });
+  }
+
+  //정산건 추가를 post합니다.
+  function submitAddSettlement(newSettlement: SettlementItem) {
+    const jsonNew = JSON.stringify(newSettlement);
+    const formData = new FormData(formRef.current ?? undefined);
+    formData.set("new-item", jsonNew);
+    formData.set("month", monthStr);
+    formData.set("partner", loaderData.partnerName);
+    formData.set("action", "add");
     submit(formData, { method: "post" });
   }
 
@@ -773,12 +820,16 @@ export default function AdminSettlementShare() {
               onClick={async () => {
                 const checkResult = checkEdit();
                 if (checkResult !== null) {
-                  submitEditSettlement(selectedItems[0], checkResult);
+                  if (isEdit) {
+                    submitEditSettlement(selectedItems[0], checkResult);
+                  } else {
+                    submitAddSettlement(checkResult);
+                  }
                   setIsEditModalOpened(false);
                 }
               }}
             >
-              수정
+              {isEdit ? "수정" : "추가"}
             </ModalButton>
           </div>
         </div>
@@ -793,9 +844,10 @@ export default function AdminSettlementShare() {
             fontWeight: "700",
           }}
         >
-          {`작업 진행 중 (${
-            Math.floor((pendingLength - (pendingItems?.length ?? 0))/ pendingLength * 100)
-          }%)`}
+          {`작업 진행 중 (${Math.floor(
+            ((pendingLength - (pendingItems?.length ?? 0)) / pendingLength) *
+              100
+          )}%)`}
           <br />
           {`도중에 페이지를 닫을 경우 오류가 발생할 수 있습니다.`}
         </div>
@@ -867,7 +919,7 @@ export default function AdminSettlementShare() {
           <>
             <div style={{ height: "20px" }} />
             <div style={{ display: "flex" }}>
-              <EditDeleteButton
+              <Button1
                 onClick={() => {
                   const updatedList = updateCheckedItems();
                   if (updatedList.length > 0) {
@@ -879,13 +931,14 @@ export default function AdminSettlementShare() {
                 }}
               >
                 선택 정산건 삭제
-              </EditDeleteButton>
-              <EditDeleteButton
+              </Button1>
+              <Button1
                 onClick={() => {
                   const updatedList = updateCheckedItems();
                   if (updatedList.length == 1) {
                     updateEditItems(updatedList[0]);
                     setIsEditModalOpened(true);
+                    setIsEdit(true);
                   } else if (updatedList.length == 0) {
                     setNoticeModalStr("선택된 정산내역이 없습니다.");
                     setIsNoticeModalOpened(true);
@@ -896,8 +949,8 @@ export default function AdminSettlementShare() {
                 }}
               >
                 선택 정산건 수정
-              </EditDeleteButton>
-              <DeleteShippingFeeButton
+              </Button1>
+              <Button2
                 onClick={() => {
                   const updatedList = updateCheckedItems();
                   if (updatedList.length > 0) {
@@ -909,7 +962,16 @@ export default function AdminSettlementShare() {
                 }}
               >
                 선택 정산건 배송비 제거
-              </DeleteShippingFeeButton>
+              </Button2>
+              <Button1
+                onClick={() => {
+                  updateEditItems(null);
+                  setIsEditModalOpened(true);
+                  setIsEdit(false);
+                }}
+              >
+                정산건 추가
+              </Button1>
             </div>
             <div style={{ height: "40px" }} />
             <SettlementSumBar
