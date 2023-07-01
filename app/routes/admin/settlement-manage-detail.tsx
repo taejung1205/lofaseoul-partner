@@ -496,7 +496,7 @@ export default function AdminSettlementShare() {
     } else {
       setSellerEdit("");
       setOrderNumberEdit("");
-      setProductNameEdit("");
+      setProductNameEdit(`[${partnerName}]`);
       setOptionNameEdit("");
       setPriceEdit(0);
       setAmountEdit(0);
