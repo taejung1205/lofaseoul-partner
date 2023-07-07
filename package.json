@@ -5,8 +5,7 @@
     "build": "remix build",
     "dev": "remix dev",
     "start": "cross-env NODE_ENV=production netlify dev",
-    "typecheck": "tsc -b",
-    "postinstall": "remix-esbuild-override"
+    "typecheck": "tsc -b"
   },
   "dependencies": {
     "@emotion/react": "^11.10.5",
@@ -42,7 +41,6 @@
     "@types/react-dom": "^18.0.8",
     "@types/styled-components": "^5.1.26",
     "eslint": "^8.27.0",
-    "remix-esbuild-override": "^3.0.4",
     "typescript": "^4.8.4"
   },
   "engines": {
