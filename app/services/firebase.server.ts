@@ -520,7 +520,7 @@ export async function deleteSettlements({
 
       //정산금액: (가격 * 수량)의 (100 - 수수료)%
       const deletingAmount = Math.round(
-        (item.price * item.amount * (100 - item.fee)) / 100.0
+        (item.price * Math.abs(item.amount) * (100 - item.fee)) / 100.0
       );
 
       //현재 정산합에서 감산
