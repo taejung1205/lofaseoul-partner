@@ -52,10 +52,12 @@ const firebaseConfig = {
 // Initialize Firebase
 let firebaseApp: any;
 let firestore: any;
+let storage: any;
 
 if (!firebaseApp?.apps.length || !firestore.apps.length) {
   firebaseApp = initializeApp(firebaseConfig);
   firestore = getFirestore(firebaseApp);
+  storage = getStorage(firebaseApp)
 }
 
 /**
@@ -1694,4 +1696,11 @@ export async function replyNotice({
     });
     return error.message ?? error;
   }
+}
+
+export async function uploadFileTest(file: File){
+  console.log("yay blob");
+    const storageRef = ref(storage, "test");
+    uploadBytes(storageRef, await file.arrayBuffer());
+    console.log("success");
 }
