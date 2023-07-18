@@ -32,6 +32,7 @@ import {
 import { emailToId } from "~/utils/account";
 import { sendAligoMessage } from "./aligo.server";
 import { NoticeItem } from "~/components/notice";
+import { Product } from "~/components/product";
 
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
@@ -1693,4 +1694,44 @@ export async function replyNotice({
     });
     return error.message ?? error;
   }
+}
+
+
+/**
+ * 상품 등록 정보를 추가합니다. 
+ * @param product: Product
+ * @returns
+ * 에러가 있을 경우 string
+ * 정상적일 경우 null
+ */
+export async function addProduct({
+  product,
+}: {
+  product: Product;
+}) {
+  const docRef = doc(firestore, "products", product.productName);
+  const docSnap = await getDoc(docRef);
+  if (docSnap.exists()) {
+    return "이미 해당 이름의 상품이 등록되어 있습니다."
+  } 
+
+  const result = await setDoc(doc(firestore, "products", product.productName), {
+    productName: product.productName,
+    englishProductName: product.englishProductName,
+    explanation: product.explanation,
+    keywordList: product.keyword,
+    sellerPrice: product.sellerPrice,
+    isUsingOption: product.isUsingOption,
+    optionList: product.option,
+    optionCount: product.optionCount,
+    // mainImageFile: File;
+    // thumbnailImageFile: File;
+    // detailImageFileList: File[];
+    refundExplanation: product.refundExplanation,
+    serviceExplanation: product.serviceExplanation
+  }).catch((error) => {
+    return error.message;
+  });
+
+  return result;
 }

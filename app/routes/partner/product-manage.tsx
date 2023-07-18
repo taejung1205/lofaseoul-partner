@@ -1,9 +1,19 @@
 import { Checkbox, Modal, Space } from "@mantine/core";
-import { useState } from "react";
+import {
+  ActionFunction,
+  LoaderFunction,
+  json,
+  redirect,
+} from "@remix-run/node";
+import { useActionData, useLoaderData, useSubmit } from "@remix-run/react";
+import { useRef, useState } from "react";
 import styled from "styled-components";
 import { BlackButton } from "~/components/button";
 import { BasicModal, ModalButton } from "~/components/modal";
 import { PageLayout } from "~/components/page_layout";
+import { Product } from "~/components/product";
+import { addProduct } from "~/services/firebase.server";
+import { requireUser } from "~/services/session.server";
 
 const EditInputBox = styled.input`
   font-size: 20px;
@@ -39,6 +49,68 @@ const ListButton = styled.button`
   cursor: pointer;
 `;
 
+export const action: ActionFunction = async ({ request }) => {
+  const body = await request.formData();
+  const productName = body.get("productName")?.toString();
+  const englishProductName = body.get("englishProductName")?.toString();
+  const explanation = body.get("explanation")?.toString();
+  const keyword = body.get("keyword")?.toString();
+  const sellerPrice = Number(body.get("sellerPrice")?.toString());
+  const isUsingOption = body.get("isUsingOption")?.toString() == "true";
+  const option = body.get("option")?.toString();
+  const optionCount = Number(body.get("optionCount")?.toString());
+  const refundExplanation = body.get("refundExplanation")?.toString();
+  const serviceExplanation = body.get("serviceExplanation")?.toString();
+
+  if (
+    productName !== undefined &&
+    englishProductName !== undefined &&
+    explanation !== undefined &&
+    keyword !== undefined &&
+    sellerPrice !== undefined &&
+    isUsingOption !== undefined &&
+    option !== undefined &&
+    optionCount !== undefined &&
+    refundExplanation !== undefined &&
+    serviceExplanation !== undefined
+  ) {
+    const product: Product = {
+      productName: productName,
+      englishProductName: englishProductName,
+      explanation: explanation,
+      keyword: keyword,
+      sellerPrice: sellerPrice,
+      isUsingOption: isUsingOption,
+      option: option,
+      optionCount: optionCount,
+      refundExplanation: refundExplanation,
+      serviceExplanation: serviceExplanation,
+    };
+    const result = await addProduct({ product: product });
+    if (result == true) {
+      return json({ message: `상품이 등록되었습니다.` });
+    } else {
+      return json({
+        message: `상품 등록 중 문제가 발생했습니다.${"\n"}${result}`,
+      });
+    }
+  }
+
+  return null;
+};
+
+export const loader: LoaderFunction = async ({ request }) => {
+  let partnerName: string;
+  const user = await requireUser(request);
+  if (user !== null) {
+    partnerName = user.uid;
+  } else {
+    return redirect("/login");
+  }
+
+  return json({ partnerName: partnerName });
+};
+
 export default function PartnerProductManage() {
   //상품 추가 모달 입력값
   const [productName, setProductName] = useState<string>(""); //상품명 (필수)
@@ -64,6 +136,11 @@ export default function PartnerProductManage() {
 
   //안내 메세지
   const [notice, setNotice] = useState<string>("");
+
+  const loaderData = useLoaderData();
+  const actionData = useActionData();
+  const formRef = useRef<HTMLFormElement>(null);
+  const submit = useSubmit();
 
   function addKeyword() {
     setKeywordList((prev) => [...prev, ""]);
@@ -193,6 +270,52 @@ export default function PartnerProductManage() {
     }
 
     return true;
+  }
+
+  //입력한 내용 토대로 엑셀에 들어갈 내용물을 만들고 추가 요청
+  function submitAddProduct() {
+    const partnerName = loaderData.partnerName;
+    if (partnerName == undefined) {
+      setNotice(
+        "프로필을 불러오는 것에 실패했습니다. 오류가 반복될 경우 관리자에게 문의해주세요."
+      );
+      setIsNoticeModalOpened(true);
+      return false;
+    }
+
+    const newProductName = `[${partnerName}] ${productName}`;
+    const newEnglishProductName =
+      englishProductName.length > 0
+        ? `[${partnerName}] ${englishProductName}`
+        : "";
+    let keyword = "";
+    for (let i = 0; i < keywordList.length; i++) {
+      keyword += keywordList[i];
+      if (i < keywordList.length - 1) {
+        keyword += ", ";
+      }
+    }
+    let option = "";
+    for (let i = 0; i < optionList.length; i++) {
+      option += optionList[i];
+      if (i < optionList.length - 1) {
+        option += "//";
+      }
+    }
+
+    const formData = new FormData(formRef.current ?? undefined);
+    formData.set("productName", newProductName);
+    formData.set("englishProductName", newEnglishProductName);
+    formData.set("explanation", explanation);
+    formData.set("keyword", keyword);
+    formData.set("sellerPrice", sellerPrice.toString());
+    formData.set("isUsingOption", isUsingOption.toString());
+    formData.set("option", option);
+    formData.set("optionCount", optionList.length.toString());
+    formData.set("refundExplanation", refundExplanation);
+    formData.set("serviceExplanation", serviceExplanation);
+
+    submit(formData, { method: "post" });
   }
 
   return (
@@ -336,6 +459,9 @@ export default function PartnerProductManage() {
               checked={isUsingOption}
               onChange={(event) => {
                 setIsUsingOption(event.currentTarget.checked);
+                if (!isUsingOption) {
+                  setOptionList([]);
+                }
               }}
               sx={{
                 marginTop: "4px",
@@ -537,6 +663,7 @@ export default function PartnerProductManage() {
               type="submit"
               onClick={async () => {
                 if (checkRequirements()) {
+                  submitAddProduct();
                 }
               }}
             >
