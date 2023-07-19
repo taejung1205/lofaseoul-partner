@@ -11,10 +11,9 @@ import styled from "styled-components";
 import { BlackButton } from "~/components/button";
 import { BasicModal, ModalButton } from "~/components/modal";
 import { PageLayout } from "~/components/page_layout";
-import { Product } from "~/components/product";
-import { addProduct } from "~/services/firebase.server";
+import { LoadedProduct, Product } from "~/components/product";
+import { addProduct, getPartnerProducts } from "~/services/firebase.server";
 import { requireUser } from "~/services/session.server";
-import { uploadFileTest } from "~/services/firebase.server";
 
 const EditInputBox = styled.input`
   font-size: 20px;
@@ -52,6 +51,7 @@ const ListButton = styled.button`
 
 export const action: ActionFunction = async ({ request }) => {
   const body = await request.formData();
+  const partnerName = body.get("partnerName")?.toString();
   const productName = body.get("productName")?.toString();
   const englishProductName = body.get("englishProductName")?.toString();
   const explanation = body.get("explanation")?.toString();
@@ -59,7 +59,6 @@ export const action: ActionFunction = async ({ request }) => {
   const sellerPrice = Number(body.get("sellerPrice")?.toString());
   const isUsingOption = body.get("isUsingOption")?.toString() == "true";
   const option = body.get("option")?.toString();
-  const optionCount = Number(body.get("optionCount")?.toString());
   const refundExplanation = body.get("refundExplanation")?.toString();
   const serviceExplanation = body.get("serviceExplanation")?.toString();
 
@@ -76,6 +75,7 @@ export const action: ActionFunction = async ({ request }) => {
   }
 
   if (
+    partnerName !== undefined &&
     productName !== undefined &&
     englishProductName !== undefined &&
     explanation !== undefined &&
@@ -83,13 +83,13 @@ export const action: ActionFunction = async ({ request }) => {
     sellerPrice !== undefined &&
     isUsingOption !== undefined &&
     option !== undefined &&
-    optionCount !== undefined &&
     refundExplanation !== undefined &&
     serviceExplanation !== undefined &&
     mainImageFile instanceof File &&
     thumbnailImageFile instanceof File
   ) {
     const product: Product = {
+      partnerName: partnerName,
       productName: productName,
       englishProductName: englishProductName,
       explanation: explanation,
@@ -97,7 +97,6 @@ export const action: ActionFunction = async ({ request }) => {
       sellerPrice: sellerPrice,
       isUsingOption: isUsingOption,
       option: option,
-      optionCount: optionCount,
       refundExplanation: refundExplanation,
       serviceExplanation: serviceExplanation,
       mainImageFile: mainImageFile,
@@ -130,7 +129,11 @@ export const loader: LoaderFunction = async ({ request }) => {
     return redirect("/login");
   }
 
-  return json({ partnerName: partnerName });
+  const products = await getPartnerProducts({
+    partnerName: partnerName,
+  });
+
+  return json({ partnerName: partnerName, products: products });
 };
 
 export default function PartnerProductManage() {
@@ -158,6 +161,9 @@ export default function PartnerProductManage() {
 
   //안내 메세지
   const [notice, setNotice] = useState<string>("");
+
+  //불러온 상품 목록
+  const [loadedProducts, setLoadedProducts] = useState<LoadedProduct[]>([]); //로딩된 전체 주문건 아이템 리스트
 
   const loaderData = useLoaderData();
   const actionData = useActionData();
@@ -335,7 +341,7 @@ export default function PartnerProductManage() {
     for (let i = 0; i < keywordList.length; i++) {
       newKeyword += keywordList[i];
       if (i < keywordList.length - 1) {
-        newKeyword += ", ";
+        newKeyword += ",";
       }
     }
     let newOption = "";
@@ -347,6 +353,7 @@ export default function PartnerProductManage() {
     }
 
     const formData: any = new FormData(formRef.current ?? undefined);
+    formData.set("partnerName", partnerName);
     formData.set("productName", newProductName);
     formData.set("englishProductName", newEnglishProductName);
     formData.set("explanation", newExplanation);
@@ -354,7 +361,6 @@ export default function PartnerProductManage() {
     formData.set("sellerPrice", sellerPrice.toString());
     formData.set("isUsingOption", isUsingOption.toString());
     formData.set("option", newOption);
-    formData.set("optionCount", optionList.length.toString());
     formData.set("refundExplanation", newRefundExplanation);
     formData.set("serviceExplanation", newServiceExplanation);
     formData.set("mainImageFile", mainImageFile);
@@ -377,6 +383,12 @@ export default function PartnerProductManage() {
       }
     }
   }, [actionData]);
+
+  useEffect(() => {
+    if (loaderData.error == undefined) {
+      setLoadedProducts(loaderData.products);
+    }
+  }, [loaderData]);
 
   return (
     <>
@@ -776,6 +788,31 @@ export default function PartnerProductManage() {
         <BlackButton onClick={() => setIsAddProductModalOpened(true)}>
           상품 추가
         </BlackButton>
+        {loadedProducts.map((item, index) => {
+          return (
+            <div
+              key={`LoadedProductItems_${index}`}
+              style={{
+                display: "flex",
+                width: "inherit",
+                alignItems: "center",
+                backgroundColor: "#ebebeb4d",
+                padding: "10px",
+                marginTop: "8px",
+                lineHeight: "1",
+              }}
+            >
+              <div style={{
+                width: "calc(100% - 100px)",
+                marginLeft: "10px",
+                lineHeight: "16px",
+                textAlign: "left"
+              }}>{item.productName}</div>
+              <Space w={10} />
+              <ListButton onClick={() => {}}>자세히</ListButton>
+            </div>
+          );
+        })}
       </PageLayout>
     </>
   );

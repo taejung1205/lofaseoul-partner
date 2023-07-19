@@ -19,7 +19,7 @@ import {
   where,
   writeBatch,
 } from "firebase/firestore";
-import { getStorage, ref, uploadBytes } from "firebase/storage";
+import { getBlob, getDownloadURL, getStorage, ref, uploadBytes } from "firebase/storage";
 import { SettlementItem } from "~/components/settlement_table";
 import { PartnerProfile } from "~/components/partner_profile";
 import { PossibleSellers } from "~/components/seller";
@@ -33,7 +33,7 @@ import {
 import { emailToId } from "~/utils/account";
 import { sendAligoMessage } from "./aligo.server";
 import { NoticeItem } from "~/components/notice";
-import { Product } from "~/components/product";
+import { LoadedProduct, Product } from "~/components/product";
 
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
@@ -1740,6 +1740,7 @@ export async function addProduct({
 
 
   const result = await setDoc(doc(firestore, "products", product.productName), {
+    partnerName: product.partnerName,
     productName: product.productName,
     englishProductName: product.englishProductName,
     explanation: product.explanation,
@@ -1747,10 +1748,9 @@ export async function addProduct({
     sellerPrice: product.sellerPrice,
     isUsingOption: product.isUsingOption,
     optionList: product.option,
-    optionCount: product.optionCount,
     mainImageFilePath: mainImagePath,
-    thumbnailImageFile: thumbnailImagePath,
-    detailImageFileList: detailImagePath,
+    thumbnailImageFilePath: thumbnailImagePath,
+    detailImageFilePathList: detailImagePath,
     refundExplanation: product.refundExplanation,
     serviceExplanation: product.serviceExplanation
   }).catch((error) => {
@@ -1762,9 +1762,54 @@ export async function addProduct({
   return true;
 }
 
-export async function uploadFileTest(file: File){
-  console.log("yay blob");
-    const storageRef = ref(storage, "test");
+/**
+ * 지정된 파트너가 등록한 상품 정보를 불러옵니다
+ * @param partnerName: 파트너 이름
+ * @returns
+ *  Array of LoadedProduct
+ */
+export async function getPartnerProducts({
+  partnerName,
+}: {
+  partnerName: string;
+}) {
+  const ordersRef = collection(firestore, `products`);
+
+  const ordersQuery = query(
+    ordersRef,
+    where("partnerName", "==", partnerName)
+  );
+  const querySnap = await getDocs(ordersQuery);
+
+  const result = await Promise.all(querySnap.docs.map(async (doc) => {
+    const data = doc.data();
+    const mainURL = await getDownloadURL(ref(storage, data.mainImageFilePath));
+    const thumbnailURL = await getDownloadURL(ref(storage, data.thumbnailImageFilePath));
+    const detailImageFilePathList = data.detailImageFilePathList.split("|");
     
-    console.log("success");
+    const detailURLList: string[] = [];
+    for(let i = 0; i < detailImageFilePathList.length; i++){
+      detailURLList.push(await getDownloadURL(ref(storage, detailImageFilePathList[i])));
+    }
+
+    const product: LoadedProduct = {
+      partnerName: data.partnerName,
+      productName: data.productName,
+      englishProductName: data.englishProductName,
+      explanation: data.explanation,
+      keyword: data.keywordList,
+      sellerPrice: data.sellerPrice,
+      isUsingOption: data.isUsingOption,
+      option: data.optionList,
+      mainImageURL: mainURL,
+      thumbnailImageURL: thumbnailURL,
+      detailImageURLList: detailURLList,
+      refundExplanation: data.refundExplanation,
+      serviceExplanation: data.serviceExplanation
+    }
+
+    return product;
+  }));
+
+  return result;
 }
