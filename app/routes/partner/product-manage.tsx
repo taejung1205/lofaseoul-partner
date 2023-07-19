@@ -124,7 +124,7 @@ export default function PartnerProductManage() {
   const [thumbnailImageFile, setThumbnailImageFile] = useState<File>(); //썸네일 이미지 (필수)
   const [detailImageFileList, setDetailImageFileList] = useState<
     (File | undefined)[]
-  >([]); //상세 이미지
+  >([]); //상세 이미지 (최소 1개 필수)
   const [refundExplanation, setRefundExplanation] = useState<string>(""); //교환/반품안내
   const [serviceExplanation, setServiceExplanation] = useState<string>(""); //서비스문의/안내
 
@@ -213,6 +213,12 @@ export default function PartnerProductManage() {
       return false;
     }
 
+    if (explanation.length == 0) {
+      setNotice("상품 간략설명을 입력해야 합니다.");
+      setIsNoticeModalOpened(true);
+      return false;
+    }
+
     if (mainImageFile == undefined) {
       setNotice("상품 이미지를 등록해야 합니다.");
       setIsNoticeModalOpened(true);
@@ -221,6 +227,12 @@ export default function PartnerProductManage() {
 
     if (thumbnailImageFile == undefined) {
       setNotice("마우스 호버용 이미지를 등록해야 합니다.");
+      setIsNoticeModalOpened(true);
+      return false;
+    }
+
+    if (detailImageFileList.length == 0) {
+      setNotice("상세 페이지 이미지를 최소 1개 등록해야 합니다.");
       setIsNoticeModalOpened(true);
       return false;
     }
@@ -382,7 +394,15 @@ export default function PartnerProductManage() {
               alignItems: "center",
             }}
           >
-            <div style={{ width: "160px" }}>상품 간략설명</div>
+            <div
+              style={{
+                width: "160px",
+                display: "flex",
+                justifyContent: "center",
+              }}
+            >
+              상품 간략설명<div style={{ width: "10px", color: "red" }}>*</div>
+            </div>
             <EditTextareaBox
               name="explanation"
               value={explanation}
@@ -577,8 +597,15 @@ export default function PartnerProductManage() {
               display: "flex",
             }}
           >
-            <div style={{ width: "160px", marginTop: "8px" }}>
-              상세 페이지 이미지
+            <div
+              style={{
+                width: "160px",
+                display: "flex",
+                justifyContent: "center",
+                marginTop: "8px"
+              }}
+            >
+              상세 페이지 이미지<div style={{ width: "10px", color: "red" }}>*</div>
             </div>
             <div
               style={{
