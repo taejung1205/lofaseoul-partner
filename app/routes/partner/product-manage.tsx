@@ -14,6 +14,7 @@ import { PageLayout } from "~/components/page_layout";
 import { Product } from "~/components/product";
 import { addProduct } from "~/services/firebase.server";
 import { requireUser } from "~/services/session.server";
+import { uploadFileTest } from "~/services/firebase.server";
 
 const EditInputBox = styled.input`
   font-size: 20px;
@@ -108,8 +109,21 @@ export const loader: LoaderFunction = async ({ request }) => {
     return redirect("/login");
   }
 
+  const body = await request.formData();
+  
+  const file = body.get("file");
+  if(file instanceof File){
+    await uploadFileTest(file)
+  } else {
+    console.log("nope")
+  }
+  return null;
+
   return json({ partnerName: partnerName });
+
+  
 };
+
 
 export default function PartnerProductManage() {
   //상품 추가 모달 입력값
@@ -328,6 +342,12 @@ export default function PartnerProductManage() {
     formData.set("serviceExplanation", serviceExplanation);
 
     submit(formData, { method: "post" });
+  }
+
+  function testUpload() {
+    const formData: any= new FormData(formRef.current ?? undefined);
+    formData.set("file", mainImageFile);
+    submit(formData, { method: "post", encType: "multipart/form-data"});
   }
 
   return (
@@ -691,7 +711,9 @@ export default function PartnerProductManage() {
               onClick={async () => {
                 if (checkRequirements()) {
                   submitAddProduct();
+                  testUpload();
                 }
+                
               }}
             >
               추가

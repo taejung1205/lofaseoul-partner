@@ -19,6 +19,7 @@ import {
   where,
   writeBatch,
 } from "firebase/firestore";
+import { getStorage, ref, uploadBytes } from "firebase/storage";
 import { SettlementItem } from "~/components/settlement_table";
 import { PartnerProfile } from "~/components/partner_profile";
 import { PossibleSellers } from "~/components/seller";
@@ -52,10 +53,12 @@ const firebaseConfig = {
 // Initialize Firebase
 let firebaseApp: any;
 let firestore: any;
+let storage: any;
 
 if (!firebaseApp?.apps.length || !firestore.apps.length) {
   firebaseApp = initializeApp(firebaseConfig);
   firestore = getFirestore(firebaseApp);
+  storage = getStorage(firebaseApp)
 }
 
 /**
@@ -1734,4 +1737,11 @@ export async function addProduct({
   });
 
   return result;
+}
+
+export async function uploadFileTest(file: File){
+  console.log("yay blob");
+    const storageRef = ref(storage, "test");
+    uploadBytes(storageRef, await file.arrayBuffer());
+    console.log("success");
 }
