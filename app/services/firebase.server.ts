@@ -1716,7 +1716,28 @@ export async function addProduct({
   const docSnap = await getDoc(docRef);
   if (docSnap.exists()) {
     return "이미 해당 이름의 상품이 등록되어 있습니다."
-  } 
+  }
+  
+  const mainImagePath = `${product.productName}/main/${product.mainImageFile.name}`;
+  const thumbnailImagePath = `${product.productName}/thumbnail/${product.thumbnailImageFile.name}`;
+
+  const mainImageStorageRef = ref(storage, mainImagePath);
+  uploadBytes(mainImageStorageRef, await product.mainImageFile.arrayBuffer());
+
+  const thumbnailImageStorageRef = ref(storage, thumbnailImagePath);
+  uploadBytes(thumbnailImageStorageRef, await product.thumbnailImageFile.arrayBuffer());
+
+  let detailImagePath: string = ""
+  for(let i = 0;  i < product.detailImageFileList.length; i++) {
+    const path = `${product.productName}/detail/${product.detailImageFileList[i].name}`
+    const detailImageStorageRef = ref(storage, path);
+    uploadBytes(detailImageStorageRef, await product.detailImageFileList[i].arrayBuffer());
+    detailImagePath += path;
+    if(i < product.detailImageFileList.length - 1){
+      detailImagePath += "|"
+    }
+  }
+
 
   const result = await setDoc(doc(firestore, "products", product.productName), {
     productName: product.productName,
@@ -1727,21 +1748,23 @@ export async function addProduct({
     isUsingOption: product.isUsingOption,
     optionList: product.option,
     optionCount: product.optionCount,
-    // mainImageFile: File;
-    // thumbnailImageFile: File;
-    // detailImageFileList: File[];
+    mainImageFilePath: mainImagePath,
+    thumbnailImageFile: thumbnailImagePath,
+    detailImageFileList: detailImagePath,
     refundExplanation: product.refundExplanation,
     serviceExplanation: product.serviceExplanation
   }).catch((error) => {
-    return error.message;
+    console.log("error", error)
+    return error.message ?? error;
   });
 
-  return result;
+  console.log("success");
+  return true;
 }
 
 export async function uploadFileTest(file: File){
   console.log("yay blob");
     const storageRef = ref(storage, "test");
-    uploadBytes(storageRef, await file.arrayBuffer());
+    
     console.log("success");
 }

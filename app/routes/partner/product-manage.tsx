@@ -6,7 +6,7 @@ import {
   redirect,
 } from "@remix-run/node";
 import { useActionData, useLoaderData, useSubmit } from "@remix-run/react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import { BlackButton } from "~/components/button";
 import { BasicModal, ModalButton } from "~/components/modal";
@@ -63,6 +63,18 @@ export const action: ActionFunction = async ({ request }) => {
   const refundExplanation = body.get("refundExplanation")?.toString();
   const serviceExplanation = body.get("serviceExplanation")?.toString();
 
+  const mainImageFile = body.get("mainImageFile");
+  const thumbnailImageFile = body.get("thumbnailImageFile");
+  const detailImageFileList = body.getAll("detailImageFileList");
+
+  for (let i = 0; i < detailImageFileList.length; i++) {
+    if (!(detailImageFileList[i] instanceof File)) {
+      return json({
+        message: `상품 등록 중 문제가 발생했습니다. 상세 이미지가 파일이 아닙니다. 관리자에게 문의해주세요.`,
+      });
+    }
+  }
+
   if (
     productName !== undefined &&
     englishProductName !== undefined &&
@@ -73,7 +85,9 @@ export const action: ActionFunction = async ({ request }) => {
     option !== undefined &&
     optionCount !== undefined &&
     refundExplanation !== undefined &&
-    serviceExplanation !== undefined
+    serviceExplanation !== undefined &&
+    mainImageFile instanceof File &&
+    thumbnailImageFile instanceof File
   ) {
     const product: Product = {
       productName: productName,
@@ -86,18 +100,25 @@ export const action: ActionFunction = async ({ request }) => {
       optionCount: optionCount,
       refundExplanation: refundExplanation,
       serviceExplanation: serviceExplanation,
+      mainImageFile: mainImageFile,
+      thumbnailImageFile: thumbnailImageFile,
+      detailImageFileList: detailImageFileList,
     };
     const result = await addProduct({ product: product });
     if (result == true) {
-      return json({ message: `상품이 등록되었습니다.` });
+      return json({ message: `상품이 등록되었습니다.`, status: "ok" });
     } else {
       return json({
         message: `상품 등록 중 문제가 발생했습니다.${"\n"}${result}`,
+        status: "error",
       });
     }
   }
 
-  return null;
+  return json({
+    message: `상품 등록 중 문제가 발생했습니다. 상품 입력 요청 처리 중 누락된 내용이 존재합니다. 관리자에게 문의해주세요`,
+    status: "error",
+  });
 };
 
 export const loader: LoaderFunction = async ({ request }) => {
@@ -109,21 +130,8 @@ export const loader: LoaderFunction = async ({ request }) => {
     return redirect("/login");
   }
 
-  const body = await request.formData();
-  
-  const file = body.get("file");
-  if(file instanceof File){
-    await uploadFileTest(file)
-  } else {
-    console.log("nope")
-  }
-  return null;
-
   return json({ partnerName: partnerName });
-
-  
 };
-
 
 export default function PartnerProductManage() {
   //상품 추가 모달 입력값
@@ -251,6 +259,12 @@ export default function PartnerProductManage() {
       return false;
     }
 
+    if (!checkDuplicateFileName(detailImageFileList)) {
+      setNotice("상세 페이지 이미지 파일들은 이름이 서로 달라야 합니다.");
+      setIsNoticeModalOpened(true);
+      return false;
+    }
+
     for (let i = 0; i < keywordList.length; i++) {
       if (keywordList[i].length == 0) {
         setNotice(
@@ -314,41 +328,55 @@ export default function PartnerProductManage() {
       englishProductName.length > 0
         ? `[${partnerName}] ${englishProductName}`
         : "";
-    let keyword = "";
+    const newExplanation = replaceLinebreak(explanation);
+    const newRefundExplanation = replaceLinebreak(refundExplanation);
+    const newServiceExplanation = replaceLinebreak(serviceExplanation);
+    let newKeyword = "";
     for (let i = 0; i < keywordList.length; i++) {
-      keyword += keywordList[i];
+      newKeyword += keywordList[i];
       if (i < keywordList.length - 1) {
-        keyword += ", ";
+        newKeyword += ", ";
       }
     }
-    let option = "";
+    let newOption = "";
     for (let i = 0; i < optionList.length; i++) {
-      option += optionList[i];
+      newOption += optionList[i];
       if (i < optionList.length - 1) {
-        option += "//";
+        newOption += "//";
       }
     }
 
-    const formData = new FormData(formRef.current ?? undefined);
+    const formData: any = new FormData(formRef.current ?? undefined);
     formData.set("productName", newProductName);
     formData.set("englishProductName", newEnglishProductName);
-    formData.set("explanation", explanation);
-    formData.set("keyword", keyword);
+    formData.set("explanation", newExplanation);
+    formData.set("keyword", newKeyword);
     formData.set("sellerPrice", sellerPrice.toString());
     formData.set("isUsingOption", isUsingOption.toString());
-    formData.set("option", option);
+    formData.set("option", newOption);
     formData.set("optionCount", optionList.length.toString());
-    formData.set("refundExplanation", refundExplanation);
-    formData.set("serviceExplanation", serviceExplanation);
+    formData.set("refundExplanation", newRefundExplanation);
+    formData.set("serviceExplanation", newServiceExplanation);
+    formData.set("mainImageFile", mainImageFile);
+    formData.set("thumbnailImageFile", thumbnailImageFile);
+    for (let i = 0; i < detailImageFileList.length; i++) {
+      formData.append("detailImageFileList", detailImageFileList[i]);
+    }
 
-    submit(formData, { method: "post" });
+    submit(formData, { method: "post", encType: "multipart/form-data" });
   }
 
-  function testUpload() {
-    const formData: any= new FormData(formRef.current ?? undefined);
-    formData.set("file", mainImageFile);
-    submit(formData, { method: "post", encType: "multipart/form-data"});
-  }
+  //결과로 오는 거 바탕으로 안내모달
+  useEffect(() => {
+    if (actionData !== undefined && actionData !== null) {
+      setNotice(actionData.message);
+      setIsNoticeModalOpened(true);
+      //성공했으면 모달 닫기
+      if (actionData.status == "ok") {
+        setIsAddProductModalOpened(false);
+      }
+    }
+  }, [actionData]);
 
   return (
     <>
@@ -448,13 +476,13 @@ export default function PartnerProductManage() {
               {keywordList.map((item, index) => {
                 return (
                   <div
+                    key={`KeywordItem-${index}`}
                     style={{
                       display: "flex",
                       justifyContent: "start",
                     }}
                   >
                     <EditInputBox
-                      key={`KeywordItem-${index}`}
                       value={keywordList[index]}
                       onChange={(e) => editKeyword(index, e.target.value)}
                       placeholder="검색어"
@@ -526,13 +554,13 @@ export default function PartnerProductManage() {
                 {optionList.map((item, index) => {
                   return (
                     <div
+                      key={`OptionItem-${index}`}
                       style={{
                         display: "flex",
                         justifyContent: "start",
                       }}
                     >
                       <LongEditInputBox2
-                        key={`OptionItem-${index}`}
                         value={optionList[index]}
                         onChange={(e) => editOption(index, e.target.value)}
                         placeholder="옵션명{옵션1|옵션2|옵션3|...}"
@@ -622,10 +650,11 @@ export default function PartnerProductManage() {
                 width: "160px",
                 display: "flex",
                 justifyContent: "center",
-                marginTop: "8px"
+                marginTop: "8px",
               }}
             >
-              상세 페이지 이미지<div style={{ width: "10px", color: "red" }}>*</div>
+              상세 페이지 이미지
+              <div style={{ width: "10px", color: "red" }}>*</div>
             </div>
             <div
               style={{
@@ -637,6 +666,7 @@ export default function PartnerProductManage() {
               {detailImageFileList.map((item, index) => {
                 return (
                   <div
+                    key={`DetailImageItem_${index}`}
                     style={{
                       display: "flex",
                       justifyContent: "start",
@@ -711,9 +741,7 @@ export default function PartnerProductManage() {
               onClick={async () => {
                 if (checkRequirements()) {
                   submitAddProduct();
-                  testUpload();
                 }
-                
               }}
             >
               추가
@@ -755,4 +783,19 @@ export default function PartnerProductManage() {
 
 function replaceLinebreak(str: string) {
   return str.split("\n").join("<br />");
+}
+
+function checkDuplicateFileName(list: any[]) {
+  for (let i = 0; i < list.length; i++) {
+    for (let j = i + 1; j < list.length; j++) {
+      if (
+        !(list[i] instanceof File) ||
+        !(list[j] instanceof File) ||
+        list[i].name == list[j].name
+      ) {
+        return false;
+      }
+    }
+  }
+  return true;
 }

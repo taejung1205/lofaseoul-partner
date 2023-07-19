@@ -7,9 +7,9 @@ export type Product = {
     isUsingOption: boolean;
     option: string;
     optionCount: number;
-    // mainImageFile: File;
-    // thumbnailImageFile: File;
-    // detailImageFileList: File[];
+    mainImageFile: File;
+    thumbnailImageFile: File;
+    detailImageFileList: any[];
     refundExplanation: string;
     serviceExplanation: string;
   };
