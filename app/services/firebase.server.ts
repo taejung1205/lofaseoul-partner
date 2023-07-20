@@ -1722,51 +1722,53 @@ export async function addProduct({ product }: { product: Product }) {
     return "이미 해당 이름의 상품이 등록되어 있습니다.";
   }
 
-  const mainImagePath = `${product.productName}/main/${product.mainImageFile.name}`;
-  const thumbnailImagePath = `${product.productName}/thumbnail/${product.thumbnailImageFile.name}`;
-
-  const mainImageStorageRef = ref(storage, mainImagePath);
-  await uploadBytes(mainImageStorageRef, await product.mainImageFile.arrayBuffer());
-
-  const thumbnailImageStorageRef = ref(storage, thumbnailImagePath);
-  await uploadBytes(
-    thumbnailImageStorageRef,
-    await product.thumbnailImageFile.arrayBuffer()
-  );
-
-  let detailImagePath: string = "";
-  for (let i = 0; i < product.detailImageFileList.length; i++) {
-    const path = `${product.productName}/detail/${product.detailImageFileList[i].name}`;
-    const detailImageStorageRef = ref(storage, path);
+  async function uploadImages(){
+    const mainImagePath = `${product.productName}/main/${product.mainImageFile.name}`;
+    const thumbnailImagePath = `${product.productName}/thumbnail/${product.thumbnailImageFile.name}`;
+  
+    const mainImageStorageRef = ref(storage, mainImagePath);
+    await uploadBytes(mainImageStorageRef, await product.mainImageFile.arrayBuffer());
+  
+    const thumbnailImageStorageRef = ref(storage, thumbnailImagePath);
     await uploadBytes(
-      detailImageStorageRef,
-      await product.detailImageFileList[i].arrayBuffer()
+      thumbnailImageStorageRef,
+      await product.thumbnailImageFile.arrayBuffer()
     );
-    detailImagePath += path;
-    if (i < product.detailImageFileList.length - 1) {
-      detailImagePath += "|";
+  
+    let detailImagePath: string = "";
+    for (let i = 0; i < product.detailImageFileList.length; i++) {
+      const path = `${product.productName}/detail/${product.detailImageFileList[i].name}`;
+      const detailImageStorageRef = ref(storage, path);
+      await uploadBytes(
+        detailImageStorageRef,
+        await product.detailImageFileList[i].arrayBuffer()
+      );
+      detailImagePath += path;
+      if (i < product.detailImageFileList.length - 1) {
+        detailImagePath += "|";
+      }
     }
+    return {mainImagePath: mainImagePath, thumbnailImagePath: thumbnailImagePath, detailImagePath: detailImagePath};
   }
 
-  const result = await setDoc(doc(firestore, "products", product.productName), {
-    partnerName: product.partnerName,
-    productName: product.productName,
-    englishProductName: product.englishProductName,
-    explanation: product.explanation,
-    keywordList: product.keyword,
-    sellerPrice: product.sellerPrice,
-    isUsingOption: product.isUsingOption,
-    optionList: product.option,
-    mainImageFilePath: mainImagePath,
-    thumbnailImageFilePath: thumbnailImagePath,
-    detailImageFilePathList: detailImagePath,
-    refundExplanation: product.refundExplanation,
-    serviceExplanation: product.serviceExplanation,
-    status: product.status
-  }).catch((error) => {
-    console.log("error", error);
-    return error.message ?? error;
-  });
+  uploadImages().then((result) => {
+    setDoc(doc(firestore, "products", product.productName), {
+      partnerName: product.partnerName,
+      productName: product.productName,
+      englishProductName: product.englishProductName,
+      explanation: product.explanation,
+      keywordList: product.keyword,
+      sellerPrice: product.sellerPrice,
+      isUsingOption: product.isUsingOption,
+      optionList: product.option,
+      mainImageFilePath: result.mainImagePath,
+      thumbnailImageFilePath: result.thumbnailImagePath,
+      detailImageFilePathList: result.detailImagePath,
+      refundExplanation: product.refundExplanation,
+      serviceExplanation: product.serviceExplanation,
+      status: product.status
+    })
+  })
 
   return true;
 }
