@@ -50,7 +50,8 @@ type PartnerPathname =
   | "waybill-share"
   | "my-info"
   | "settlement-list"
-  | "shipped-list";
+  | "shipped-list"
+  | "product-manage";
 
 export function AdminSidebar() {
   const location = useLocation();
@@ -184,6 +185,9 @@ export function PartnerSidebar() {
       case "/partner/shipped-list":
         setCurrentPage("shipped-list");
         break;
+      case "/partner/product-manage":
+        setCurrentPage("product-manage");
+        break;
     }
   }, [location.pathname]);
   return (
@@ -194,6 +198,7 @@ export function PartnerSidebar() {
       <SidebarButton name="온라인배송완료내역" pathname="shipped-list" />
       <SidebarButton name="출고 지연주문건" pathname="delayed-order" />
       <SidebarButton name="정산내역" pathname="settlement-list" />
+      <SidebarButton name="상품 관리" pathname="product-manage" />
       <SidebarButton name="발신함 / 수신함" pathname="alert" />
     </SidebarBox>
   );
