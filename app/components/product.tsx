@@ -12,6 +12,7 @@ export type Product = {
   detailImageFileList: any[];
   refundExplanation: string;
   serviceExplanation: string;
+  status: "승인대기" | "승인거부" | "승인완료"
 };
 
 export type LoadedProduct = {
@@ -24,8 +25,12 @@ export type LoadedProduct = {
   isUsingOption: boolean;
   option: string;
   mainImageURL: string;
+  mainImageName: string;
   thumbnailImageURL: string;
+  thumbnailImageName: string;
   detailImageURLList: string[];
+  detailImageNameList: string[];
   refundExplanation: string;
   serviceExplanation: string;
+  status: "승인대기" | "승인거부" | "승인완료"
 };

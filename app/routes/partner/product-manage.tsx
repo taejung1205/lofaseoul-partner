@@ -12,7 +12,11 @@ import { BlackButton } from "~/components/button";
 import { BasicModal, ModalButton } from "~/components/modal";
 import { PageLayout } from "~/components/page_layout";
 import { LoadedProduct, Product } from "~/components/product";
-import { addProduct, getPartnerProducts } from "~/services/firebase.server";
+import {
+  addProduct,
+  deleteProduct,
+  getPartnerProducts,
+} from "~/services/firebase.server";
 import { requireUser } from "~/services/session.server";
 
 const EditInputBox = styled.input`
@@ -49,75 +53,149 @@ const ListButton = styled.button`
   cursor: pointer;
 `;
 
+const FileUploadButton = styled.label`
+  font-size: 16px;
+  background-color: darkgrey;
+  width: 100px;
+  height: 32px;
+  margin: 4px;
+  color: white;
+  border: none;
+  font-weight: 700;
+  line-height: 1.8;
+  cursor: pointer;
+`;
+
+const FileUpload = styled.input`
+  width: 0;
+  height: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+`;
+
 export const action: ActionFunction = async ({ request }) => {
   const body = await request.formData();
-  const partnerName = body.get("partnerName")?.toString();
-  const productName = body.get("productName")?.toString();
-  const englishProductName = body.get("englishProductName")?.toString();
-  const explanation = body.get("explanation")?.toString();
-  const keyword = body.get("keyword")?.toString();
-  const sellerPrice = Number(body.get("sellerPrice")?.toString());
-  const isUsingOption = body.get("isUsingOption")?.toString() == "true";
-  const option = body.get("option")?.toString();
-  const refundExplanation = body.get("refundExplanation")?.toString();
-  const serviceExplanation = body.get("serviceExplanation")?.toString();
+  const actionType = body.get("actionType")?.toString();
+  if (actionType == "add" || actionType == "update") {
+    const partnerName = body.get("partnerName")?.toString();
+    const productName = body.get("productName")?.toString();
+    const englishProductName = body.get("englishProductName")?.toString();
+    const explanation = body.get("explanation")?.toString();
+    const keyword = body.get("keyword")?.toString();
+    const sellerPrice = Number(body.get("sellerPrice")?.toString());
+    const isUsingOption = body.get("isUsingOption")?.toString() == "true";
+    const option = body.get("option")?.toString();
+    const refundExplanation = body.get("refundExplanation")?.toString();
+    const serviceExplanation = body.get("serviceExplanation")?.toString();
 
-  const mainImageFile = body.get("mainImageFile");
-  const thumbnailImageFile = body.get("thumbnailImageFile");
-  const detailImageFileList = body.getAll("detailImageFileList");
+    const mainImageFile = body.get("mainImageFile");
+    const thumbnailImageFile = body.get("thumbnailImageFile");
+    const detailImageFileList = body.getAll("detailImageFileList");
 
-  for (let i = 0; i < detailImageFileList.length; i++) {
-    if (!(detailImageFileList[i] instanceof File)) {
-      return json({
-        message: `상품 등록 중 문제가 발생했습니다. 상세 이미지가 파일이 아닙니다. 관리자에게 문의해주세요.`,
-      });
+    for (let i = 0; i < detailImageFileList.length; i++) {
+      if (!(detailImageFileList[i] instanceof File)) {
+        return json({
+          message: `상품 등록 중 문제가 발생했습니다. 상세 이미지가 파일이 아닙니다. 관리자에게 문의해주세요.`,
+        });
+      }
     }
-  }
 
-  if (
-    partnerName !== undefined &&
-    productName !== undefined &&
-    englishProductName !== undefined &&
-    explanation !== undefined &&
-    keyword !== undefined &&
-    sellerPrice !== undefined &&
-    isUsingOption !== undefined &&
-    option !== undefined &&
-    refundExplanation !== undefined &&
-    serviceExplanation !== undefined &&
-    mainImageFile instanceof File &&
-    thumbnailImageFile instanceof File
-  ) {
-    const product: Product = {
-      partnerName: partnerName,
-      productName: productName,
-      englishProductName: englishProductName,
-      explanation: explanation,
-      keyword: keyword,
-      sellerPrice: sellerPrice,
-      isUsingOption: isUsingOption,
-      option: option,
-      refundExplanation: refundExplanation,
-      serviceExplanation: serviceExplanation,
-      mainImageFile: mainImageFile,
-      thumbnailImageFile: thumbnailImageFile,
-      detailImageFileList: detailImageFileList,
-    };
-    const result = await addProduct({ product: product });
-    if (result == true) {
-      return json({ message: `상품이 등록되었습니다.`, status: "ok" });
+    if (
+      partnerName !== undefined &&
+      productName !== undefined &&
+      englishProductName !== undefined &&
+      explanation !== undefined &&
+      keyword !== undefined &&
+      sellerPrice !== undefined &&
+      isUsingOption !== undefined &&
+      option !== undefined &&
+      refundExplanation !== undefined &&
+      serviceExplanation !== undefined &&
+      mainImageFile instanceof File &&
+      thumbnailImageFile instanceof File
+    ) {
+      const product: Product = {
+        partnerName: partnerName,
+        productName: productName,
+        englishProductName: englishProductName,
+        explanation: explanation,
+        keyword: keyword,
+        sellerPrice: sellerPrice,
+        isUsingOption: isUsingOption,
+        option: option,
+        refundExplanation: refundExplanation,
+        serviceExplanation: serviceExplanation,
+        mainImageFile: mainImageFile,
+        thumbnailImageFile: thumbnailImageFile,
+        detailImageFileList: detailImageFileList,
+        status: "승인대기",
+      };
+
+      //수정일 경우 기존 삭제 후 새로 올리는 형식으로
+      if (actionType == "update") {
+        const prevProductName = body.get("prevProductName")?.toString();
+        if (prevProductName !== undefined || prevProductName == "") {
+          const result = await deleteProduct({ productName: prevProductName });
+          if (result !== null) {
+            return json({
+              message: `상품 수정 중 삭제 과정에서 문제가 발생했습니다.${"\n"}${result}`,
+              status: "error",
+            });
+          }
+        } else {
+          return json({
+            message: `상품 수정 중 기존 정보 삭제 과정에서 발생했습니다. 기존 상품 정보의 이름이 누락되었습니다. 관리자에게 문의해주세요.`,
+            status: "error",
+          });
+        }
+      }
+
+      const result = await addProduct({ product: product });
+      if (result == true) {
+        if (actionType == "add") {
+          return json({ message: `상품이 등록되었습니다.`, status: "ok" });
+        } else {
+          return json({ message: `상품이 수정되었습니다.`, status: "ok" });
+        }
+      } else {
+        if (actionType == "add") {
+          return json({
+            message: `상품 등록 중 문제가 발생했습니다.${"\n"}${result}`,
+            status: "error",
+          });
+        } else {
+          return json({
+            message: `상품 수정 중 등록 과정에서 문제가 발생했습니다.${"\n"}${result}`,
+            status: "error",
+          });
+        }
+      }
+    }
+
+    return json({
+      message: `상품 등록 중 문제가 발생했습니다. 상품 입력 요청 처리 중 누락된 내용이 존재합니다. 관리자에게 문의해주세요`,
+      status: "error",
+    });
+  } else if (actionType == "delete") {
+    const productName = body.get("productName")?.toString();
+    if (productName !== undefined || productName == "") {
+      const result = await deleteProduct({ productName: productName });
+      if (result !== null) {
+        return json({
+          message: `상품  삭제 과정에서 문제가 발생했습니다.${"\n"}${result}`,
+          status: "error",
+        });
+      } else {
+        return json({ message: `상품이 삭제되었습니다..`, status: "ok" });
+      }
     } else {
       return json({
-        message: `상품 등록 중 문제가 발생했습니다.${"\n"}${result}`,
+        message: `상품 삭제 과정에서 발생했습니다. 기존 상품 정보의 이름이 누락되었습니다. 관리자에게 문의해주세요.`,
         status: "error",
       });
     }
   }
-
-  return json({
-    message: `상품 등록 중 문제가 발생했습니다. 상품 입력 요청 처리 중 누락된 내용이 존재합니다. 관리자에게 문의해주세요`,
-    status: "error",
-  });
 };
 
 export const loader: LoaderFunction = async ({ request }) => {
@@ -132,6 +210,10 @@ export const loader: LoaderFunction = async ({ request }) => {
   const products = await getPartnerProducts({
     partnerName: partnerName,
   });
+
+  if (typeof products == "string") {
+    return json({ partnerName: partnerName, products: [], error: products });
+  }
 
   return json({ partnerName: partnerName, products: products });
 };
@@ -158,6 +240,14 @@ export default function PartnerProductManage() {
     useState<boolean>(false);
   const [isNoticeModalOpened, setIsNoticeModalOpened] =
     useState<boolean>(false);
+
+  //기존 상품 목록으로 창을 연건지
+  const [isLoadedProduct, setIsLoadedProduct] = useState<boolean>(false);
+
+  //현재 열고 있는 상품
+  const [loadedProduct, setLoadedProduct] = useState<
+    LoadedProduct | undefined
+  >();
 
   //안내 메세지
   const [notice, setNotice] = useState<string>("");
@@ -216,7 +306,7 @@ export default function PartnerProductManage() {
     setDetailImageFileList((prev) => [...prev, undefined]);
   }
 
-  function editDetailImage(index: number, val: File) {
+  function editDetailImage(index: number, val: File | undefined) {
     const newDetailImageList = detailImageFileList.map((item, i) => {
       if (i == index) {
         return val;
@@ -243,6 +333,24 @@ export default function PartnerProductManage() {
 
     if (explanation.length == 0) {
       setNotice("상품 간략설명을 입력해야 합니다.");
+      setIsNoticeModalOpened(true);
+      return false;
+    }
+
+    if (explanation.includes("<br />")) {
+      setNotice("'<br />' 문자열은 설명에 들어갈 수 없습니다.");
+      setIsNoticeModalOpened(true);
+      return false;
+    }
+
+    if (refundExplanation.includes("<br />")) {
+      setNotice("'<br />' 문자열은 안내 설명에 들어갈 수 없습니다.");
+      setIsNoticeModalOpened(true);
+      return false;
+    }
+
+    if (serviceExplanation.includes("<br />")) {
+      setNotice("'<br />' 문자열은 안내 설명에 들어갈 수 없습니다.");
       setIsNoticeModalOpened(true);
       return false;
     }
@@ -279,6 +387,12 @@ export default function PartnerProductManage() {
         setIsNoticeModalOpened(true);
         return false;
       }
+
+      if (keywordList[i].includes(",")) {
+        setNotice("쉼표(,)는 검색어에 들어갈 수 없습니다.");
+        setIsNoticeModalOpened(true);
+        return false;
+      }
     }
 
     if (isUsingOption && optionList.length == 0) {
@@ -295,6 +409,13 @@ export default function PartnerProductManage() {
         setIsNoticeModalOpened(true);
         return false;
       }
+
+      if (optionList[i].includes("//")) {
+        setNotice("'//' 문자열은 옵션에 들어갈 수 없습니다.");
+        setIsNoticeModalOpened(true);
+        return false;
+      }
+
       const openBrace = optionList[i].indexOf("{");
       const closeBrace = optionList[i].indexOf("}");
 
@@ -306,7 +427,10 @@ export default function PartnerProductManage() {
     }
 
     for (let i = 0; i < detailImageFileList.length; i++) {
-      if (detailImageFileList[i] == undefined) {
+      if (
+        detailImageFileList[i] == undefined ||
+        typeof detailImageFileList[i] == "undefined"
+      ) {
         setNotice(
           "빈 상세 페이지 이미지가 있습니다. 해당 항목을 삭제하거나 파일을 등록해주세요."
         );
@@ -319,7 +443,7 @@ export default function PartnerProductManage() {
   }
 
   //입력한 내용 토대로 엑셀에 들어갈 내용물을 만들고 추가 요청
-  function submitAddProduct() {
+  async function submitProduct() {
     const partnerName = loaderData.partnerName;
     if (partnerName == undefined) {
       setNotice(
@@ -353,6 +477,12 @@ export default function PartnerProductManage() {
     }
 
     const formData: any = new FormData(formRef.current ?? undefined);
+    if (isLoadedProduct) {
+      formData.set("actionType", "update");
+      formData.set("prevProductName", loadedProduct?.productName ?? "");
+    } else {
+      formData.set("actionType", "add");
+    }
     formData.set("partnerName", partnerName);
     formData.set("productName", newProductName);
     formData.set("englishProductName", newEnglishProductName);
@@ -372,6 +502,84 @@ export default function PartnerProductManage() {
     submit(formData, { method: "post", encType: "multipart/form-data" });
   }
 
+  //현재 보고 있는 상품 삭제 요청
+  async function deleteProduct() {
+    const formData = new FormData(formRef.current ?? undefined);
+    formData.set("actionType", "delete");
+    formData.set("productName", loadedProduct?.productName ?? "");
+    submit(formData, { method: "post" });
+  }
+
+  //LoadedProduct로 입력란업데이트
+  async function loadAddProductModal(product: LoadedProduct) {
+    setProductName(
+      product.productName.slice(
+        product.productName.indexOf(`[${loaderData.partnerName}]`) +
+          loaderData.partnerName.length +
+          3
+      )
+    );
+    setEnglishProductName(
+      product.englishProductName.slice(
+        product.englishProductName.indexOf(`[${loaderData.partnerName}]`) +
+          loaderData.partnerName.length +
+          3
+      )
+    );
+    setExplanation(replaceBr(product.explanation));
+    if (product.keyword.length == 0) {
+      setKeywordList([]);
+    } else {
+      setKeywordList(product.keyword.split(","));
+    }
+    setSellerPrice(product.sellerPrice);
+    setIsUsingOption(product.isUsingOption);
+    if (product.option.length == 0) {
+      setOptionList([]);
+    } else {
+      setOptionList(product.option.split("//"));
+    }
+
+    const mainFile = await downloadFile(
+      product.mainImageURL,
+      product.mainImageName
+    );
+    const thumbnailFile = await downloadFile(
+      product.thumbnailImageURL,
+      product.thumbnailImageName
+    );
+    const detailFileList = [];
+    for (let i = 0; i < product.detailImageURLList.length; i++) {
+      detailFileList.push(
+        await downloadFile(
+          product.detailImageURLList[i],
+          product.detailImageNameList[i]
+        )
+      );
+    }
+    setMainImageFile(mainFile);
+    setThumbnailImageFile(thumbnailFile);
+    setDetailImageFileList(detailFileList);
+    setRefundExplanation(replaceBr(product.refundExplanation));
+    setServiceExplanation(replaceBr(product.serviceExplanation));
+  }
+
+  //입력란 초기화
+  function resetAddProductModal() {
+    setProductName("");
+    setEnglishProductName("");
+    setExplanation("");
+    setKeywordList([]);
+    setSellerPrice(0);
+    setIsUsingOption(false);
+    setOptionList([]);
+    setMainImageFile(undefined);
+    setThumbnailImageFile(undefined);
+    setDetailImageFileList([]);
+    setRefundExplanation("");
+    setServiceExplanation("");
+  }
+
   //결과로 오는 거 바탕으로 안내모달
   useEffect(() => {
     if (actionData !== undefined && actionData !== null) {
@@ -387,8 +595,82 @@ export default function PartnerProductManage() {
   useEffect(() => {
     if (loaderData.error == undefined) {
       setLoadedProducts(loaderData.products);
+    } else {
+      setNotice(
+        `상품 등록 정보를 불러오는 도중 오류가 발생했습니다. ${loaderData.error}`
+      );
+      setIsNoticeModalOpened(true);
     }
   }, [loaderData]);
+
+  useEffect(() => {
+    if (mainImageFile !== undefined) {
+      if (mainImageFile.size > 50 * 1024 ** 2) {
+        setNotice("업로드할 이미지의 크기는 50MB를 넘을 수 없습니다.");
+        setIsNoticeModalOpened(true);
+        setMainImageFile(undefined);
+        return;
+      }
+
+      if (
+        mainImageFile.name.includes("/") ||
+        mainImageFile.name.includes("|")
+      ) {
+        setNotice(
+          "업로드할 이미지의 이름에 '/' 또는 '|'이 들어갈 수 없습니다."
+        );
+        setIsNoticeModalOpened(true);
+        setMainImageFile(undefined);
+        return;
+      }
+    }
+  }, [mainImageFile]);
+
+  useEffect(() => {
+    if (thumbnailImageFile !== undefined) {
+      if (thumbnailImageFile.size > 50 * 1024 ** 2) {
+        setNotice("업로드할 이미지의 크기는 50MB를 넘을 수 없습니다.");
+        setIsNoticeModalOpened(true);
+        setThumbnailImageFile(undefined);
+        return;
+      }
+
+      if (
+        thumbnailImageFile.name.includes("/") ||
+        thumbnailImageFile.name.includes("|")
+      ) {
+        setNotice(
+          "업로드할 이미지의 이름에 '/' 또는 '|'이 들어갈 수 없습니다."
+        );
+        setIsNoticeModalOpened(true);
+        setThumbnailImageFile(undefined);
+        return;
+      }
+    }
+  }, [thumbnailImageFile]);
+
+  useEffect(() => {
+    for (let i = 0; i < detailImageFileList.length; i++) {
+      if (detailImageFileList[i] !== undefined) {
+        const file: any = detailImageFileList[i];
+        if (file.size > 50 * 1024 ** 2) {
+          setNotice("업로드할 이미지의 크기는 50MB를 넘을 수 없습니다.");
+          setIsNoticeModalOpened(true);
+          editDetailImage(i, undefined);
+          return;
+        }
+
+        if (file.name.includes("/") || file.name.includes("|")) {
+          setNotice(
+            "업로드할 이미지의 이름에 '/' 또는 '|'이 들어갈 수 없습니다."
+          );
+          setIsNoticeModalOpened(true);
+          editDetailImage(i, undefined);
+          return;
+        }
+      }
+    }
+  }, [detailImageFileList]);
 
   return (
     <>
@@ -584,6 +866,14 @@ export default function PartnerProductManage() {
                     </div>
                   );
                 })}
+                {optionList.length > 0 ? (
+                  <div style={{ fontSize: "16px", textAlign: "start" }}>
+                    {"예시) 컬러{빨강|파랑|초록}"}
+                  </div>
+                ) : (
+                  <></>
+                )}
+
                 <ListButton
                   onClick={() => {
                     addOption();
@@ -612,16 +902,22 @@ export default function PartnerProductManage() {
             >
               상품 이미지<div style={{ width: "10px", color: "red" }}>*</div>
             </div>
-            <input
+            <FileUpload
               type="file"
+              id="uploadMainImage"
               accept=".png,.jpg,.jpeg,.svg"
-              style={{ margin: "8px" }}
               onChange={(e) => {
                 if (e.target.files) {
                   setMainImageFile(e.target.files[0]);
                 }
               }}
             />
+            <FileUploadButton htmlFor="uploadMainImage">
+              파일 선택
+            </FileUploadButton>
+            <div style={{ fontSize: "12px", fontWeight: "400" }}>
+              {mainImageFile?.name}
+            </div>
           </div>
 
           <div
@@ -640,16 +936,22 @@ export default function PartnerProductManage() {
               마우스 호버 이미지
               <div style={{ width: "10px", color: "red" }}>*</div>
             </div>
-            <input
+            <FileUpload
               type="file"
+              id="uploadThumbnailImage"
               accept=".png,.jpg,.jpeg,.svg"
-              style={{ margin: "8px" }}
               onChange={(e) => {
                 if (e.target.files) {
                   setThumbnailImageFile(e.target.files[0]);
                 }
               }}
             />
+            <FileUploadButton htmlFor="uploadThumbnailImage">
+              파일 선택
+            </FileUploadButton>
+            <div style={{ fontSize: "12px", fontWeight: "400" }}>
+              {thumbnailImageFile?.name}
+            </div>
           </div>
 
           <div
@@ -682,18 +984,25 @@ export default function PartnerProductManage() {
                     style={{
                       display: "flex",
                       justifyContent: "start",
+                      alignItems: "center",
                     }}
                   >
-                    <input
+                    <FileUpload
                       type="file"
+                      id={`uploadDetailImage_${index}`}
                       accept=".png,.jpg,.jpeg,.svg"
-                      style={{ margin: "8px" }}
                       onChange={(e) => {
                         if (e.target.files) {
                           editDetailImage(index, e.target.files[0]);
                         }
                       }}
                     />
+                    <FileUploadButton htmlFor={`uploadDetailImage_${index}`}>
+                      파일 선택
+                    </FileUploadButton>
+                    <div style={{ fontSize: "12px", fontWeight: "400" }}>
+                      {detailImageFileList[index]?.name}
+                    </div>
                     <Space w={10} />
                     <ListButton onClick={() => deleteDetailImage(index)}>
                       삭제
@@ -746,18 +1055,30 @@ export default function PartnerProductManage() {
           <div style={{ height: "20px" }} />
           <div style={{ display: "flex", justifyContent: "center" }}>
             <ModalButton onClick={() => setIsAddProductModalOpened(false)}>
-              취소
+              {isLoadedProduct ? "닫기" : "취소"}
             </ModalButton>
             <ModalButton
               type="submit"
               onClick={async () => {
                 if (checkRequirements()) {
-                  submitAddProduct();
+                  await submitProduct();
                 }
               }}
             >
-              추가
+              {isLoadedProduct ? "수정" : "추가"}
             </ModalButton>
+            {isLoadedProduct ? (
+              <ModalButton
+                type="submit"
+                onClick={async () => {
+                  await deleteProduct();
+                }}
+              >
+                삭제
+              </ModalButton>
+            ) : (
+              <></>
+            )}
           </div>
         </div>
       </Modal>
@@ -785,34 +1106,75 @@ export default function PartnerProductManage() {
       </BasicModal>
 
       <PageLayout>
-        <BlackButton onClick={() => setIsAddProductModalOpened(true)}>
+        <BlackButton
+          onClick={() => {
+            if (isLoadedProduct) {
+              resetAddProductModal();
+              setIsLoadedProduct(false);
+            }
+            setIsAddProductModalOpened(true);
+          }}
+        >
           상품 추가
         </BlackButton>
-        {loadedProducts.map((item, index) => {
-          return (
-            <div
-              key={`LoadedProductItems_${index}`}
-              style={{
-                display: "flex",
-                width: "inherit",
-                alignItems: "center",
-                backgroundColor: "#ebebeb4d",
-                padding: "10px",
-                marginTop: "8px",
-                lineHeight: "1",
-              }}
-            >
-              <div style={{
-                width: "calc(100% - 100px)",
-                marginLeft: "10px",
-                lineHeight: "16px",
-                textAlign: "left"
-              }}>{item.productName}</div>
-              <Space w={10} />
-              <ListButton onClick={() => {}}>자세히</ListButton>
-            </div>
-          );
-        })}
+        <div style={{ fontSize: "28px", padding: "16px" }}>
+          등록한 상품 목록
+        </div>
+        <Space h={10} />
+        <div style={{ overflowY: "auto", width: "inherit" }}>
+          {loadedProducts.map((item, index) => {
+            return (
+              <div
+                key={`LoadedProductItems_${index}`}
+                style={{
+                  display: "flex",
+                  width: "inherit",
+                  alignItems: "center",
+                  backgroundColor: "#ebebeb4d",
+                  padding: "10px",
+                  marginTop: "8px",
+                  lineHeight: "1",
+                }}
+              >
+                <div
+                  style={{
+                    width: "calc(100% - 200px)",
+                    marginLeft: "10px",
+                    lineHeight: "16px",
+                    textAlign: "left",
+                  }}
+                >
+                  {item.productName}
+                </div>
+                <Space w={10} />
+                <div
+                  style={{
+                    color:
+                      item.status == "승인대기"
+                        ? "black"
+                        : item.status == "승인거부"
+                        ? "red"
+                        : "blue",
+                    width: "90px",
+                  }}
+                >
+                  {item.status}
+                </div>
+                <Space w={10} />
+                <ListButton
+                  onClick={async () => {
+                    await loadAddProductModal(item);
+                    setIsLoadedProduct(true);
+                    setIsAddProductModalOpened(true);
+                    setLoadedProduct(item);
+                  }}
+                >
+                  자세히
+                </ListButton>
+              </div>
+            );
+          })}
+        </div>
       </PageLayout>
     </>
   );
@@ -820,6 +1182,10 @@ export default function PartnerProductManage() {
 
 function replaceLinebreak(str: string) {
   return str.split("\n").join("<br />");
+}
+
+function replaceBr(str: string) {
+  return str.split("<br />").join("\n");
 }
 
 function checkDuplicateFileName(list: any[]) {
@@ -835,4 +1201,11 @@ function checkDuplicateFileName(list: any[]) {
     }
   }
   return true;
+}
+
+async function downloadFile(url: string, fileName: string) {
+  let file: File = await fetch(url)
+    .then((response) => response.blob())
+    .then((blob) => new File([blob], fileName));
+  return file;
 }
