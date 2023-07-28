@@ -57,12 +57,12 @@ export default function Partner() {
 
   return (
     <>
-      <LoadingOverlay
+      {/* <LoadingOverlay
         visible={
           transition.state == "loading"
         }
         overlayBlur={2}
-      />
+      /> */}
       <PartnerPage>
         <PartnerHeader
           username={loaderData.name}

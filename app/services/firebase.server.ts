@@ -1787,6 +1787,12 @@ export async function addProduct({ product }: { product: Product }) {
       serviceExplanation: product.serviceExplanation,
       status: product.status,
     });
+  }).catch(error => {
+    const id = getIdFromTime();
+    setDoc(doc(firestore, "errors", id), {
+      function: "addProduct",
+      error: error.toString()
+    })
   });
 
   return true;
