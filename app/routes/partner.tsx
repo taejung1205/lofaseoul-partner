@@ -59,7 +59,7 @@ export default function Partner() {
     <>
       <LoadingOverlay
         visible={
-          transition.state == "loading" || transition.state == "submitting"
+          transition.state == "loading"
         }
         overlayBlur={2}
       />

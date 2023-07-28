@@ -21,9 +21,7 @@ import {
 } from "firebase/firestore";
 import {
   deleteObject,
-  getBlob,
   getDownloadURL,
-  getMetadata,
   getStorage,
   ref,
   uploadBytes,
@@ -31,7 +29,12 @@ import {
 import { SettlementItem } from "~/components/settlement_table";
 import { PartnerProfile } from "~/components/partner_profile";
 import { PossibleSellers } from "~/components/seller";
-import { dateToDayStr, dayStrToDate, getTimezoneDate } from "~/components/date";
+import {
+  dateToDayStr,
+  dayStrToDate,
+  getIdFromTime,
+  getTimezoneDate,
+} from "~/components/date";
 import { OrderItem } from "~/components/order";
 import {
   createAuthAccount,
@@ -41,8 +44,7 @@ import {
 import { emailToId } from "~/utils/account";
 import { sendAligoMessage } from "./aligo.server";
 import { NoticeItem } from "~/components/notice";
-import { LoadedProduct, Product } from "~/components/product";
-import { json } from "@remix-run/node";
+import { Product } from "~/components/product";
 
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
@@ -1722,20 +1724,28 @@ export async function addProduct({ product }: { product: Product }) {
     return "이미 해당 이름의 상품이 등록되어 있습니다.";
   }
 
-  async function uploadImages(){
+  const id = getIdFromTime();
+
+  async function uploadImages() {
     const mainImagePath = `${product.productName}/main/${product.mainImageFile.name}`;
     const thumbnailImagePath = `${product.productName}/thumbnail/${product.thumbnailImageFile.name}`;
-  
+
     const mainImageStorageRef = ref(storage, mainImagePath);
-    await uploadBytes(mainImageStorageRef, await product.mainImageFile.arrayBuffer());
-  
+    await uploadBytes(
+      mainImageStorageRef,
+      await product.mainImageFile.arrayBuffer()
+    );
+    const mainImageURL = await getDownloadURL(mainImageStorageRef);
+
     const thumbnailImageStorageRef = ref(storage, thumbnailImagePath);
     await uploadBytes(
       thumbnailImageStorageRef,
       await product.thumbnailImageFile.arrayBuffer()
     );
-  
-    let detailImagePath: string = "";
+    const thumbnailImageURL = await getDownloadURL(thumbnailImageStorageRef);
+
+    const detailImageNameList: string[] = [];
+    const detailImageURLList: string[] = [];
     for (let i = 0; i < product.detailImageFileList.length; i++) {
       const path = `${product.productName}/detail/${product.detailImageFileList[i].name}`;
       const detailImageStorageRef = ref(storage, path);
@@ -1743,32 +1753,41 @@ export async function addProduct({ product }: { product: Product }) {
         detailImageStorageRef,
         await product.detailImageFileList[i].arrayBuffer()
       );
-      detailImagePath += path;
-      if (i < product.detailImageFileList.length - 1) {
-        detailImagePath += "|";
-      }
+      detailImageNameList.push(product.detailImageFileList[i].name);
+      detailImageURLList.push(await getDownloadURL(detailImageStorageRef));
     }
-    return {mainImagePath: mainImagePath, thumbnailImagePath: thumbnailImagePath, detailImagePath: detailImagePath};
+    return {
+      mainImageName: product.mainImageFile.name,
+      thumbnailImageName: product.thumbnailImageFile.name,
+      detailImageNameList: detailImageNameList,
+      mainImageURL: mainImageURL,
+      thumbnailImageURL: thumbnailImageURL,
+      detailImageURLList: detailImageURLList,
+    };
   }
 
   uploadImages().then((result) => {
     setDoc(doc(firestore, "products", product.productName), {
+      id: id,
       partnerName: product.partnerName,
       productName: product.productName,
       englishProductName: product.englishProductName,
       explanation: product.explanation,
-      keywordList: product.keyword,
+      keyword: product.keyword,
       sellerPrice: product.sellerPrice,
       isUsingOption: product.isUsingOption,
-      optionList: product.option,
-      mainImageFilePath: result.mainImagePath,
-      thumbnailImageFilePath: result.thumbnailImagePath,
-      detailImageFilePathList: result.detailImagePath,
+      option: product.option,
+      mainImageName: result.mainImageName,
+      mainImageURL: result.mainImageURL,
+      thumbnailImageName: result.thumbnailImageName,
+      thumbnailImageURL: result.thumbnailImageURL,
+      detailImageNameList: result.detailImageNameList,
+      detailImageURLList: result.detailImageURLList,
       refundExplanation: product.refundExplanation,
       serviceExplanation: product.serviceExplanation,
-      status: product.status
-    })
-  })
+      status: product.status,
+    });
+  });
 
   return true;
 }
@@ -1787,65 +1806,16 @@ export async function getPartnerProducts({
   try {
     const productsRef = collection(firestore, `products`);
 
-    const productsQuery = query(productsRef, where("partnerName", "==", partnerName));
-    const querySnap = await getDocs(productsQuery);
-  
-    const result = await Promise.all(
-      querySnap.docs.map(async (doc) => {
-        const data = doc.data();
-        const mainURL = await getDownloadURL(
-          ref(storage, data.mainImageFilePath)
-        );
-        const mainName = (await getMetadata(ref(storage, data.mainImageFilePath)))
-          .name;
-        const thumbnailURL = await getDownloadURL(
-          ref(storage, data.thumbnailImageFilePath)
-        );
-        const thumbnailName = (
-          await getMetadata(ref(storage, data.thumbnailImageFilePath))
-        ).name;
-        const detailImageFilePathList = data.detailImageFilePathList.split("|");
-  
-        const detailURLList: string[] = [];
-        const detailNameList: string[] = [];
-        for (let i = 0; i < detailImageFilePathList.length; i++) {
-          detailURLList.push(
-            await getDownloadURL(ref(storage, detailImageFilePathList[i]))
-          );
-          detailNameList.push(
-            (await getMetadata(ref(storage, detailImageFilePathList[i]))).name
-          );
-        }
-  
-        const product: LoadedProduct = {
-          partnerName: data.partnerName,
-          productName: data.productName,
-          englishProductName: data.englishProductName,
-          explanation: data.explanation,
-          keyword: data.keywordList,
-          sellerPrice: data.sellerPrice,
-          isUsingOption: data.isUsingOption,
-          option: data.optionList,
-          mainImageURL: mainURL,
-          mainImageName: mainName,
-          thumbnailImageURL: thumbnailURL,
-          thumbnailImageName: thumbnailName,
-          detailImageURLList: detailURLList,
-          detailImageNameList: detailNameList,
-          refundExplanation: data.refundExplanation,
-          serviceExplanation: data.serviceExplanation,
-          status: data.status
-        };
-  
-        return product;
-      })
+    const productsQuery = query(
+      productsRef,
+      where("partnerName", "==", partnerName)
     );
-  
-    return result;
-  } catch(error: any){
+    const querySnap = await getDocs(productsQuery);
+
+    return querySnap.docs.map((doc) => doc.data());
+  } catch (error: any) {
     return error.message ?? error.toString();
   }
-  
 }
 
 /**
@@ -1863,21 +1833,40 @@ export async function deleteProduct({ productName }: { productName: string }) {
       const data = docSnap.data();
       await deleteDoc(doc(firestore, "products", productName));
 
-      const mainPath = data.mainImageFilePath;
+      const mainPath = `${data.productName}/main/${data.mainImageName}`;
       await deleteObject(ref(storage, mainPath));
-      const thumbnailPath = data.thumbnailImageFilePath;
+      const thumbnailPath = `${data.productName}/thumbnail/${data.thumbnailImageName}`;
       await deleteObject(ref(storage, thumbnailPath));
-      const detailPathList = data.detailImageFilePathList.split("|");
-      for(let i = 0 ; i < detailPathList.length; i++){
-        await deleteObject(ref(storage, detailPathList[i]));
+      const detailNameList = data.detailImageNameList;
+      for (let i = 0; i < detailNameList.length; i++) {
+        const detailPath = `${data.productName}/detail/${detailNameList[i]}`;
+        await deleteObject(ref(storage, detailPath));
       }
     }
-   
-  } catch(error: any) {
+  } catch (error: any) {
     return error.message ?? error;
   }
 
   return null;
+}
 
- 
+/**
+ * 상품이 DB에 등록되었는지를 확인합니다.
+ * @param id: productName (해당 상품 이름)
+ * @returns boolean
+ */
+
+export async function isProductUploaded({ productName }: { productName: string }) {
+  console.log("product uploaded?");
+  try {
+    const docRef = doc(firestore, "products", productName);
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      return true;
+    } else {
+      return false;
+    }
+  } catch (error: any) {
+    return false;
+  }
 }
