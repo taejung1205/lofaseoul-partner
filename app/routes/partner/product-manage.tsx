@@ -154,9 +154,15 @@ export const action: ActionFunction = async ({ request }) => {
       const result = await addProduct({ product: product });
       if (result == true) {
         if (actionType == "add") {
-          return json({ message: `상품을 등록중입니다. 잠시후 새로고침하여 등록한 상품을 확인할 수 있습니다.`, status: "ok" });
+          return json({
+            message: `상품을 등록중입니다. 잠시후 새로고침하여 등록한 상품을 확인할 수 있습니다.`,
+            status: "ok",
+          });
         } else {
-          return json({ message: `상품을 수정중입니다. 잠시후 새로고침하여 수정한 상품을 확인할 수 있습니다.`, status: "ok" });
+          return json({
+            message: `상품을 수정중입니다. 잠시후 새로고침하여 수정한 상품을 확인할 수 있습니다.`,
+            status: "ok",
+          });
         }
       } else {
         if (actionType == "add") {
@@ -512,6 +518,7 @@ export default function PartnerProductManage() {
 
   //LoadedProduct로 입력란업데이트
   async function loadAddProductModal(product: LoadedProduct) {
+    console.log(product);
     setProductName(
       product.productName.slice(
         product.productName.indexOf(`[${loaderData.partnerName}]`) +
