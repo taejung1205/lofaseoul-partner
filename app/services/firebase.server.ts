@@ -1849,3 +1849,24 @@ export async function deleteProduct({ productName }: { productName: string }) {
 
   return null;
 }
+
+/**
+ * 상품이 DB에 등록되었는지를 확인합니다.
+ * @param id: productName (해당 상품 이름)
+ * @returns boolean
+ */
+
+export async function isProductUploaded({ productName }: { productName: string }) {
+  console.log("product uploaded?");
+  try {
+    const docRef = doc(firestore, "products", productName);
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      return true;
+    } else {
+      return false;
+    }
+  } catch (error: any) {
+    return false;
+  }
+}

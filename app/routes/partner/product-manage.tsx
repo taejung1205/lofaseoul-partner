@@ -16,6 +16,7 @@ import {
   addProduct,
   deleteProduct,
   getPartnerProducts,
+  isProductUploaded,
 } from "~/services/firebase.server";
 import { requireUser } from "~/services/session.server";
 
@@ -153,17 +154,10 @@ export const action: ActionFunction = async ({ request }) => {
 
       const result = await addProduct({ product: product });
       if (result == true) {
-        if (actionType == "add") {
-          return json({
-            message: `상품을 등록중입니다. 잠시후 새로고침하여 등록한 상품을 확인할 수 있습니다.`,
-            status: "ok",
-          });
-        } else {
-          return json({
-            message: `상품을 수정중입니다. 잠시후 새로고침하여 수정한 상품을 확인할 수 있습니다.`,
-            status: "ok",
-          });
-        }
+        return json({
+          isWaiting: true,
+          status: "ok",
+        });
       } else {
         if (actionType == "add") {
           return json({
@@ -198,6 +192,24 @@ export const action: ActionFunction = async ({ request }) => {
     } else {
       return json({
         message: `상품 삭제 과정에서 발생했습니다. 기존 상품 정보의 이름이 누락되었습니다. 관리자에게 문의해주세요.`,
+        status: "error",
+      });
+    }
+  } else if (actionType == "waiting") {
+    const productName = body.get("productName")?.toString();
+    if (productName !== undefined || productName == "") {
+      const result = await isProductUploaded({ productName: productName });
+      if (result == true) {
+        return json({
+          message: `업로드가 완료되었습니다.`,
+          status: "ok",
+        });
+      } else {
+        return json({ isWaiting: true });
+      }
+    } else {
+      return json({
+        message: `상품 업로드 확인 과정에서 발생했습니다. 관리자에게 문의해주세요.`,
         status: "error",
       });
     }
@@ -260,6 +272,12 @@ export default function PartnerProductManage() {
 
   //불러온 상품 목록
   const [loadedProducts, setLoadedProducts] = useState<LoadedProduct[]>([]); //로딩된 전체 주문건 아이템 리스트
+
+  //업로드 중 상태
+  const [isUploadInProgress, setIsUploadInProgress] = useState<boolean>(false);
+
+  //업로드 중 확인 요청 용 타이머
+  const [queryIntervalId, setQueryIntervalId] = useState<NodeJS.Timer>();
 
   const loaderData = useLoaderData();
   const actionData = useActionData();
@@ -590,11 +608,16 @@ export default function PartnerProductManage() {
   //결과로 오는 거 바탕으로 안내모달
   useEffect(() => {
     if (actionData !== undefined && actionData !== null) {
-      setNotice(actionData.message);
-      setIsNoticeModalOpened(true);
-      //성공했으면 모달 닫기
-      if (actionData.status == "ok") {
-        setIsAddProductModalOpened(false);
+      if (actionData.isWaiting) {
+        console.log("waiting");
+      } else {
+        setIsUploadInProgress(false);
+        setNotice(actionData.message);
+        setIsNoticeModalOpened(true);
+        //성공했으면 모달 닫기
+        if (actionData.status == "ok") {
+          setIsAddProductModalOpened(false);
+        }
       }
     }
   }, [actionData]);
@@ -678,6 +701,25 @@ export default function PartnerProductManage() {
       }
     }
   }, [detailImageFileList]);
+
+  //업로드 중 업로드됐는지 확인을 위한 인터벌
+  useEffect(() => {
+    var interval = setInterval(() => {
+      if (isUploadInProgress) {
+        const formData = new FormData(formRef.current ?? undefined);
+        formData.set(
+          "productName",
+          `[${loaderData.partnerName}] ${productName}`
+        );
+        formData.set("actionType", "waiting");
+        submit(formData, { method: "post" });
+      } else {
+        clearInterval(queryIntervalId);
+      }
+    }, 1 * 2000);
+    setQueryIntervalId(interval);
+    return () => clearInterval(queryIntervalId); //
+  }, [isUploadInProgress]);
 
   return (
     <>
@@ -1069,6 +1111,7 @@ export default function PartnerProductManage() {
               onClick={async () => {
                 if (checkRequirements()) {
                   await submitProduct();
+                  setIsUploadInProgress(true);
                 }
               }}
             >
@@ -1109,6 +1152,21 @@ export default function PartnerProductManage() {
               확인
             </ModalButton>
           </div>
+        </div>
+      </BasicModal>
+
+      {/* 업로드를 기다리기 위한 모달 */}
+      <BasicModal opened={isUploadInProgress} onClose={() => {}}>
+        <div
+          style={{
+            justifyContent: "center",
+            textAlign: "center",
+            fontWeight: "700",
+          }}
+        >
+          {`업로드 진행 중...`}
+          <br />
+          {`도중에 페이지를 닫을 경우 오류가 발생할 수 있습니다.`}
         </div>
       </BasicModal>
 
