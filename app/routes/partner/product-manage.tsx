@@ -1183,7 +1183,7 @@ export default function PartnerProductManage() {
           상품 추가
         </BlackButton>
         <div style={{ fontSize: "28px", padding: "16px" }}>
-          등록한 상품 목록
+          신청한 상품 목록
         </div>
         <Space h={10} />
         <div style={{ overflowY: "auto", width: "inherit" }}>

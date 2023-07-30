@@ -40,7 +40,8 @@ type AdminPathname =
   | "partner-list"
   | "settlement-manage"
   | "settlement-share"
-  | "shipped-list";
+  | "shipped-list"
+  | "product-manage";
 
 type PartnerPathname =
   | null
@@ -115,6 +116,10 @@ export function AdminSidebar() {
       case "/admin/order-list":
         setCurrentPage("order-list");
         break;
+
+      case "/admin/product-manage":
+        setCurrentPage("product-manage");
+        break;
     }
   }, [location.pathname]);
   return (
@@ -127,6 +132,7 @@ export function AdminSidebar() {
       <SidebarButton name="출고 지연주문건" pathname="delayed-order" />
       <SidebarButton name="정산내역 공유" pathname="settlement-share" />
       <SidebarButton name="정산내역 관리" pathname="settlement-manage" />
+      <SidebarButton name="상품등록 관리" pathname="product-manage" />
       <SidebarButton name="발신함 / 수신함" pathname="alert" />
     </SidebarBox>
   );
