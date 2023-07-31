@@ -279,7 +279,7 @@ export default function AdminProductManage() {
       zip.file(mainFile.name, mainFile);
 
       const thumbnailFile = await downloadFile(
-        products[i].mainImageURL,
+        products[i].thumbnailImageURL,
         makeFileName(products[i].id, products[i].thumbnailImageName)
       );
 
@@ -287,7 +287,7 @@ export default function AdminProductManage() {
 
       for (let j = 0; j < products[i].detailImageURLList.length; j++) {
         const detailFile = await downloadFile(
-          products[i].mainImageURL,
+          products[i].detailImageURLList[j],
           makeFileName(products[i].id, products[i].detailImageNameList[j])
         );
         zip.file(detailFile.name, detailFile);
