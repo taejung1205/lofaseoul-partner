@@ -211,7 +211,7 @@ export const action: ActionFunction = async ({ request }) => {
         const result = await getProductUploadProgress({
           productName: productName,
         });
-        return json({ isWaiting: true, progress: result });
+        return json({ isWaiting: true, progress: result, status: "ok" });
       }
     } else {
       return json({
