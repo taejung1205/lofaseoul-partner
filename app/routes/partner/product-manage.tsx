@@ -154,7 +154,6 @@ export const action: ActionFunction = async ({ request }) => {
       }
 
       const result = await addProduct({ product: product });
-      console.log("PRODUCT: ", product);
 
       if (result == null) {
         return {
@@ -623,6 +622,7 @@ export default function PartnerProductManage() {
     if (actionData !== undefined && actionData !== null) {
       if (actionData.isWaiting) {
         setImageUploadProgress(actionData.progress);
+        console.log("isWaiting status: ", actionData.status);
       } else {
         console.log(actionData);
         setIsUploadInProgress(false);
