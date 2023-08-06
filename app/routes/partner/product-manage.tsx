@@ -154,6 +154,7 @@ export const action: ActionFunction = async ({ request }) => {
       }
 
       const result = await addProduct({ product: product });
+      console.log("PRODUCT: ", product);
 
       if (result == null) {
         return {
