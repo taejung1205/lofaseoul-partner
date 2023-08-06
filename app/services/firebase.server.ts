@@ -1748,7 +1748,7 @@ export async function addProduct({ product }: { product: Product }) {
 
     const detailImageNameList: string[] = [];
     const detailUploadTaskList: UploadTask[] = [];
-    for (let i = 0; i < detail.length; i++) {
+    for (let i = 0; i < detailList.length; i++) {
       const path = `${product.productName}/detail/${product.detailImageFileList[i].name}`;
       const detailImageStorageRef = ref(storage, path);
       const task = uploadBytesResumable(detailImageStorageRef, detailList[i]);
@@ -1780,7 +1780,6 @@ export async function addProduct({ product }: { product: Product }) {
     detailImageNameList: string[];
     detailImageURLList: string[];
   }) {
-    console.log("UPLOADING");
     setDoc(doc(firestore, "products", product.productName), {
       id: id,
       partnerName: product.partnerName,
@@ -1803,130 +1802,47 @@ export async function addProduct({ product }: { product: Product }) {
     });
   }
 
-  const main = await product.mainImageFile.arrayBuffer();
-  const thumbnail = await product.thumbnailImageFile.arrayBuffer();
-  const detail: ArrayBuffer[] = [];
-  for (let i = 0; i < product.detailImageFileList.length; i++) {
-    detail.push(await product.detailImageFileList[i].arrayBuffer());
-  }
-
-  const upload = uploadImages(main, thumbnail, detail);
-
-  let mainURL = "";
-  let thumbnailURL = "";
-  let detailImageURLList = new Array(upload.detailImageNameList.length).fill(
-    ""
-  );
-
-  const stair = 500000; //해당 바이트만큼 전송됐을 때마다 업로드 상태 업데이트
-  let mainProgress = 0;
-  let thumbnailProgress = 0;
-  let detailProgress = 0;
-  let detailBytesList = new Array(upload.detailImageNameList.length).fill(0); // 각 상세이미지 실제 전송된 양
-  let detailProgressList = new Array(upload.detailImageNameList.length).fill(0); // 각 상세이미지 다음 업로드 기준점
-
-  await setDoc(doc(firestore, "products-progress", product.productName), {
-    mainTotalBytes: main.byteLength,
-    thumbnailTotalBytes: thumbnail.byteLength,
-    detailTotalBytes: detail.reduce((sum, val) => sum + val.byteLength, 0),
-    mainBytesTransferred: 0,
-    thumbnailBytesTransferred: 0,
-    detailBytesTransferred: 0,
-  });
-
-  upload.mainUploadTask.on(
-    "state_changed",
-    (snapshot) => {
-      if (snapshot.bytesTransferred > mainProgress) {
-        mainProgress += stair;
-        updateDoc(doc(firestore, "products-progress", product.productName), {
-          mainBytesTransferred: snapshot.bytesTransferred,
-        });
-      }
-    },
-    (error) => {
-      console.log("ERROR", error.code);
-    },
-    () => {
-      updateDoc(doc(firestore, "products-progress", product.productName), {
-        mainBytesTransferred: main.byteLength,
-      }).then(() => {
-        getDownloadURL(upload.mainUploadTask.snapshot.ref).then(
-          (downloadURL) => {
-            console.log("Main image available at", downloadURL);
-            mainURL = downloadURL;
-            if (
-              mainURL.length > 0 &&
-              thumbnailURL.length > 0 &&
-              detailImageURLList.every((value) => value.length > 0)
-            ) {
-              uploadDoc({
-                mainImageName: upload.mainImageName,
-                mainImageURL: mainURL,
-                thumbnailImageName: upload.thumbnailImageName,
-                thumbnailImageURL: thumbnailURL,
-                detailImageNameList: upload.detailImageNameList,
-                detailImageURLList: detailImageURLList,
-              });
-            }
-          }
-        );
-      });
+  try {
+    const main = await product.mainImageFile.arrayBuffer();
+    const thumbnail = await product.thumbnailImageFile.arrayBuffer();
+    const detail: ArrayBuffer[] = [];
+    for (let i = 0; i < product.detailImageFileList.length; i++) {
+      detail.push(await product.detailImageFileList[i].arrayBuffer());
     }
-  );
 
-  upload.thumbnailUploadTask.on(
-    "state_changed",
-    (snapshot) => {
-      if (snapshot.bytesTransferred > thumbnailProgress) {
-        thumbnailProgress += stair;
-        updateDoc(doc(firestore, "products-progress", product.productName), {
-          thumbnailBytesTransferred: snapshot.bytesTransferred,
-        });
-      }
-    },
-    (error) => {
-      console.log("ERROR", error.code);
-    },
-    () => {
-      updateDoc(doc(firestore, "products-progress", product.productName), {
-        thumbnailBytesTransferred: thumbnail.byteLength,
-      }).then(() => {
-        getDownloadURL(upload.thumbnailUploadTask.snapshot.ref).then(
-          (downloadURL) => {
-            console.log("Thumbnail image available at", downloadURL);
-            thumbnailURL = downloadURL;
-            if (
-              mainURL.length > 0 &&
-              thumbnailURL.length > 0 &&
-              detailImageURLList.every((value) => value.length > 0)
-            ) {
-              uploadDoc({
-                mainImageName: upload.mainImageName,
-                mainImageURL: mainURL,
-                thumbnailImageName: upload.thumbnailImageName,
-                thumbnailImageURL: thumbnailURL,
-                detailImageNameList: upload.detailImageNameList,
-                detailImageURLList: detailImageURLList,
-              });
-            }
-          }
-        );
-      });
-    }
-  );
+    const upload = uploadImages(main, thumbnail, detail);
 
-  for (let i = 0; i < detailImageURLList.length; i++) {
-    upload.detailUploadTaskList[i].on(
+    let mainURL = "";
+    let thumbnailURL = "";
+    let detailImageURLList = new Array(upload.detailImageNameList.length).fill(
+      ""
+    );
+
+    const stair = 500000; //해당 바이트만큼 전송됐을 때마다 업로드 상태 업데이트
+    let mainProgress = 0;
+    let thumbnailProgress = 0;
+    let detailProgress = 0;
+    let detailBytesList = new Array(upload.detailImageNameList.length).fill(0); // 각 상세이미지 실제 전송된 양
+    let detailProgressList = new Array(upload.detailImageNameList.length).fill(
+      0
+    ); // 각 상세이미지 다음 업로드 기준점
+
+    await setDoc(doc(firestore, "products-progress", product.productName), {
+      mainTotalBytes: main.byteLength,
+      thumbnailTotalBytes: thumbnail.byteLength,
+      detailTotalBytes: detail.reduce((sum, val) => sum + val.byteLength, 0),
+      mainBytesTransferred: 0,
+      thumbnailBytesTransferred: 0,
+      detailBytesTransferred: 0,
+    });
+
+    upload.mainUploadTask.on(
       "state_changed",
       (snapshot) => {
-        
-        if (snapshot.bytesTransferred > detailProgressList[i]) {
-          detailProgressList[i] += stair;
-          detailProgress += (snapshot.bytesTransferred - detailBytesList[i]);
-          detailBytesList[i] = snapshot.bytesTransferred
+        if (snapshot.bytesTransferred > mainProgress) {
+          mainProgress += stair;
           updateDoc(doc(firestore, "products-progress", product.productName), {
-            detailBytesTransferred: detailProgress,
+            mainBytesTransferred: snapshot.bytesTransferred,
           });
         }
       },
@@ -1934,14 +1850,13 @@ export async function addProduct({ product }: { product: Product }) {
         console.log("ERROR", error.code);
       },
       () => {
-        detailProgress += (detail[i].byteLength - detailBytesList[i]);
         updateDoc(doc(firestore, "products-progress", product.productName), {
-          detailBytesTransferred: detailProgress
+          mainBytesTransferred: main.byteLength,
         }).then(() => {
-          getDownloadURL(upload.detailUploadTaskList[i].snapshot.ref).then(
+          getDownloadURL(upload.mainUploadTask.snapshot.ref).then(
             (downloadURL) => {
-              console.log("Detail image " + i + " available at", downloadURL);
-              detailImageURLList[i] = downloadURL;
+              console.log("Main image available at", downloadURL);
+              mainURL = downloadURL;
               if (
                 mainURL.length > 0 &&
                 thumbnailURL.length > 0 &&
@@ -1961,6 +1876,98 @@ export async function addProduct({ product }: { product: Product }) {
         });
       }
     );
+
+    upload.thumbnailUploadTask.on(
+      "state_changed",
+      (snapshot) => {
+        if (snapshot.bytesTransferred > thumbnailProgress) {
+          thumbnailProgress += stair;
+          updateDoc(doc(firestore, "products-progress", product.productName), {
+            thumbnailBytesTransferred: snapshot.bytesTransferred,
+          });
+        }
+      },
+      (error) => {
+        console.log("ERROR", error.code);
+      },
+      () => {
+        updateDoc(doc(firestore, "products-progress", product.productName), {
+          thumbnailBytesTransferred: thumbnail.byteLength,
+        }).then(() => {
+          getDownloadURL(upload.thumbnailUploadTask.snapshot.ref).then(
+            (downloadURL) => {
+              console.log("Thumbnail image available at", downloadURL);
+              thumbnailURL = downloadURL;
+              if (
+                mainURL.length > 0 &&
+                thumbnailURL.length > 0 &&
+                detailImageURLList.every((value) => value.length > 0)
+              ) {
+                uploadDoc({
+                  mainImageName: upload.mainImageName,
+                  mainImageURL: mainURL,
+                  thumbnailImageName: upload.thumbnailImageName,
+                  thumbnailImageURL: thumbnailURL,
+                  detailImageNameList: upload.detailImageNameList,
+                  detailImageURLList: detailImageURLList,
+                });
+              }
+            }
+          );
+        });
+      }
+    );
+
+    for (let i = 0; i < detailImageURLList.length; i++) {
+      upload.detailUploadTaskList[i].on(
+        "state_changed",
+        (snapshot) => {
+          if (snapshot.bytesTransferred > detailProgressList[i]) {
+            detailProgressList[i] += stair;
+            detailProgress += snapshot.bytesTransferred - detailBytesList[i];
+            detailBytesList[i] = snapshot.bytesTransferred;
+            updateDoc(
+              doc(firestore, "products-progress", product.productName),
+              {
+                detailBytesTransferred: detailProgress,
+              }
+            );
+          }
+        },
+        (error) => {
+          console.log("ERROR", error.code);
+        },
+        () => {
+          detailProgress += detail[i].byteLength - detailBytesList[i];
+          updateDoc(doc(firestore, "products-progress", product.productName), {
+            detailBytesTransferred: detailProgress,
+          }).then(() => {
+            getDownloadURL(upload.detailUploadTaskList[i].snapshot.ref).then(
+              (downloadURL) => {
+                console.log("Detail image " + i + " available at", downloadURL);
+                detailImageURLList[i] = downloadURL;
+                if (
+                  mainURL.length > 0 &&
+                  thumbnailURL.length > 0 &&
+                  detailImageURLList.every((value) => value.length > 0)
+                ) {
+                  uploadDoc({
+                    mainImageName: upload.mainImageName,
+                    mainImageURL: mainURL,
+                    thumbnailImageName: upload.thumbnailImageName,
+                    thumbnailImageURL: thumbnailURL,
+                    detailImageNameList: upload.detailImageNameList,
+                    detailImageURLList: detailImageURLList,
+                  });
+                }
+              }
+            );
+          });
+        }
+      );
+    }
+  } catch (error: any) {
+    return error.message ?? error.toString();
   }
 
   return null;
