@@ -626,7 +626,7 @@ export default function PartnerProductManage() {
       } else {
         console.log(actionData);
         setIsUploadInProgress(false);
-        setNotice(actionData.message);
+        setNotice(actionData.message ?? actionData.errorMessage ?? actionData);
         setIsNoticeModalOpened(true);
         //성공했으면 모달 닫기
         if (actionData.status == "ok") {
@@ -1130,7 +1130,7 @@ export default function PartnerProductManage() {
                 if (checkRequirements()) {
                   setIsLoading(true);
                   await submitProduct();
-                  // setIsUploadInProgress(true);
+                  setIsUploadInProgress(true);
                   setIsLoading(false);
                 }
               }}
