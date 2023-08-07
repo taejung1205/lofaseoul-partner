@@ -1,4 +1,4 @@
-import { Checkbox, Modal, Space } from "@mantine/core";
+import { Checkbox, LoadingOverlay, Modal, Space } from "@mantine/core";
 import {
   ActionFunction,
   LoaderFunction,
@@ -16,6 +16,7 @@ import {
   addProduct,
   deleteProduct,
   getPartnerProducts,
+  getProductUploadProgress,
   isProductUploaded,
 } from "~/services/firebase.server";
 import { requireUser } from "~/services/session.server";
@@ -153,11 +154,13 @@ export const action: ActionFunction = async ({ request }) => {
       }
 
       const result = await addProduct({ product: product });
-      if (result == true) {
-        return json({
+
+      if (result == null) {
+        return {
           isWaiting: true,
+          progress: 0,
           status: "ok",
-        });
+        };
       } else {
         if (actionType == "add") {
           return json({
@@ -205,7 +208,10 @@ export const action: ActionFunction = async ({ request }) => {
           status: "ok",
         });
       } else {
-        return json({ isWaiting: true });
+        const result = await getProductUploadProgress({
+          productName: productName,
+        });
+        return json({ isWaiting: true, progress: result, status: "ok" });
       }
     } else {
       return json({
@@ -276,8 +282,14 @@ export default function PartnerProductManage() {
   //업로드 중 상태
   const [isUploadInProgress, setIsUploadInProgress] = useState<boolean>(false);
 
+  //파일 업로드 진행 상태
+  const [imageUploadProgress, setImageUploadProgress] = useState<number>(0);
+
   //업로드 중 확인 요청 용 타이머
   const [queryIntervalId, setQueryIntervalId] = useState<NodeJS.Timer>();
+
+  //로딩 중
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const loaderData = useLoaderData();
   const actionData = useActionData();
@@ -609,13 +621,17 @@ export default function PartnerProductManage() {
   useEffect(() => {
     if (actionData !== undefined && actionData !== null) {
       if (actionData.isWaiting) {
-        console.log("waiting");
+        setImageUploadProgress(actionData.progress);
+        console.log("isWaiting status: ", actionData.status);
       } else {
+        console.log(actionData);
         setIsUploadInProgress(false);
-        setNotice(actionData.message);
+        setNotice(actionData.message ?? actionData.errorMessage ?? actionData);
         setIsNoticeModalOpened(true);
         //성공했으면 모달 닫기
         if (actionData.status == "ok") {
+          clearInterval(queryIntervalId);
+          setImageUploadProgress(0);
           setIsAddProductModalOpened(false);
         }
       }
@@ -723,6 +739,8 @@ export default function PartnerProductManage() {
 
   return (
     <>
+      <LoadingOverlay visible={isLoading} overlayBlur={2} />
+
       {/* 상품 입력을 위한 모달 */}
       <Modal
         opened={isAddProductModalOpened}
@@ -1110,8 +1128,10 @@ export default function PartnerProductManage() {
               type="submit"
               onClick={async () => {
                 if (checkRequirements()) {
+                  setIsLoading(true);
                   await submitProduct();
                   setIsUploadInProgress(true);
+                  setIsLoading(false);
                 }
               }}
             >
@@ -1121,7 +1141,9 @@ export default function PartnerProductManage() {
               <ModalButton
                 type="submit"
                 onClick={async () => {
+                  setIsLoading(true);
                   await deleteProduct();
+                  setIsLoading(false);
                 }}
               >
                 삭제
@@ -1164,7 +1186,7 @@ export default function PartnerProductManage() {
             fontWeight: "700",
           }}
         >
-          {`업로드 진행 중...`}
+          {`업로드 진행 중... (${imageUploadProgress.toFixed(2)}%)`}
           <br />
           {`도중에 페이지를 닫을 경우 오류가 발생할 수 있습니다.`}
         </div>
@@ -1228,10 +1250,12 @@ export default function PartnerProductManage() {
                 <Space w={10} />
                 <ListButton
                   onClick={async () => {
+                    setIsLoading(true);
                     await loadAddProductModal(item);
                     setIsLoadedProduct(true);
                     setIsAddProductModalOpened(true);
                     setLoadedProduct(item);
+                    setIsLoading(false);
                   }}
                 >
                   자세히

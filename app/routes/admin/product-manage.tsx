@@ -1,4 +1,4 @@
-import { Checkbox, Modal } from "@mantine/core";
+import { Checkbox, LoadingOverlay, Modal } from "@mantine/core";
 import { ActionFunction, LoaderFunction, json } from "@remix-run/node";
 import { useActionData, useLoaderData, useSubmit } from "@remix-run/react";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -61,7 +61,7 @@ const DetailBody = styled.div`
   font-weight: 700;
   width: 568px;
   margin: 4px;
-  height: 30px;
+  min-height: 30px;
   text-align: center;
 `;
 
@@ -160,6 +160,9 @@ export default function AdminProductManage() {
     useState<boolean>(false);
   const [isDetailModalOpened, setIsDetailModalOpened] =
     useState<boolean>(false);
+
+  //로딩 중 오버레이
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   useEffect(() => {
     if (loaderData.error == undefined) {
@@ -273,14 +276,18 @@ export default function AdminProductManage() {
     for (let i = 0; i < products.length; i++) {
       const mainFile = await downloadFile(
         products[i].mainImageURL,
-        makeFileName(products[i].id, products[i].mainImageName)
+        makeFileName(products[i].id, products[i].mainImageName, "main")
       );
 
       zip.file(mainFile.name, mainFile);
 
       const thumbnailFile = await downloadFile(
         products[i].thumbnailImageURL,
-        makeFileName(products[i].id, products[i].thumbnailImageName)
+        makeFileName(
+          products[i].id,
+          products[i].thumbnailImageName,
+          "thumbnail"
+        )
       );
 
       zip.file(thumbnailFile.name, thumbnailFile);
@@ -288,18 +295,23 @@ export default function AdminProductManage() {
       for (let j = 0; j < products[i].detailImageURLList.length; j++) {
         const detailFile = await downloadFile(
           products[i].detailImageURLList[j],
-          makeFileName(products[i].id, products[i].detailImageNameList[j])
+          makeFileName(
+            products[i].id,
+            products[i].detailImageNameList[j],
+            "detail"
+          )
         );
         zip.file(detailFile.name, detailFile);
       }
     }
     zip.generateAsync({ type: "blob" }).then((content) => {
-      saveAs(content, "test.zip");
+      saveAs(content, "이미지 모음.zip");
     });
   }
 
   return (
     <>
+      <LoadingOverlay visible={isLoading} overlayBlur={2} />
       {/* 안내메세지를 위한 모달 */}
       <BasicModal
         opened={isNoticeModalOpened}
@@ -520,7 +532,9 @@ export default function AdminProductManage() {
             onClick={async () => {
               const updatedList = updateCheckedItems();
               if (updatedList.length > 0) {
+                setIsLoading(true);
                 await writeExcel(updatedList);
+                setIsLoading(false);
               } else {
                 setNotice("선택된 주문건이 없습니다.");
                 setIsNoticeModalOpened(true);
@@ -534,7 +548,9 @@ export default function AdminProductManage() {
             onClick={async () => {
               const updatedList = updateCheckedItems();
               if (updatedList.length > 0) {
+                setIsLoading(true);
                 await downloadImageZip(updatedList);
+                setIsLoading(false);
               } else {
                 setNotice("선택된 주문건이 없습니다.");
                 setIsNoticeModalOpened(true);
@@ -795,26 +811,29 @@ const schema = [
   {
     column: "이미지등록(상세)",
     type: String,
-    value: (item: LoadedProduct) => makeFileName(item.id, item.mainImageName),
+    value: (item: LoadedProduct) =>
+      makeFileName(item.id, item.mainImageName, "main"),
     width: 20,
   },
   {
     column: "이미지등록(목록)",
     type: String,
-    value: (item: LoadedProduct) => makeFileName(item.id, item.mainImageName),
+    value: (item: LoadedProduct) =>
+      makeFileName(item.id, item.mainImageName, "main"),
     width: 20,
   },
   {
     column: "이미지등록(작은목록)",
     type: String,
-    value: (item: LoadedProduct) => makeFileName(item.id, item.mainImageName),
+    value: (item: LoadedProduct) =>
+      makeFileName(item.id, item.mainImageName, "main"),
     width: 20,
   },
   {
     column: "이미지등록(축소)",
     type: String,
     value: (item: LoadedProduct) =>
-      makeFileName(item.id, item.thumbnailImageName),
+      makeFileName(item.id, item.thumbnailImageName, "thumbnail"),
     width: 20,
   },
   {
@@ -823,7 +842,7 @@ const schema = [
     value: (item: LoadedProduct) => {
       let str = "";
       for (let i = 0; i < item.detailImageNameList.length; i++) {
-        str += makeFileName(item.id, item.detailImageNameList[i]);
+        str += makeFileName(item.id, item.detailImageNameList[i], "detail");
         if (i < item.detailImageNameList.length - 1) {
           str += "|";
         }
@@ -846,8 +865,12 @@ const schema = [
   },
 ];
 
-function makeFileName(id: string, fileName: string) {
-  return `${id}_${fileName}`;
+function makeFileName(
+  id: string,
+  fileName: string,
+  usage: "main" | "thumbnail" | "detail"
+) {
+  return `${id}_${usage}_${fileName}`;
 }
 
 async function downloadFile(url: string, fileName: string) {
