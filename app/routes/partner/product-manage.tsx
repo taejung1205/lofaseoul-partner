@@ -1130,7 +1130,7 @@ export default function PartnerProductManage() {
                 if (checkRequirements()) {
                   setIsLoading(true);
                   await submitProduct();
-                  setIsUploadInProgress(true);
+                  // setIsUploadInProgress(true);
                   setIsLoading(false);
                 }
               }}
