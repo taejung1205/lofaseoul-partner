@@ -1810,15 +1810,7 @@ export async function addProduct({ product }: { product: Product }) {
       detail.push(await product.detailImageFileList[i].arrayBuffer());
     }
 
-    await setDoc(doc(firestore, "debug", product.productName), {
-      log: 0
-    });
-
     const upload = uploadImages(main, thumbnail, detail);
-
-    await setDoc(doc(firestore, "debug", product.productName), {
-      log: 1
-    });
 
     let mainURL = "";
     let thumbnailURL = "";
@@ -1842,10 +1834,6 @@ export async function addProduct({ product }: { product: Product }) {
       mainBytesTransferred: 0,
       thumbnailBytesTransferred: 0,
       detailBytesTransferred: 0,
-    });
-
-    await setDoc(doc(firestore, "debug", product.productName), {
-      log: 2
     });
 
     upload.mainUploadTask.on(
@@ -1978,10 +1966,6 @@ export async function addProduct({ product }: { product: Product }) {
         }
       );
     }
-
-    await setDoc(doc(firestore, "debug", product.productName), {
-      log: 3
-    });
   } catch (error: any) {
     return error.message ?? error.toString();
   }
