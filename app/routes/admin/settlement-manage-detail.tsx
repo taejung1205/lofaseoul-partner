@@ -582,7 +582,6 @@ export default function AdminSettlementShare() {
   }
 
   async function writeExcel(selected: SettlementItem[]) {
-    console.log(selected);
     await writeXlsxFile(selected, {
       schema,
       headerStyle: {
