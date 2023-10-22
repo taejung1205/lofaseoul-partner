@@ -986,13 +986,13 @@ export default function AdminSettlementShare() {
               >
                 정산건 추가
               </Button1>
-              <Button1
+              <Button2
                 onClick={async () => {
                   await writeExcel();
                 }}
               >
                 선택건 엑셀 다운로드
-              </Button1>
+              </Button2>
             </div>
             <div style={{ height: "40px" }} />
             <SettlementSumBar
@@ -1047,7 +1047,7 @@ const schema = [
   },
   {
     column: "판매단가",
-    type: String,
+    type: Number,
     value: (item: SettlementItem) => item.price,
     width: 15,
   },
