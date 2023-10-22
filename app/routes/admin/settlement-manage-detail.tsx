@@ -581,8 +581,9 @@ export default function AdminSettlementShare() {
     submit(formData, { method: "post" });
   }
 
-  async function writeExcel() {
-    await writeXlsxFile(items, {
+  async function writeExcel(selected: SettlementItem[]) {
+    console.log(selected);
+    await writeXlsxFile(selected, {
       schema,
       headerStyle: {
         fontWeight: "bold",
@@ -988,10 +989,16 @@ export default function AdminSettlementShare() {
               </Button1>
               <Button2
                 onClick={async () => {
-                  await writeExcel();
+                  const updatedList = updateCheckedItems();
+                  if (updatedList.length > 0) {
+                    await writeExcel(updatedList);
+                  } else {
+                    setNoticeModalStr("선택된 정산내역이 없습니다.");
+                    setIsNoticeModalOpened(true);
+                  }
                 }}
               >
-                전체 엑셀 다운로드
+                선택건 엑셀 다운로드
               </Button2>
             </div>
             <div style={{ height: "40px" }} />
@@ -1035,7 +1042,9 @@ const schema = [
   {
     column: "상품명",
     type: String,
-    value: (item: SettlementItem) => item.productName,
+    value: (item: SettlementItem) => {
+      return item.productName;
+    },
     width: 60,
     wrap: true,
   },
@@ -1048,13 +1057,17 @@ const schema = [
   {
     column: "판매단가",
     type: Number,
-    value: (item: SettlementItem) => item.price,
+    value: (item: SettlementItem) => {
+      return Number(item.price);
+    },
     width: 15,
   },
   {
     column: "수량",
     type: Number,
-    value: (item: SettlementItem) => item.amount,
+    value: (item: SettlementItem) => {
+      return Number(item.amount);
+    },
     width: 10,
   },
   {
@@ -1068,5 +1081,5 @@ const schema = [
     type: String,
     value: (item: SettlementItem) => item.receiver,
     width: 10,
-  }
+  },
 ];
