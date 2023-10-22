@@ -41,6 +41,7 @@ import { BasicModal, ModalButton } from "~/components/modal";
 import { PageLayout } from "~/components/page_layout";
 import { GetListButton } from "~/components/button";
 import { LoadingOverlay } from "@mantine/core";
+import writeXlsxFile from "write-excel-file";
 
 const EmptySettlementBox = styled.div`
   display: flex;
@@ -580,6 +581,19 @@ export default function AdminSettlementShare() {
     submit(formData, { method: "post" });
   }
 
+  async function writeExcel() {
+    await writeXlsxFile(selectedItems, {
+      schema,
+      headerStyle: {
+        fontWeight: "bold",
+        align: "center",
+      },
+      fileName: `정산내역_${partnerName}_${loaderData.monthStr}.xlsx`,
+      fontFamily: "맑은 고딕",
+      fontSize: 10,
+    });
+  }
+
   return (
     <>
       <LoadingOverlay
@@ -972,6 +986,13 @@ export default function AdminSettlementShare() {
               >
                 정산건 추가
               </Button1>
+              <Button1
+                onClick={async () => {
+                  await writeExcel();
+                }}
+              >
+                선택건 엑셀 다운로드
+              </Button1>
             </div>
             <div style={{ height: "40px" }} />
             <SettlementSumBar
@@ -995,3 +1016,57 @@ export default function AdminSettlementShare() {
     </>
   );
 }
+
+const schema = [
+  {
+    column: "판매처",
+    type: String,
+    value: (item: SettlementItem) => item.seller,
+    width: 15,
+    wrap: true,
+  },
+  {
+    column: "주문번호",
+    type: String,
+    value: (item: SettlementItem) => item.orderNumber,
+    width: 30,
+    wrap: true,
+  },
+  {
+    column: "상품명",
+    type: String,
+    value: (item: SettlementItem) => item.productName,
+    width: 60,
+    wrap: true,
+  },
+  {
+    column: "옵션명",
+    type: String,
+    value: (item: SettlementItem) => item.optionName,
+    width: 30,
+  },
+  {
+    column: "판매단가",
+    type: String,
+    value: (item: SettlementItem) => item.price,
+    width: 15,
+  },
+  {
+    column: "수량",
+    type: Number,
+    value: (item: SettlementItem) => item.amount,
+    width: 10,
+  },
+  {
+    column: "주문자",
+    type: String,
+    value: (item: SettlementItem) => item.orderer,
+    width: 10,
+  },
+  {
+    column: "송신자",
+    type: String,
+    value: (item: SettlementItem) => item.receiver,
+    width: 10,
+  }
+];
