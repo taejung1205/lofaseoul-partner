@@ -582,7 +582,7 @@ export default function AdminSettlementShare() {
   }
 
   async function writeExcel() {
-    await writeXlsxFile(selectedItems, {
+    await writeXlsxFile(items, {
       schema,
       headerStyle: {
         fontWeight: "bold",
@@ -991,7 +991,7 @@ export default function AdminSettlementShare() {
                   await writeExcel();
                 }}
               >
-                선택건 엑셀 다운로드
+                전체 엑셀 다운로드
               </Button2>
             </div>
             <div style={{ height: "40px" }} />
