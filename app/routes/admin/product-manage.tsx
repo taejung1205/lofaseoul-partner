@@ -298,6 +298,8 @@ export default function AdminProductManage() {
     });
   }
 
+  return (<div>WIP <br /> 공사중입니다.</div>)
+  
   return (
     <>
       {/* 안내메세지를 위한 모달 */}
