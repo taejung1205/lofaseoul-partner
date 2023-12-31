@@ -522,6 +522,8 @@ export default function AdminSettlementShare() {
       fee: feeEdit,
       shippingFee: shippingFeeEdit,
       partnerName: "",
+      orderTag: "",
+      sale: 0
     };
 
     const isValid = isSettlementItemValid(newSettlement);

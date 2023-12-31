@@ -215,6 +215,8 @@ export default function AdminSettlementShare() {
             partnerName: "",
             fee: -1,
             shippingFee: -1,
+            orderTag: element.주문태그?.toString() ?? "",
+            sale: element.세일적용 ?? 0
           };
 
           let isValid = isSettlementItemValid(item);
