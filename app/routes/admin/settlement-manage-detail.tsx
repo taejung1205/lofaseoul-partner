@@ -276,6 +276,8 @@ export default function AdminSettlementShare() {
   const [amountEdit, setAmountEdit] = useState<number>(0);
   const [feeEdit, setFeeEdit] = useState<number>(0);
   const [shippingFeeEdit, setShippingFeeEdit] = useState<number>(0);
+  const [saleEdit, setSaleEdit] = useState<number>(0);
+  const [orderTagEdit, setOrderTagEdit] = useState<string>("");
   const [optionNameEdit, setOptionNameEdit] = useState<string>("");
   const [ordererEdit, setOrdererEdit] = useState<string>("");
   const [receiverEdit, setReceiverEdit] = useState<string>("");
@@ -492,6 +494,8 @@ export default function AdminSettlementShare() {
       setAmountEdit(settlement.amount);
       setFeeEdit(settlement.fee);
       setShippingFeeEdit(settlement.shippingFee);
+      setSaleEdit(settlement.sale);
+      setOrderTagEdit(settlement.orderTag);
       setOrdererEdit(settlement.orderer);
       setReceiverEdit(settlement.receiver);
     } else {
@@ -503,6 +507,8 @@ export default function AdminSettlementShare() {
       setAmountEdit(0);
       setOrdererEdit("");
       setReceiverEdit("");
+      setSaleEdit(0);
+      setOrderTagEdit("");
     }
   }
 
@@ -522,8 +528,8 @@ export default function AdminSettlementShare() {
       fee: feeEdit,
       shippingFee: shippingFeeEdit,
       partnerName: "",
-      orderTag: "",
-      sale: 0
+      orderTag: orderTagEdit,
+      sale: saleEdit,
     };
 
     const isValid = isSettlementItemValid(newSettlement);
@@ -824,6 +830,29 @@ export default function AdminSettlementShare() {
               required
             />
           </div>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+            }}
+          >
+            <div style={{ width: "100px" }}>세일반영</div>
+            <EditInputBox
+              type="number"
+              name="sale"
+              value={saleEdit}
+              onChange={(e) => setSaleEdit(Number(e.target.value))}
+              required
+            />
+            <div style={{ width: "100px" }}>주문태그</div>
+            <EditInputBox
+              type="text"
+              name="orderTag"
+              value={orderTagEdit}
+              onChange={(e) => setOrderTagEdit(e.target.value)}
+              required
+            />
+          </div>
           <div style={{ height: "20px" }} />
           {editErrorStr}
           {editErrorStr.length > 0 ? <div style={{ height: "20px" }} /> : <></>}
@@ -1083,4 +1112,16 @@ const schema = [
     value: (item: SettlementItem) => item.receiver,
     width: 10,
   },
+  {
+    column: "세일반영",
+    type: Number,
+    value: (item: SettlementItem) => item.sale,
+    width: 10,
+  },
+  {
+    column: "주문태그",
+    type: String,
+    value: (item: SettlementItem) => item.orderTag,
+    width: 10,
+  }
 ];
