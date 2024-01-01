@@ -41,6 +41,7 @@ import { BasicModal, ModalButton } from "~/components/modal";
 import { PageLayout } from "~/components/page_layout";
 import { GetListButton } from "~/components/button";
 import { LoadingOverlay } from "@mantine/core";
+import writeXlsxFile from "write-excel-file";
 
 const EmptySettlementBox = styled.div`
   display: flex;
@@ -275,6 +276,8 @@ export default function AdminSettlementShare() {
   const [amountEdit, setAmountEdit] = useState<number>(0);
   const [feeEdit, setFeeEdit] = useState<number>(0);
   const [shippingFeeEdit, setShippingFeeEdit] = useState<number>(0);
+  const [saleEdit, setSaleEdit] = useState<number>(0);
+  const [orderTagEdit, setOrderTagEdit] = useState<string>("");
   const [optionNameEdit, setOptionNameEdit] = useState<string>("");
   const [ordererEdit, setOrdererEdit] = useState<string>("");
   const [receiverEdit, setReceiverEdit] = useState<string>("");
@@ -491,6 +494,8 @@ export default function AdminSettlementShare() {
       setAmountEdit(settlement.amount);
       setFeeEdit(settlement.fee);
       setShippingFeeEdit(settlement.shippingFee);
+      setSaleEdit(settlement.sale);
+      setOrderTagEdit(settlement.orderTag);
       setOrdererEdit(settlement.orderer);
       setReceiverEdit(settlement.receiver);
     } else {
@@ -502,6 +507,8 @@ export default function AdminSettlementShare() {
       setAmountEdit(0);
       setOrdererEdit("");
       setReceiverEdit("");
+      setSaleEdit(0);
+      setOrderTagEdit("");
     }
   }
 
@@ -521,6 +528,8 @@ export default function AdminSettlementShare() {
       fee: feeEdit,
       shippingFee: shippingFeeEdit,
       partnerName: "",
+      orderTag: orderTagEdit,
+      sale: saleEdit,
     };
 
     const isValid = isSettlementItemValid(newSettlement);
@@ -578,6 +587,19 @@ export default function AdminSettlementShare() {
     formData.set("partner", loaderData.partnerName);
     formData.set("action", "add");
     submit(formData, { method: "post" });
+  }
+
+  async function writeExcel(selected: SettlementItem[]) {
+    await writeXlsxFile(selected, {
+      schema,
+      headerStyle: {
+        fontWeight: "bold",
+        align: "center",
+      },
+      fileName: `정산내역_${partnerName}_${loaderData.monthStr}.xlsx`,
+      fontFamily: "맑은 고딕",
+      fontSize: 10,
+    });
   }
 
   return (
@@ -808,6 +830,29 @@ export default function AdminSettlementShare() {
               required
             />
           </div>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+            }}
+          >
+            <div style={{ width: "100px" }}>세일반영</div>
+            <EditInputBox
+              type="number"
+              name="sale"
+              value={saleEdit}
+              onChange={(e) => setSaleEdit(Number(e.target.value))}
+              required
+            />
+            <div style={{ width: "100px" }}>주문태그</div>
+            <EditInputBox
+              type="text"
+              name="orderTag"
+              value={orderTagEdit}
+              onChange={(e) => setOrderTagEdit(e.target.value)}
+              required
+            />
+          </div>
           <div style={{ height: "20px" }} />
           {editErrorStr}
           {editErrorStr.length > 0 ? <div style={{ height: "20px" }} /> : <></>}
@@ -972,6 +1017,19 @@ export default function AdminSettlementShare() {
               >
                 정산건 추가
               </Button1>
+              <Button2
+                onClick={async () => {
+                  const updatedList = updateCheckedItems();
+                  if (updatedList.length > 0) {
+                    await writeExcel(updatedList);
+                  } else {
+                    setNoticeModalStr("선택된 정산내역이 없습니다.");
+                    setIsNoticeModalOpened(true);
+                  }
+                }}
+              >
+                선택건 엑셀 다운로드
+              </Button2>
             </div>
             <div style={{ height: "40px" }} />
             <SettlementSumBar
@@ -995,3 +1053,75 @@ export default function AdminSettlementShare() {
     </>
   );
 }
+
+const schema = [
+  {
+    column: "판매처",
+    type: String,
+    value: (item: SettlementItem) => item.seller,
+    width: 15,
+    wrap: true,
+  },
+  {
+    column: "주문번호",
+    type: String,
+    value: (item: SettlementItem) => item.orderNumber,
+    width: 30,
+    wrap: true,
+  },
+  {
+    column: "상품명",
+    type: String,
+    value: (item: SettlementItem) => {
+      return item.productName;
+    },
+    width: 60,
+    wrap: true,
+  },
+  {
+    column: "옵션명",
+    type: String,
+    value: (item: SettlementItem) => item.optionName,
+    width: 30,
+  },
+  {
+    column: "판매단가",
+    type: Number,
+    value: (item: SettlementItem) => {
+      return Number(item.price);
+    },
+    width: 15,
+  },
+  {
+    column: "수량",
+    type: Number,
+    value: (item: SettlementItem) => {
+      return Number(item.amount);
+    },
+    width: 10,
+  },
+  {
+    column: "주문자",
+    type: String,
+    value: (item: SettlementItem) => item.orderer,
+    width: 10,
+  },
+  {
+    column: "송신자",
+    type: String,
+    value: (item: SettlementItem) => item.receiver,
+    width: 10,
+  },
+  {
+    column: "세일반영",
+    type: Number,
+    value: (item: SettlementItem) => item.sale,
+    width: 10,
+  },
+  {
+    column: "주문태그",
+    type: String,
+    value: (item: SettlementItem) => item.orderTag,
+    width: 10,
+  }
+];

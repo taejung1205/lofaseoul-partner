@@ -17,6 +17,8 @@ export type SettlementItem = {
   partnerName: string;
   fee: number;
   shippingFee: number;
+  orderTag: string;
+  sale: number;
 };
 
 const SettlementBox = styled.div`
@@ -67,13 +69,18 @@ const TextBox = styled.div`
  */
 export function isSettlementItemValid(item: SettlementItem) {
   if (
-    item.seller == undefined || item.seller == "" ||
-    item.orderNumber == undefined || item.orderNumber == "" ||
-    item.productName == undefined || item.productName == "" ||
-    item.price == undefined || 
+    item.seller == undefined ||
+    item.seller == "" ||
+    item.orderNumber == undefined ||
+    item.orderNumber == "" ||
+    item.productName == undefined ||
+    item.productName == "" ||
+    item.price == undefined ||
     item.amount == undefined ||
-    item.orderer == undefined || item.orderer == "" ||
-    item.receiver == undefined || item.receiver == ""
+    item.orderer == undefined ||
+    item.orderer == "" ||
+    item.receiver == undefined ||
+    item.receiver == ""
   ) {
     return false;
   } else {
@@ -132,7 +139,11 @@ export function setSettlementFee(
   item: SettlementItem,
   partnerProfile: PartnerProfile
 ) {
-  item.shippingFee = partnerProfile.shippingFee;
+  if(isShippingFeeApplied(item)){
+    item.shippingFee = partnerProfile.shippingFee;
+  } else {
+    item.shippingFee = 0;
+  }
   if (item.seller == "로파공홈") {
     item.fee = partnerProfile.lofaFee;
   } else {
@@ -140,7 +151,19 @@ export function setSettlementFee(
   }
 }
 
-
+//주문태그를 바탕으로 배송비가 적용될 지, 되지 않을 지를 판단합니다.
+//  직접출고 -> 배송비 정산 x 
+// 직접 추가출고 -> 배송비 정산 x 
+// 3PL출고(별이무역) -> 배송비 정산 x 
+// 외부출고 -> 배송비 정산 O 
+// 외부 추가출고 -> 배송비 정산 O  
+function isShippingFeeApplied(item: SettlementItem){
+  if(item.orderTag == "외부출고" || item.orderTag == "외부 추가출고") {
+    return true;
+  } else {
+    return false;
+  }
+}
 
 function SettlementItem({
   item,
@@ -157,6 +180,14 @@ function SettlementItem({
     setIsChecked(check);
   }, [check]);
   const [isChecked, setIsChecked] = useState<boolean>(check);
+  let saleString = "";
+  if(item.sale == undefined){
+    saleString = "0";
+  } else if (item.sale > 0 && item.sale <= 1) {
+    saleString = item.sale * 100 + "%";
+  } else {
+    saleString = item.sale + "";
+  }
   return (
     <SettlementItemBox key={`SettlementItem-${index}`}>
       <Checkbox
@@ -172,13 +203,15 @@ function SettlementItem({
       <TextBox style={{ width: "150px", fontSize: "12px" }}>
         {item.orderNumber}
       </TextBox>
-      <TextBox style={{ width: "calc(50% - 310px)", fontSize: "12px" }}>
+      <TextBox style={{ width: "calc(50% - 340px)", fontSize: "12px" }}>
         {item.productName}
       </TextBox>
-      <TextBox style={{ width: "calc(50% - 310px)", fontSize: "12px" }}>
+      <TextBox style={{ width: "calc(50% - 430px)", fontSize: "12px" }}>
         {item.optionName}
       </TextBox>
       <TextBox style={{ width: "60px" }}>{item.price}</TextBox>
+      <TextBox style={{ width: "60px" }}>{saleString}</TextBox>
+      <TextBox style={{ width: "90px" }}>{item.shippingFee == 0 ? "X" : "O"}</TextBox>
       <TextBox style={{ width: "30px" }}>{item.amount}</TextBox>
       <TextBox style={{ width: "90px" }}>{item.orderer}</TextBox>
       <TextBox style={{ width: "90px" }}>{item.receiver}</TextBox>
@@ -221,9 +254,11 @@ export function SettlementTable({
           />
           <TextBox style={{ width: "90px" }}>판매처</TextBox>
           <TextBox style={{ width: "150px" }}>주문번호</TextBox>
-          <TextBox style={{ width: "calc(50% - 318px)" }}>상품명</TextBox>
-          <TextBox style={{ width: "calc(50% - 318px)" }}>옵션명</TextBox>
+          <TextBox style={{ width: "calc(50% - 348px)" }}>상품명</TextBox>
+          <TextBox style={{ width: "calc(50% - 438px)" }}>옵션명</TextBox>
           <TextBox style={{ width: "60px" }}>판매단가</TextBox>
+          <TextBox style={{ width: "60px" }}>세일적용</TextBox>
+          <TextBox style={{ width: "90px" }}>배송비 정산</TextBox>
           <TextBox style={{ width: "30px" }}>수량</TextBox>
           <TextBox style={{ width: "90px" }}>주문자</TextBox>
           <TextBox style={{ width: "90px" }}>송신자</TextBox>
@@ -251,5 +286,3 @@ export function SettlementTable({
 export const SettlementTableMemo = React.memo(SettlementTable, (prev, next) => {
   return prev.items == next.items && prev.itemsChecked == next.itemsChecked;
 });
-
-

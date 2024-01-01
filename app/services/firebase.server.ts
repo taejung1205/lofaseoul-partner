@@ -316,9 +316,20 @@ export async function addSettlements({
 
       /* partners에 총계 넣기 위한 계산 */
 
+      //할인된 가격
+      //sale이 1 이하일 경우 할인율, 초과일 경우 할인금액으로 계산
+      let saledPrice;
+      if(item.sale == undefined || item.sale == 0) {
+        saledPrice = item.price
+      } else if (item.sale <= 1) {
+        saledPrice = item.price * (1 - item.sale);
+      } else {
+        saledPrice = item.price - item.sale;
+      }
+
       //정산금액: (가격 * 수량)의 (100 - 수수료)%
       const newSettlement = Math.round(
-        (item.price * Math.abs(item.amount) * (100 - item.fee)) / 100.0
+        (saledPrice * Math.abs(item.amount) * (100 - item.fee)) / 100.0
       );
 
       //현재 정산합에 추가
@@ -534,9 +545,20 @@ export async function deleteSettlements({
 
       /* partners에 총계 계산 */
 
+      //할인된 가격
+      //sale이 1 이하일 경우 할인율, 초과일 경우 할인금액으로 계산
+      let saledPrice;
+      if(item.sale == undefined || item.sale == 0) {
+        saledPrice = item.price
+      } else if (item.sale <= 1) {
+        saledPrice = item.price * (1 - item.sale);
+      } else {
+        saledPrice = item.price - item.sale;
+      }
+
       //정산금액: (가격 * 수량)의 (100 - 수수료)%
       const deletingAmount = Math.round(
-        (item.price * Math.abs(item.amount) * (100 - item.fee)) / 100.0
+        (saledPrice * Math.abs(item.amount) * (100 - item.fee)) / 100.0
       );
 
       //현재 정산합에서 감산
