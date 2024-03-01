@@ -76,11 +76,7 @@ export function isSettlementItemValid(item: SettlementItem) {
     item.productName == undefined ||
     item.productName == "" ||
     item.price == undefined ||
-    item.amount == undefined ||
-    item.orderer == undefined ||
-    item.orderer == "" ||
-    item.receiver == undefined ||
-    item.receiver == ""
+    item.amount == undefined
   ) {
     return false;
   } else {

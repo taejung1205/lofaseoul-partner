@@ -319,7 +319,7 @@ export async function addSettlements({
       //할인된 가격
       //sale이 1 이하일 경우 할인율, 초과일 경우 할인금액으로 계산
       let saledPrice;
-      if(item.sale == undefined || item.sale == 0) {
+      if (item.sale == undefined || item.sale == 0) {
         saledPrice = item.price
       } else if (item.sale <= 1) {
         saledPrice = item.price * (1 - item.sale);
@@ -548,7 +548,7 @@ export async function deleteSettlements({
       //할인된 가격
       //sale이 1 이하일 경우 할인율, 초과일 경우 할인금액으로 계산
       let saledPrice;
-      if(item.sale == undefined || item.sale == 0) {
+      if (item.sale == undefined || item.sale == 0) {
         saledPrice = item.price
       } else if (item.sale <= 1) {
         saledPrice = item.price * (1 - item.sale);
@@ -2224,4 +2224,31 @@ export async function getProductUploadProgress({
   } catch (error: any) {
     return 0;
   }
+}
+
+
+
+
+
+
+/**
+ * 정산내역을 추가합니다.
+ * 추가 후 정산합계 기록도 수정합니다.
+ * @param settlements: SettlementItem[] (length <= 250), monthStr: string (입력할 월)
+ * @returns
+ *
+ */
+export async function addSettlementsV2({
+  settlements,
+  monthStr,
+}: {
+  settlements: string;
+  monthStr: string;
+}) {
+  const time = new Date().getTime();
+  await setDoc(doc(firestore, `settlements-data/${monthStr}`), {
+    json: settlements,
+    updateTime: time
+  });
+  return true;
 }
