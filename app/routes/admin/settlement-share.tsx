@@ -82,15 +82,14 @@ export const action: ActionFunction = async ({ request }) => {
     const settlement = body.get("settlement")?.toString();
     const month = body.get("month")?.toString();
     if (settlement !== undefined && month !== undefined) {
-      const jsonArr: SettlementItem[] = JSON.parse(settlement);
       const result = await addSettlements({
-        settlements: jsonArr,
+        settlements: settlement,
         monthStr: month,
       });
       if (result === true) {
-        return json({ message: `${month} 정산내역 공유가 완료되었습니다.` });
+        return json({ message: `${month} 정산내역 공유가 등록되었습니다. 잠시 후 기록이 반영될 예정입니다.` });
       } else {
-        throw Error(result);
+        throw Error();
       }
     }
   }
@@ -110,9 +109,6 @@ export default function AdminSettlementShare() {
   const [selectedDate, setSelectedDate] = useState<Date>();
   const [selectedMonthStr, setSelectedMonthStr] = useState<string>();
   const [fileName, setFileName] = useState<string>("");
-
-  const [pendingItems, setPendingItems] = useState<SettlementItem[][]>();
-  const [pendingLength, setPendingLength] = useState<number>(0);
 
   const [isNoticeModalOpened, setIsNoticeModalOpened] =
     useState<boolean>(false);
@@ -149,22 +145,9 @@ export default function AdminSettlementShare() {
   }, [selectedDate]);
 
   useEffect(() => {
-    if (pendingItems !== undefined && pendingItems.length > 0) {
-      let chunk = pendingItems[0];
-      const newPendingItems = pendingItems.slice(1);
-      setPendingItems(newPendingItems);
-      const chunkJson = JSON.stringify(chunk);
-      const formData = new FormData(formRef.current ?? undefined);
-      formData.set("settlement", chunkJson);
-      formData.set("month", selectedMonthStr!);
-      formData.set("action", "share");
-      submit(formData, { method: "post" });
-    } else {
-      if (actionData !== undefined && actionData !== null) {
-        setNoticeModalStr(actionData.message ?? actionData);
-        setIsNoticeModalOpened(true);
-        setPendingLength(0);
-      }
+    if (actionData !== undefined && actionData !== null) {
+      setNoticeModalStr(actionData.message ?? actionData);
+      setIsNoticeModalOpened(true);
     }
   }, [actionData]);
 
@@ -177,15 +160,13 @@ export default function AdminSettlementShare() {
   }
 
   async function submitAddSettlements(settlementList: SettlementItem[]) {
-    const chunkSize = 20;
-    let pending: SettlementItem[][] = [];
-    for (let i = 0; i < settlementList.length; i += chunkSize) {
-      let chunk = settlementList.slice(i, i + chunkSize);
-      pending.push(chunk);
-    }
-    setPendingItems(pending);
-    setPendingLength(pending.length);
-    submit(null, { method: "post" });
+    console.log('submit add settlement, length:', settlementList.length);
+    const data = JSON.stringify(settlementList);
+    const formData = new FormData(formRef.current ?? undefined);
+    formData.set("settlement", data);
+    formData.set("month", selectedMonthStr!);
+    formData.set("action", "share");
+    submit(formData, { method: "post" });
   }
 
   const readExcel = (e: any) => {
@@ -269,7 +250,7 @@ export default function AdminSettlementShare() {
   return (
     <>
       <LoadingOverlay
-        visible={transition.state == "loading" && pendingLength == 0}
+        visible={transition.state == "loading"}
         overlayBlur={2}
       />
       <BasicModal
@@ -333,22 +314,6 @@ export default function AdminSettlementShare() {
               공유
             </ModalButton>
           </div>
-        </div>
-      </BasicModal>
-
-      <BasicModal opened={pendingLength > 0} onClose={() => {}}>
-        <div
-          style={{
-            justifyContent: "center",
-            textAlign: "center",
-            fontWeight: "700",
-          }}
-        >
-          {`작업 진행 중 (${
-            Math.floor((pendingLength - (pendingItems?.length ?? 0))/ pendingLength * 100)
-          }%)`}
-          <br />
-          {`도중에 페이지를 닫을 경우 오류가 발생할 수 있습니다.`}
         </div>
       </BasicModal>
 

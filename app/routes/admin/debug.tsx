@@ -27,7 +27,6 @@ import {
 import { SettlementItem } from "~/components/settlement_table";
 import {
   addSettlements,
-  addSettlementsV2,
   getPartnerProfiles,
   getSettlementMonthes,
 } from "~/services/firebase.server";
@@ -83,7 +82,7 @@ export const action: ActionFunction = async ({ request }) => {
     const settlement = body.get("settlement")?.toString();
     const month = body.get("month")?.toString();
     if (settlement !== undefined && month !== undefined) {
-      const result = await addSettlementsV2({
+      const result = await addSettlements({
         settlements: settlement,
         monthStr: month,
       });
