@@ -31,11 +31,11 @@ import {
 import {
   addSettlements,
   deleteSettlements,
-  deleteSettlementsShippingFee,
   getPartnerProfile,
   getPartnerProfiles,
   getSettlements,
   getSettlementSum,
+  deleteSettlementsShippingFee,
 } from "~/services/firebase.server";
 import { BasicModal, ModalButton } from "~/components/modal";
 import { PageLayout } from "~/components/page_layout";
@@ -118,20 +118,16 @@ export const action: ActionFunction = async ({ request }) => {
   if (actionType === "delete") {
     const settlement = body.get("settlement")?.toString();
     const month = body.get("month")?.toString();
-    const partnerName = body.get("partner")?.toString();
     if (
       settlement !== undefined &&
-      month !== undefined &&
-      partnerName !== undefined
+      month !== undefined
     ) {
-      const jsonArr: SettlementItem[] = JSON.parse(settlement);
       const result = await deleteSettlements({
-        settlements: jsonArr,
-        monthStr: month,
-        partnerName: partnerName,
+        settlements: settlement,
+        monthStr: month
       });
       if (result == true) {
-        return json({ message: `삭제가 완료되었습니다.` });
+        return json({ message: `삭제가 등록되었습니다. 잠시 후 새로고침하여 확인해주세요.` });
       } else {
         throw Error(result);
       }
@@ -140,31 +136,27 @@ export const action: ActionFunction = async ({ request }) => {
     const deletingItem = body.get("deleting-item")?.toString();
     const newItem = body.get("new-item")?.toString();
     const month = body.get("month")?.toString();
-    const partnerName = body.get("partner")?.toString();
     if (
       deletingItem !== undefined &&
       newItem !== undefined &&
-      month !== undefined &&
-      partnerName !== undefined
+      month !== undefined
     ) {
-      const jsonDelete: SettlementItem = JSON.parse(deletingItem);
-      const jsonNew: SettlementItem = JSON.parse(newItem);
       const result_1 = await deleteSettlements({
-        settlements: [jsonDelete],
-        monthStr: month,
-        partnerName: partnerName,
+        settlements: `[${deletingItem}]`,
+        monthStr: month
       });
 
       if (result_1 !== true) {
         throw Error(result_1);
       }
+
       const result_2 = await addSettlements({
-        settlements: [jsonNew],
+        settlements: `[${newItem}]`,
         monthStr: month,
       });
 
       if (result_2 == true) {
-        return json({ message: `수정이 완료되었습니다.` });
+        return json({ message: `수정이 등록되었습니다. 잠시 후 새로고침하여 확인해주세요.` });
       } else {
         throw Error(result_2);
       }
@@ -172,20 +164,16 @@ export const action: ActionFunction = async ({ request }) => {
   } else if (actionType == "shipping-delete") {
     const settlement = body.get("settlement")?.toString();
     const month = body.get("month")?.toString();
-    const partnerName = body.get("partner")?.toString();
     if (
       settlement !== undefined &&
-      month !== undefined &&
-      partnerName !== undefined
+      month !== undefined
     ) {
-      const jsonArr: SettlementItem[] = JSON.parse(settlement);
       const result = await deleteSettlementsShippingFee({
-        settlements: jsonArr,
+        settlements: settlement,
         monthStr: month,
-        partnerName: partnerName,
       });
       if (result == true) {
-        return json({ message: `삭제가 완료되었습니다.` });
+        return json({ message: `배송비 삭제가 등록되었습니다. 잠시 후 새로고침하여 확인해주세요.` });
       } else {
         throw Error(result);
       }
@@ -199,14 +187,13 @@ export const action: ActionFunction = async ({ request }) => {
       month !== undefined &&
       partnerName !== undefined
     ) {
-      const jsonNew: SettlementItem = JSON.parse(newItem);
       const result = await addSettlements({
-        settlements: [jsonNew],
+        settlements: `[${newItem}]`,
         monthStr: month,
       });
 
       if (result == true) {
-        return json({ message: `수정이 완료되었습니다.` });
+        return json({ message: `추가가 등록되었습니다. 잠시 후 새로고침하여 확인해주세요.`  });
       } else {
         throw Error(result);
       }
@@ -261,12 +248,6 @@ export default function AdminSettlementShare() {
   const [partnerName, setPartnerName] = useState<string>(""); //파트너명 (조회된 파트너명으로 시작, 입력창으로 수정 및 조회)
   const [noticeModalStr, setNoticeModalStr] = useState<string>(""); //안내 모달창에서 뜨는 메세지
   const [editErrorStr, setEditErrorStr] = useState<string>(""); //수정 모달에서 뜨는 에러 메세지
-
-  const [pendingItems, setPendingItems] = useState<SettlementItem[][]>();
-  const [pendingLength, setPendingLength] = useState<number>(0);
-  const [pendingAction, setPendingAction] = useState<
-    "delete" | "shipping-delete" | "none"
-  >("none");
 
   //정산내역 수정시 입력창 내용물
   const [sellerEdit, setSellerEdit] = useState<string>("");
@@ -377,6 +358,13 @@ export default function AdminSettlementShare() {
   }, []);
 
   useEffect(() => {
+    if (actionData !== undefined && actionData !== null) {
+      setNoticeModalStr(actionData.message ?? actionData);
+      setIsNoticeModalOpened(true);
+    }
+  }, [actionData]);
+
+  useEffect(() => {
     if (settlements !== null) {
       let newItems: SettlementItem[] = [];
       if (seller == "all") {
@@ -411,28 +399,6 @@ export default function AdminSettlementShare() {
     }
   }, [loaderData]);
 
-  useEffect(() => {
-    if (pendingItems !== undefined && pendingItems.length > 0) {
-      let chunk = pendingItems[0];
-      const newPendingItems = pendingItems.slice(1);
-      setPendingItems(newPendingItems);
-      const chunkJson = JSON.stringify(chunk);
-      const formData = new FormData(formRef.current ?? undefined);
-      formData.set("settlement", chunkJson);
-      formData.set("month", monthStr);
-      formData.set("partner", loaderData.partnerName);
-      formData.set("action", pendingAction);
-      submit(formData, { method: "post" });
-    } else {
-      if (actionData !== undefined && actionData !== null) {
-        setNoticeModalStr(actionData.message ?? actionData);
-        setIsNoticeModalOpened(true);
-        setPendingLength(0);
-        setPendingAction("none");
-      }
-    }
-  }, [actionData]);
-
   function onItemCheck(index: number, isChecked: boolean) {
     itemsChecked[index] = isChecked;
   }
@@ -456,30 +422,24 @@ export default function AdminSettlementShare() {
 
   //정산건 삭제를 post합니다.
   function submitDeleteSettlements(settlementList: SettlementItem[]) {
-    const chunkSize = 20;
-    let pending: SettlementItem[][] = [];
-    for (let i = 0; i < settlementList.length; i += chunkSize) {
-      let chunk = settlementList.slice(i, i + chunkSize);
-      pending.push(chunk);
-    }
-    setPendingItems(pending);
-    setPendingLength(pending.length);
-    setPendingAction("delete");
-    submit(null, { method: "post" });
+    console.log('submit delete settlement, length:', settlementList.length);
+    const data = JSON.stringify(settlementList);
+    const formData = new FormData(formRef.current ?? undefined);
+    formData.set("settlement", data);
+    formData.set("month", selectedMonthStr!);
+    formData.set("action", "delete");
+    submit(formData, { method: "post" });
   }
 
   //정산건 배송비 제거를 post합니다.
   function submitShippingFeeDelete(settlementList: SettlementItem[]) {
-    const chunkSize = 20;
-    let pending: SettlementItem[][] = [];
-    for (let i = 0; i < settlementList.length; i += chunkSize) {
-      let chunk = settlementList.slice(i, i + chunkSize);
-      pending.push(chunk);
-    }
-    setPendingItems(pending);
-    setPendingLength(pending.length);
-    setPendingAction("shipping-delete");
-    submit(null, { method: "post" });
+    console.log('submit delete shipping fee, length:', settlementList.length);
+    const data = JSON.stringify(settlementList);
+    const formData = new FormData(formRef.current ?? undefined);
+    formData.set("settlement", data);
+    formData.set("month", selectedMonthStr!);
+    formData.set("action", "shipping-delete");
+    submit(formData, { method: "post" });
   }
 
   //수정 시작시 기본 입력값을 선택한 정산건으로 맞춥니다.
@@ -573,7 +533,6 @@ export default function AdminSettlementShare() {
     formData.set("deleting-item", jsonDelete);
     formData.set("new-item", jsonNew);
     formData.set("month", monthStr);
-    formData.set("partner", loaderData.partnerName);
     formData.set("action", "edit");
     submit(formData, { method: "post" });
   }
@@ -605,7 +564,7 @@ export default function AdminSettlementShare() {
   return (
     <>
       <LoadingOverlay
-        visible={transition.state == "loading" && pendingLength == 0}
+        visible={transition.state == "loading"}
         overlayBlur={2}
       />
       {/* 안내용 모달 */}
@@ -877,24 +836,6 @@ export default function AdminSettlementShare() {
               {isEdit ? "수정" : "추가"}
             </ModalButton>
           </div>
-        </div>
-      </BasicModal>
-
-      {/* 작업 중 모달 */}
-      <BasicModal opened={pendingLength > 0} onClose={() => {}}>
-        <div
-          style={{
-            justifyContent: "center",
-            textAlign: "center",
-            fontWeight: "700",
-          }}
-        >
-          {`작업 진행 중 (${Math.floor(
-            ((pendingLength - (pendingItems?.length ?? 0)) / pendingLength) *
-              100
-          )}%)`}
-          <br />
-          {`도중에 페이지를 닫을 경우 오류가 발생할 수 있습니다.`}
         </div>
       </BasicModal>
 

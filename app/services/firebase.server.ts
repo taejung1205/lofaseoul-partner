@@ -244,7 +244,7 @@ export async function deletePartnerProfile({ name }: { name: string }) {
 /**
  * 정산내역을 추가합니다.
  * 추가 후 정산합계 기록도 수정합니다.
- * @param settlements: SettlementItem[] (length <= 250), monthStr: string (입력할 월)
+ * @param settlements: JSON string of settlement items list
  * @returns
  *
  */
@@ -252,144 +252,14 @@ export async function addSettlements({
   settlements,
   monthStr,
 }: {
-  settlements: SettlementItem[];
+  settlements: string;
   monthStr: string;
 }) {
   try {
-    if (settlements.length > 20) {
-      throw Error("addSettlements에 들어온 배열의 길이가 250을 넘습니다.");
-    }
-    let settlementBatch = writeBatch(firestore);
-
     const time = new Date().getTime();
-    let partnersJson: any = {};
-
-    const partners: string[] = [];
-    settlements.forEach((item) => {
-      if (!partners.includes(item.partnerName)) {
-        partners.push(item.partnerName);
-      }
-    });
-
-    const partnerSums = new Map<string, any>();
-
-    for (let i = 0; i < partners.length; i++) {
-      let sumItem = await getSettlementSum({
-        partnerName: partners[i],
-        monthStr: monthStr,
-      });
-      partnerSums.set(partners[i], sumItem);
-    }
-
-    for (let i = 0; i < settlements.length; i++) {
-      const item = settlements[i];
-      let seller = "etc";
-      if (PossibleSellers.includes(item.seller)) {
-        seller = item.seller;
-      }
-
-      //현재 작업에서 해당 파트너의 정산합 추가한적 없으면 초기화
-      if (partnersJson[item.partnerName] == undefined) {
-        partnersJson[item.partnerName] = {
-          settlement_etc: 0,
-          shipping_etc: 0,
-          orderNumbers: [],
-        };
-
-        PossibleSellers.forEach((seller) => {
-          partnersJson[item.partnerName][`settlement_${seller}`] = 0;
-          partnersJson[item.partnerName][`shipping_${seller}`] = 0;
-        });
-      }
-
-      //현재 올리는 정산 + 기존 정산내역에 해당 주문번호 있으면 배송비 0원
-      const partnerSum = partnerSums.get(item.partnerName);
-
-      if (
-        partnersJson[item.partnerName].orderNumbers.includes(
-          item.orderNumber
-        ) ||
-        partnerSum?.orderNumbers.includes(item.orderNumber)
-      ) {
-        item.shippingFee = 0;
-      }
-
-      /* partners에 총계 넣기 위한 계산 */
-
-      //할인된 가격
-      //sale이 1 이하일 경우 할인율, 초과일 경우 할인금액으로 계산
-      let saledPrice;
-      if(item.sale == undefined || item.sale == 0) {
-        saledPrice = item.price
-      } else if (item.sale <= 1) {
-        saledPrice = item.price * (1 - item.sale);
-      } else {
-        saledPrice = item.price - item.sale;
-      }
-
-      //정산금액: (가격 * 수량)의 (100 - 수수료)%
-      const newSettlement = Math.round(
-        (saledPrice * Math.abs(item.amount) * (100 - item.fee)) / 100.0
-      );
-
-      //현재 정산합에 추가
-      partnersJson[item.partnerName][`settlement_${seller}`] += newSettlement;
-      partnersJson[item.partnerName][`shipping_${seller}`] += item.shippingFee;
-
-      partnersJson[item.partnerName].orderNumbers.push(item.orderNumber);
-
-      //items에 해당 정산아이템 추가
-      const itemDocName = `${time}_${i}`;
-      let itemDocRef = doc(
-        firestore,
-        `settlements/${monthStr}/items`,
-        itemDocName
-      );
-      settlementBatch.set(itemDocRef, item);
-    }
-
-    //partners에 각 파트너의 총계 추가
-    for (let partnerName in partnersJson) {
-      let prevSum = await getSettlementSum({
-        partnerName: partnerName,
-        monthStr: monthStr,
-      });
-      let partnerDocRef = doc(
-        firestore,
-        `settlements/${monthStr}/partners`,
-        partnerName
-      );
-      //기존 정산합이 없을 경우
-      if (prevSum == null) {
-        settlementBatch.set(partnerDocRef, partnersJson[partnerName]);
-      } else {
-        //기존 정산합이 있을 경우
-        let newSum: any = {};
-        if (prevSum["orderNumbers"].includes)
-          newSum["orderNumbers"] = prevSum["orderNumbers"].concat(
-            partnersJson[partnerName]["orderNumbers"]
-          );
-        PossibleSellers.forEach((seller) => {
-          newSum[`settlement_${seller}`] =
-            prevSum![`settlement_${seller}`] +
-            partnersJson[partnerName][`settlement_${seller}`];
-          newSum[`shipping_${seller}`] =
-            prevSum![`shipping_${seller}`] +
-            partnersJson[partnerName][`shipping_${seller}`];
-        });
-        newSum[`settlement_etc`] =
-          prevSum["settlement_etc"] +
-          partnersJson[partnerName][`settlement_etc`];
-        newSum[`shipping_etc`] =
-          prevSum["shipping_etc"] + partnersJson[partnerName][`shipping_etc`];
-        settlementBatch.set(partnerDocRef, newSum);
-      }
-    }
-
-    await settlementBatch.commit();
-
-    await setDoc(doc(firestore, `settlements/${monthStr}`), {
-      isShared: true,
+    await setDoc(doc(firestore, `settlements-data-add/${monthStr}`), {
+      json: settlements,
+      updateTime: time
     });
 
     return true;
@@ -401,6 +271,67 @@ export async function addSettlements({
     return error.message ?? error;
   }
 }
+
+/**
+ * 해당 정산내역들을 삭제합니다
+ * @param monthStr: 월, 
+ * @param settlements: 대상 정산내역, JSON string of SettlementItem array
+ */
+
+export async function deleteSettlements({
+  settlements,
+  monthStr,
+}: {
+  settlements: string;
+  monthStr: string;
+}) {
+  try {
+    const time = new Date().getTime();
+    await setDoc(doc(firestore, `settlements-data-delete/${monthStr}`), {
+      json: settlements,
+      updateTime: time
+    });
+
+    return true;
+  } catch (error: any) {
+    sendAligoMessage({
+      text: `[로파파트너] ${error.message ?? error}`,
+      receiver: "01023540973",
+    });
+    return error.message ?? error;
+  }
+}
+
+/**
+ * 해당 정산내역들의 배송비를 0원으로 만듭니다.
+ * @param monthStr: 월
+ * @param settlements: 대상 정산내역, JSON string of SettlementItem array
+ */
+
+export async function deleteSettlementsShippingFee({
+  settlements,
+  monthStr,
+}: {
+  settlements: string;
+  monthStr: string;
+}) {
+  try {
+    const time = new Date().getTime();
+    await setDoc(doc(firestore, `settlements-data-delete-shipping-fee/${monthStr}`), {
+      json: settlements,
+      updateTime: time
+    });
+
+    return true;
+  } catch (error: any) {
+    sendAligoMessage({
+      text: `[로파파트너] ${error.message ?? error}`,
+      receiver: "01023540973",
+    });
+    return error.message ?? error;
+  }
+}
+
 
 /**
  * 정산을 등록한 월의 목록을 불러옵니다.
@@ -480,223 +411,6 @@ export async function getAllSettlementSum({ monthStr }: { monthStr: string }) {
       data: doc.data(),
     };
   });
-}
-
-/**
- * 해당 정산내역들을 삭제합니다
- * @param monthStr: 월, settlements: 정산내역 (같은 파트너의 정산내역, 길이 400 이하), partnerName: 파트너이름
- */
-export async function deleteSettlements({
-  settlements,
-  monthStr,
-  partnerName,
-}: {
-  settlements: SettlementItem[];
-  monthStr: string;
-  partnerName: string;
-}) {
-  try {
-    if (settlements.length == 0) {
-      throw Error("들어온 정산내역이 없습니다.");
-    }
-
-    if (settlements.length > 20) {
-      throw Error("deleteSettlements에 들어온 배열의 길이가 400을 넘습니다.");
-    }
-
-    let deleteBatch = writeBatch(firestore);
-
-    function subtractArray(a: string[], b: string[]) {
-      let hash = Object.create(null);
-      b.forEach((val) => {
-        hash[val] = (hash[val] || 0) + 1;
-      });
-      return a.filter((val) => {
-        return !hash[val] || (hash[val]--, false);
-      });
-    }
-
-    let prevSum = await getSettlementSum({
-      partnerName: partnerName,
-      monthStr: monthStr,
-    });
-
-    let newSum = prevSum;
-
-    if (prevSum == null) {
-      throw Error("기존 정산 합산 내역을 불러올 수 없습니다.");
-    }
-
-    // 주문번호 제거
-    let deletingOrderNumbers = settlements.map((item) => item.orderNumber);
-    let newOrderNumbers = subtractArray(
-      prevSum.orderNumbers,
-      deletingOrderNumbers
-    );
-
-    newSum!.orderNumbers = newOrderNumbers;
-
-    for (let i = 0; i < settlements.length; i++) {
-      let item = settlements[i];
-      let seller = "etc";
-      if (PossibleSellers.includes(item.seller)) {
-        seller = item.seller;
-      }
-
-      /* partners에 총계 계산 */
-
-      //할인된 가격
-      //sale이 1 이하일 경우 할인율, 초과일 경우 할인금액으로 계산
-      let saledPrice;
-      if(item.sale == undefined || item.sale == 0) {
-        saledPrice = item.price
-      } else if (item.sale <= 1) {
-        saledPrice = item.price * (1 - item.sale);
-      } else {
-        saledPrice = item.price - item.sale;
-      }
-
-      //정산금액: (가격 * 수량)의 (100 - 수수료)%
-      const deletingAmount = Math.round(
-        (saledPrice * Math.abs(item.amount) * (100 - item.fee)) / 100.0
-      );
-
-      //현재 정산합에서 감산
-      newSum![`settlement_${seller}`] -= deletingAmount;
-      newSum![`shipping_${seller}`] -= item.shippingFee;
-
-      //items에 해당 정산아이템 삭제
-      const settlementsRef = collection(
-        firestore,
-        `settlements/${monthStr}/items`
-      );
-
-      const idQuery = query(
-        settlementsRef,
-        where("partnerName", "==", item.partnerName),
-        where("productName", "==", item.productName),
-        where("price", "==", item.price),
-        where("receiver", "==", item.receiver),
-        where("seller", "==", item.seller),
-        where("optionName", "==", item.optionName),
-        where("fee", "==", item.fee),
-        where("orderer", "==", item.orderer),
-        where("orderNumber", "==", item.orderNumber),
-        where("shippingFee", "==", item.shippingFee),
-        where("amount", "==", item.amount),
-        limit(1)
-      );
-      const querySnap = await getDocs(idQuery);
-      querySnap.forEach(async (doc) => {
-        deleteBatch.delete(doc.ref);
-      });
-    }
-
-    await deleteBatch.commit();
-
-    await setDoc(
-      doc(firestore, `settlements/${monthStr}/partners`, partnerName),
-      newSum
-    );
-    return true;
-  } catch (error: any) {
-    sendAligoMessage({
-      text: `[로파파트너] ${error.message ?? error}`,
-      receiver: "01023540973",
-    });
-    return error.message ?? error;
-  }
-}
-
-/**
- * 해당 정산내역들의 배송비를 0원으로 만듭니다.
- * @param monthStr: 월, settlements: 정산내역 (같은 파트너의 정산내역), partnerName: 파트너이름
- */
-export async function deleteSettlementsShippingFee({
-  settlements,
-  monthStr,
-  partnerName,
-}: {
-  settlements: SettlementItem[];
-  monthStr: string;
-  partnerName: string;
-}) {
-  try {
-    if (settlements.length == 0) {
-      throw Error("들어온 정산내역이 없습니다.");
-    }
-
-    if (settlements.length > 20) {
-      throw Error(
-        "deleteSettlementsShippingFee에 들어온 배열의 길이가 400을 넘습니다."
-      );
-    }
-
-    let shippingFeeBatch = writeBatch(firestore);
-
-    let prevSum = await getSettlementSum({
-      partnerName: partnerName,
-      monthStr: monthStr,
-    });
-
-    let newSum = prevSum;
-
-    if (prevSum == null) {
-      throw Error("기존 정산 합산 내역을 불러올 수 없습니다.");
-    }
-
-    for (let i = 0; i < settlements.length; i++) {
-      let item = settlements[i];
-      let seller = "etc";
-      if (PossibleSellers.includes(item.seller)) {
-        seller = item.seller;
-      }
-
-      /* partners에 총계 계산 */
-
-      newSum![`shipping_${seller}`] -= item.shippingFee;
-
-      //items에 해당 정산아이템의 배송비 수정
-      const settlementsRef = collection(
-        firestore,
-        `settlements/${monthStr}/items`
-      );
-
-      const idQuery = query(
-        settlementsRef,
-        where("partnerName", "==", item.partnerName),
-        where("productName", "==", item.productName),
-        where("price", "==", item.price),
-        where("receiver", "==", item.receiver),
-        where("seller", "==", item.seller),
-        where("optionName", "==", item.optionName),
-        where("fee", "==", item.fee),
-        where("orderer", "==", item.orderer),
-        where("orderNumber", "==", item.orderNumber),
-        where("shippingFee", "==", item.shippingFee),
-        where("amount", "==", item.amount),
-        limit(1)
-      );
-      const querySnap = await getDocs(idQuery);
-      querySnap.forEach(async (doc) => {
-        shippingFeeBatch.update(doc.ref, { shippingFee: 0 });
-      });
-    }
-
-    await shippingFeeBatch.commit();
-
-    await setDoc(
-      doc(firestore, `settlements/${monthStr}/partners`, partnerName),
-      newSum
-    );
-    return true;
-  } catch (error: any) {
-    await sendAligoMessage({
-      text: error.message ?? error,
-      receiver: "01023540973",
-    });
-    return error.message ?? error;
-  }
 }
 
 /**
@@ -2225,3 +1939,9 @@ export async function getProductUploadProgress({
     return 0;
   }
 }
+
+
+
+
+
+

@@ -1,27 +1,177 @@
-import { PartnerProfile } from "~/components/partner_profile";
-
+import { LoadingOverlay } from "@mantine/core";
+import { ActionFunction, json, LoaderFunction } from "@remix-run/node";
+import {
+  useActionData,
+  useLoaderData,
+  useSubmit,
+  useTransition,
+} from "@remix-run/react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import styled from "styled-components";
 import * as xlsx from "xlsx";
-import { useSubmit } from "@remix-run/react";
-import { useEffect, useRef } from "react";
-import { ActionFunction } from "@remix-run/node";
-import { addPartnerProfiles } from "~/services/firebase.server";
+import {
+  dateToKoreanMonth,
+  getTimezoneDate,
+  MonthSelectPopover,
+} from "~/components/date";
+import { BasicModal, ModalButton } from "~/components/modal";
+import { PageLayout } from "~/components/page_layout";
+import { PartnerProfile } from "~/components/partner_profile";
+import {
+  isSettlementItemValid,
+  setSettlementPartnerName,
+  adjustSellerName,
+  setSettlementFee,
+  SettlementTableMemo,
+} from "~/components/settlement_table";
+import { SettlementItem } from "~/components/settlement_table";
+import {
+  addSettlements,
+  getPartnerProfiles,
+  getSettlementMonthes,
+} from "~/services/firebase.server";
+
+const FileNameBox = styled.div`
+  border: 3px solid #000000;
+  background-color: #efefef;
+  width: 550px;
+  max-width: 70%;
+  font-size: 20px;
+  line-height: 20px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+  padding: 6px;
+  text-align: left;
+`;
+
+const FileUploadButton = styled.label`
+  background-color: white;
+  border: 3px solid black;
+  font-size: 20px;
+  font-weight: 700;
+  width: 110px;
+  line-height: 24px;
+  padding: 6px;
+  cursor: pointer;
+`;
+
+const FileUpload = styled.input`
+  width: 0;
+  height: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+`;
+
+const ShareButton = styled.button`
+  background-color: black;
+  color: white;
+  font-size: 24px;
+  font-weight: 700;
+  width: 350px;
+  line-height: 1;
+  padding: 6px 6px 6px 6px;
+  cursor: pointer;
+`;
 
 export const action: ActionFunction = async ({ request }) => {
   const body = await request.formData();
-  const accounts = body.get("accounts")?.toString();
-  const jsonArr: PartnerProfile[] = JSON.parse(accounts!);
-  await addPartnerProfiles({ partnerProfiles: jsonArr });
-
+  const actionType = body.get("action")?.toString();
+  if (actionType === "share") {
+    const settlement = body.get("settlement")?.toString();
+    const month = body.get("month")?.toString();
+    if (settlement !== undefined && month !== undefined) {
+      const result = await addSettlements({
+        settlements: settlement,
+        monthStr: month,
+      });
+      if (result === true) {
+        return json({ message: `${month} 정산내역 공유가 등록되었습니다. 잠시 후 기록이 반영될 예정입니다.` });
+      } else {
+        throw Error();
+      }
+    }
+  }
   return null;
 };
 
-export default function AdminOrderShare() {
+export let loader: LoaderFunction = async ({ request }) => {
+  const monthes = await getSettlementMonthes();
+  const partnersMap = await getPartnerProfiles();
+  const partnersArr = Array.from(partnersMap.values());
+  return json({ monthes: monthes, partners: partnersArr });
+};
+
+export default function AdminSettlementShare() {
+  const [items, setItems] = useState<SettlementItem[]>([]);
+  const [itemsChecked, setItemsChecked] = useState<boolean[]>([]);
+  const [selectedDate, setSelectedDate] = useState<Date>();
+  const [selectedMonthStr, setSelectedMonthStr] = useState<string>();
+  const [fileName, setFileName] = useState<string>("");
+
+  const [pendingItems, setPendingItems] = useState<SettlementItem[][]>();
+  const [pendingLength, setPendingLength] = useState<number>(0);
+
+  const [isNoticeModalOpened, setIsNoticeModalOpened] =
+    useState<boolean>(false);
+  const [isShareModalOpened, setIsShareModalOpened] = useState<boolean>(false);
+  const [noticeModalStr, setNoticeModalStr] = useState<string>("에러");
+
+  const transition = useTransition();
   const submit = useSubmit();
+  const loaderData = useLoaderData();
+  const actionData = useActionData();
+  const sharedMonthes: string[] = loaderData.monthes;
+  const partnerProfiles = useMemo(() => {
+    let map = new Map();
+    loaderData.partners.forEach((partner: PartnerProfile) => {
+      map.set(partner.name, partner);
+    });
+    return map;
+  }, [loaderData]);
   const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
-    console.log(new Date());
-  }, [])
+    setSelectedDate(getTimezoneDate(new Date()));
+  }, []);
+
+  useEffect(() => {
+    const newArr = Array(items.length).fill(true);
+    setItemsChecked(newArr);
+  }, [items]);
+
+  useEffect(() => {
+    if (selectedDate !== undefined) {
+      setSelectedMonthStr(dateToKoreanMonth(selectedDate));
+    }
+  }, [selectedDate]);
+
+  useEffect(() => {
+    if (actionData !== undefined && actionData !== null) {
+      setNoticeModalStr(actionData.message ?? actionData);
+      setIsNoticeModalOpened(true);
+      setPendingLength(0);
+    }
+  }, [actionData]);
+
+  function onItemCheck(index: number, isChecked: boolean) {
+    itemsChecked[index] = isChecked;
+  }
+
+  function onCheckAll(isChecked: boolean) {
+    setItemsChecked(Array(items.length).fill(isChecked));
+  }
+
+  async function submitAddSettlements(settlementList: SettlementItem[]) {
+    console.log('submit add settlement, length:', settlementList.length);
+    const data = JSON.stringify(settlementList);
+    const formData = new FormData(formRef.current ?? undefined);
+    formData.set("settlement", data);
+    formData.set("month", selectedMonthStr!);
+    formData.set("action", "share");
+    submit(formData, { method: "post" });
+  }
 
   const readExcel = (e: any) => {
     e.preventDefault();
@@ -29,7 +179,7 @@ export default function AdminOrderShare() {
     if (e.target.files) {
       const reader = new FileReader();
       reader.onload = (e: any) => {
-        const array: PartnerProfile[] = [];
+        const array: SettlementItem[] = [];
         const data = e.target.result;
         const workbook = xlsx.read(data, { type: "array" });
         const sheetName = workbook.SheetNames[0];
@@ -38,46 +188,209 @@ export default function AdminOrderShare() {
 
         for (let i = 0; i < json.length; i++) {
           let element = json[i];
-          let item: PartnerProfile = {
-            name: element.업체명,
-            id: element.아이디,
-            password: element.패스워드,
-            email: element.이메일 ?? "",
-            phone: element.연락처 ?? "",
-            lofaFee: element.공홈,
-            otherFee: element.타채널,
-            shippingFee: element.배송비,
+          let item: SettlementItem = {
+            seller: element.판매처?.toString(),
+            orderNumber: element.주문번호?.toString(),
+            productName: element.상품명?.toString(),
+            optionName: element.옵션명?.toString() ?? "",
+            price: element.판매단가,
+            amount: element.수량,
+            orderer: element.주문자?.toString(),
+            receiver: element.수령자?.toString(),
+            partnerName: "",
+            fee: -1,
+            shippingFee: -1,
+            orderTag: element.주문태그?.toString() ?? "",
+            sale: element.세일적용 ?? 0
           };
-          if (item.name === "어드민") {
-            break;
+
+          let isValid = isSettlementItemValid(item);
+
+          if (!isValid) {
+            setNoticeModalStr(
+              `유효하지 않은 엑셀 파일입니다. ${JSON.stringify(item)}`
+            );
+            setIsNoticeModalOpened(true);
+            setFileName("");
+            setItems([]);
+            return false;
           }
+
+          adjustSellerName(item);
+
+          let nameResult = setSettlementPartnerName(item);
+          if (!nameResult || item.partnerName.length == 0) {
+            setNoticeModalStr(
+              "유효하지 않은 엑셀 파일입니다.\n상품명에 파트너 이름이 들어있는지 확인해주세요."
+            );
+            setIsNoticeModalOpened(true);
+            setFileName("");
+            setItems([]);
+            return false;
+          }
+
+          const partnerProfile = partnerProfiles.get(item.partnerName);
+          if (partnerProfile === undefined) {
+            setNoticeModalStr(
+              `유효하지 않은 엑셀 파일입니다.\n상품명의 파트너가 계약 업체 목록에 있는지 확인해주세요. (${item.partnerName})`
+            );
+            setIsNoticeModalOpened(true);
+            setFileName("");
+            setItems([]);
+            return false;
+          }
+
+          setSettlementFee(item, partnerProfile);
+
           array.push(item);
         }
-        console.log(array);
-        addAccounts(array);
+        setItems(array);
       };
       reader.readAsArrayBuffer(e.target.files[0]);
+      setFileName(e.target.files[0].name);
     }
   };
 
-  function addAccounts(partnerList: PartnerProfile[]) {
-    const json = JSON.stringify(partnerList);
-    const formData = new FormData(formRef.current ?? undefined);
-    formData.set("accounts", json);
-    submit(formData, { method: "post" });
-  }
-
-
-
   return (
     <>
-      <p>주문서 공유</p>
-      <input
-        type="file"
-        onChange={readExcel}
-        id="uploadFile"
-        accept=".xlsx,.xls"
+      <LoadingOverlay
+        visible={transition.state == "loading" && pendingLength == 0}
+        overlayBlur={2}
       />
+      <BasicModal
+        opened={isNoticeModalOpened}
+        onClose={() => setIsNoticeModalOpened(false)}
+      >
+        <div
+          style={{
+            justifyContent: "center",
+            textAlign: "center",
+            fontWeight: "700",
+          }}
+        >
+          {noticeModalStr}
+          <div style={{ height: "20px" }} />
+          <div style={{ display: "flex", justifyContent: "center" }}>
+            <ModalButton onClick={() => setIsNoticeModalOpened(false)}>
+              확인
+            </ModalButton>
+          </div>
+        </div>
+      </BasicModal>
+
+      <BasicModal
+        opened={isShareModalOpened}
+        onClose={() => setIsShareModalOpened}
+      >
+        <div
+          style={{
+            justifyContent: "center",
+            textAlign: "center",
+            fontWeight: "700",
+          }}
+        >
+          {sharedMonthes.includes(selectedMonthStr ?? "")
+            ? "중복공유됩니다. 그래도 진행하시겠습니까?"
+            : "업체들에게 정산내역을 공유하시겠습니까?"}
+          <div style={{ height: "20px" }} />
+          <div style={{ display: "flex", justifyContent: "center" }}>
+            <ModalButton onClick={() => setIsShareModalOpened(false)}>
+              취소
+            </ModalButton>
+            <ModalButton
+              onClick={() => {
+                let settlementList = [];
+                for (let i = 0; i < items.length; i++) {
+                  if (itemsChecked[i]) {
+                    settlementList.push(items[i]);
+                  }
+                }
+                if (settlementList.length > 0) {
+                  submitAddSettlements(settlementList);
+                } else {
+                  setNoticeModalStr("선택된 정산내역이 없습니다.");
+                  setIsNoticeModalOpened(true);
+                }
+
+                setIsShareModalOpened(false);
+              }}
+            >
+              공유
+            </ModalButton>
+          </div>
+        </div>
+      </BasicModal>
+
+      <BasicModal opened={pendingLength > 0} onClose={() => { }}>
+        <div
+          style={{
+            justifyContent: "center",
+            textAlign: "center",
+            fontWeight: "700",
+          }}
+        >
+          {`작업 진행 중 (${Math.floor((pendingLength - (pendingItems?.length ?? 0)) / pendingLength * 100)
+            }%)`}
+          <br />
+          {`도중에 페이지를 닫을 경우 오류가 발생할 수 있습니다.`}
+        </div>
+      </BasicModal>
+
+      <PageLayout>
+        <div style={{ display: "flex", alignItems: "center" }}>
+          <img src="/images/icon_calendar.svg" />
+          <MonthSelectPopover
+            onLeftClick={() =>
+              setSelectedDate(
+                new Date(selectedDate!.setMonth(selectedDate!.getMonth() - 1))
+              )
+            }
+            onRightClick={() =>
+              setSelectedDate(
+                new Date(selectedDate!.setMonth(selectedDate!.getMonth() + 1))
+              )
+            }
+            monthStr={selectedMonthStr ?? ""}
+          />
+        </div>
+        <div style={{ height: "20px" }} />
+        <div style={{ display: "flex" }} className="fileBox">
+          <FileNameBox>{fileName}</FileNameBox>
+          <div style={{ width: "20px" }} />
+          <FileUploadButton htmlFor="uploadFile">파일 첨부</FileUploadButton>
+          <FileUpload
+            type="file"
+            onChange={readExcel}
+            id="uploadFile"
+            accept=".xlsx,.xls"
+          />
+        </div>
+        <div style={{ height: "20px" }} />
+        <SettlementTableMemo
+          items={items}
+          itemsChecked={itemsChecked}
+          onItemCheck={onItemCheck}
+          onCheckAll={onCheckAll}
+          defaultAllCheck={true}
+        />
+
+        <div style={{ height: "20px" }} />
+        {items.length > 0 ? (
+          <div
+            style={{
+              width: "inherit",
+              display: "flex",
+              justifyContent: "center",
+            }}
+          >
+            <ShareButton onClick={() => setIsShareModalOpened(true)}>
+              정산 내역 공유
+            </ShareButton>
+          </div>
+        ) : (
+          <></>
+        )}
+      </PageLayout>
     </>
   );
 }
