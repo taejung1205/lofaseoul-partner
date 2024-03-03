@@ -36,6 +36,8 @@ export const action: ActionFunction = async ({ request }) => {
     const lofaFee = Number(body.get("lofaFee"));
     const otherFee = Number(body.get("otherFee"));
     const shippingFee = Number(body.get("shippingFee"));
+    const brn = body.get("brn")?.toString();
+    const bankAccount = body.get("bankAccount")?.toString();
 
     if (
       typeof name == "undefined" ||
@@ -56,6 +58,8 @@ export const action: ActionFunction = async ({ request }) => {
         lofaFee: lofaFee,
         otherFee: otherFee,
         shippingFee: shippingFee,
+        brn: brn ?? "",
+        bankAccount: bankAccount ?? ""
       };
       const addPartnerResult = await addPartnerProfile({
         partnerProfile,
@@ -122,6 +126,8 @@ export default function AdminPartnerList() {
             lofaFee: 0,
             otherFee: 0,
             shippingFee: 0,
+            brn: "",
+            bankAccount: ""
           }}
           isNew={true}
           isEdit={true}
@@ -144,6 +150,8 @@ export default function AdminPartnerList() {
               lofaFee: doc.lofaFee,
               otherFee: doc.otherFee,
               shippingFee: doc.shippingFee,
+              brn: doc.brn,
+              bankAccount: doc.bankAccount
             }}
             isEdit={currentEdit == index}
             onEditClick={() => {

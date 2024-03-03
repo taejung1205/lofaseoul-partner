@@ -39,7 +39,6 @@ export const loader: LoaderFunction = async ({ request }) => {
     const sums = await getAllSettlementSum({
       monthStr: monthStr,
     });
-    console.log(sums);
     return json({ sums: sums, month: month });
   } else {
     return null;

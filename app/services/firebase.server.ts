@@ -46,6 +46,7 @@ import { emailToId } from "~/utils/account";
 import { sendAligoMessage } from "./aligo.server";
 import { NoticeItem } from "~/components/notice";
 import { Product } from "~/components/product";
+import { SettlementSumItem } from "~/components/settlement_sum";
 
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
@@ -180,6 +181,8 @@ export async function addPartnerProfile({
     lofaFee: partnerProfile.lofaFee,
     otherFee: partnerProfile.otherFee,
     shippingFee: partnerProfile.shippingFee,
+    brn: partnerProfile.brn,
+    bankAccount: partnerProfile.bankAccount,
     isAdmin: false,
   }).catch((error) => {
     return error.message;
@@ -405,12 +408,24 @@ export async function getAllSettlementSum({ monthStr }: { monthStr: string }) {
     `settlements/${monthStr}/partners`
   );
   const querySnap = await getDocs(settlementsRef);
-  return querySnap.docs.map((doc) => {
-    return {
+  const result: SettlementSumItem[] = [];
+  for(let i = 0; i < querySnap.docs.length; i++){
+    const doc = querySnap.docs[i]
+    const partnerProfile = await getPartnerProfile({name: doc.id});
+    let brn = "";
+    let bankAccount = "";
+    if(partnerProfile !== null){
+      brn =  partnerProfile.brn;
+      bankAccount =  partnerProfile.bankAccount;
+    }
+    result.push({
       partnerName: doc.id,
       data: doc.data(),
-    };
-  });
+      brn: brn,
+      bankAccount: bankAccount
+    })
+  }
+  return result;
 }
 
 /**
