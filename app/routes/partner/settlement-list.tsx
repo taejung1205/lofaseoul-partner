@@ -58,6 +58,13 @@ const ReportButton = styled.button`
   cursor: pointer;
 `;
 
+const InfoText = styled.text`
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 6px 6px 6px 6px;
+`;
+
 export const action: ActionFunction = async ({ request }) => {
   const body = await request.formData();
   const actionType = body.get("action")?.toString();
@@ -351,7 +358,8 @@ export default function AdminSettlementShare() {
         {items.length > 0 && allSum !== null ? (
           <>
             <div style={{ height: "20px" }} />
-
+            <InfoText>{`* 합배송 정산내역에 대한 배송비는 중복으로 적용되지 않습니다. (주문번호가 동일한 경우)`}</InfoText>
+            <div style={{ height: "20px" }} />
             <div style={{ display: "flex", alignItems: "center" }}>
               <ReportButton
                 onClick={() => {
@@ -366,7 +374,7 @@ export default function AdminSettlementShare() {
               </div>
             </div>
 
-            <div style={{ height: "40px" }} />
+            <div style={{ height: "20px" }} />
 
             <SettlementSumBar
               seller={seller ?? "all"}
