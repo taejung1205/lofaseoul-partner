@@ -499,9 +499,9 @@ export default function AdminSettlementShare() {
       sale: saleEdit,
     };
 
-    const isValid = isSettlementItemValid(newSettlement);
-    if (!isValid) {
-      setEditErrorStr("잘못된 정산내역입니다. 내역을 확인해주세요.");
+    const checkValid = isSettlementItemValid(newSettlement);
+    if (checkValid !== "ok") {
+      setEditErrorStr("잘못된 정산내역입니다. " + checkValid);
       return null;
     }
 

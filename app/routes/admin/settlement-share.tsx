@@ -200,12 +200,22 @@ export default function AdminSettlementShare() {
             sale: element.세일적용 ?? 0
           };
 
-          let isValid = isSettlementItemValid(item);
+          let checkValidResult = isSettlementItemValid(item);
 
-          if (!isValid) {
-            setNoticeModalStr(
-              `유효하지 않은 엑셀 파일입니다. ${JSON.stringify(item)}`
-            );
+          if (checkValidResult !== "ok") {
+            if(i == 0){
+              setNoticeModalStr(
+                `유효하지 않은 엑셀 파일입니다.
+                첫 번째 줄의 ${checkValidResult}
+                항목 이름이 정상적인지 확인해주세요.`
+              );
+            } else {
+              setNoticeModalStr(
+                `유효하지 않은 엑셀 파일입니다.
+                ${i + 2}번째 줄의 ${checkValidResult}
+                해당 아이템을 확인해주세요.`
+              );
+            }
             setIsNoticeModalOpened(true);
             setFileName("");
             setItems([]);
@@ -262,6 +272,7 @@ export default function AdminSettlementShare() {
             justifyContent: "center",
             textAlign: "center",
             fontWeight: "700",
+            whiteSpace: "pre-line"
           }}
         >
           {noticeModalStr}
