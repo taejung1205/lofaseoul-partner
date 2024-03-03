@@ -2,7 +2,7 @@ import { json, LoaderFunction } from "@remix-run/node";
 import { Link, useLoaderData } from "@remix-run/react";
 import { useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
-import { GetListButton } from "~/components/button";
+import { BlackButton, GetListButton } from "~/components/button";
 import {
   MonthSelectPopover,
   dateToKoreanMonth,
@@ -19,6 +19,7 @@ import {
   SettlementSumTable,
 } from "~/components/settlement_sum";
 import { getAllSettlementSum } from "~/services/firebase.server";
+import writeXlsxFile from "write-excel-file";
 
 const EmptySettlementBox = styled.div`
   display: flex;
@@ -30,6 +31,10 @@ const EmptySettlementBox = styled.div`
   width: inherit;
 `;
 
+const DownloadButton = styled(GetListButton)`
+width: 200px;
+`;
+
 export const loader: LoaderFunction = async ({ request }) => {
   const url = new URL(request.url);
   const month = url.searchParams.get("month");
@@ -39,7 +44,6 @@ export const loader: LoaderFunction = async ({ request }) => {
     const sums = await getAllSettlementSum({
       monthStr: monthStr,
     });
-    console.log(sums);
     return json({ sums: sums, month: month });
   } else {
     return null;
@@ -85,7 +89,7 @@ export default function AdminSettlementManage() {
       }
       return {
         settlement: settlementSum,
-        shipping: shippingSum,
+        shippingFee: shippingSum,
       };
     }
   }, [sums, seller]);
@@ -99,6 +103,28 @@ export default function AdminSettlementManage() {
       setSelectedMonthStr(dateToKoreanMonth(selectedDate));
     }
   }, [selectedDate]);
+
+  async function writeExcel(sumItems: SettlementSumItem[]) {
+    const copy = sumItems.map((item) => item);
+    const totalSumItem: SettlementSumItem = {
+      partnerName: "합계",
+      data: totalSum,
+      brn: "",
+      bankAccount: ""
+    }
+    copy.push(totalSumItem)
+    await writeXlsxFile(copy, {
+      schema,
+      headerStyle: {
+        fontWeight: "bold",
+        align: "center",
+      },
+      fileName: `정산합계_${loaderData.month}.xlsx`,
+      fontFamily: "맑은 고딕",
+      fontSize: 10,
+
+    });
+  }
 
   return (
     <PageLayout>
@@ -128,6 +154,11 @@ export default function AdminSettlementManage() {
           <Link to={`/admin/settlement-manage?month=${selectedMonthNumeral}`}>
             <GetListButton>조회하기</GetListButton>
           </Link>
+          {sums == null || sums.length == 0 ? <></> :
+            <DownloadButton onClick={async () => {
+              await writeExcel(sums);
+            }
+            }>엑셀 다운로드</DownloadButton>}
         </div>
 
         <SellerSelect seller={seller} setSeller={setSeller} />
@@ -174,7 +205,7 @@ export default function AdminSettlementManage() {
           <SettlementSumBar
             seller={seller ?? "all"}
             settlement={totalSum?.settlement}
-            shippingFee={totalSum?.shipping}
+            shippingFee={totalSum?.shippingFee}
           />
         </>
       ) : (
@@ -183,3 +214,66 @@ export default function AdminSettlementManage() {
     </PageLayout>
   );
 }
+
+const schema = [
+  {
+    column: "업체명",
+    type: String,
+    value: (item: SettlementSumItem) => item.partnerName,
+    width: 30,
+    wrap: true,
+  },
+  {
+    column: "사업자등록번호",
+    type: String,
+    value: (item: SettlementSumItem) => item.brn,
+    width: 30,
+    wrap: true,
+  },
+  {
+    column: "계좌번호",
+    type: String,
+    value: (item: SettlementSumItem) => item.bankAccount,
+    width: 30,
+    wrap: true,
+  },
+  {
+    column: "정산금액",
+    type: Number,
+    value: (item: SettlementSumItem) => {
+      if (item.partnerName == "합계") {
+        return item.data.settlement;
+      } else {
+        const sum = getAllSellerSettlementSum(item.data);
+        return sum.settlement;
+      }
+    },
+    width: 30,
+  },
+  {
+    column: "배송비 별도 정산",
+    type: Number,
+    value: (item: SettlementSumItem) => {
+      if (item.partnerName == "합계") {
+        return item.data.shippingFee;
+      } else {
+        const sum = getAllSellerSettlementSum(item.data);
+        return sum.shippingFee;
+      }
+    },
+    width: 30,
+  },
+  {
+    column: "최종 정산 금액",
+    type: Number,
+    value: (item: SettlementSumItem) => {
+      if (item.partnerName == "합계") {
+        return item.data.shippingFee + item.data.settlement;
+      } else {
+        const sum = getAllSellerSettlementSum(item.data);
+        return sum.shippingFee + sum.settlement
+      }
+    },
+    width: 30,
+  }
+];

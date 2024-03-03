@@ -86,6 +86,13 @@ const LongEditInputBox = styled.input`
   margin: 4px;
 `;
 
+const InfoText = styled.text`
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 6px 6px 6px 6px;
+`;
+
 const Button1 = styled.button`
   background-color: black;
   color: white;
@@ -193,7 +200,7 @@ export const action: ActionFunction = async ({ request }) => {
       });
 
       if (result == true) {
-        return json({ message: `추가가 등록되었습니다. 잠시 후 새로고침하여 확인해주세요.`  });
+        return json({ message: `추가가 등록되었습니다. 잠시 후 새로고침하여 확인해주세요.` });
       } else {
         throw Error(result);
       }
@@ -492,9 +499,9 @@ export default function AdminSettlementShare() {
       sale: saleEdit,
     };
 
-    const isValid = isSettlementItemValid(newSettlement);
-    if (!isValid) {
-      setEditErrorStr("잘못된 정산내역입니다. 내역을 확인해주세요.");
+    const checkValid = isSettlementItemValid(newSettlement);
+    if (checkValid !== "ok") {
+      setEditErrorStr("잘못된 정산내역입니다. " + checkValid);
       return null;
     }
 
@@ -972,7 +979,9 @@ export default function AdminSettlementShare() {
                 선택건 엑셀 다운로드
               </Button2>
             </div>
-            <div style={{ height: "40px" }} />
+            <div style={{ height: "20px" }} />
+            <InfoText>{`* 합배송 정산내역에 대한 배송비는 중복으로 적용되지 않습니다. (주문번호가 동일한 경우)`}</InfoText>
+            <div style={{ height: "20px" }} />
             <SettlementSumBar
               seller={seller ?? "all"}
               settlement={

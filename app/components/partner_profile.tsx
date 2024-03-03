@@ -12,6 +12,8 @@ export type PartnerProfile = {
   lofaFee: number;
   otherFee: number;
   shippingFee: number;
+  brn: string;
+  bankAccount: string;
 };
 
 const PartnerProfileBox = styled.div`
@@ -64,6 +66,9 @@ export function PartnerProfile({
   const [shippingFeeEdit, setShippingFeeEdit] = useState(
     partnerProfile.shippingFee
   );
+  const [brnEdit, setBrnEdit] = useState(partnerProfile.brn);
+  const [bankAccountEdit, setBankAccountEdit] = useState(partnerProfile.bankAccount);
+
   if (!isEdit) {
     return (
       <>
@@ -182,6 +187,14 @@ export function PartnerProfile({
               <div style={{ padding: "13px" }}>
                 {partnerProfile.shippingFee}원
               </div>
+            </ProfileGridItem>
+            <ProfileGridItem>
+              <div style={{ padding: "13px", width: "180px" }}>사업자등록번호</div>
+              <div style={{ padding: "13px" }}>{partnerProfile.brn}</div>
+            </ProfileGridItem>
+            <ProfileGridItem>
+              <div style={{ padding: "13px", width: "120px" }}>계좌번호</div>
+              <div style={{ padding: "13px" }}>{partnerProfile.bankAccount}</div>
             </ProfileGridItem>
           </ProfileGridContainer>
         </PartnerProfileBox>
@@ -308,6 +321,24 @@ export function PartnerProfile({
                 value={shippingFeeEdit}
                 onChange={(e) => setShippingFeeEdit(Number(e.target.value))}
                 required
+              />
+            </ProfileGridItem>
+            <ProfileGridItem>
+              <div style={{ padding: "13px", width: "180px" }}>사업자등록번호</div>
+              <InputBox
+                type="text"
+                name="brn"
+                value={brnEdit}
+                onChange={(e) => setBrnEdit(e.target.value)}
+              />
+            </ProfileGridItem>
+            <ProfileGridItem>
+              <div style={{ padding: "13px", width: "120px" }}>계좌번호</div>
+              <InputBox
+                type="text"
+                name="bankAccount"
+                value={bankAccountEdit}
+                onChange={(e) => setBankAccountEdit(e.target.value)}
               />
             </ProfileGridItem>
           </ProfileGridContainer>

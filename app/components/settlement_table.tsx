@@ -65,23 +65,32 @@ const TextBox = styled.div`
  * 파트너명, 옵션명을 제외하고 비어있는 값이 있으면 유효하지 않은 값으로 간주합니다.
  * @param item : SettlementItem
  * @returns
- *  유효할 경우 true, 아닐 경우 false
+ *  유효할 경우 "ok", 아닐 경우 어디가 문제인지 나타내는 string
  */
 export function isSettlementItemValid(item: SettlementItem) {
-  if (
-    item.seller == undefined ||
-    item.seller == "" ||
-    item.orderNumber == undefined ||
-    item.orderNumber == "" ||
-    item.productName == undefined ||
-    item.productName == "" ||
-    item.price == undefined ||
-    item.amount == undefined
-  ) {
-    return false;
-  } else {
-    return true;
+  if (item.seller == undefined ||
+    item.seller == "") {
+    return "판매처가 누락되었습니다."
   }
+
+  if (item.orderNumber == undefined ||
+    item.orderNumber == "") {
+    return "주문번호가 누락되었습니다."
+  }
+
+  if (item.productName == undefined ||
+    item.productName == "") {
+    return "상품명이 누락되었습니다."
+  }
+
+  if (item.price == undefined) {
+    return "판매단가가 누락되었습니다"
+  }
+
+  if (item.amount == undefined) {
+    return "수량이 누락되었습니다."
+  }
+  return "ok";
 }
 
 /**
@@ -135,7 +144,7 @@ export function setSettlementFee(
   item: SettlementItem,
   partnerProfile: PartnerProfile
 ) {
-  if(isShippingFeeApplied(item)){
+  if (isShippingFeeApplied(item)) {
     item.shippingFee = partnerProfile.shippingFee;
   } else {
     item.shippingFee = 0;
@@ -153,8 +162,8 @@ export function setSettlementFee(
 // 3PL출고(별이무역) -> 배송비 정산 x 
 // 외부출고 -> 배송비 정산 O 
 // 외부 추가출고 -> 배송비 정산 O  
-function isShippingFeeApplied(item: SettlementItem){
-  if(item.orderTag == "외부출고" || item.orderTag == "외부 추가출고") {
+function isShippingFeeApplied(item: SettlementItem) {
+  if (item.orderTag == "외부출고" || item.orderTag == "외부 추가출고") {
     return true;
   } else {
     return false;
@@ -177,7 +186,7 @@ function SettlementItem({
   }, [check]);
   const [isChecked, setIsChecked] = useState<boolean>(check);
   let saleString = "";
-  if(item.sale == undefined){
+  if (item.sale == undefined) {
     saleString = "0";
   } else if (item.sale > 0 && item.sale <= 1) {
     saleString = item.sale * 100 + "%";

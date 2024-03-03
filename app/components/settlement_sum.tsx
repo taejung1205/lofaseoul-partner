@@ -6,6 +6,8 @@ import { PossibleSellers } from "./seller";
 export type SettlementSumItem = {
   partnerName: string;
   data: any;
+  brn: string;
+  bankAccount: string;
 };
 
 const SettlementBox = styled.div`
@@ -157,11 +159,13 @@ export function SettlementSumTable({
   return (
     <SettlementBox>
       <SettlementHeader>
-        <TextBox style={{ width: "25%", textAlign: "left" }}>업체명</TextBox>
-        <TextBox style={{ width: "20%" }}>정산금액</TextBox>
-        <TextBox style={{ width: "20%" }}>배송비 별도 정산</TextBox>
-        <TextBox style={{ width: "20%" }}>최종 정산 금액</TextBox>
-        <TextBox style={{ width: "15%" }}></TextBox>
+        <TextBox style={{ width: "20%", textAlign: "left" }}>업체명</TextBox>
+        <TextBox style={{ width: "14%" }}>사업자등록번호</TextBox>
+        <TextBox style={{ width: "14%" }}>계좌번호</TextBox>
+        <TextBox style={{ width: "14%" }}>정산금액</TextBox>
+        <TextBox style={{ width: "14%" }}>배송비 별도 정산</TextBox>
+        <TextBox style={{ width: "14%" }}>최종 정산 금액</TextBox>
+        <TextBox style={{ width: "10%" }}></TextBox>
         <div style={{ width: "16px" }} />
       </SettlementHeader>
       <SettlementItemsBox>
@@ -175,26 +179,32 @@ export function SettlementSumTable({
           }
           return (
             <SettlementItemBox key={`SettlementSumItem-${index}`}>
-              <TextBox style={{ width: "25%", textAlign: "left" }}>
+              <TextBox style={{ width: "20%", textAlign: "left" }}>
                 {item.partnerName}
               </TextBox>
-              <TextBox style={{ width: "20%" }}>
+              <TextBox style={{ width: "14%" }}>
+                {item.brn}
+              </TextBox>
+              <TextBox style={{ width: "14%" }}>
+                {item.bankAccount}
+              </TextBox>
+              <TextBox style={{ width: "14%" }}>
                 {isAllSum ? allSettlement : item.data[`settlement_${seller}`]}
               </TextBox>
-              <TextBox style={{ width: "20%" }}>
+              <TextBox style={{ width: "14%" }}>
                 {isAllSum ? allShipping : item.data[`shipping_${seller}`]}
               </TextBox>
-              <TextBox style={{ width: "20%" }}>
+              <TextBox style={{ width: "14%" }}>
                 {isAllSum
                   ? allShipping + allSettlement
                   : item.data[`settlement_${seller}`] +
-                    item.data[`shipping_${seller}`]}
+                  item.data[`shipping_${seller}`]}
               </TextBox>
               <Link
                 to={`/admin/settlement-manage-detail?partner=${item.partnerName}&month=${monthNumeral}`}
-                style={{ width: "15%" }}
+                style={{ width: "10%" }}
               >
-                <TextBox style={{  color: "#1859FF" }}>
+                <TextBox style={{ color: "#1859FF" }}>
                   자세히보기
                 </TextBox>
               </Link>
