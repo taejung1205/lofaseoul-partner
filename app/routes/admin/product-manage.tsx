@@ -816,28 +816,28 @@ const schema = [
     column: "이미지등록(상세)",
     type: String,
     value: (item: LoadedProduct) =>
-      `big/${makeFileName(item.id, undefined, item.mainImageName.split('.').pop() ?? ".jpg","main")}`,
+      `big1/${makeFileName(item.id, undefined, item.mainImageName.split('.').pop() ?? ".jpg","main")}`,
     width: 20,
   },
   {
     column: "이미지등록(목록)",
     type: String,
     value: (item: LoadedProduct) =>
-    `big/${makeFileName(item.id, undefined, item.mainImageName.split('.').pop() ?? ".jpg", "main")}`,
+    `medium1/${makeFileName(item.id, undefined, item.mainImageName.split('.').pop() ?? ".jpg", "main")}`,
     width: 20,
   },
   {
     column: "이미지등록(작은목록)",
     type: String,
     value: (item: LoadedProduct) =>
-    `big/${makeFileName(item.id, undefined, item.mainImageName.split('.').pop() ?? ".jpg", "main")}`,
+    `tiny1/${makeFileName(item.id, undefined, item.mainImageName.split('.').pop() ?? ".jpg", "main")}`,
     width: 20,
   },
   {
     column: "이미지등록(축소)",
     type: String,
     value: (item: LoadedProduct) =>
-    `big/${makeFileName(item.id, undefined, item.thumbnailImageName.split('.').pop() ?? ".jpg", "thumbnail")}`,
+    `small1/${makeFileName(item.id, undefined, item.thumbnailImageName.split('.').pop() ?? ".jpg", "thumbnail")}`,
     width: 20,
   },
   {
