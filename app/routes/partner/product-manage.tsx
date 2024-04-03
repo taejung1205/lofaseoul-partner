@@ -158,6 +158,7 @@ export const action: ActionFunction = async ({ request }) => {
       if (result == null) {
         return {
           isWaiting: true,
+          isStartWaiting: true,
           progress: 0,
           status: "ok",
         };
@@ -620,6 +621,9 @@ export default function PartnerProductManage() {
   //결과로 오는 거 바탕으로 안내모달
   useEffect(() => {
     if (actionData !== undefined && actionData !== null) {
+      if(actionData.isStartWaiting){
+        setIsUploadInProgress(true);
+      }
       if (actionData.isWaiting) {
         setImageUploadProgress(actionData.progress);
         console.log("isWaiting status: ", actionData.status);
@@ -1132,7 +1136,6 @@ export default function PartnerProductManage() {
                 if (checkRequirements()) {
                   setIsLoading(true);
                   await submitProduct();
-                  setIsUploadInProgress(true);
                   setIsLoading(false);
                 }
               }}
