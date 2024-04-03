@@ -276,7 +276,7 @@ export default function AdminProductManage() {
     for (let i = 0; i < products.length; i++) {
       const mainFile = await downloadFile(
         products[i].mainImageURL,
-        makeFileName(products[i].id, products[i].mainImageName, "main")
+        makeFileName(products[i].id, undefined, products[i].mainImageName.split('.').pop() ?? ".jpg", "main")
       );
 
       zip.file(mainFile.name, mainFile);
@@ -285,7 +285,8 @@ export default function AdminProductManage() {
         products[i].thumbnailImageURL,
         makeFileName(
           products[i].id,
-          products[i].thumbnailImageName,
+          undefined,
+          products[i].thumbnailImageName.split('.').pop() ?? ".jpg",
           "thumbnail"
         )
       );
@@ -297,7 +298,8 @@ export default function AdminProductManage() {
           products[i].detailImageURLList[j],
           makeFileName(
             products[i].id,
-            products[i].detailImageNameList[j],
+            j,
+            products[i].detailImageNameList[j].split('.').pop() ?? ".jpg",
             "detail"
           )
         );
@@ -701,7 +703,7 @@ const schema = [
   {
     column: "상품분류 번호",
     type: Number,
-    value: (item: LoadedProduct) => 26,
+    value: (item: LoadedProduct) => 143,
     width: 20,
   },
   {
@@ -814,28 +816,28 @@ const schema = [
     column: "이미지등록(상세)",
     type: String,
     value: (item: LoadedProduct) =>
-      makeFileName(item.id, item.mainImageName, "main"),
+      makeFileName(item.id, undefined, item.mainImageName.split('.').pop() ?? ".jpg","main"),
     width: 20,
   },
   {
     column: "이미지등록(목록)",
     type: String,
     value: (item: LoadedProduct) =>
-      makeFileName(item.id, item.mainImageName, "main"),
+      makeFileName(item.id, undefined, item.mainImageName.split('.').pop() ?? ".jpg", "main"),
     width: 20,
   },
   {
     column: "이미지등록(작은목록)",
     type: String,
     value: (item: LoadedProduct) =>
-      makeFileName(item.id, item.mainImageName, "main"),
+      makeFileName(item.id, undefined, item.mainImageName.split('.').pop() ?? ".jpg", "main"),
     width: 20,
   },
   {
     column: "이미지등록(축소)",
     type: String,
     value: (item: LoadedProduct) =>
-      makeFileName(item.id, item.thumbnailImageName, "thumbnail"),
+      makeFileName(item.id, undefined, item.thumbnailImageName.split('.').pop() ?? ".jpg", "thumbnail"),
     width: 20,
   },
   {
@@ -844,7 +846,7 @@ const schema = [
     value: (item: LoadedProduct) => {
       let str = "";
       for (let i = 0; i < item.detailImageNameList.length; i++) {
-        str += makeFileName(item.id, item.detailImageNameList[i], "detail");
+        str += makeFileName(item.id, i, item.detailImageNameList[i].split('.').pop() ?? ".jpg", "detail");
         if (i < item.detailImageNameList.length - 1) {
           str += "|";
         }
@@ -869,10 +871,16 @@ const schema = [
 
 function makeFileName(
   id: string,
-  fileName: string,
+  index: number | undefined,
+  type: string,
   usage: "main" | "thumbnail" | "detail"
 ) {
-  return `${id}_${usage}_${fileName}`;
+  if(index){
+    return `${id}_${usage}_${index}.${type}`;
+  } else {
+    return `${id}_${usage}.${type}`;
+  }
+ 
 }
 
 async function downloadFile(url: string, fileName: string) {
