@@ -701,7 +701,7 @@ const schema = [
   {
     column: "상품분류 번호",
     type: Number,
-    value: (item: LoadedProduct) => 26,
+    value: (item: LoadedProduct) => 143,
     width: 20,
   },
   {
