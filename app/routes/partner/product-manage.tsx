@@ -737,7 +737,7 @@ export default function PartnerProductManage() {
     return () => clearInterval(queryIntervalId); //
   }, [isUploadInProgress]);
 
-  return (<div>WIP <br /> 공사중입니다.</div>)
+  // return (<div>WIP <br /> 공사중입니다.</div>)
   
   return (
     <>

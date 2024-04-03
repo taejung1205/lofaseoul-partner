@@ -132,7 +132,7 @@ export function AdminSidebar() {
       <SidebarButton name="출고 지연주문건" pathname="delayed-order" />
       <SidebarButton name="정산내역 공유" pathname="settlement-share" />
       <SidebarButton name="정산내역 관리" pathname="settlement-manage" />
-      <SidebarButton name="상품등록 관리" pathname="product-manage" />
+      <SidebarButton name="상품등록 관리 (WIP)" pathname="product-manage" />
       <SidebarButton name="발신함 / 수신함" pathname="alert" />
     </SidebarBox>
   );
@@ -204,7 +204,7 @@ export function PartnerSidebar() {
       <SidebarButton name="온라인배송완료내역" pathname="shipped-list" />
       <SidebarButton name="출고 지연주문건" pathname="delayed-order" />
       <SidebarButton name="정산내역" pathname="settlement-list" />
-      <SidebarButton name="상품 관리" pathname="product-manage" />
+      <SidebarButton name="상품 관리 (WIP)" pathname="product-manage" />
       <SidebarButton name="발신함 / 수신함" pathname="alert" />
     </SidebarBox>
   );
