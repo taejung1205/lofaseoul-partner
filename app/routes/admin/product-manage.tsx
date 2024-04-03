@@ -816,28 +816,28 @@ const schema = [
     column: "이미지등록(상세)",
     type: String,
     value: (item: LoadedProduct) =>
-      makeFileName(item.id, undefined, item.mainImageName.split('.').pop() ?? ".jpg","main"),
+      `big/${makeFileName(item.id, undefined, item.mainImageName.split('.').pop() ?? ".jpg","main")}`,
     width: 20,
   },
   {
     column: "이미지등록(목록)",
     type: String,
     value: (item: LoadedProduct) =>
-      makeFileName(item.id, undefined, item.mainImageName.split('.').pop() ?? ".jpg", "main"),
+    `big/${makeFileName(item.id, undefined, item.mainImageName.split('.').pop() ?? ".jpg", "main")}`,
     width: 20,
   },
   {
     column: "이미지등록(작은목록)",
     type: String,
     value: (item: LoadedProduct) =>
-      makeFileName(item.id, undefined, item.mainImageName.split('.').pop() ?? ".jpg", "main"),
+    `big/${makeFileName(item.id, undefined, item.mainImageName.split('.').pop() ?? ".jpg", "main")}`,
     width: 20,
   },
   {
     column: "이미지등록(축소)",
     type: String,
     value: (item: LoadedProduct) =>
-      makeFileName(item.id, undefined, item.thumbnailImageName.split('.').pop() ?? ".jpg", "thumbnail"),
+    `big/${makeFileName(item.id, undefined, item.thumbnailImageName.split('.').pop() ?? ".jpg", "thumbnail")}`,
     width: 20,
   },
   {
@@ -846,7 +846,7 @@ const schema = [
     value: (item: LoadedProduct) => {
       let str = "";
       for (let i = 0; i < item.detailImageNameList.length; i++) {
-        str += makeFileName(item.id, i, item.detailImageNameList[i].split('.').pop() ?? ".jpg", "detail");
+        str += `big/${makeFileName(item.id, i, item.detailImageNameList[i].split('.').pop() ?? ".jpg", "detail")}`;
         if (i < item.detailImageNameList.length - 1) {
           str += "|";
         }
