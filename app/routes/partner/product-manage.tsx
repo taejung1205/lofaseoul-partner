@@ -66,6 +66,17 @@ const ListButton = styled.button`
   cursor: pointer;
 `;
 
+const DetailButton = styled.button`
+font-size: 20px;
+background-color: black;
+width: 95px;
+height: 32px;
+color: white;
+border: none;
+font-weight: 700;
+cursor: pointer;
+`;
+
 const FileUploadButton = styled.label`
   font-size: 16px;
   background-color: darkgrey;
@@ -86,6 +97,22 @@ const FileUpload = styled.input`
   overflow: hidden;
   border: 0;
 `;
+
+const LoadedProductItem = styled.div`
+  display: flex;
+width: inherit;
+align-items: top;
+background-color: #ebebeb4d;
+padding: 10px;
+margin-bottom: 6px;
+line-height: 1;
+`;
+
+const LoadedProductThumbnail = styled.img`
+object-fit: contain;
+width: 100px;
+height: 100px;
+`
 
 export const action: ActionFunction = async ({ request }) => {
   const body = await request.formData();
@@ -1232,27 +1259,18 @@ export default function PartnerProductManage() {
         <div style={{ fontSize: "28px", padding: "16px" }}>
           신청한 상품 목록
         </div>
-        <Space h={10} />
         <div style={{ overflowY: "auto", width: "inherit" }}>
           {loadedProducts.map((item, index) => {
             return (
-              <div
+              <LoadedProductItem
                 key={`LoadedProductItems_${index}`}
-                style={{
-                  display: "flex",
-                  width: "inherit",
-                  alignItems: "center",
-                  backgroundColor: "#ebebeb4d",
-                  padding: "10px",
-                  marginTop: "8px",
-                  lineHeight: "1",
-                }}
               >
+                <LoadedProductThumbnail src={item.mainImageURL} />
                 <div
                   style={{
-                    width: "calc(100% - 200px)",
+                    width: "calc(100% - 320px)",
                     marginLeft: "10px",
-                    lineHeight: "16px",
+                    lineHeight: "28px",
                     textAlign: "left",
                   }}
                 >
@@ -1268,12 +1286,13 @@ export default function PartnerProductManage() {
                           ? "red"
                           : "blue",
                     width: "90px",
+                    lineHeight: "28px",
                   }}
                 >
                   {item.status}
                 </div>
                 <Space w={10} />
-                <ListButton
+                <DetailButton
                   onClick={async () => {
                     setIsLoading(true);
                     await loadAddProductModal(item);
@@ -1284,8 +1303,8 @@ export default function PartnerProductManage() {
                   }}
                 >
                   자세히
-                </ListButton>
-              </div>
+                </DetailButton>
+              </LoadedProductItem>
             );
           })}
         </div>
