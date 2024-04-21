@@ -1550,6 +1550,7 @@ export async function addProduct({ product }: { product: Product }) {
       refundExplanation: product.refundExplanation,
       serviceExplanation: product.serviceExplanation,
       status: product.status,
+      memo: product.memo
     });
   }
 

@@ -24,31 +24,55 @@ import { requireUser } from "~/services/session.server";
 const EditInputBox = styled.input`
   font-size: 20px;
   font-weight: 700;
-  width: 250px;
-  margin: 4px;
+  width: 360px;
+  height: 34px;
+  margin-top: 10px;
+  margin-bottom: 10px;
+  border: 1px solid black;
+`;
+
+const InfoBox = styled.div`
+  background-color: #f2f2f2;
+  padding-top: 20px;
+  padding-left: 25px;
+  padding-right: 25px;
+  padding-bottom: 20px;
+  text-align: left;
+  size: 18px;
+  line-height: 26px;
 `;
 
 const LongEditInputBox = styled(EditInputBox)`
-  width: 568px;
-`;
-
-const LongEditInputBox2 = styled(EditInputBox)`
-  width: 480px;
+  width: 800px;
 `;
 
 const EditTextareaBox = styled.textarea`
-  font-size: 16px;
+  font-size: 20px;
   font-weight: 400;
   width: 568px;
-  margin: 4px;
+  margin-top: 10px;
+  margin-bottom: 10px;
   resize: vertical;
+  border: 1px solid black;
 `;
 const ListButton = styled.button`
   font-size: 16px;
   background-color: black;
   width: 60px;
   height: 32px;
-  margin: 4px;
+  margin-top: 10px;
+  margin-bottom: 10px;
+  color: white;
+  border: none;
+  font-weight: 700;
+  cursor: pointer;
+`;
+
+const DetailButton = styled.button`
+  font-size: 20px;
+  background-color: black;
+  width: 95px;
+  height: 32px;
   color: white;
   border: none;
   font-weight: 700;
@@ -57,10 +81,9 @@ const ListButton = styled.button`
 
 const FileUploadButton = styled.label`
   font-size: 16px;
-  background-color: darkgrey;
-  width: 100px;
+  background-color: black;
+  width: 60px;
   height: 32px;
-  margin: 4px;
   color: white;
   border: none;
   font-weight: 700;
@@ -76,6 +99,64 @@ const FileUpload = styled.input`
   border: 0;
 `;
 
+const LoadedProductItem = styled.div`
+  display: flex;
+  width: inherit;
+  align-items: top;
+  background-color: #ebebeb4d;
+  padding: 10px;
+  margin-bottom: 6px;
+  line-height: 1;
+`;
+
+const LoadedProductThumbnail = styled.img`
+  object-fit: contain;
+  width: 100px;
+  height: 100px;
+`;
+
+const LabelText = styled.div`
+  font-size: 24px;
+  display: flex;
+  justify-content: left;
+  width: 200px;
+  font-weight: 700;
+  line-height: 35px;
+`;
+
+const HintText = styled.div`
+  font-size: 18px;
+  color: #acacac;
+  line-height: 26px;
+  font-weight: 700;
+  text-align: left;
+`;
+
+const PreviewImage = styled.img`
+  width: 166px;
+  height: 168px;
+  object-fit: contain;
+  border: 1px solid black;
+  background-color: #f8f8f8;
+  color: black;
+  margin-top: 10px;
+`;
+
+const PreviewImageAlt = styled.div`
+  width: 166px;
+  height: 168px;
+  border: 1px solid black;
+  background-color: #f8f8f8;
+  text-align: center;
+  align-items: center;
+  justify-content: center;
+  color: #9d9d9d;
+  font-size: 20px;
+  font-weight: 700;
+  display: flex;
+  margin-top: 10px;
+`;
+
 export const action: ActionFunction = async ({ request }) => {
   const body = await request.formData();
   const actionType = body.get("actionType")?.toString();
@@ -88,6 +169,7 @@ export const action: ActionFunction = async ({ request }) => {
     const sellerPrice = Number(body.get("sellerPrice")?.toString());
     const isUsingOption = body.get("isUsingOption")?.toString() == "true";
     const option = body.get("option")?.toString();
+    const memo = body.get("memo")?.toString();
     const refundExplanation = body.get("refundExplanation")?.toString();
     const serviceExplanation = body.get("serviceExplanation")?.toString();
 
@@ -112,6 +194,7 @@ export const action: ActionFunction = async ({ request }) => {
       sellerPrice !== undefined &&
       isUsingOption !== undefined &&
       option !== undefined &&
+      memo !== undefined &&
       refundExplanation !== undefined &&
       serviceExplanation !== undefined &&
       mainImageFile instanceof File &&
@@ -126,6 +209,7 @@ export const action: ActionFunction = async ({ request }) => {
         sellerPrice: sellerPrice,
         isUsingOption: isUsingOption,
         option: option,
+        memo: memo,
         refundExplanation: refundExplanation,
         serviceExplanation: serviceExplanation,
         mainImageFile: mainImageFile,
@@ -248,22 +332,26 @@ export default function PartnerProductManage() {
   const [productName, setProductName] = useState<string>(""); //상품명 (필수)
   const [englishProductName, setEnglishProductName] = useState<string>(""); //영문상품명
   const [explanation, setExplanation] = useState<string>(""); //상품 설명
-  const [keywordList, setKeywordList] = useState<string[]>([]); //검색어 설정
+  const [keyword, setKeyword] = useState<string>(); //검색어 설정
   const [sellerPrice, setSellerPrice] = useState<number>(0); //판매가 (필수)
   const [isUsingOption, setIsUsingOption] = useState<boolean>(false); // 옵션 사용 여부
-  const [optionList, setOptionList] = useState<string[]>([]); //옵션 목록
+  const [optionCategoryList, setOptionCategoryList] = useState<string[]>([""]); //옵션 카테고리 목록
+  const [optionDetailList, setOptionDetailList] = useState<string[]>([""]); //옵션 세부항목 목록
   const [mainImageFile, setMainImageFile] = useState<File>(); //메인 이미지 (필수)
   const [thumbnailImageFile, setThumbnailImageFile] = useState<File>(); //썸네일 이미지 (필수)
   const [detailImageFileList, setDetailImageFileList] = useState<
     (File | undefined)[]
-  >([]); //상세 이미지 (최소 1개 필수)
+  >(Array(8).fill(undefined)); //상세 이미지 (최소 1개 필수)
+  const [memo, setMemo] = useState<string>(""); // 옵션 별 가격 설정 및 관리자 전달 메모
   const [refundExplanation, setRefundExplanation] = useState<string>(""); //교환/반품안내
   const [serviceExplanation, setServiceExplanation] = useState<string>(""); //서비스문의/안내
 
   //모달 열림 여부
-  const [isAddProductModalOpened, setIsAddProductModalOpened] =
-    useState<boolean>(false);
   const [isNoticeModalOpened, setIsNoticeModalOpened] =
+    useState<boolean>(false);
+
+  // 상품 추가 메뉴가 열렸는지
+  const [isAddProductMenuOpened, setIsAddProductMenuOpened] =
     useState<boolean>(false);
 
   //기존 상품 목록으로 창을 연건지
@@ -292,51 +380,50 @@ export default function PartnerProductManage() {
   //로딩 중
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
+  //현재 보고 있는 신청한 상품 목록 페이지 번호
+  //유저한테 보이는 값은 여기서 +1
+  const [pageIndex, setPageIndex] = useState<number>(0);
+
   const loaderData = useLoaderData();
   const actionData = useActionData();
   const formRef = useRef<HTMLFormElement>(null);
   const submit = useSubmit();
 
-  function addKeyword() {
-    setKeywordList((prev) => [...prev, ""]);
-  }
-
-  function editKeyword(index: number, val: string) {
-    const newKeywordList = keywordList.map((item, i) => {
-      if (i == index) {
-        return val;
-      } else {
-        return item;
-      }
-    });
-    setKeywordList(newKeywordList);
-  }
-
-  function deleteKeyword(index: number) {
-    const first = keywordList.slice(0, index);
-    const last = keywordList.slice(index + 1);
-    setKeywordList(first.concat(last));
-  }
-
   function addOption() {
-    setOptionList((prev) => [...prev, ""]);
+    setOptionCategoryList((prev) => [...prev, ""]);
+    setOptionDetailList((prev) => [...prev, ""]);
   }
 
-  function editOption(index: number, val: string) {
-    const newOptionList = optionList.map((item, i) => {
+  function editOptionCategory(index: number, val: string) {
+    const newOptionCategoryList = optionCategoryList.map((item, i) => {
       if (i == index) {
         return val;
       } else {
         return item;
       }
     });
-    setOptionList(newOptionList);
+    setOptionCategoryList(newOptionCategoryList);
+  }
+
+  function editOptionDetail(index: number, val: string) {
+    const newOptionDetailList = optionDetailList.map((item, i) => {
+      if (i == index) {
+        return val;
+      } else {
+        return item;
+      }
+    });
+    setOptionDetailList(newOptionDetailList);
   }
 
   function deleteOption(index: number) {
-    const first = optionList.slice(0, index);
-    const last = optionList.slice(index + 1);
-    setOptionList(first.concat(last));
+    const first1 = optionCategoryList.slice(0, index);
+    const last1 = optionCategoryList.slice(index + 1);
+    setOptionCategoryList(first1.concat(last1));
+
+    const first2 = optionDetailList.slice(0, index);
+    const last2 = optionDetailList.slice(index + 1);
+    setOptionDetailList(first2.concat(last2));
   }
 
   function addDetailImage() {
@@ -404,7 +491,7 @@ export default function PartnerProductManage() {
       return false;
     }
 
-    if (detailImageFileList.length == 0) {
+    if (isDetailImageListEmpty()) {
       setNotice("상세 페이지 이미지를 최소 1개 등록해야 합니다.");
       setIsNoticeModalOpened(true);
       return false;
@@ -416,65 +503,88 @@ export default function PartnerProductManage() {
       return false;
     }
 
-    for (let i = 0; i < keywordList.length; i++) {
-      if (keywordList[i].length == 0) {
+    //검색어 설정 검사
+    // for (let i = 0; i < keywordList.length; i++) {
+    //   if (keywordList[i].length == 0) {
+    //     setNotice(
+    //       "빈 검색어가 있습니다. 해당 항목을 삭제하거나 내용을 입력해주세요."
+    //     );
+    //     setIsNoticeModalOpened(true);
+    //     return false;
+    //   }
+
+    //   if (keywordList[i].includes(",")) {
+    //     setNotice("쉼표(,)는 검색어에 들어갈 수 없습니다.");
+    //     setIsNoticeModalOpened(true);
+    //     return false;
+    //   }
+    // }
+
+    for (let i = 0; i < optionCategoryList.length; i++) {
+      if (
+        optionCategoryList[i].length == 0 &&
+        optionDetailList[i].length != 0
+      ) {
         setNotice(
-          "빈 검색어가 있습니다. 해당 항목을 삭제하거나 내용을 입력해주세요."
+          "옵션 카테고리가 빈 항목이 있습니다. 해당 항목을 삭제하거나 내용을 입력해주세요."
         );
         setIsNoticeModalOpened(true);
         return false;
       }
 
-      if (keywordList[i].includes(",")) {
-        setNotice("쉼표(,)는 검색어에 들어갈 수 없습니다.");
-        setIsNoticeModalOpened(true);
-        return false;
-      }
-    }
-
-    if (isUsingOption && optionList.length == 0) {
-      setNotice("옵션을 사용하고자 할 경우, 옵션을 최소 1개 입력해주세요.");
-      setIsNoticeModalOpened(true);
-      return false;
-    }
-
-    for (let i = 0; i < optionList.length; i++) {
-      if (optionList[i].length == 0) {
+      if (
+        optionCategoryList[i].length != 0 &&
+        optionDetailList[i].length == 0
+      ) {
         setNotice(
-          "빈 옵션이 있습니다. 해당 항목을 삭제하거나 내용을 입력해주세요."
+          "옵션 세부항목이 빈 항목이 있습니다. 해당 항목을 삭제하거나 내용을 입력해주세요."
         );
         setIsNoticeModalOpened(true);
         return false;
       }
 
-      if (optionList[i].includes("//")) {
+      if (
+        optionDetailList[i].includes("//") ||
+        optionCategoryList[i].includes("//")
+      ) {
         setNotice("'//' 문자열은 옵션에 들어갈 수 없습니다.");
         setIsNoticeModalOpened(true);
         return false;
       }
 
-      const openBrace = optionList[i].indexOf("{");
-      const closeBrace = optionList[i].indexOf("}");
-
-      if (openBrace <= 0 || closeBrace <= 0 || openBrace >= closeBrace) {
-        setNotice("옵션을 양식에 맞춰 입력해주세요.");
-        setIsNoticeModalOpened(true);
-        return false;
-      }
-    }
-
-    for (let i = 0; i < detailImageFileList.length; i++) {
       if (
-        detailImageFileList[i] == undefined ||
-        typeof detailImageFileList[i] == "undefined"
+        optionDetailList[i].includes("{") ||
+        optionCategoryList[i].includes("{") ||
+        optionDetailList[i].includes("}") ||
+        optionCategoryList[i].includes("}")
       ) {
-        setNotice(
-          "빈 상세 페이지 이미지가 있습니다. 해당 항목을 삭제하거나 파일을 등록해주세요."
-        );
+        setNotice("중괄호 ({, }) 문자열은 옵션에 들어갈 수 없습니다.");
+        setIsNoticeModalOpened(true);
+        return false;
+      }
+
+      if (
+        optionDetailList[i].includes("|") ||
+        optionCategoryList[i].includes("|")
+      ) {
+        setNotice("'|' 문자열은 옵션에 들어갈 수 없습니다.");
         setIsNoticeModalOpened(true);
         return false;
       }
     }
+
+    // for (let i = 0; i < detailImageFileList.length; i++) {
+    //   if (
+    //     detailImageFileList[i] == undefined ||
+    //     typeof detailImageFileList[i] == "undefined"
+    //   ) {
+    //     setNotice(
+    //       "빈 상세 페이지 이미지가 있습니다. 해당 항목을 삭제하거나 파일을 등록해주세요."
+    //     );
+    //     setIsNoticeModalOpened(true);
+    //     return false;
+    //   }
+    // }
 
     return true;
   }
@@ -498,20 +608,26 @@ export default function PartnerProductManage() {
     const newExplanation = replaceLinebreak(explanation);
     const newRefundExplanation = replaceLinebreak(refundExplanation);
     const newServiceExplanation = replaceLinebreak(serviceExplanation);
-    let newKeyword = "";
-    for (let i = 0; i < keywordList.length; i++) {
-      newKeyword += keywordList[i];
-      if (i < keywordList.length - 1) {
-        newKeyword += ",";
-      }
-    }
     let newOption = "";
-    for (let i = 0; i < optionList.length; i++) {
-      newOption += optionList[i];
-      if (i < optionList.length - 1) {
+    for (let i = 0; i < optionCategoryList.length; i++) {
+      if (
+        optionCategoryList[i].length == 0 &&
+        optionDetailList[i].length == 0
+      ) {
+        continue;
+      }
+      console.log(optionCategoryList[i]);
+      console.log(optionDetailList[i]);
+      let parsedOption = optionCategoryList[i];
+      parsedOption += "{";
+      parsedOption += replaceComma(optionDetailList[i]);
+      parsedOption += "}";
+      newOption += parsedOption;
+      if (i < optionCategoryList.length - 1) {
         newOption += "//";
       }
     }
+    console.log(newOption);
 
     const formData: any = new FormData(formRef.current ?? undefined);
     if (isLoadedProduct) {
@@ -524,16 +640,19 @@ export default function PartnerProductManage() {
     formData.set("productName", newProductName);
     formData.set("englishProductName", newEnglishProductName);
     formData.set("explanation", newExplanation);
-    formData.set("keyword", newKeyword);
+    formData.set("keyword", keyword);
     formData.set("sellerPrice", sellerPrice.toString());
     formData.set("isUsingOption", isUsingOption.toString());
     formData.set("option", newOption);
+    formData.set("memo", memo);
     formData.set("refundExplanation", newRefundExplanation);
     formData.set("serviceExplanation", newServiceExplanation);
     formData.set("mainImageFile", mainImageFile);
     formData.set("thumbnailImageFile", thumbnailImageFile);
     for (let i = 0; i < detailImageFileList.length; i++) {
-      formData.append("detailImageFileList", detailImageFileList[i]);
+      if (detailImageFileList[i]) {
+        formData.append("detailImageFileList", detailImageFileList[i]);
+      }
     }
 
     submit(formData, { method: "post", encType: "multipart/form-data" });
@@ -565,17 +684,23 @@ export default function PartnerProductManage() {
       )
     );
     setExplanation(replaceBr(product.explanation));
-    if (product.keyword.length == 0) {
-      setKeywordList([]);
-    } else {
-      setKeywordList(product.keyword.split(","));
-    }
+    setKeyword(product.keyword);
     setSellerPrice(product.sellerPrice);
     setIsUsingOption(product.isUsingOption);
     if (product.option.length == 0) {
-      setOptionList([]);
+      setOptionCategoryList([""]);
+      setOptionDetailList([""]);
     } else {
-      setOptionList(product.option.split("//"));
+      const catList = [];
+      const detList = [];
+      const fullList = product.option.split("//");
+      for (let i = 0; i < fullList.length; i++) {
+        const list = fullList[i].split("{");
+        catList.push(list[0]);
+        detList.push(replaceVerticalBar(list[1].split("}")[0]));
+      }
+      setOptionCategoryList(catList);
+      setOptionDetailList(detList);
     }
 
     const mainFile = await downloadFile(
@@ -586,18 +711,17 @@ export default function PartnerProductManage() {
       product.thumbnailImageURL,
       product.thumbnailImageName
     );
-    const detailFileList = [];
+    const detailFileList = Array(8).fill(undefined);
     for (let i = 0; i < product.detailImageURLList.length; i++) {
-      detailFileList.push(
-        await downloadFile(
-          product.detailImageURLList[i],
-          product.detailImageNameList[i]
-        )
+      detailFileList[i] = await downloadFile(
+        product.detailImageURLList[i],
+        product.detailImageNameList[i]
       );
     }
     setMainImageFile(mainFile);
     setThumbnailImageFile(thumbnailFile);
     setDetailImageFileList(detailFileList);
+    setMemo(product.memo);
     setRefundExplanation(replaceBr(product.refundExplanation));
     setServiceExplanation(replaceBr(product.serviceExplanation));
   }
@@ -607,21 +731,32 @@ export default function PartnerProductManage() {
     setProductName("");
     setEnglishProductName("");
     setExplanation("");
-    setKeywordList([]);
+    setKeyword("");
     setSellerPrice(0);
     setIsUsingOption(false);
-    setOptionList([]);
+    setOptionCategoryList([""]);
+    setOptionDetailList([""]);
     setMainImageFile(undefined);
     setThumbnailImageFile(undefined);
-    setDetailImageFileList([]);
+    setDetailImageFileList(Array(8).fill(undefined));
+    setMemo("");
     setRefundExplanation("");
     setServiceExplanation("");
+  }
+
+  function isDetailImageListEmpty() {
+    for (let i = 0; i < detailImageFileList.length; i++) {
+      if (detailImageFileList[i]) {
+        return false;
+      }
+    }
+    return true;
   }
 
   //결과로 오는 거 바탕으로 안내모달
   useEffect(() => {
     if (actionData !== undefined && actionData !== null) {
-      if(actionData.isStartWaiting){
+      if (actionData.isStartWaiting) {
         setIsUploadInProgress(true);
       }
       if (actionData.isWaiting) {
@@ -636,7 +771,7 @@ export default function PartnerProductManage() {
         if (actionData.status == "ok") {
           clearInterval(queryIntervalId);
           setImageUploadProgress(0);
-          setIsAddProductModalOpened(false);
+          setIsAddProductMenuOpened(false);
         }
       }
     }
@@ -673,6 +808,13 @@ export default function PartnerProductManage() {
         setMainImageFile(undefined);
         return;
       }
+
+      const preview = document.getElementById(
+        "mainImagePreview"
+      ) as HTMLImageElement;
+      if (preview) {
+        preview.src = URL.createObjectURL(mainImageFile);
+      }
     }
   }, [mainImageFile]);
 
@@ -696,12 +838,22 @@ export default function PartnerProductManage() {
         setThumbnailImageFile(undefined);
         return;
       }
+
+      const preview = document.getElementById(
+        "thumbnailImagePreview"
+      ) as HTMLImageElement;
+      if (preview) {
+        preview.src = URL.createObjectURL(thumbnailImageFile);
+      }
     }
   }, [thumbnailImageFile]);
 
   useEffect(() => {
     for (let i = 0; i < detailImageFileList.length; i++) {
-      if (detailImageFileList[i] !== undefined) {
+      if (
+        detailImageFileList[i] !== undefined &&
+        detailImageFileList[i] !== null
+      ) {
         const file: any = detailImageFileList[i];
         if (file.size > 50 * 1024 ** 2) {
           setNotice("업로드할 이미지의 크기는 50MB를 넘을 수 없습니다.");
@@ -717,6 +869,15 @@ export default function PartnerProductManage() {
           setIsNoticeModalOpened(true);
           editDetailImage(i, undefined);
           return;
+        }
+
+        const preview = document.getElementById(
+          `detailImagePreview_${i}`
+        ) as HTMLImageElement;
+        if (preview) {
+          preview.src = URL.createObjectURL(detailImageFileList[i]!);
+        } else {
+          console.log("no");
         }
       }
     }
@@ -742,423 +903,10 @@ export default function PartnerProductManage() {
   }, [isUploadInProgress]);
 
   // return (<div>WIP <br /> 공사중입니다.</div>)
-  
+
   return (
     <>
       <LoadingOverlay visible={isLoading} overlayBlur={2} />
-
-      {/* 상품 입력을 위한 모달 */}
-      <Modal
-        opened={isAddProductModalOpened}
-        onClose={() => setIsAddProductModalOpened(false)}
-        size={"xl"}
-        withCloseButton={false}
-        closeOnClickOutside={false}
-      >
-        <div
-          style={{
-            justifyContent: "center",
-            textAlign: "center",
-            fontWeight: "700",
-            fontSize: "16px",
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-            }}
-          >
-            <div
-              style={{
-                width: "160px",
-                display: "flex",
-                justifyContent: "center",
-              }}
-            >
-              상품명<div style={{ width: "10px", color: "red" }}>*</div>
-            </div>
-            <LongEditInputBox
-              type="text"
-              name="productName"
-              value={productName}
-              onChange={(e) => setProductName(e.target.value)}
-              required
-            />
-          </div>
-
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-            }}
-          >
-            <div style={{ width: "160px" }}>영문 상품명</div>
-            <LongEditInputBox
-              type="text"
-              name="englishProductName"
-              value={englishProductName}
-              onChange={(e) => setEnglishProductName(e.target.value)}
-              required
-            />
-          </div>
-
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-            }}
-          >
-            <div
-              style={{
-                width: "160px",
-                display: "flex",
-                justifyContent: "center",
-              }}
-            >
-              상품 간략설명<div style={{ width: "10px", color: "red" }}>*</div>
-            </div>
-            <EditTextareaBox
-              name="explanation"
-              value={explanation}
-              onChange={(e) => setExplanation(e.target.value)}
-              rows={3}
-              required
-            />
-          </div>
-
-          <div
-            style={{
-              display: "flex",
-            }}
-          >
-            <div style={{ width: "160px", marginTop: "8px" }}>검색어 설정</div>
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "start",
-              }}
-            >
-              {keywordList.map((item, index) => {
-                return (
-                  <div
-                    key={`KeywordItem-${index}`}
-                    style={{
-                      display: "flex",
-                      justifyContent: "start",
-                    }}
-                  >
-                    <EditInputBox
-                      value={keywordList[index]}
-                      onChange={(e) => editKeyword(index, e.target.value)}
-                      placeholder="검색어"
-                    />
-                    <Space w={10} />
-                    <ListButton onClick={() => deleteKeyword(index)}>
-                      삭제
-                    </ListButton>
-                  </div>
-                );
-              })}
-              <ListButton
-                onClick={() => {
-                  addKeyword();
-                }}
-              >
-                추가
-              </ListButton>
-            </div>
-          </div>
-
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-            }}
-          >
-            <div style={{ width: "160px" }}>판매가</div>
-            <EditInputBox
-              name="sellerPrice"
-              value={sellerPrice}
-              onChange={(e) => {
-                if (!Number.isNaN(Number(e.target.value))) {
-                  setSellerPrice(Number(e.target.value));
-                }
-              }}
-              required
-            />
-            <div style={{ width: "160px" }}>옵션 사용</div>
-            <Checkbox
-              name="isUsingOption"
-              checked={isUsingOption}
-              onChange={(event) => {
-                setIsUsingOption(event.currentTarget.checked);
-                if (!isUsingOption) {
-                  setOptionList([]);
-                }
-              }}
-              sx={{
-                marginTop: "4px",
-              }}
-            />
-          </div>
-
-          {isUsingOption ? (
-            <div
-              style={{
-                display: "flex",
-              }}
-            >
-              <div style={{ width: "160px", marginTop: "8px" }}>옵션 입력</div>
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  justifyContent: "start",
-                }}
-              >
-                {optionList.map((item, index) => {
-                  return (
-                    <div
-                      key={`OptionItem-${index}`}
-                      style={{
-                        display: "flex",
-                        justifyContent: "start",
-                      }}
-                    >
-                      <LongEditInputBox2
-                        value={optionList[index]}
-                        onChange={(e) => editOption(index, e.target.value)}
-                        placeholder="옵션명{옵션1|옵션2|옵션3|...}"
-                      />
-                      <Space w={10} />
-                      <ListButton onClick={() => deleteOption(index)}>
-                        삭제
-                      </ListButton>
-                    </div>
-                  );
-                })}
-                {optionList.length > 0 ? (
-                  <div style={{ fontSize: "16px", textAlign: "start" }}>
-                    {"예시) 컬러{빨강|파랑|초록}"}
-                  </div>
-                ) : (
-                  <></>
-                )}
-
-                <ListButton
-                  onClick={() => {
-                    addOption();
-                  }}
-                >
-                  추가
-                </ListButton>
-              </div>
-            </div>
-          ) : (
-            <></>
-          )}
-
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-            }}
-          >
-            <div
-              style={{
-                width: "160px",
-                display: "flex",
-                justifyContent: "center",
-              }}
-            >
-              상품 이미지<div style={{ width: "10px", color: "red" }}>*</div>
-            </div>
-            <FileUpload
-              type="file"
-              id="uploadMainImage"
-              accept=".png,.jpg,.jpeg,.svg"
-              onChange={(e) => {
-                if (e.target.files) {
-                  setMainImageFile(e.target.files[0]);
-                }
-              }}
-            />
-            <FileUploadButton htmlFor="uploadMainImage">
-              파일 선택
-            </FileUploadButton>
-            <div style={{ fontSize: "12px", fontWeight: "400" }}>
-              {mainImageFile?.name}
-            </div>
-          </div>
-
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-            }}
-          >
-            <div
-              style={{
-                width: "160px",
-                display: "flex",
-                justifyContent: "center",
-              }}
-            >
-              마우스 호버 이미지
-              <div style={{ width: "10px", color: "red" }}>*</div>
-            </div>
-            <FileUpload
-              type="file"
-              id="uploadThumbnailImage"
-              accept=".png,.jpg,.jpeg,.svg"
-              onChange={(e) => {
-                if (e.target.files) {
-                  setThumbnailImageFile(e.target.files[0]);
-                }
-              }}
-            />
-            <FileUploadButton htmlFor="uploadThumbnailImage">
-              파일 선택
-            </FileUploadButton>
-            <div style={{ fontSize: "12px", fontWeight: "400" }}>
-              {thumbnailImageFile?.name}
-            </div>
-          </div>
-
-          <div
-            style={{
-              display: "flex",
-            }}
-          >
-            <div
-              style={{
-                width: "160px",
-                display: "flex",
-                justifyContent: "center",
-                marginTop: "8px",
-              }}
-            >
-              상세 페이지 이미지
-              <div style={{ width: "10px", color: "red" }}>*</div>
-            </div>
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "start",
-              }}
-            >
-              {detailImageFileList.map((item, index) => {
-                return (
-                  <div
-                    key={`DetailImageItem_${index}`}
-                    style={{
-                      display: "flex",
-                      justifyContent: "start",
-                      alignItems: "center",
-                    }}
-                  >
-                    <FileUpload
-                      type="file"
-                      id={`uploadDetailImage_${index}`}
-                      accept=".png,.jpg,.jpeg,.svg"
-                      onChange={(e) => {
-                        if (e.target.files) {
-                          editDetailImage(index, e.target.files[0]);
-                        }
-                      }}
-                    />
-                    <FileUploadButton htmlFor={`uploadDetailImage_${index}`}>
-                      파일 선택
-                    </FileUploadButton>
-                    <div style={{ fontSize: "12px", fontWeight: "400" }}>
-                      {detailImageFileList[index]?.name}
-                    </div>
-                    <Space w={10} />
-                    <ListButton onClick={() => deleteDetailImage(index)}>
-                      삭제
-                    </ListButton>
-                  </div>
-                );
-              })}
-              <ListButton
-                onClick={() => {
-                  addDetailImage();
-                }}
-              >
-                추가
-              </ListButton>
-            </div>
-          </div>
-
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-            }}
-          >
-            <div style={{ width: "160px" }}>교환/반품 안내</div>
-            <EditTextareaBox
-              name="refundExplanation"
-              value={refundExplanation}
-              onChange={(e) => setRefundExplanation(e.target.value)}
-              rows={2}
-              required
-            />
-          </div>
-
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-            }}
-          >
-            <div style={{ width: "160px" }}>서비스 문의/안내</div>
-            <EditTextareaBox
-              name="serviceExplanation"
-              value={serviceExplanation}
-              onChange={(e) => setServiceExplanation(e.target.value)}
-              rows={2}
-              required
-            />
-          </div>
-
-          <div style={{ height: "20px" }} />
-          <div style={{ display: "flex", justifyContent: "center" }}>
-            <ModalButton onClick={() => setIsAddProductModalOpened(false)}>
-              {isLoadedProduct ? "닫기" : "취소"}
-            </ModalButton>
-            <ModalButton
-              type="submit"
-              onClick={async () => {
-                if (checkRequirements()) {
-                  setIsLoading(true);
-                  await submitProduct();
-                  setIsLoading(false);
-                }
-              }}
-            >
-              {isLoadedProduct ? "수정" : "추가"}
-            </ModalButton>
-            {isLoadedProduct ? (
-              <ModalButton
-                type="submit"
-                onClick={async () => {
-                  setIsLoading(true);
-                  await deleteProduct();
-                  setIsLoading(false);
-                }}
-              >
-                삭제
-              </ModalButton>
-            ) : (
-              <></>
-            )}
-          </div>
-        </div>
-      </Modal>
 
       {/* 안내메세지를 위한 모달 */}
       <BasicModal
@@ -1197,79 +945,531 @@ export default function PartnerProductManage() {
         </div>
       </BasicModal>
 
-      <PageLayout>
-        <BlackButton
-          onClick={() => {
-            if (isLoadedProduct) {
-              resetAddProductModal();
-              setIsLoadedProduct(false);
-            }
-            setIsAddProductModalOpened(true);
-          }}
-        >
-          상품 추가
-        </BlackButton>
-        <div style={{ fontSize: "28px", padding: "16px" }}>
-          신청한 상품 목록
-        </div>
-        <Space h={10} />
-        <div style={{ overflowY: "auto", width: "inherit" }}>
-          {loadedProducts.map((item, index) => {
-            return (
+      {isAddProductMenuOpened ? (
+        /* 상품 입력 시의 화면 */
+        <PageLayout>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              width: "100%",
+            }}
+          >
+            <div style={{ display: "flex" }}>
+              <img
+                src="/images/icon_back.png"
+                onClick={() => setIsAddProductMenuOpened(false)}
+                style={{
+                  cursor: "pointer",
+                  width: "40px",
+                  objectFit: "contain",
+                }}
+              />
+              <Space w={15} />
+              <div style={{ fontSize: "24px", lineHeight: "35px" }}>
+                상품 추가
+              </div>
+            </div>
+            <div style={{display: "flex"}}>
+              <img
+                src="/images/icon_trash.svg"
+                style={{cursor: "pointer"}}
+                onClick={async () => {
+                  if(isLoadedProduct){
+                    setIsLoading(true);
+                    await deleteProduct();
+                    setIsLoading(false);
+                  } else {
+                    setIsAddProductMenuOpened(false);
+                  }
+                }}
+              />
+              <Space w={20} />
+              {/* <img src="/images/icon_save.svg" /> */}
+            </div>
+          </div>
+          <Space h={40} />
+          <div
+            style={{
+              justifyContent: "center",
+              textAlign: "center",
+              fontWeight: "700",
+              fontSize: "16px",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+              }}
+            >
+              <LabelText>
+                상품명<div style={{ width: "10px", color: "red" }}>*</div>
+              </LabelText>
+              <LongEditInputBox
+                type="text"
+                name="productName"
+                value={productName}
+                onChange={(e) => setProductName(e.target.value)}
+                required
+              />
+            </div>
+
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+              }}
+            >
+              <LabelText>영문 상품명</LabelText>
+              <LongEditInputBox
+                type="text"
+                name="englishProductName"
+                value={englishProductName}
+                onChange={(e) => setEnglishProductName(e.target.value)}
+                required
+              />
+            </div>
+
+            <div
+              style={{
+                display: "flex",
+              }}
+            >
+              <LabelText style={{ marginTop: "10px" }}>
+                상품 간략설명
+                <div style={{ width: "10px", color: "red" }}>*</div>
+              </LabelText>
+              <EditTextareaBox
+                name="explanation"
+                value={explanation}
+                onChange={(e) => setExplanation(e.target.value)}
+                rows={4}
+                required
+              />
+            </div>
+
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+              }}
+            >
+              <LabelText>검색어 설정</LabelText>
+              <EditInputBox
+                type="text"
+                name="keyword"
+                value={keyword}
+                onChange={(e) => setKeyword(e.target.value)}
+                required
+              />
+              <Space w={10} />
+              <HintText>{`쉼표로 구분해주세요. (예: 검색어1, 검색어2, 검색어3)`}</HintText>
+            </div>
+
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+              }}
+            >
+              <LabelText>판매가</LabelText>
+              <EditInputBox
+                name="sellerPrice"
+                value={sellerPrice}
+                onChange={(e) => {
+                  if (!Number.isNaN(Number(e.target.value))) {
+                    setSellerPrice(Number(e.target.value));
+                  }
+                }}
+                required
+              />
+            </div>
+
+            <div
+              style={{
+                display: "flex",
+                marginTop: "10px",
+              }}
+            >
+              <LabelText>옵션 설정</LabelText>
               <div
-                key={`LoadedProductItems_${index}`}
                 style={{
                   display: "flex",
-                  width: "inherit",
-                  alignItems: "center",
-                  backgroundColor: "#ebebeb4d",
-                  padding: "10px",
-                  marginTop: "8px",
-                  lineHeight: "1",
+                  flexDirection: "column",
+                  justifyContent: "start",
                 }}
               >
-                <div
-                  style={{
-                    width: "calc(100% - 200px)",
-                    marginLeft: "10px",
-                    lineHeight: "16px",
-                    textAlign: "left",
-                  }}
-                >
-                  {item.productName}
+                <div style={{ display: "flex" }}>
+                  <div style={{ width: "200px" }}>
+                    <HintText>
+                      옵션 카테고리 <br />
+                      ex. 컬러
+                    </HintText>
+                  </div>
+                  <Space w={10} />
+                  <div style={{ width: "400px" }}>
+                    <HintText>
+                      옵션 세부항목, 쉼표로 구분해주세요. <br />
+                      ex. 빨강, 파랑, 초록
+                    </HintText>
+                  </div>
                 </div>
-                <Space w={10} />
-                <div
-                  style={{
-                    color:
-                      item.status == "승인대기"
-                        ? "black"
-                        : item.status == "승인거부"
-                        ? "red"
-                        : "blue",
-                    width: "90px",
-                  }}
-                >
-                  {item.status}
-                </div>
-                <Space w={10} />
+
+                {optionCategoryList.map((item, index) => {
+                  return (
+                    <div
+                      key={`OptionItem-${index}`}
+                      style={{
+                        display: "flex",
+                        justifyContent: "start",
+                      }}
+                    >
+                      <EditInputBox
+                        style={{ width: "200px" }}
+                        value={optionCategoryList[index]}
+                        onChange={(e) =>
+                          editOptionCategory(index, e.target.value)
+                        }
+                      />
+                      <Space w={10} />
+                      <EditInputBox
+                        style={{ width: "400px" }}
+                        value={optionDetailList[index]}
+                        onChange={(e) =>
+                          editOptionDetail(index, e.target.value)
+                        }
+                      />
+                      <Space w={10} />
+                      <ListButton onClick={() => deleteOption(index)}>
+                        삭제
+                      </ListButton>
+                    </div>
+                  );
+                })}
                 <ListButton
-                  onClick={async () => {
-                    setIsLoading(true);
-                    await loadAddProductModal(item);
-                    setIsLoadedProduct(true);
-                    setIsAddProductModalOpened(true);
-                    setLoadedProduct(item);
-                    setIsLoading(false);
+                  onClick={() => {
+                    addOption();
                   }}
                 >
-                  자세히
+                  추가
                 </ListButton>
               </div>
-            );
-          })}
-        </div>
-      </PageLayout>
+            </div>
+
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+              }}
+            >
+              <LabelText style={{ textAlign: "left" }}>
+                옵션 별 가격 <br /> 설정 및 관리자 <br />
+                전달 메모
+              </LabelText>
+              <EditTextareaBox
+                name="memo"
+                value={memo}
+                onChange={(e) => setMemo(e.target.value)}
+                rows={4}
+                required
+              />
+            </div>
+
+            <div
+              style={{
+                display: "flex",
+                alignItems: "top",
+              }}
+            >
+              <LabelText style={{ marginTop: "10px" }}>
+                교환/반품 안내
+              </LabelText>
+              <EditTextareaBox
+                name="refundExplanation"
+                value={refundExplanation}
+                onChange={(e) => setRefundExplanation(e.target.value)}
+                rows={4}
+                required
+              />
+            </div>
+
+            <div
+              style={{
+                display: "flex",
+                alignItems: "top",
+              }}
+            >
+              <LabelText style={{ marginTop: "10px" }}>
+                서비스 문의/안내
+              </LabelText>
+              <EditTextareaBox
+                name="serviceExplanation"
+                value={serviceExplanation}
+                onChange={(e) => setServiceExplanation(e.target.value)}
+                rows={4}
+                required
+              />
+            </div>
+
+            <div
+              style={{
+                display: "flex",
+                alignItems: "top",
+              }}
+            >
+              <LabelText style={{ marginTop: "10px" }}>
+                썸네일 이미지
+                <div style={{ width: "10px", color: "red" }}>*</div>
+              </LabelText>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "left",
+                }}
+              >
+                {mainImageFile == undefined ? (
+                  <PreviewImageAlt>메인 썸네일</PreviewImageAlt>
+                ) : (
+                  <PreviewImage id="mainImagePreview" />
+                )}
+
+                <FileUpload
+                  type="file"
+                  id="uploadMainImage"
+                  accept=".png,.jpg,.jpeg,.svg"
+                  onChange={(e) => {
+                    if (e.target.files) {
+                      setMainImageFile(e.target.files[0]);
+                    }
+                  }}
+                />
+                <Space h={12} />
+                <FileUploadButton htmlFor="uploadMainImage">
+                  추가
+                </FileUploadButton>
+              </div>
+              <Space w={20} />
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "left",
+                }}
+              >
+                {thumbnailImageFile == undefined ? (
+                  <PreviewImageAlt>
+                    마우스
+                    <br />
+                    후버이미지
+                  </PreviewImageAlt>
+                ) : (
+                  <PreviewImage id="thumbnailImagePreview" />
+                )}
+
+                <FileUpload
+                  type="file"
+                  id="uploadThumbnailImage"
+                  accept=".png,.jpg,.jpeg,.svg"
+                  onChange={(e) => {
+                    if (e.target.files) {
+                      setThumbnailImageFile(e.target.files[0]);
+                    }
+                  }}
+                />
+                <Space h={12} />
+                <FileUploadButton htmlFor="uploadThumbnailImage">
+                  추가
+                </FileUploadButton>
+              </div>
+            </div>
+            <Space h={30} />
+            <div
+              style={{
+                display: "flex",
+              }}
+            >
+              <LabelText />
+              <InfoBox style={{ width: "800px" }}>
+                상품 이미지는 가로 1000 세로 1250 의 4:5 배율로 업로드
+                부탁드립니다.
+                <br />
+                흰 배경의 누끼 이미지로 업로드 부탁드립니다.
+                <br />
+                <br />
+                이미지 가이드라인을 따르지 않을 경우,업로드가 지연될 수
+                있습니다.
+              </InfoBox>
+            </div>
+            <Space h={10} />
+            <div
+              style={{
+                display: "flex",
+              }}
+            >
+              <LabelText style={{ marginTop: "10px" }}>
+                상세페이지 이미지
+                <div style={{ width: "10px", color: "red" }}>*</div>
+              </LabelText>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "auto auto auto auto",
+                  gap: "10px",
+                }}
+              >
+                {detailImageFileList.map((item, index) => {
+                  return (
+                    <div
+                      key={`DetailImageItem_${index}`}
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        justifyContent: "left",
+                      }}
+                    >
+                      {detailImageFileList[index] == undefined ? (
+                        <PreviewImageAlt>{index + 1}</PreviewImageAlt>
+                      ) : (
+                        <PreviewImage id={`detailImagePreview_${index}`} />
+                      )}
+                      <FileUpload
+                        type="file"
+                        id={`uploadDetailImage_${index}`}
+                        accept=".png,.jpg,.jpeg,.svg"
+                        onChange={(e) => {
+                          if (e.target.files) {
+                            editDetailImage(index, e.target.files[0]);
+                          }
+                        }}
+                      />
+                      <Space h={12} />
+                      <FileUploadButton htmlFor={`uploadDetailImage_${index}`}>
+                        추가
+                      </FileUploadButton>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div style={{ height: "100px" }} />
+            <div style={{ display: "flex" }}>
+              <LabelText />
+              <ListButton
+                type="submit"
+                style={{
+                  width: "225px",
+                  height: "60px",
+                  fontSize: "22px",
+                }}
+                onClick={async () => {
+                  if (checkRequirements()) {
+                    setIsLoading(true);
+                    await submitProduct();
+                    setIsLoading(false);
+                  }
+                }}
+              >
+                상품 검수요청
+              </ListButton>
+            </div>
+            <div style={{ height: "100px" }} />
+          </div>
+        </PageLayout>
+      ) : (
+        <PageLayout>
+          <InfoBox>
+            로파서울에서는 모든 상품들이 아닌, 엄선한 상품들만 업로드 승인을
+            하고 있습니다.
+            <br />
+            또 때로는 로파서울 측에서 이미지 재촬영 후 상품 업로드를 진행하여
+            <br />
+            업로드까지 시일이 오래 걸리는 경우도 있습니다. <br />
+            <br />
+            비록 타 플랫폼처럼 빠르게 업로드가 진행되지 못하더라도, 고객님들과
+            개별 브랜드/ 작가님들께 유의미한 제안을 하고자 <br />
+            로파서울이 유지하고 있는 정책이니 파트너분들의 너른 양해
+            부탁드립니다.
+          </InfoBox>
+          <BlackButton
+            onClick={() => {
+              if (isLoadedProduct) {
+                resetAddProductModal();
+                setIsLoadedProduct(false);
+              }
+              setIsAddProductMenuOpened(true);
+            }}
+          >
+            상품 추가
+          </BlackButton>
+          <Space h={40} />
+          <div
+            style={{ backgroundColor: "black", height: 1, width: "100%" }}
+          ></div>
+          <div style={{ fontSize: "28px", padding: "16px" }}>
+            신청한 상품 목록
+          </div>
+          <div style={{ overflowY: "auto", width: "inherit" }}>
+            {loadedProducts.map((item, index) => {
+              if (Math.floor(index / 3) == pageIndex) {
+                return (
+                  <LoadedProductItem key={`LoadedProductItems_${index}`}>
+                    <LoadedProductThumbnail src={item.mainImageURL} />
+                    <div
+                      style={{
+                        width: "calc(100% - 320px)",
+                        marginLeft: "10px",
+                        lineHeight: "28px",
+                        textAlign: "left",
+                      }}
+                    >
+                      {item.productName}
+                    </div>
+                    <Space w={10} />
+                    <div
+                      style={{
+                        color:
+                          item.status == "승인대기"
+                            ? "black"
+                            : item.status == "승인거부"
+                            ? "red"
+                            : "blue",
+                        width: "90px",
+                        lineHeight: "28px",
+                      }}
+                    >
+                      {item.status}
+                    </div>
+                    <Space w={10} />
+                    <DetailButton
+                      onClick={async () => {
+                        setIsLoading(true);
+                        await loadAddProductModal(item);
+                        setIsLoadedProduct(true);
+                        setIsAddProductMenuOpened(true);
+                        setLoadedProduct(item);
+                        setIsLoading(false);
+                      }}
+                    >
+                      자세히
+                    </DetailButton>
+                  </LoadedProductItem>
+                );
+              }
+            })}
+          </div>
+          <Space h={10} />
+          <PageIndex
+            pageCount={Math.ceil(loadedProducts.length / 3)}
+            currentIndex={pageIndex}
+            onIndexClick={(index: number) => {
+              setPageIndex(index);
+            }}
+          />
+        </PageLayout>
+      )}
     </>
   );
 }
@@ -1282,12 +1482,20 @@ function replaceBr(str: string) {
   return str.split("<br />").join("\n");
 }
 
+function replaceComma(str: string) {
+  return str.split(',').join('|');
+}
+
+function replaceVerticalBar(str: string){
+  return str.split('|').join(',');
+}
+
 function checkDuplicateFileName(list: any[]) {
   for (let i = 0; i < list.length; i++) {
     for (let j = i + 1; j < list.length; j++) {
       if (
-        !(list[i] instanceof File) ||
-        !(list[j] instanceof File) ||
+        (list[i] instanceof File) &&
+        (list[j] instanceof File) &&
         list[i].name == list[j].name
       ) {
         return false;
@@ -1302,4 +1510,37 @@ async function downloadFile(url: string, fileName: string) {
     .then((response) => response.blob())
     .then((blob) => new File([blob], fileName));
   return file;
+}
+
+function PageIndex({
+  pageCount,
+  currentIndex,
+  onIndexClick,
+}: {
+  pageCount: number;
+  currentIndex: number;
+  onIndexClick: (index: number) => void;
+}) {
+  let arr = [];
+  for (let i = 0; i < pageCount; i++) {
+    arr.push(i);
+  }
+  return (
+    <div style={{ display: "flex", width: "100%", justifyContent: "center" }}>
+      {arr.map((item, index) => (
+        <div
+          style={{
+            fontWeight: item == currentIndex ? 700 : 400,
+            margin: 5,
+            cursor: "pointer",
+          }}
+          onClick={() => {
+            onIndexClick(item);
+          }}
+        >
+          {item + 1}
+        </div>
+      ))}
+    </div>
+  );
 }
