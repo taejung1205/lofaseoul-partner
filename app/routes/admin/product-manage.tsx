@@ -497,6 +497,15 @@ export default function AdminProductManage() {
               alignItems: "center",
             }}
           >
+            <DetailTitle>옵션 별 가격 설정 및 관리자 전달 메모</DetailTitle>
+            <DetailBody>{detailProduct?.memo}</DetailBody>
+          </div>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+            }}
+          >
             <DetailTitle>교환/반품 안내</DetailTitle>
             <DetailBody>{detailProduct?.refundExplanation}</DetailBody>
           </div>
