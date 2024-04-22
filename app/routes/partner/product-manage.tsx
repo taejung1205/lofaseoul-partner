@@ -160,7 +160,12 @@ const PreviewImageAlt = styled.div`
 export const action: ActionFunction = async ({ request }) => {
   const body = await request.formData();
   const actionType = body.get("actionType")?.toString();
-  if (actionType == "add" || actionType == "update") {
+  if (
+    actionType == "add" ||
+    actionType == "update" ||
+    actionType == "tempsave-add" ||
+    actionType == "tempsave-update"
+  ) {
     const partnerName = body.get("partnerName")?.toString();
     const productName = body.get("productName")?.toString();
     const englishProductName = body.get("englishProductName")?.toString();
@@ -176,6 +181,8 @@ export const action: ActionFunction = async ({ request }) => {
     const mainImageFile = body.get("mainImageFile");
     const thumbnailImageFile = body.get("thumbnailImageFile");
     const detailImageFileList = body.getAll("detailImageFileList");
+
+    const isTempSave = (actionType == "tempsave-add" || actionType == "tempsave-update");
 
     for (let i = 0; i < detailImageFileList.length; i++) {
       if (!(detailImageFileList[i] instanceof File)) {
@@ -215,11 +222,11 @@ export const action: ActionFunction = async ({ request }) => {
         mainImageFile: mainImageFile,
         thumbnailImageFile: thumbnailImageFile,
         detailImageFileList: detailImageFileList,
-        status: "승인대기",
+        status: isTempSave ? "임시저장" : "승인대기",
       };
 
       //수정일 경우 기존 삭제 후 새로 올리는 형식으로
-      if (actionType == "update") {
+      if (actionType == "update" || actionType == "tempsave-update") {
         const prevProductName = body.get("prevProductName")?.toString();
         if (prevProductName !== undefined || prevProductName == "") {
           const result = await deleteProduct({ productName: prevProductName });
@@ -658,6 +665,75 @@ export default function PartnerProductManage() {
     submit(formData, { method: "post", encType: "multipart/form-data" });
   }
 
+  //입력한 내용을 토대로 임시저장, 해당 절차는 필수 내용 입력 여부를 거치지 않음
+  async function submitTemporarySave() {
+    const partnerName = loaderData.partnerName;
+    if (partnerName == undefined) {
+      setNotice(
+        "프로필을 불러오는 것에 실패했습니다. 오류가 반복될 경우 관리자에게 문의해주세요."
+      );
+      setIsNoticeModalOpened(true);
+      return false;
+    }
+
+    const newProductName = `[${partnerName}] ${productName}`;
+    const newEnglishProductName =
+      englishProductName.length > 0
+        ? `[${partnerName}] ${englishProductName}`
+        : "";
+    const newExplanation = replaceLinebreak(explanation);
+    const newRefundExplanation = replaceLinebreak(refundExplanation);
+    const newServiceExplanation = replaceLinebreak(serviceExplanation);
+    let newOption = "";
+    for (let i = 0; i < optionCategoryList.length; i++) {
+      if (
+        optionCategoryList[i].length == 0 &&
+        optionDetailList[i].length == 0
+      ) {
+        continue;
+      }
+      console.log(optionCategoryList[i]);
+      console.log(optionDetailList[i]);
+      let parsedOption = optionCategoryList[i];
+      parsedOption += "{";
+      parsedOption += replaceComma(optionDetailList[i]);
+      parsedOption += "}";
+      newOption += parsedOption;
+      if (i < optionCategoryList.length - 1) {
+        newOption += "//";
+      }
+    }
+    console.log(newOption);
+
+    const formData: any = new FormData(formRef.current ?? undefined);
+    if (isLoadedProduct) {
+      formData.set("actionType", "tempsave-update");
+      formData.set("prevProductName", loadedProduct?.productName ?? "");
+    } else {
+      formData.set("actionType", "tempsave-add");
+    }
+    formData.set("partnerName", partnerName);
+    formData.set("productName", newProductName);
+    formData.set("englishProductName", newEnglishProductName);
+    formData.set("explanation", newExplanation);
+    formData.set("keyword", keyword);
+    formData.set("sellerPrice", sellerPrice.toString());
+    formData.set("isUsingOption", isUsingOption.toString());
+    formData.set("option", newOption);
+    formData.set("memo", memo);
+    formData.set("refundExplanation", newRefundExplanation);
+    formData.set("serviceExplanation", newServiceExplanation);
+    formData.set("mainImageFile", mainImageFile);
+    formData.set("thumbnailImageFile", thumbnailImageFile);
+    for (let i = 0; i < detailImageFileList.length; i++) {
+      if (detailImageFileList[i]) {
+        formData.append("detailImageFileList", detailImageFileList[i]);
+      }
+    }
+
+    submit(formData, { method: "post", encType: "multipart/form-data" });
+  }
+
   //현재 보고 있는 상품 삭제 요청
   async function deleteProduct() {
     const formData = new FormData(formRef.current ?? undefined);
@@ -970,12 +1046,12 @@ export default function PartnerProductManage() {
                 상품 추가
               </div>
             </div>
-            <div style={{display: "flex"}}>
+            <div style={{ display: "flex" }}>
               <img
                 src="/images/icon_trash.svg"
-                style={{cursor: "pointer"}}
+                style={{ cursor: "pointer" }}
                 onClick={async () => {
-                  if(isLoadedProduct){
+                  if (isLoadedProduct) {
                     setIsLoading(true);
                     await deleteProduct();
                     setIsLoading(false);
@@ -985,7 +1061,17 @@ export default function PartnerProductManage() {
                 }}
               />
               <Space w={20} />
-              {/* <img src="/images/icon_save.svg" /> */}
+              <img
+                src="/images/icon_save.svg"
+                style={{ cursor: "pointer" }}
+                onClick={async () => {
+                  if (checkRequirements()) {
+                    setIsLoading(true);
+                    await submitTemporarySave();
+                    setIsLoading(false);
+                  }
+                }}
+              />
             </div>
           </div>
           <Space h={40} />
@@ -1073,7 +1159,9 @@ export default function PartnerProductManage() {
                 alignItems: "center",
               }}
             >
-              <LabelText>판매가</LabelText>
+              <LabelText>
+                판매가 <div style={{ width: "10px", color: "red" }}>*</div>
+              </LabelText>
               <EditInputBox
                 name="sellerPrice"
                 value={sellerPrice}
@@ -1435,7 +1523,9 @@ export default function PartnerProductManage() {
                             ? "black"
                             : item.status == "승인거부"
                             ? "red"
-                            : "blue",
+                            : item.status == "승인완료"
+                            ? "blue"
+                            : "grey",
                         width: "90px",
                         lineHeight: "28px",
                       }}
@@ -1483,19 +1573,19 @@ function replaceBr(str: string) {
 }
 
 function replaceComma(str: string) {
-  return str.split(',').join('|');
+  return str.split(",").join("|");
 }
 
-function replaceVerticalBar(str: string){
-  return str.split('|').join(',');
+function replaceVerticalBar(str: string) {
+  return str.split("|").join(",");
 }
 
 function checkDuplicateFileName(list: any[]) {
   for (let i = 0; i < list.length; i++) {
     for (let j = i + 1; j < list.length; j++) {
       if (
-        (list[i] instanceof File) &&
-        (list[j] instanceof File) &&
+        list[i] instanceof File &&
+        list[j] instanceof File &&
         list[i].name == list[j].name
       ) {
         return false;

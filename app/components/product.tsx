@@ -13,7 +13,7 @@ export type Product = {
   memo: string;
   refundExplanation: string;
   serviceExplanation: string;
-  status: "승인대기" | "승인거부" | "승인완료";
+  status: "승인대기" | "승인거부" | "승인완료" | "임시저장";
 };
 
 export type LoadedProduct = {
@@ -35,5 +35,5 @@ export type LoadedProduct = {
   memo: string;
   refundExplanation: string;
   serviceExplanation: string;
-  status: "승인대기" | "승인거부" | "승인완료";
+  status: "승인대기" | "승인거부" | "승인완료" | "임시저장";
 };
