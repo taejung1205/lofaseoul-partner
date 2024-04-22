@@ -1753,6 +1753,7 @@ export async function getPartnerProducts({
 
 /**
  * 모든 상품 정보를 불러옵니다
+ * 임시저장은 제외
  * @param partnerName: 파트너 이름
  * @returns
  *  Array of LoadedProduct
@@ -1761,7 +1762,7 @@ export async function getAllProducts() {
   try {
     const productsRef = collection(firestore, `products`);
 
-    const productsQuery = query(productsRef);
+    const productsQuery = query(productsRef, where("status", "!=", "임시저장"));
     const querySnap = await getDocs(productsQuery);
 
     return querySnap.docs.map((doc) => doc.data());
@@ -1769,6 +1770,7 @@ export async function getAllProducts() {
     return error.message ?? error.toString();
   }
 }
+
 
 /**
  * 등록한 상품 정보를 삭제합니다.

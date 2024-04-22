@@ -276,7 +276,13 @@ export default function AdminProductManage() {
     for (let i = 0; i < products.length; i++) {
       const mainFile = await downloadFile(
         products[i].mainImageURL,
-        makeFileName(products[i].id, undefined, products[i].mainImageName.split('.').pop() ?? ".jpg", "main")
+        makeFileName(
+          products[i].partnerName,
+          products[i].productName,
+          "메인썸네일",
+          1,
+          products[i].mainImageName.split(".").pop() ?? "jpg"
+        )
       );
 
       zip.file(mainFile.name, mainFile);
@@ -284,10 +290,11 @@ export default function AdminProductManage() {
       const thumbnailFile = await downloadFile(
         products[i].thumbnailImageURL,
         makeFileName(
-          products[i].id,
-          undefined,
-          products[i].thumbnailImageName.split('.').pop() ?? ".jpg",
-          "thumbnail"
+          products[i].partnerName,
+          products[i].productName,
+          "마우스후버이미지",
+          1,
+          products[i].mainImageName.split(".").pop() ?? "jpg"
         )
       );
 
@@ -297,10 +304,11 @@ export default function AdminProductManage() {
         const detailFile = await downloadFile(
           products[i].detailImageURLList[j],
           makeFileName(
-            products[i].id,
-            j,
-            products[i].detailImageNameList[j].split('.').pop() ?? ".jpg",
-            "detail"
+            products[i].partnerName,
+            products[i].productName,
+            "상세페이지이미지",
+            j+1,
+            products[i].mainImageName.split(".").pop() ?? "jpg"
           )
         );
         zip.file(detailFile.name, detailFile);
@@ -312,7 +320,7 @@ export default function AdminProductManage() {
   }
 
   // return (<div>WIP <br /> 공사중입니다.</div>)
-  
+
   return (
     <>
       <LoadingOverlay visible={isLoading} overlayBlur={2} />
@@ -824,44 +832,45 @@ const schema = [
   {
     column: "이미지등록(상세)",
     type: String,
-    value: (item: LoadedProduct) =>
-      `big1/${makeFileName(item.id, undefined, item.mainImageName.split('.').pop() ?? ".jpg","main")}`,
+    value: (item: LoadedProduct) => "",
+    // `big1/${makeFileName(item.id, undefined, item.mainImageName.split('.').pop() ?? ".jpg","main")}`,
     width: 20,
   },
   {
     column: "이미지등록(목록)",
     type: String,
-    value: (item: LoadedProduct) =>
-    `medium1/${makeFileName(item.id, undefined, item.mainImageName.split('.').pop() ?? ".jpg", "main")}`,
+    value: (item: LoadedProduct) => "",
+    // `medium1/${makeFileName(item.id, undefined, item.mainImageName.split('.').pop() ?? ".jpg", "main")}`,
     width: 20,
   },
   {
     column: "이미지등록(작은목록)",
     type: String,
-    value: (item: LoadedProduct) =>
-    `tiny1/${makeFileName(item.id, undefined, item.mainImageName.split('.').pop() ?? ".jpg", "main")}`,
+    value: (item: LoadedProduct) => "",
+    //`tiny1/${makeFileName(item.id, undefined, item.mainImageName.split('.').pop() ?? ".jpg", "main")}`,
     width: 20,
   },
   {
     column: "이미지등록(축소)",
     type: String,
-    value: (item: LoadedProduct) =>
-    `small1/${makeFileName(item.id, undefined, item.thumbnailImageName.split('.').pop() ?? ".jpg", "thumbnail")}`,
+    value: (item: LoadedProduct) => "",
+    // `small1/${makeFileName(item.id, undefined, item.thumbnailImageName.split('.').pop() ?? ".jpg", "thumbnail")}`,
     width: 20,
   },
   {
     column: "이미지등록(추가)",
     type: String,
-    value: (item: LoadedProduct) => {
-      let str = "";
-      for (let i = 0; i < item.detailImageNameList.length; i++) {
-        str += `big/${makeFileName(item.id, i, item.detailImageNameList[i].split('.').pop() ?? ".jpg", "detail")}`;
-        if (i < item.detailImageNameList.length - 1) {
-          str += "|";
-        }
-      }
-      return str;
-    },
+    value: (item: LoadedProduct) => "",
+    // {
+    //   let str = "";
+    //   for (let i = 0; i < item.detailImageNameList.length; i++) {
+    //     str += `big/${makeFileName(item.id, i, item.detailImageNameList[i].split('.').pop() ?? ".jpg", "detail")}`;
+    //     if (i < item.detailImageNameList.length - 1) {
+    //       str += "|";
+    //     }
+    //   }
+    //   return str;
+    // },
     width: 20,
   },
   {
@@ -879,17 +888,13 @@ const schema = [
 ];
 
 function makeFileName(
-  id: string,
-  index: number | undefined,
-  type: string,
-  usage: "main" | "thumbnail" | "detail"
+  partnerName: string,
+  productName: string,
+  usage: string,
+  index: number,
+  type: string
 ) {
-  if(index){
-    return `${id}_${usage}_${index}.${type}`;
-  } else {
-    return `${id}_${usage}.${type}`;
-  }
- 
+  return `${partnerName}_${productName}_${usage}_${index}.${type}`;
 }
 
 async function downloadFile(url: string, fileName: string) {
