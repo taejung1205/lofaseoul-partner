@@ -5,7 +5,7 @@ import {
   json,
   redirect,
 } from "@remix-run/node";
-import { useActionData, useLoaderData, useSubmit } from "@remix-run/react";
+import { useActionData, useLoaderData, useSubmit, useTransition } from "@remix-run/react";
 import { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import { BlackButton } from "~/components/button";
@@ -336,6 +336,8 @@ export const loader: LoaderFunction = async ({ request }) => {
 };
 
 export default function PartnerProductManage() {
+
+  const transition = useTransition();
   //상품 추가 모달 입력값
   const [productName, setProductName] = useState<string>(""); //상품명 (필수)
   const [englishProductName, setEnglishProductName] = useState<string>(""); //영문상품명
@@ -624,8 +626,6 @@ export default function PartnerProductManage() {
       ) {
         continue;
       }
-      console.log(optionCategoryList[i]);
-      console.log(optionDetailList[i]);
       let parsedOption = optionCategoryList[i];
       parsedOption += "{";
       parsedOption += replaceComma(optionDetailList[i]);
@@ -635,7 +635,6 @@ export default function PartnerProductManage() {
         newOption += "//";
       }
     }
-    console.log(newOption);
 
     const formData: any = new FormData(formRef.current ?? undefined);
     if (isLoadedProduct) {
@@ -693,8 +692,6 @@ export default function PartnerProductManage() {
       ) {
         continue;
       }
-      console.log(optionCategoryList[i]);
-      console.log(optionDetailList[i]);
       let parsedOption = optionCategoryList[i];
       parsedOption += "{";
       parsedOption += replaceComma(optionDetailList[i]);
@@ -704,7 +701,6 @@ export default function PartnerProductManage() {
         newOption += "//";
       }
     }
-    console.log(newOption);
 
     const formData: any = new FormData(formRef.current ?? undefined);
     if (isLoadedProduct) {
@@ -954,7 +950,7 @@ export default function PartnerProductManage() {
         if (preview) {
           preview.src = URL.createObjectURL(detailImageFileList[i]!);
         } else {
-          console.log("no");
+
         }
       }
     }
@@ -983,7 +979,7 @@ export default function PartnerProductManage() {
 
   return (
     <>
-      <LoadingOverlay visible={isLoading} overlayBlur={2} />
+      <LoadingOverlay visible={isLoading || transition.state == "loading"} overlayBlur={2} />
 
       {/* 안내메세지를 위한 모달 */}
       <BasicModal
@@ -1052,13 +1048,13 @@ export default function PartnerProductManage() {
                 src="/images/icon_trash.svg"
                 style={{ cursor: "pointer" }}
                 onClick={async () => {
+                  setIsLoading(true);
                   if (isLoadedProduct) {
-                    setIsLoading(true);
                     await deleteProduct();
-                    setIsLoading(false);
                   } else {
                     setIsAddProductMenuOpened(false);
                   }
+                  setIsLoading(false);
                 }}
               />
               <Space w={20} />
@@ -1066,11 +1062,11 @@ export default function PartnerProductManage() {
                 src="/images/icon_save.svg"
                 style={{ cursor: "pointer" }}
                 onClick={async () => {
+                  setIsLoading(true);
                   if (checkRequirements()) {
-                    setIsLoading(true);
                     await submitTemporarySave();
-                    setIsLoading(false);
                   }
+                  setIsLoading(false);
                 }}
               />
             </div>
@@ -1466,11 +1462,11 @@ export default function PartnerProductManage() {
                   fontSize: "22px",
                 }}
                 onClick={async () => {
+                  setIsLoading(true);
                   if (checkRequirements()) {
-                    setIsLoading(true);
                     await submitProduct();
-                    setIsLoading(false);
                   }
+                  setIsLoading(false);
                 }}
               >
                 상품 검수요청
