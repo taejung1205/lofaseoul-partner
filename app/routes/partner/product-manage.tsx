@@ -980,7 +980,7 @@ export default function PartnerProductManage() {
 
   return (
     <>
-      <LoadingOverlay visible={isLoading || transition.state == "loading" || navigation.state == "submitting"} overlayBlur={2} />
+      <LoadingOverlay visible={(isLoading || navigation.state == "submitting") && !isUploadInProgress} overlayBlur={2} />
 
       {/* 안내메세지를 위한 모달 */}
       <BasicModal
