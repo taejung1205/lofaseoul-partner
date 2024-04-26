@@ -5,7 +5,7 @@ import {
   json,
   redirect,
 } from "@remix-run/node";
-import { useActionData, useLoaderData, useSubmit, useTransition } from "@remix-run/react";
+import { useActionData, useLoaderData, useSubmit, useTransition, useNavigation } from "@remix-run/react";
 import { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import { BlackButton } from "~/components/button";
@@ -396,6 +396,7 @@ export default function PartnerProductManage() {
 
   const loaderData = useLoaderData();
   const actionData = useActionData();
+  const navigation = useNavigation();
   const formRef = useRef<HTMLFormElement>(null);
   const submit = useSubmit();
 
@@ -979,7 +980,7 @@ export default function PartnerProductManage() {
 
   return (
     <>
-      <LoadingOverlay visible={isLoading || transition.state == "loading"} overlayBlur={2} />
+      <LoadingOverlay visible={isLoading || transition.state == "loading" || navigation.state == "submitting"} overlayBlur={2} />
 
       {/* 안내메세지를 위한 모달 */}
       <BasicModal
