@@ -182,7 +182,8 @@ export const action: ActionFunction = async ({ request }) => {
     const thumbnailImageFile = body.get("thumbnailImageFile");
     const detailImageFileList = body.getAll("detailImageFileList");
 
-    const isTempSave = (actionType == "tempsave-add" || actionType == "tempsave-update");
+    const isTempSave =
+      actionType == "tempsave-add" || actionType == "tempsave-update";
 
     for (let i = 0; i < detailImageFileList.length; i++) {
       if (!(detailImageFileList[i] instanceof File)) {
@@ -1433,9 +1434,21 @@ export default function PartnerProductManage() {
                         }}
                       />
                       <Space h={12} />
-                      <FileUploadButton htmlFor={`uploadDetailImage_${index}`}>
-                        추가
-                      </FileUploadButton>
+                      <div style={{ display: "flex" }}>
+                        <FileUploadButton
+                          htmlFor={`uploadDetailImage_${index}`}
+                        >
+                          추가
+                        </FileUploadButton>
+                        <Space w={10} />
+                        <FileUploadButton
+                          onClick={() => {
+                            editDetailImage(index, undefined);
+                          }}
+                        >
+                          삭제
+                        </FileUploadButton>
+                      </div>
                     </div>
                   );
                 })}
