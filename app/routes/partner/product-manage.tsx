@@ -511,10 +511,9 @@ export default function PartnerProductManage() {
       return false;
     }
 
-    if(totalImageFileSize() > 6 * 1024 ** 2){
-      setNotice("업로드할 이미지의 크기의 총합은 6MB를 넘을 수 없습니다.");
+    if(totalImageFileSize() > 5 * 1024 ** 2){
+      setNotice("업로드할 이미지의 크기의 총합은 5MB를 넘을 수 없습니다.");
       setIsNoticeModalOpened(true);
-      setMainImageFile(undefined);
       return;
     }
 
@@ -878,8 +877,8 @@ export default function PartnerProductManage() {
 
   useEffect(() => {
     if (mainImageFile !== undefined) {
-      if (mainImageFile.size > 6 * 1024 ** 2) {
-        setNotice("업로드할 이미지의 크기는 6MB를 넘을 수 없습니다.");
+      if (mainImageFile.size > 5 * 1024 ** 2) {
+        setNotice("업로드할 이미지의 크기는 5MB를 넘을 수 없습니다.");
         setIsNoticeModalOpened(true);
         setMainImageFile(undefined);
         return;
@@ -908,8 +907,8 @@ export default function PartnerProductManage() {
 
   useEffect(() => {
     if (thumbnailImageFile !== undefined) {
-      if (thumbnailImageFile.size > 6 * 1024 ** 2) {
-        setNotice("업로드할 이미지의 크기는 6MB를 넘을 수 없습니다.");
+      if (thumbnailImageFile.size > 5 * 1024 ** 2) {
+        setNotice("업로드할 이미지의 크기는 5MB를 넘을 수 없습니다.");
         setIsNoticeModalOpened(true);
         setThumbnailImageFile(undefined);
         return;
@@ -943,8 +942,8 @@ export default function PartnerProductManage() {
         detailImageFileList[i] !== null
       ) {
         const file: any = detailImageFileList[i];
-        if (file.size > 6 * 1024 ** 2) {
-          setNotice("업로드할 이미지의 크기는 6MB를 넘을 수 없습니다.");
+        if (file.size > 5 * 1024 ** 2) {
+          setNotice("업로드할 이미지의 크기는 5MB를 넘을 수 없습니다.");
           setIsNoticeModalOpened(true);
           editDetailImage(i, undefined);
           return;
@@ -1320,7 +1319,7 @@ export default function PartnerProductManage() {
             >
               <LabelText />
               <InfoBox style={{ width: "800px", color: "red" }}>
-                현재는 이미지 파일이 도합 6MB를 넘어갈 수 없습니다.
+                현재는 이미지 파일이 도합 5MB를 넘어갈 수 없습니다.
               </InfoBox>
             </div>
 
