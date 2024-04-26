@@ -5,7 +5,7 @@ import {
   json,
   redirect,
 } from "@remix-run/node";
-import { useActionData, useLoaderData, useSubmit } from "@remix-run/react";
+import { useActionData, useLoaderData, useSubmit, useTransition, useNavigation } from "@remix-run/react";
 import { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import { BlackButton } from "~/components/button";
@@ -182,7 +182,8 @@ export const action: ActionFunction = async ({ request }) => {
     const thumbnailImageFile = body.get("thumbnailImageFile");
     const detailImageFileList = body.getAll("detailImageFileList");
 
-    const isTempSave = (actionType == "tempsave-add" || actionType == "tempsave-update");
+    const isTempSave =
+      actionType == "tempsave-add" || actionType == "tempsave-update";
 
     for (let i = 0; i < detailImageFileList.length; i++) {
       if (!(detailImageFileList[i] instanceof File)) {
@@ -335,6 +336,8 @@ export const loader: LoaderFunction = async ({ request }) => {
 };
 
 export default function PartnerProductManage() {
+
+  const transition = useTransition();
   //상품 추가 모달 입력값
   const [productName, setProductName] = useState<string>(""); //상품명 (필수)
   const [englishProductName, setEnglishProductName] = useState<string>(""); //영문상품명
@@ -393,6 +396,7 @@ export default function PartnerProductManage() {
 
   const loaderData = useLoaderData();
   const actionData = useActionData();
+  const navigation = useNavigation();
   const formRef = useRef<HTMLFormElement>(null);
   const submit = useSubmit();
 
@@ -623,8 +627,6 @@ export default function PartnerProductManage() {
       ) {
         continue;
       }
-      console.log(optionCategoryList[i]);
-      console.log(optionDetailList[i]);
       let parsedOption = optionCategoryList[i];
       parsedOption += "{";
       parsedOption += replaceComma(optionDetailList[i]);
@@ -634,7 +636,6 @@ export default function PartnerProductManage() {
         newOption += "//";
       }
     }
-    console.log(newOption);
 
     const formData: any = new FormData(formRef.current ?? undefined);
     if (isLoadedProduct) {
@@ -692,8 +693,6 @@ export default function PartnerProductManage() {
       ) {
         continue;
       }
-      console.log(optionCategoryList[i]);
-      console.log(optionDetailList[i]);
       let parsedOption = optionCategoryList[i];
       parsedOption += "{";
       parsedOption += replaceComma(optionDetailList[i]);
@@ -703,7 +702,6 @@ export default function PartnerProductManage() {
         newOption += "//";
       }
     }
-    console.log(newOption);
 
     const formData: any = new FormData(formRef.current ?? undefined);
     if (isLoadedProduct) {
@@ -953,7 +951,7 @@ export default function PartnerProductManage() {
         if (preview) {
           preview.src = URL.createObjectURL(detailImageFileList[i]!);
         } else {
-          console.log("no");
+
         }
       }
     }
@@ -982,7 +980,7 @@ export default function PartnerProductManage() {
 
   return (
     <>
-      <LoadingOverlay visible={isLoading} overlayBlur={2} />
+      <LoadingOverlay visible={isLoading || transition.state == "loading" || navigation.state == "submitting"} overlayBlur={2} />
 
       {/* 안내메세지를 위한 모달 */}
       <BasicModal
@@ -1051,13 +1049,13 @@ export default function PartnerProductManage() {
                 src="/images/icon_trash.svg"
                 style={{ cursor: "pointer" }}
                 onClick={async () => {
+                  setIsLoading(true);
                   if (isLoadedProduct) {
-                    setIsLoading(true);
                     await deleteProduct();
-                    setIsLoading(false);
                   } else {
                     setIsAddProductMenuOpened(false);
                   }
+                  setIsLoading(false);
                 }}
               />
               <Space w={20} />
@@ -1065,11 +1063,11 @@ export default function PartnerProductManage() {
                 src="/images/icon_save.svg"
                 style={{ cursor: "pointer" }}
                 onClick={async () => {
+                  setIsLoading(true);
                   if (checkRequirements()) {
-                    setIsLoading(true);
                     await submitTemporarySave();
-                    setIsLoading(false);
                   }
+                  setIsLoading(false);
                 }}
               />
             </div>
@@ -1433,9 +1431,21 @@ export default function PartnerProductManage() {
                         }}
                       />
                       <Space h={12} />
-                      <FileUploadButton htmlFor={`uploadDetailImage_${index}`}>
-                        추가
-                      </FileUploadButton>
+                      <div style={{ display: "flex" }}>
+                        <FileUploadButton
+                          htmlFor={`uploadDetailImage_${index}`}
+                        >
+                          추가
+                        </FileUploadButton>
+                        <Space w={10} />
+                        <FileUploadButton
+                          onClick={() => {
+                            editDetailImage(index, undefined);
+                          }}
+                        >
+                          삭제
+                        </FileUploadButton>
+                      </div>
                     </div>
                   );
                 })}
@@ -1453,11 +1463,11 @@ export default function PartnerProductManage() {
                   fontSize: "22px",
                 }}
                 onClick={async () => {
+                  setIsLoading(true);
                   if (checkRequirements()) {
-                    setIsLoading(true);
                     await submitProduct();
-                    setIsLoading(false);
                   }
+                  setIsLoading(false);
                 }}
               >
                 상품 검수요청
