@@ -6,6 +6,7 @@ import {
   redirect,
 } from "@remix-run/node";
 import { useActionData, useLoaderData, useSubmit, useTransition, useNavigation } from "@remix-run/react";
+import { forEach } from "jszip";
 import { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import { BlackButton } from "~/components/button";
@@ -437,10 +438,6 @@ export default function PartnerProductManage() {
     setOptionDetailList(first2.concat(last2));
   }
 
-  function addDetailImage() {
-    setDetailImageFileList((prev) => [...prev, undefined]);
-  }
-
   function editDetailImage(index: number, val: File | undefined) {
     const newDetailImageList = detailImageFileList.map((item, i) => {
       if (i == index) {
@@ -512,6 +509,13 @@ export default function PartnerProductManage() {
       setNotice("상세 페이지 이미지 파일들은 이름이 서로 달라야 합니다.");
       setIsNoticeModalOpened(true);
       return false;
+    }
+
+    if(totalImageFileSize() > 6 * 1024 ** 2){
+      setNotice("업로드할 이미지의 크기의 총합은 6MB를 넘을 수 없습니다.");
+      setIsNoticeModalOpened(true);
+      setMainImageFile(undefined);
+      return;
     }
 
     //검색어 설정 검사
@@ -827,6 +831,16 @@ export default function PartnerProductManage() {
     return true;
   }
 
+  function totalImageFileSize(){
+    let total = 0;
+    total += mainImageFile?.size ?? 0;
+    total += thumbnailImageFile?.size ?? 0;
+    detailImageFileList.forEach(file => {
+      total += file?.size ?? 0;
+    })
+    return total;
+  }
+
   //결과로 오는 거 바탕으로 안내모달
   useEffect(() => {
     if (actionData !== undefined && actionData !== null) {
@@ -864,8 +878,8 @@ export default function PartnerProductManage() {
 
   useEffect(() => {
     if (mainImageFile !== undefined) {
-      if (mainImageFile.size > 50 * 1024 ** 2) {
-        setNotice("업로드할 이미지의 크기는 50MB를 넘을 수 없습니다.");
+      if (mainImageFile.size > 6 * 1024 ** 2) {
+        setNotice("업로드할 이미지의 크기는 6MB를 넘을 수 없습니다.");
         setIsNoticeModalOpened(true);
         setMainImageFile(undefined);
         return;
@@ -894,8 +908,8 @@ export default function PartnerProductManage() {
 
   useEffect(() => {
     if (thumbnailImageFile !== undefined) {
-      if (thumbnailImageFile.size > 50 * 1024 ** 2) {
-        setNotice("업로드할 이미지의 크기는 50MB를 넘을 수 없습니다.");
+      if (thumbnailImageFile.size > 6 * 1024 ** 2) {
+        setNotice("업로드할 이미지의 크기는 6MB를 넘을 수 없습니다.");
         setIsNoticeModalOpened(true);
         setThumbnailImageFile(undefined);
         return;
@@ -929,8 +943,8 @@ export default function PartnerProductManage() {
         detailImageFileList[i] !== null
       ) {
         const file: any = detailImageFileList[i];
-        if (file.size > 50 * 1024 ** 2) {
-          setNotice("업로드할 이미지의 크기는 50MB를 넘을 수 없습니다.");
+        if (file.size > 6 * 1024 ** 2) {
+          setNotice("업로드할 이미지의 크기는 6MB를 넘을 수 없습니다.");
           setIsNoticeModalOpened(true);
           editDetailImage(i, undefined);
           return;
@@ -1296,6 +1310,18 @@ export default function PartnerProductManage() {
                 rows={4}
                 required
               />
+            </div>
+
+            <Space h={30} />
+            <div
+              style={{
+                display: "flex",
+              }}
+            >
+              <LabelText />
+              <InfoBox style={{ width: "800px", color: "red" }}>
+                현재는 이미지 파일이 도합 6MB를 넘어갈 수 없습니다.
+              </InfoBox>
             </div>
 
             <div
