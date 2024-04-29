@@ -18,13 +18,20 @@ import styled from "styled-components";
 import { BlackButton } from "~/components/button";
 import { BasicModal, ModalButton } from "~/components/modal";
 import { PageLayout } from "~/components/page_layout";
-import { LoadedProduct, Product } from "~/components/product";
 import {
-  addProduct,
+  LoadedProduct,
+  Product,
+  ProductWithoutFile,
+} from "~/components/product";
+import {
+  addProductWithoutFile,
   deleteProduct,
   getPartnerProducts,
   getProductUploadProgress,
+  initializeUploadProductImage,
+  isProductImageUploadFinished,
   isProductUploaded,
+  uploadProductImage,
 } from "~/services/firebase.server";
 import { requireUser } from "~/services/session.server";
 import { resizeFile } from "~/utils/resize-image";
@@ -168,6 +175,48 @@ const PreviewImageAlt = styled.div`
 export const action: ActionFunction = async ({ request }) => {
   const body = await request.formData();
   const actionType = body.get("actionType")?.toString();
+
+  if (actionType == "initial-upload") {
+    const productName = body.get("productName")?.toString();
+    const mainSize = Number(body.get("mainSize")?.toString());
+    const mainName = body.get("mainName")?.toString();
+    const thumbnailSize = Number(body.get("thumbnailSize")?.toString());
+    const thumbnailName = body.get("thumbnailName")?.toString();
+    const detailSizeList = body.getAll("detailSize");
+    const detailNameList = body.getAll("detailName");
+    const isTempSave = body.get("isTempSave")?.toString();
+
+    if (
+      productName &&
+      mainSize &&
+      mainName &&
+      thumbnailName &&
+      thumbnailSize &&
+      detailNameList &&
+      detailSizeList
+    ) {
+      await initializeUploadProductImage(
+        productName,
+        mainSize,
+        mainName,
+        thumbnailSize,
+        thumbnailName,
+        detailSizeList.map((val) => val as unknown as number),
+        detailNameList.map((val) => val as unknown as string)
+      );
+      return {
+        isWaiting: true,
+        isStartWaiting: true,
+        progress: 0,
+        isTempSave: isTempSave == "true" ? true : false,
+        status: "ok",
+        currentStep: "initial-complete",
+      };
+    } else {
+      console.log("error");
+    }
+  }
+
   if (
     actionType == "add" ||
     actionType == "update" ||
@@ -186,20 +235,8 @@ export const action: ActionFunction = async ({ request }) => {
     const refundExplanation = body.get("refundExplanation")?.toString();
     const serviceExplanation = body.get("serviceExplanation")?.toString();
 
-    const mainImageFile = body.get("mainImageFile");
-    const thumbnailImageFile = body.get("thumbnailImageFile");
-    const detailImageFileList = body.getAll("detailImageFileList");
-
     const isTempSave =
       actionType == "tempsave-add" || actionType == "tempsave-update";
-
-    for (let i = 0; i < detailImageFileList.length; i++) {
-      if (!(detailImageFileList[i] instanceof File)) {
-        return json({
-          message: `상품 등록 중 문제가 발생했습니다. 상세 이미지가 파일이 아닙니다. 관리자에게 문의해주세요.`,
-        });
-      }
-    }
 
     if (
       partnerName !== undefined &&
@@ -212,11 +249,9 @@ export const action: ActionFunction = async ({ request }) => {
       option !== undefined &&
       memo !== undefined &&
       refundExplanation !== undefined &&
-      serviceExplanation !== undefined &&
-      mainImageFile instanceof File &&
-      thumbnailImageFile instanceof File
+      serviceExplanation !== undefined
     ) {
-      const product: Product = {
+      const product: ProductWithoutFile = {
         partnerName: partnerName,
         productName: productName,
         englishProductName: englishProductName,
@@ -228,9 +263,6 @@ export const action: ActionFunction = async ({ request }) => {
         memo: memo,
         refundExplanation: refundExplanation,
         serviceExplanation: serviceExplanation,
-        mainImageFile: mainImageFile,
-        thumbnailImageFile: thumbnailImageFile,
-        detailImageFileList: detailImageFileList,
         status: isTempSave ? "임시저장" : "승인대기",
       };
 
@@ -253,13 +285,14 @@ export const action: ActionFunction = async ({ request }) => {
         }
       }
 
-      const result = await addProduct({ product: product });
+      const result = await addProductWithoutFile({ product: product });
 
       if (result == null) {
         return {
           isWaiting: true,
-          isStartWaiting: true,
           progress: 0,
+          currentStep: "data-complete",
+          nextImageStep: "main",
           status: "ok",
         };
       } else {
@@ -302,7 +335,9 @@ export const action: ActionFunction = async ({ request }) => {
   } else if (actionType == "waiting") {
     const productName = body.get("productName")?.toString();
     if (productName !== undefined || productName == "") {
-      const result = await isProductUploaded({ productName: productName });
+      const result = await isProductImageUploadFinished({
+        productName: productName,
+      });
       if (result == true) {
         return json({
           message: `업로드가 완료되었습니다.`,
@@ -320,6 +355,44 @@ export const action: ActionFunction = async ({ request }) => {
         status: "error",
       });
     }
+  } else if (actionType == "upload-image") {
+    const productName = body.get("productName")?.toString();
+    const file = body.get("file");
+    const usage = body.get("usage")?.toString();
+    const filename = body.get("filename")?.toString();
+    const detailIndex = Number(body.get("detailIndex")?.toString() ?? "-1");
+    if (
+      productName !== undefined &&
+      file instanceof File &&
+      usage !== undefined &&
+      detailIndex !== undefined &&
+      filename !== undefined
+    ) {
+      await uploadProductImage(file, filename, usage, productName, detailIndex);
+    }
+
+    let nextStep = "";
+    switch (usage) {
+      case "main":
+        nextStep = "thumbnail";
+        break;
+      case "thumbnail":
+        nextStep = "detail";
+        break;
+      case "detail":
+        nextStep = "detail";
+        break;
+    }
+
+    const nextIndex = detailIndex + 1;
+    return json({
+      isWaiting: true,
+      progress: 0,
+      currentStep: "data-complete",
+      nextImageStep: nextStep,
+      detailIndex: nextIndex,
+      status: "ok",
+    });
   }
 };
 
@@ -517,11 +590,11 @@ export default function PartnerProductManage() {
       return false;
     }
 
-    if (totalImageFileSize() > 5 * 1024 ** 2) {
-      setNotice("업로드할 이미지의 크기의 총합은 5MB를 넘을 수 없습니다.");
-      setIsNoticeModalOpened(true);
-      return;
-    }
+    // if (totalImageFileSize() > 5 * 1024 ** 2) {
+    //   setNotice("업로드할 이미지의 크기의 총합은 5MB를 넘을 수 없습니다.");
+    //   setIsNoticeModalOpened(true);
+    //   return;
+    // }
 
     //검색어 설정 검사
     // for (let i = 0; i < keywordList.length; i++) {
@@ -610,7 +683,7 @@ export default function PartnerProductManage() {
   }
 
   //입력한 내용 토대로 엑셀에 들어갈 내용물을 만들고 추가 요청
-  async function submitProduct() {
+  async function initializeUploadProduct(isTempSave = false) {
     const partnerName = loaderData.partnerName;
     if (partnerName == undefined) {
       setNotice(
@@ -619,8 +692,40 @@ export default function PartnerProductManage() {
       setIsNoticeModalOpened(true);
       return false;
     }
-
     const newProductName = `[${partnerName}] ${productName}`;
+
+    //initializeUploadProductImage
+    const formData: any = new FormData(formRef.current ?? undefined);
+    formData.set("actionType", "initial-upload");
+    formData.set("productName", newProductName);
+    formData.set("mainSize", mainImageFile?.size);
+    formData.set("mainName", mainImageFile?.name);
+    formData.set("thumbnailSize", thumbnailImageFile?.size);
+    formData.set("thumbnailName", thumbnailImageFile?.name);
+    formData.set("isTempSave", isTempSave);
+    for (let i = 0; i < detailImageFileList.length; i++) {
+      if (detailImageFileList[i]) {
+        formData.append("detailSize", detailImageFileList[i]?.size);
+        formData.append("detailName", detailImageFileList[i]?.name);
+      }
+    }
+
+    submit(formData, { method: "post" });
+  }
+
+  async function submitProductData(isTempSave = false) {
+    const partnerName = loaderData.partnerName;
+    if (partnerName == undefined) {
+      setNotice(
+        "프로필을 불러오는 것에 실패했습니다. 오류가 반복될 경우 관리자에게 문의해주세요."
+      );
+      setIsNoticeModalOpened(true);
+      return false;
+    }
+    const newProductName = `[${partnerName}] ${productName}`;
+
+    //Add data except files
+    const formData: any = new FormData(formRef.current ?? undefined);
     const newEnglishProductName =
       englishProductName.length > 0
         ? `[${partnerName}] ${englishProductName}`
@@ -646,33 +751,91 @@ export default function PartnerProductManage() {
       }
     }
 
-    const formData: any = new FormData(formRef.current ?? undefined);
     if (isLoadedProduct) {
-      formData.set("actionType", "update");
-      formData.set("prevProductName", loadedProduct?.productName ?? "");
+      if(isTempSave){
+        formData.set("actionType", "tempsave-update");
+        formData.set("prevProductName", loadedProduct?.productName ?? "");
+      } else {
+        formData.set("actionType", "update");
+        formData.set("prevProductName", loadedProduct?.productName ?? "");
+      }
     } else {
-      formData.set("actionType", "add");
+      if(isTempSave){
+        formData.set("actionType", "tempsave-add");
+      } else {
+        formData.set("actionType", "add");
+      }
     }
+
     formData.set("partnerName", partnerName);
     formData.set("productName", newProductName);
     formData.set("englishProductName", newEnglishProductName);
     formData.set("explanation", newExplanation);
-    formData.set("keyword", keyword);
+    formData.set("keyword", keyword ?? "");
     formData.set("sellerPrice", sellerPrice.toString());
     formData.set("isUsingOption", isUsingOption.toString());
     formData.set("option", newOption);
     formData.set("memo", memo);
     formData.set("refundExplanation", newRefundExplanation);
     formData.set("serviceExplanation", newServiceExplanation);
-    formData.set("mainImageFile", mainImageFile);
-    formData.set("thumbnailImageFile", thumbnailImageFile);
-    for (let i = 0; i < detailImageFileList.length; i++) {
-      if (detailImageFileList[i]) {
-        formData.append("detailImageFileList", detailImageFileList[i]);
-      }
+
+    submit(formData, { method: "post" });
+  }
+
+  async function submitImageFiles(step: string, detailIndex: number) {
+    const partnerName = loaderData.partnerName;
+    if (partnerName == undefined) {
+      setNotice(
+        "프로필을 불러오는 것에 실패했습니다. 오류가 반복될 경우 관리자에게 문의해주세요."
+      );
+      setIsNoticeModalOpened(true);
+      return false;
+    }
+    const newProductName = `[${partnerName}] ${productName}`;
+
+    //Upload Files
+    let formData: any = new FormData(formRef.current ?? undefined);
+    if (step == "main") {
+      formData.set("actionType", "upload-image");
+      formData.set("productName", newProductName);
+      formData.set("file", mainImageFile);
+      formData.set("filename", mainImageFile?.name);
+      formData.set("usage", "main");
+      submit(formData, { method: "post", encType: "multipart/form-data" });
     }
 
-    submit(formData, { method: "post", encType: "multipart/form-data" });
+    if (step == "thumbnail") {
+      formData = new FormData(formRef.current ?? undefined);
+      formData.set("actionType", "upload-image");
+      formData.set("productName", newProductName);
+      formData.set("file", thumbnailImageFile);
+      formData.set("filename", thumbnailImageFile?.name);
+      formData.set("usage", "thumbnail");
+      submit(formData, { method: "post", encType: "multipart/form-data" });
+    }
+
+    if (step == "detail") {
+      let curIndex = 0;
+      for (let i = 0; i < detailImageFileList.length; i++) {
+        if (detailImageFileList[i]) {
+          if (curIndex == detailIndex) {
+            formData.set("actionType", "upload-image");
+            formData.set("productName", newProductName);
+            formData.set("file", detailImageFileList[i]);
+            formData.set("filename", detailImageFileList[i]?.name);
+            formData.set("usage", "detail");
+            formData.set("detailIndex", detailIndex);
+            submit(formData, {
+              method: "post",
+              encType: "multipart/form-data",
+            });
+            return;
+          } else {
+            curIndex++;
+          }
+        }
+      }
+    }
   }
 
   //입력한 내용을 토대로 임시저장, 해당 절차는 필수 내용 입력 여부를 거치지 않음
@@ -854,9 +1017,15 @@ export default function PartnerProductManage() {
       }
       if (actionData.isWaiting) {
         setImageUploadProgress(actionData.progress);
-        console.log("isWaiting status: ", actionData.status);
+
+        if (actionData.currentStep == "initial-complete") {
+          submitProductData(actionData.isTempSave);
+        }
+
+        if (actionData.currentStep == "data-complete") {
+          submitImageFiles(actionData.nextImageStep, actionData.detailIndex);
+        }
       } else {
-        console.log(actionData);
         setIsUploadInProgress(false);
         setNotice(actionData.message ?? actionData.errorMessage ?? actionData);
         setIsNoticeModalOpened(true);
@@ -1088,7 +1257,7 @@ export default function PartnerProductManage() {
                 onClick={async () => {
                   setIsLoading(true);
                   if (checkRequirements()) {
-                    await submitTemporarySave();
+                    await initializeUploadProduct(true);
                   }
                   setIsLoading(false);
                 }}
@@ -1509,7 +1678,7 @@ export default function PartnerProductManage() {
                 onClick={async () => {
                   setIsLoading(true);
                   if (checkRequirements()) {
-                    await submitProduct();
+                    await initializeUploadProduct(false);
                   }
                   setIsLoading(false);
                 }}

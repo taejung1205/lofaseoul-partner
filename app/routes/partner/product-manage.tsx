@@ -14,7 +14,6 @@ import { BasicModal, ModalButton } from "~/components/modal";
 import { PageLayout } from "~/components/page_layout";
 import { LoadedProduct, Product } from "~/components/product";
 import {
-  addProduct,
   deleteProduct,
   getPartnerProducts,
   getProductUploadProgress,
@@ -246,28 +245,28 @@ export const action: ActionFunction = async ({ request }) => {
         }
       }
 
-      const result = await addProduct({ product: product });
+      // const result = await addProduct({ product: product });
 
-      if (result == null) {
-        return {
-          isWaiting: true,
-          isStartWaiting: true,
-          progress: 0,
-          status: "ok",
-        };
-      } else {
-        if (actionType == "add") {
-          return json({
-            message: `상품 등록 중 문제가 발생했습니다.${"\n"}${result}`,
-            status: "error",
-          });
-        } else {
-          return json({
-            message: `상품 수정 중 등록 과정에서 문제가 발생했습니다.${"\n"}${result}`,
-            status: "error",
-          });
-        }
-      }
+      // if (result == null) {
+      //   return {
+      //     isWaiting: true,
+      //     isStartWaiting: true,
+      //     progress: 0,
+      //     status: "ok",
+      //   };
+      // } else {
+      //   if (actionType == "add") {
+      //     return json({
+      //       message: `상품 등록 중 문제가 발생했습니다.${"\n"}${result}`,
+      //       status: "error",
+      //     });
+      //   } else {
+      //     return json({
+      //       message: `상품 수정 중 등록 과정에서 문제가 발생했습니다.${"\n"}${result}`,
+      //       status: "error",
+      //     });
+      //   }
+      // }
     }
 
     return json({
