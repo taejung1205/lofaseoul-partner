@@ -1774,7 +1774,7 @@ export async function uploadProductImage(
   const uploadTask = uploadBytesResumable(imageStorageRef, arrayBuffer);
 
   let progress = 0;
-  let stair = 500000;
+  let stair = 50000;
 
   uploadTask.on(
     "state_changed",
