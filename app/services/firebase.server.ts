@@ -24,6 +24,7 @@ import {
   getDownloadURL,
   getStorage,
   ref,
+  uploadBytes,
   uploadBytesResumable,
   UploadTask,
 } from "firebase/storage";
@@ -1959,7 +1960,9 @@ export async function getProductUploadProgress({
 }
 
 
-
-
-
-
+export async function uploadImageTest(file: Uint8Array){
+  const mainImagePath = `test/testfile.jpg`;
+  const mainImageStorageRef = ref(storage, mainImagePath);
+  const mainUploadTask = await uploadBytes(mainImageStorageRef, file);
+  return mainUploadTask;
+}
