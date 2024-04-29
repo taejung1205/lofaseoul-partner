@@ -16,6 +16,21 @@ export type Product = {
   status: "승인대기" | "승인거부" | "승인완료" | "임시저장";
 };
 
+export type ProductWithoutFile = {
+  partnerName: string;
+  productName: string;
+  englishProductName: string;
+  explanation: string;
+  keyword: string;
+  sellerPrice: number;
+  isUsingOption: boolean;
+  option: string;
+  memo: string;
+  refundExplanation: string;
+  serviceExplanation: string;
+  status: "승인대기" | "승인거부" | "승인완료" | "임시저장";
+};
+
 export type LoadedProduct = {
   id: string;
   partnerName: string;
