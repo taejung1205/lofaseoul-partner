@@ -1,25 +1,37 @@
-import { Checkbox, LoadingOverlay, Modal, Space } from "@mantine/core";
+import { LoadingOverlay, Space } from "@mantine/core";
 import {
   ActionFunction,
   LoaderFunction,
   json,
   redirect,
 } from "@remix-run/node";
-import { useActionData, useLoaderData, useSubmit, useTransition, useNavigation } from "@remix-run/react";
-import { forEach } from "jszip";
+import {
+  useActionData,
+  useLoaderData,
+  useSubmit,
+  useTransition,
+  useNavigation,
+} from "@remix-run/react";
 import { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import { BlackButton } from "~/components/button";
 import { BasicModal, ModalButton } from "~/components/modal";
 import { PageLayout } from "~/components/page_layout";
-import { LoadedProduct, Product } from "~/components/product";
 import {
+  LoadedProduct,
+  ProductWithoutFile,
+} from "~/components/product";
+import {
+  addProductWithoutFile,
   deleteProduct,
   getPartnerProducts,
   getProductUploadProgress,
-  isProductUploaded,
+  initializeUploadProductImage,
+  isProductImageUploadFinished,
+  uploadProductImage,
 } from "~/services/firebase.server";
 import { requireUser } from "~/services/session.server";
+import { resizeFile } from "~/utils/resize-image";
 
 const EditInputBox = styled.input`
   font-size: 20px;
@@ -160,6 +172,48 @@ const PreviewImageAlt = styled.div`
 export const action: ActionFunction = async ({ request }) => {
   const body = await request.formData();
   const actionType = body.get("actionType")?.toString();
+
+  if (actionType == "initial-upload") {
+    const productName = body.get("productName")?.toString();
+    const mainSize = Number(body.get("mainSize")?.toString());
+    const mainName = body.get("mainName")?.toString();
+    const thumbnailSize = Number(body.get("thumbnailSize")?.toString());
+    const thumbnailName = body.get("thumbnailName")?.toString();
+    const detailSizeList = body.getAll("detailSize");
+    const detailNameList = body.getAll("detailName");
+    const isTempSave = body.get("isTempSave")?.toString();
+
+    if (
+      productName &&
+      mainSize &&
+      mainName &&
+      thumbnailName &&
+      thumbnailSize &&
+      detailNameList &&
+      detailSizeList
+    ) {
+      await initializeUploadProductImage(
+        productName,
+        mainSize,
+        mainName,
+        thumbnailSize,
+        thumbnailName,
+        detailSizeList.map((val) => val as unknown as number),
+        detailNameList.map((val) => val as unknown as string)
+      );
+      return {
+        isWaiting: true,
+        isStartWaiting: true,
+        progress: 0,
+        isTempSave: isTempSave == "true" ? true : false,
+        status: "ok",
+        currentStep: "initial-complete",
+      };
+    } else {
+      console.log("error");
+    }
+  }
+
   if (
     actionType == "add" ||
     actionType == "update" ||
@@ -178,20 +232,8 @@ export const action: ActionFunction = async ({ request }) => {
     const refundExplanation = body.get("refundExplanation")?.toString();
     const serviceExplanation = body.get("serviceExplanation")?.toString();
 
-    const mainImageFile = body.get("mainImageFile");
-    const thumbnailImageFile = body.get("thumbnailImageFile");
-    const detailImageFileList = body.getAll("detailImageFileList");
-
     const isTempSave =
       actionType == "tempsave-add" || actionType == "tempsave-update";
-
-    for (let i = 0; i < detailImageFileList.length; i++) {
-      if (!(detailImageFileList[i] instanceof File)) {
-        return json({
-          message: `상품 등록 중 문제가 발생했습니다. 상세 이미지가 파일이 아닙니다. 관리자에게 문의해주세요.`,
-        });
-      }
-    }
 
     if (
       partnerName !== undefined &&
@@ -204,11 +246,9 @@ export const action: ActionFunction = async ({ request }) => {
       option !== undefined &&
       memo !== undefined &&
       refundExplanation !== undefined &&
-      serviceExplanation !== undefined &&
-      mainImageFile instanceof File &&
-      thumbnailImageFile instanceof File
+      serviceExplanation !== undefined
     ) {
-      const product: Product = {
+      const product: ProductWithoutFile = {
         partnerName: partnerName,
         productName: productName,
         englishProductName: englishProductName,
@@ -220,9 +260,6 @@ export const action: ActionFunction = async ({ request }) => {
         memo: memo,
         refundExplanation: refundExplanation,
         serviceExplanation: serviceExplanation,
-        mainImageFile: mainImageFile,
-        thumbnailImageFile: thumbnailImageFile,
-        detailImageFileList: detailImageFileList,
         status: isTempSave ? "임시저장" : "승인대기",
       };
 
@@ -245,28 +282,29 @@ export const action: ActionFunction = async ({ request }) => {
         }
       }
 
-      // const result = await addProduct({ product: product });
+      const result = await addProductWithoutFile({ product: product });
 
-      // if (result == null) {
-      //   return {
-      //     isWaiting: true,
-      //     isStartWaiting: true,
-      //     progress: 0,
-      //     status: "ok",
-      //   };
-      // } else {
-      //   if (actionType == "add") {
-      //     return json({
-      //       message: `상품 등록 중 문제가 발생했습니다.${"\n"}${result}`,
-      //       status: "error",
-      //     });
-      //   } else {
-      //     return json({
-      //       message: `상품 수정 중 등록 과정에서 문제가 발생했습니다.${"\n"}${result}`,
-      //       status: "error",
-      //     });
-      //   }
-      // }
+      if (result == null) {
+        return {
+          isWaiting: true,
+          progress: 0,
+          currentStep: "data-complete",
+          nextImageStep: "main",
+          status: "ok",
+        };
+      } else {
+        if (actionType == "add") {
+          return json({
+            message: `상품 등록 중 문제가 발생했습니다.${"\n"}${result}`,
+            status: "error",
+          });
+        } else {
+          return json({
+            message: `상품 수정 중 등록 과정에서 문제가 발생했습니다.${"\n"}${result}`,
+            status: "error",
+          });
+        }
+      }
     }
 
     return json({
@@ -294,7 +332,9 @@ export const action: ActionFunction = async ({ request }) => {
   } else if (actionType == "waiting") {
     const productName = body.get("productName")?.toString();
     if (productName !== undefined || productName == "") {
-      const result = await isProductUploaded({ productName: productName });
+      const result = await isProductImageUploadFinished({
+        productName: productName,
+      });
       if (result == true) {
         return json({
           message: `업로드가 완료되었습니다.`,
@@ -312,6 +352,44 @@ export const action: ActionFunction = async ({ request }) => {
         status: "error",
       });
     }
+  } else if (actionType == "upload-image") {
+    const productName = body.get("productName")?.toString();
+    const file = body.get("file");
+    const usage = body.get("usage")?.toString();
+    const filename = body.get("filename")?.toString();
+    const detailIndex = Number(body.get("detailIndex")?.toString() ?? "-1");
+    if (
+      productName !== undefined &&
+      file instanceof File &&
+      usage !== undefined &&
+      detailIndex !== undefined &&
+      filename !== undefined
+    ) {
+      await uploadProductImage(file, filename, usage, productName, detailIndex);
+    }
+
+    let nextStep = "";
+    switch (usage) {
+      case "main":
+        nextStep = "thumbnail";
+        break;
+      case "thumbnail":
+        nextStep = "detail";
+        break;
+      case "detail":
+        nextStep = "detail";
+        break;
+    }
+
+    const nextIndex = detailIndex + 1;
+    return json({
+      isWaiting: true,
+      progress: 0,
+      currentStep: "data-complete",
+      nextImageStep: nextStep,
+      detailIndex: nextIndex,
+      status: "ok",
+    });
   }
 };
 
@@ -336,7 +414,6 @@ export const loader: LoaderFunction = async ({ request }) => {
 };
 
 export default function PartnerProductManage() {
-
   const transition = useTransition();
   //상품 추가 모달 입력값
   const [productName, setProductName] = useState<string>(""); //상품명 (필수)
@@ -378,10 +455,13 @@ export default function PartnerProductManage() {
   //불러온 상품 목록
   const [loadedProducts, setLoadedProducts] = useState<LoadedProduct[]>([]); //로딩된 전체 주문건 아이템 리스트
 
-  //업로드 중 상태
-  const [isUploadInProgress, setIsUploadInProgress] = useState<boolean>(false);
+  //업로드 대기 중 상태
+  const [isUploadWaitingInProgress, setIsUploadWaitingInProgress] = useState<boolean>(false);
 
-  //파일 업로드 진행 상태
+  //업로드 절차 상태 (해당 상태에선 퍼센트 얼마나 진행됐는지 요청 X)
+  const [isUploadRequestSent, setIsUploadRequestSent] = useState<boolean>(true);
+
+  //파일 업로드 진행 상태 퍼센티지
   const [imageUploadProgress, setImageUploadProgress] = useState<number>(0);
 
   //업로드 중 확인 요청 용 타이머
@@ -510,11 +590,11 @@ export default function PartnerProductManage() {
       return false;
     }
 
-    if(totalImageFileSize() > 5 * 1024 ** 2){
-      setNotice("업로드할 이미지의 크기의 총합은 5MB를 넘을 수 없습니다.");
-      setIsNoticeModalOpened(true);
-      return;
-    }
+    // if (totalImageFileSize() > 5 * 1024 ** 2) {
+    //   setNotice("업로드할 이미지의 크기의 총합은 5MB를 넘을 수 없습니다.");
+    //   setIsNoticeModalOpened(true);
+    //   return;
+    // }
 
     //검색어 설정 검사
     // for (let i = 0; i < keywordList.length; i++) {
@@ -603,7 +683,8 @@ export default function PartnerProductManage() {
   }
 
   //입력한 내용 토대로 엑셀에 들어갈 내용물을 만들고 추가 요청
-  async function submitProduct() {
+  async function initializeUploadProduct(isTempSave = false) {
+    setIsUploadRequestSent(false);
     const partnerName = loaderData.partnerName;
     if (partnerName == undefined) {
       setNotice(
@@ -612,8 +693,40 @@ export default function PartnerProductManage() {
       setIsNoticeModalOpened(true);
       return false;
     }
-
     const newProductName = `[${partnerName}] ${productName}`;
+
+    //initializeUploadProductImage
+    const formData: any = new FormData(formRef.current ?? undefined);
+    formData.set("actionType", "initial-upload");
+    formData.set("productName", newProductName);
+    formData.set("mainSize", mainImageFile?.size);
+    formData.set("mainName", mainImageFile?.name);
+    formData.set("thumbnailSize", thumbnailImageFile?.size);
+    formData.set("thumbnailName", thumbnailImageFile?.name);
+    formData.set("isTempSave", isTempSave);
+    for (let i = 0; i < detailImageFileList.length; i++) {
+      if (detailImageFileList[i]) {
+        formData.append("detailSize", detailImageFileList[i]?.size);
+        formData.append("detailName", detailImageFileList[i]?.name);
+      }
+    }
+
+    submit(formData, { method: "post" });
+  }
+
+  async function submitProductData(isTempSave = false) {
+    const partnerName = loaderData.partnerName;
+    if (partnerName == undefined) {
+      setNotice(
+        "프로필을 불러오는 것에 실패했습니다. 오류가 반복될 경우 관리자에게 문의해주세요."
+      );
+      setIsNoticeModalOpened(true);
+      return false;
+    }
+    const newProductName = `[${partnerName}] ${productName}`;
+
+    //Add data except files
+    const formData: any = new FormData(formRef.current ?? undefined);
     const newEnglishProductName =
       englishProductName.length > 0
         ? `[${partnerName}] ${englishProductName}`
@@ -639,33 +752,92 @@ export default function PartnerProductManage() {
       }
     }
 
-    const formData: any = new FormData(formRef.current ?? undefined);
     if (isLoadedProduct) {
-      formData.set("actionType", "update");
-      formData.set("prevProductName", loadedProduct?.productName ?? "");
+      if(isTempSave){
+        formData.set("actionType", "tempsave-update");
+        formData.set("prevProductName", loadedProduct?.productName ?? "");
+      } else {
+        formData.set("actionType", "update");
+        formData.set("prevProductName", loadedProduct?.productName ?? "");
+      }
     } else {
-      formData.set("actionType", "add");
+      if(isTempSave){
+        formData.set("actionType", "tempsave-add");
+      } else {
+        formData.set("actionType", "add");
+      }
     }
+
     formData.set("partnerName", partnerName);
     formData.set("productName", newProductName);
     formData.set("englishProductName", newEnglishProductName);
     formData.set("explanation", newExplanation);
-    formData.set("keyword", keyword);
+    formData.set("keyword", keyword ?? "");
     formData.set("sellerPrice", sellerPrice.toString());
     formData.set("isUsingOption", isUsingOption.toString());
     formData.set("option", newOption);
     formData.set("memo", memo);
     formData.set("refundExplanation", newRefundExplanation);
     formData.set("serviceExplanation", newServiceExplanation);
-    formData.set("mainImageFile", mainImageFile);
-    formData.set("thumbnailImageFile", thumbnailImageFile);
-    for (let i = 0; i < detailImageFileList.length; i++) {
-      if (detailImageFileList[i]) {
-        formData.append("detailImageFileList", detailImageFileList[i]);
-      }
+
+    submit(formData, { method: "post" });
+  }
+
+  async function submitImageFiles(step: string, detailIndex: number) {
+    const partnerName = loaderData.partnerName;
+    if (partnerName == undefined) {
+      setNotice(
+        "프로필을 불러오는 것에 실패했습니다. 오류가 반복될 경우 관리자에게 문의해주세요."
+      );
+      setIsNoticeModalOpened(true);
+      return false;
+    }
+    const newProductName = `[${partnerName}] ${productName}`;
+
+    //Upload Files
+    let formData: any = new FormData(formRef.current ?? undefined);
+    if (step == "main") {
+      formData.set("actionType", "upload-image");
+      formData.set("productName", newProductName);
+      formData.set("file", mainImageFile);
+      formData.set("filename", mainImageFile?.name);
+      formData.set("usage", "main");
+      submit(formData, { method: "post", encType: "multipart/form-data" });
     }
 
-    submit(formData, { method: "post", encType: "multipart/form-data" });
+    if (step == "thumbnail") {
+      formData = new FormData(formRef.current ?? undefined);
+      formData.set("actionType", "upload-image");
+      formData.set("productName", newProductName);
+      formData.set("file", thumbnailImageFile);
+      formData.set("filename", thumbnailImageFile?.name);
+      formData.set("usage", "thumbnail");
+      submit(formData, { method: "post", encType: "multipart/form-data" });
+    }
+
+    if (step == "detail") {
+      let curIndex = 0;
+      for (let i = 0; i < detailImageFileList.length; i++) {
+        if (detailImageFileList[i]) {
+          if (curIndex == detailIndex) {
+            formData.set("actionType", "upload-image");
+            formData.set("productName", newProductName);
+            formData.set("file", detailImageFileList[i]);
+            formData.set("filename", detailImageFileList[i]?.name);
+            formData.set("usage", "detail");
+            formData.set("detailIndex", detailIndex);
+            submit(formData, {
+              method: "post",
+              encType: "multipart/form-data",
+            });
+            return;
+          } else {
+            curIndex++;
+          }
+        }
+      }
+      setIsUploadRequestSent(true);
+    }
   }
 
   //입력한 내용을 토대로 임시저장, 해당 절차는 필수 내용 입력 여부를 거치지 않음
@@ -829,28 +1001,24 @@ export default function PartnerProductManage() {
     return true;
   }
 
-  function totalImageFileSize(){
-    let total = 0;
-    total += mainImageFile?.size ?? 0;
-    total += thumbnailImageFile?.size ?? 0;
-    detailImageFileList.forEach(file => {
-      total += file?.size ?? 0;
-    })
-    return total;
-  }
-
   //결과로 오는 거 바탕으로 안내모달
   useEffect(() => {
     if (actionData !== undefined && actionData !== null) {
       if (actionData.isStartWaiting) {
-        setIsUploadInProgress(true);
+        setIsUploadWaitingInProgress(true);
       }
       if (actionData.isWaiting) {
         setImageUploadProgress(actionData.progress);
-        console.log("isWaiting status: ", actionData.status);
+
+        if (actionData.currentStep == "initial-complete") {
+          submitProductData(actionData.isTempSave);
+        }
+
+        if (actionData.currentStep == "data-complete") {
+          submitImageFiles(actionData.nextImageStep, actionData.detailIndex);
+        }
       } else {
-        console.log(actionData);
-        setIsUploadInProgress(false);
+        setIsUploadWaitingInProgress(false);
         setNotice(actionData.message ?? actionData.errorMessage ?? actionData);
         setIsNoticeModalOpened(true);
         //성공했으면 모달 닫기
@@ -963,7 +1131,6 @@ export default function PartnerProductManage() {
         if (preview) {
           preview.src = URL.createObjectURL(detailImageFileList[i]!);
         } else {
-
         }
       }
     }
@@ -972,7 +1139,7 @@ export default function PartnerProductManage() {
   //업로드 중 업로드됐는지 확인을 위한 인터벌
   useEffect(() => {
     var interval = setInterval(() => {
-      if (isUploadInProgress) {
+      if (isUploadWaitingInProgress && isUploadRequestSent) {
         const formData = new FormData(formRef.current ?? undefined);
         formData.set(
           "productName",
@@ -986,13 +1153,18 @@ export default function PartnerProductManage() {
     }, 1 * 2000);
     setQueryIntervalId(interval);
     return () => clearInterval(queryIntervalId); //
-  }, [isUploadInProgress]);
+  }, [isUploadWaitingInProgress, isUploadRequestSent]);
 
   // return (<div>WIP <br /> 공사중입니다.</div>)
 
   return (
     <>
-      <LoadingOverlay visible={(isLoading || navigation.state == "submitting") && !isUploadInProgress} overlayBlur={2} />
+      <LoadingOverlay
+        visible={
+          (isLoading || navigation.state == "submitting") && !isUploadWaitingInProgress
+        }
+        overlayBlur={2}
+      />
 
       {/* 안내메세지를 위한 모달 */}
       <BasicModal
@@ -1017,7 +1189,7 @@ export default function PartnerProductManage() {
       </BasicModal>
 
       {/* 업로드를 기다리기 위한 모달 */}
-      <BasicModal opened={isUploadInProgress} onClose={() => {}}>
+      <BasicModal opened={isUploadWaitingInProgress} onClose={() => {}}>
         <div
           style={{
             justifyContent: "center",
@@ -1077,7 +1249,7 @@ export default function PartnerProductManage() {
                 onClick={async () => {
                   setIsLoading(true);
                   if (checkRequirements()) {
-                    await submitTemporarySave();
+                    await initializeUploadProduct(true);
                   }
                   setIsLoading(false);
                 }}
@@ -1349,10 +1521,13 @@ export default function PartnerProductManage() {
                   type="file"
                   id="uploadMainImage"
                   accept=".png,.jpg,.jpeg,.svg"
-                  onChange={(e) => {
+                  onChange={async (e) => {
+                    setIsLoading(true);
                     if (e.target.files) {
-                      setMainImageFile(e.target.files[0]);
+                      const file = await resizeFile(e.target.files[0]);
+                      setMainImageFile(file);
                     }
+                    setIsLoading(false);
                   }}
                 />
                 <Space h={12} />
@@ -1382,10 +1557,13 @@ export default function PartnerProductManage() {
                   type="file"
                   id="uploadThumbnailImage"
                   accept=".png,.jpg,.jpeg,.svg"
-                  onChange={(e) => {
+                  onChange={async (e) => {
+                    setIsLoading(true);
                     if (e.target.files) {
-                      setThumbnailImageFile(e.target.files[0]);
+                      const file = await resizeFile(e.target.files[0]);
+                      setThumbnailImageFile(file);
                     }
+                    setIsLoading(false);
                   }}
                 />
                 <Space h={12} />
@@ -1448,10 +1626,13 @@ export default function PartnerProductManage() {
                         type="file"
                         id={`uploadDetailImage_${index}`}
                         accept=".png,.jpg,.jpeg,.svg"
-                        onChange={(e) => {
+                        onChange={async (e) => {
+                          setIsLoading(true);
                           if (e.target.files) {
-                            editDetailImage(index, e.target.files[0]);
+                            const file = await resizeFile(e.target.files[0]);
+                            editDetailImage(index, file);
                           }
+                          setIsLoading(false);
                         }}
                       />
                       <Space h={12} />
@@ -1489,7 +1670,7 @@ export default function PartnerProductManage() {
                 onClick={async () => {
                   setIsLoading(true);
                   if (checkRequirements()) {
-                    await submitProduct();
+                    await initializeUploadProduct(false);
                   }
                   setIsLoading(false);
                 }}
@@ -1653,6 +1834,7 @@ function PageIndex({
     <div style={{ display: "flex", width: "100%", justifyContent: "center" }}>
       {arr.map((item, index) => (
         <div
+          key={`PageIndex-${index}`}
           style={{
             fontWeight: item == currentIndex ? 700 : 400,
             margin: 5,
