@@ -205,8 +205,8 @@ export const action: ActionFunction = async ({ request }) => {
         detailNameList.map((val) => val as unknown as string)
       );
       return {
-        isWaiting: false,
-        isStartWaiting: false,
+        isWaiting: true,
+        isStartWaiting: true,
         progress: 0,
         isTempSave: isTempSave == "true" ? true : false,
         status: "ok",
@@ -752,7 +752,7 @@ export default function PartnerProductManage() {
     }
 
     if (isLoadedProduct) {
-      if (isTempSave) {
+      if(isTempSave){
         formData.set("actionType", "tempsave-update");
         formData.set("prevProductName", loadedProduct?.productName ?? "");
       } else {
@@ -760,7 +760,7 @@ export default function PartnerProductManage() {
         formData.set("prevProductName", loadedProduct?.productName ?? "");
       }
     } else {
-      if (isTempSave) {
+      if(isTempSave){
         formData.set("actionType", "tempsave-add");
       } else {
         formData.set("actionType", "add");
@@ -1012,10 +1012,7 @@ export default function PartnerProductManage() {
           submitProductData(actionData.isTempSave);
         }
 
-        if (
-          actionData.currentStep == "data-complete" &&
-          actionData.nextImageStep == "main"
-        ) {
+        if (actionData.currentStep == "data-complete") {
           submitImageFiles(actionData.nextImageStep, actionData.detailIndex);
         }
       } else {
@@ -1678,20 +1675,6 @@ export default function PartnerProductManage() {
               >
                 상품 검수요청
               </ListButton>
-              <button
-                onClick={() => {
-                  initializeUploadProduct();
-                }}
-              >
-                f
-              </button>
-              <button
-                onClick={() => {
-                  submitImageFiles("main", 0);
-                }}
-              >
-                f
-              </button>
             </div>
             <div style={{ height: "100px" }} />
           </div>
