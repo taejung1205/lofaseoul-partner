@@ -999,16 +999,6 @@ export default function PartnerProductManage() {
     return true;
   }
 
-  function totalImageFileSize() {
-    let total = 0;
-    total += mainImageFile?.size ?? 0;
-    total += thumbnailImageFile?.size ?? 0;
-    detailImageFileList.forEach((file) => {
-      total += file?.size ?? 0;
-    });
-    return total;
-  }
-
   //결과로 오는 거 바탕으로 안내모달
   useEffect(() => {
     if (actionData !== undefined && actionData !== null) {
@@ -1022,7 +1012,7 @@ export default function PartnerProductManage() {
           submitProductData(actionData.isTempSave);
         }
 
-        if (actionData.currentStep == "data-complete") {
+        if (actionData.currentStep == "data-complete" && actionData.nextImageStep == "main") {
           submitImageFiles(actionData.nextImageStep, actionData.detailIndex);
         }
       } else {
