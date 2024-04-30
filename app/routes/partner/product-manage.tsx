@@ -1483,16 +1483,6 @@ export default function PartnerProductManage() {
             </div>
 
             <Space h={30} />
-            <div
-              style={{
-                display: "flex",
-              }}
-            >
-              <LabelText />
-              <InfoBox style={{ width: "800px", color: "red" }}>
-                현재는 이미지 파일이 도합 5MB를 넘어갈 수 없습니다.
-              </InfoBox>
-            </div>
 
             <div
               style={{
