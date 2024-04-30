@@ -458,10 +458,13 @@ export default function PartnerProductManage() {
   //불러온 상품 목록
   const [loadedProducts, setLoadedProducts] = useState<LoadedProduct[]>([]); //로딩된 전체 주문건 아이템 리스트
 
-  //업로드 중 상태
-  const [isUploadInProgress, setIsUploadInProgress] = useState<boolean>(false);
+  //업로드 대기 중 상태
+  const [isUploadWaitingInProgress, setIsUploadWaitingInProgress] = useState<boolean>(false);
 
-  //파일 업로드 진행 상태
+  //업로드 절차 상태 (해당 상태에선 퍼센트 얼마나 진행됐는지 요청 X)
+  const [isUploadRequestSent, setIsUploadRequestSent] = useState<boolean>(true);
+
+  //파일 업로드 진행 상태 퍼센티지
   const [imageUploadProgress, setImageUploadProgress] = useState<number>(0);
 
   //업로드 중 확인 요청 용 타이머
@@ -684,6 +687,7 @@ export default function PartnerProductManage() {
 
   //입력한 내용 토대로 엑셀에 들어갈 내용물을 만들고 추가 요청
   async function initializeUploadProduct(isTempSave = false) {
+    setIsUploadRequestSent(false);
     const partnerName = loaderData.partnerName;
     if (partnerName == undefined) {
       setNotice(
@@ -835,6 +839,7 @@ export default function PartnerProductManage() {
           }
         }
       }
+      setIsUploadRequestSent(true);
     }
   }
 
@@ -1003,7 +1008,7 @@ export default function PartnerProductManage() {
   useEffect(() => {
     if (actionData !== undefined && actionData !== null) {
       if (actionData.isStartWaiting) {
-        setIsUploadInProgress(true);
+        setIsUploadWaitingInProgress(true);
       }
       if (actionData.isWaiting) {
         setImageUploadProgress(actionData.progress);
@@ -1016,7 +1021,7 @@ export default function PartnerProductManage() {
           submitImageFiles(actionData.nextImageStep, actionData.detailIndex);
         }
       } else {
-        setIsUploadInProgress(false);
+        setIsUploadWaitingInProgress(false);
         setNotice(actionData.message ?? actionData.errorMessage ?? actionData);
         setIsNoticeModalOpened(true);
         //성공했으면 모달 닫기
@@ -1137,7 +1142,7 @@ export default function PartnerProductManage() {
   //업로드 중 업로드됐는지 확인을 위한 인터벌
   useEffect(() => {
     var interval = setInterval(() => {
-      if (isUploadInProgress) {
+      if (isUploadWaitingInProgress && isUploadRequestSent) {
         const formData = new FormData(formRef.current ?? undefined);
         formData.set(
           "productName",
@@ -1151,7 +1156,7 @@ export default function PartnerProductManage() {
     }, 1 * 2000);
     setQueryIntervalId(interval);
     return () => clearInterval(queryIntervalId); //
-  }, [isUploadInProgress]);
+  }, [isUploadWaitingInProgress, isUploadRequestSent]);
 
   // return (<div>WIP <br /> 공사중입니다.</div>)
 
@@ -1159,7 +1164,7 @@ export default function PartnerProductManage() {
     <>
       <LoadingOverlay
         visible={
-          (isLoading || navigation.state == "submitting") && !isUploadInProgress
+          (isLoading || navigation.state == "submitting") && !isUploadWaitingInProgress
         }
         overlayBlur={2}
       />
@@ -1187,7 +1192,7 @@ export default function PartnerProductManage() {
       </BasicModal>
 
       {/* 업로드를 기다리기 위한 모달 */}
-      <BasicModal opened={isUploadInProgress} onClose={() => {}}>
+      <BasicModal opened={isUploadWaitingInProgress} onClose={() => {}}>
         <div
           style={{
             justifyContent: "center",
