@@ -1056,8 +1056,8 @@ export default function PartnerProductManage() {
 
   useEffect(() => {
     if (mainImageFile !== undefined) {
-      if (mainImageFile.size > 5 * 1024 ** 2) {
-        setNotice("업로드할 이미지의 크기는 5MB를 넘을 수 없습니다.");
+      if (mainImageFile.size > 3 * 1024 ** 2) {
+        setNotice("업로드할 이미지의 크기는 3MB를 넘을 수 없습니다.");
         setIsNoticeModalOpened(true);
         setMainImageFile(undefined);
         return;
@@ -1086,8 +1086,8 @@ export default function PartnerProductManage() {
 
   useEffect(() => {
     if (thumbnailImageFile !== undefined) {
-      if (thumbnailImageFile.size > 5 * 1024 ** 2) {
-        setNotice("업로드할 이미지의 크기는 5MB를 넘을 수 없습니다.");
+      if (thumbnailImageFile.size > 3 * 1024 ** 2) {
+        setNotice("업로드할 이미지의 크기는 3MB를 넘을 수 없습니다.");
         setIsNoticeModalOpened(true);
         setThumbnailImageFile(undefined);
         return;
@@ -1121,8 +1121,8 @@ export default function PartnerProductManage() {
         detailImageFileList[i] !== null
       ) {
         const file: any = detailImageFileList[i];
-        if (file.size > 5 * 1024 ** 2) {
-          setNotice("업로드할 이미지의 크기는 5MB를 넘을 수 없습니다.");
+        if (file.size > 3 * 1024 ** 2) {
+          setNotice("업로드할 이미지의 크기는 3MB를 넘을 수 없습니다.");
           setIsNoticeModalOpened(true);
           editDetailImage(i, undefined);
           return;
@@ -1155,8 +1155,8 @@ export default function PartnerProductManage() {
         extraImageFileList[i] !== null
       ) {
         const file: any = extraImageFileList[i];
-        if (file.size > 5 * 1024 ** 2) {
-          setNotice("업로드할 이미지의 크기는 5MB를 넘을 수 없습니다.");
+        if (file.size > 3 * 1024 ** 2) {
+          setNotice("업로드할 이미지의 크기는 3MB를 넘을 수 없습니다.");
           setIsNoticeModalOpened(true);
           editExtraImage(i, undefined);
           return;
