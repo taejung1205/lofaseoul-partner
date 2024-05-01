@@ -10,6 +10,7 @@ export type Product = {
   mainImageFile: File;
   thumbnailImageFile: File;
   detailImageFileList: any[];
+  extraImageFileList: any[];
   memo: string;
   refundExplanation: string;
   serviceExplanation: string;
@@ -47,6 +48,8 @@ export type LoadedProduct = {
   thumbnailImageName: string;
   detailImageURLList: string[];
   detailImageNameList: string[];
+  extraImageURLList: string[];
+  extraImageNameList: string[];
   memo: string;
   refundExplanation: string;
   serviceExplanation: string;

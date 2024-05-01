@@ -142,7 +142,7 @@ const HintText = styled.div`
 `;
 
 const PreviewImage = styled.img`
-  width: 166px;
+  width: 133px;
   height: 168px;
   object-fit: contain;
   border: 1px solid black;
@@ -152,7 +152,7 @@ const PreviewImage = styled.img`
 `;
 
 const PreviewImageAlt = styled.div`
-  width: 166px;
+  width: 133px;
   height: 168px;
   border: 1px solid black;
   background-color: #f8f8f8;
@@ -178,6 +178,8 @@ export const action: ActionFunction = async ({ request }) => {
     const thumbnailName = body.get("thumbnailName")?.toString();
     const detailSizeList = body.getAll("detailSize");
     const detailNameList = body.getAll("detailName");
+    const extraSizeList = body.getAll("extraSize");
+    const extraNameList = body.getAll("extraName");
     const isTempSave = body.get("isTempSave")?.toString();
 
     if (
@@ -187,7 +189,9 @@ export const action: ActionFunction = async ({ request }) => {
       thumbnailName &&
       thumbnailSize &&
       detailNameList &&
-      detailSizeList
+      detailSizeList &&
+      extraNameList &&
+      extraSizeList
     ) {
       await initializeUploadProductImage(
         productName,
@@ -196,7 +200,9 @@ export const action: ActionFunction = async ({ request }) => {
         thumbnailSize,
         thumbnailName,
         detailSizeList.map((val) => val as unknown as number),
-        detailNameList.map((val) => val as unknown as string)
+        detailNameList.map((val) => val as unknown as string),
+        extraSizeList.map((val) => val as unknown as number),
+        extraNameList.map((val) => val as unknown as string)
       );
       return {
         isWaiting: true,
@@ -376,6 +382,9 @@ export const action: ActionFunction = async ({ request }) => {
       case "detail":
         nextStep = "detail";
         break;
+      case "extra":
+        nextStep = "extra";
+        break;
     }
 
     const nextIndex = detailIndex + 1;
@@ -425,7 +434,10 @@ export default function PartnerProductManage() {
   const [thumbnailImageFile, setThumbnailImageFile] = useState<File>(); //썸네일 이미지 (필수)
   const [detailImageFileList, setDetailImageFileList] = useState<
     (File | undefined)[]
-  >(Array(8).fill(undefined)); //상세 이미지 (최소 1개 필수)
+  >(Array(8).fill(undefined)); //상세 이미지 - 좌우슬라이드 (최소 1개 필수)
+  const [extraImageFileList, setExtraImageFileList] = useState<
+    (File | undefined)[]
+  >(Array(8).fill(undefined)); //상세 이미지 - 하단첨부
   const [memo, setMemo] = useState<string>(""); // 옵션 별 가격 설정 및 관리자 전달 메모
   const [refundExplanation, setRefundExplanation] = useState<string>(""); //교환/반품안내
   const [serviceExplanation, setServiceExplanation] = useState<string>(""); //서비스문의/안내
@@ -526,10 +538,15 @@ export default function PartnerProductManage() {
     setDetailImageFileList(newDetailImageList);
   }
 
-  function deleteDetailImage(index: number) {
-    const first = detailImageFileList.slice(0, index);
-    const last = detailImageFileList.slice(index + 1);
-    setDetailImageFileList(first.concat(last));
+  function editExtraImage(index: number, val: File | undefined) {
+    const newExtraImageList = extraImageFileList.map((item, i) => {
+      if (i == index) {
+        return val;
+      } else {
+        return item;
+      }
+    });
+    setExtraImageFileList(newExtraImageList);
   }
 
   //필수 입력 내용을 전부 제대로 입력했는지
@@ -583,6 +600,12 @@ export default function PartnerProductManage() {
     }
 
     if (!checkDuplicateFileName(detailImageFileList)) {
+      setNotice("상세 페이지 이미지 파일들은 이름이 서로 달라야 합니다.");
+      setIsNoticeModalOpened(true);
+      return false;
+    }
+
+    if (!checkDuplicateFileName(extraImageFileList)) {
       setNotice("상세 페이지 이미지 파일들은 이름이 서로 달라야 합니다.");
       setIsNoticeModalOpened(true);
       return false;
@@ -706,6 +729,12 @@ export default function PartnerProductManage() {
       if (detailImageFileList[i]) {
         formData.append("detailSize", detailImageFileList[i]?.size);
         formData.append("detailName", detailImageFileList[i]?.name);
+      }
+    }
+    for (let i = 0; i < extraImageFileList.length; i++) {
+      if (extraImageFileList[i]) {
+        formData.append("extraSize", extraImageFileList[i]?.size);
+        formData.append("extraName", extraImageFileList[i]?.name);
       }
     }
 
@@ -834,74 +863,49 @@ export default function PartnerProductManage() {
           }
         }
       }
+
+      //detailImage 모두 올렸으면 extraImage 업로드
+      for (let i = 0; i < extraImageFileList.length; i++) {
+        if (extraImageFileList[i]) {
+          formData.set("actionType", "upload-image");
+          formData.set("productName", newProductName);
+          formData.set("file", extraImageFileList[i]);
+          formData.set("filename", extraImageFileList[i]?.name);
+          formData.set("usage", "extra");
+          formData.set("detailIndex", 0);
+          submit(formData, {
+            method: "post",
+            encType: "multipart/form-data",
+          });
+          return;
+        }
+      }
       setIsUploadRequestSent(true);
     }
-  }
 
-  //입력한 내용을 토대로 임시저장, 해당 절차는 필수 내용 입력 여부를 거치지 않음
-  async function submitTemporarySave() {
-    const partnerName = loaderData.partnerName;
-    if (partnerName == undefined) {
-      setNotice(
-        "프로필을 불러오는 것에 실패했습니다. 오류가 반복될 경우 관리자에게 문의해주세요."
-      );
-      setIsNoticeModalOpened(true);
-      return false;
-    }
-
-    const newProductName = `[${partnerName}] ${productName}`;
-    const newEnglishProductName =
-      englishProductName.length > 0
-        ? `[${partnerName}] ${englishProductName}`
-        : "";
-    const newExplanation = replaceLinebreak(explanation);
-    const newRefundExplanation = replaceLinebreak(refundExplanation);
-    const newServiceExplanation = replaceLinebreak(serviceExplanation);
-    let newOption = "";
-    for (let i = 0; i < optionCategoryList.length; i++) {
-      if (
-        optionCategoryList[i].length == 0 &&
-        optionDetailList[i].length == 0
-      ) {
-        continue;
+    if (step == "extra") {
+      let curIndex = 0;
+      for (let i = 0; i < extraImageFileList.length; i++) {
+        if (extraImageFileList[i]) {
+          if (curIndex == detailIndex) {
+            formData.set("actionType", "upload-image");
+            formData.set("productName", newProductName);
+            formData.set("file", extraImageFileList[i]);
+            formData.set("filename", extraImageFileList[i]?.name);
+            formData.set("usage", "extra");
+            formData.set("detailIndex", detailIndex);
+            submit(formData, {
+              method: "post",
+              encType: "multipart/form-data",
+            });
+            return;
+          } else {
+            curIndex++;
+          }
+        }
       }
-      let parsedOption = optionCategoryList[i];
-      parsedOption += "{";
-      parsedOption += replaceComma(optionDetailList[i]);
-      parsedOption += "}";
-      newOption += parsedOption;
-      if (i < optionCategoryList.length - 1) {
-        newOption += "//";
-      }
+      setIsUploadRequestSent(true);
     }
-
-    const formData: any = new FormData(formRef.current ?? undefined);
-    if (isLoadedProduct) {
-      formData.set("actionType", "tempsave-update");
-      formData.set("prevProductName", loadedProduct?.productName ?? "");
-    } else {
-      formData.set("actionType", "tempsave-add");
-    }
-    formData.set("partnerName", partnerName);
-    formData.set("productName", newProductName);
-    formData.set("englishProductName", newEnglishProductName);
-    formData.set("explanation", newExplanation);
-    formData.set("keyword", keyword);
-    formData.set("sellerPrice", sellerPrice.toString());
-    formData.set("isUsingOption", isUsingOption.toString());
-    formData.set("option", newOption);
-    formData.set("memo", memo);
-    formData.set("refundExplanation", newRefundExplanation);
-    formData.set("serviceExplanation", newServiceExplanation);
-    formData.set("mainImageFile", mainImageFile);
-    formData.set("thumbnailImageFile", thumbnailImageFile);
-    for (let i = 0; i < detailImageFileList.length; i++) {
-      if (detailImageFileList[i]) {
-        formData.append("detailImageFileList", detailImageFileList[i]);
-      }
-    }
-
-    submit(formData, { method: "post", encType: "multipart/form-data" });
   }
 
   //현재 보고 있는 상품 삭제 요청
@@ -958,15 +962,24 @@ export default function PartnerProductManage() {
       product.thumbnailImageName
     );
     const detailFileList = Array(8).fill(undefined);
+    const extraFileList = Array(8).fill(undefined);
     for (let i = 0; i < product.detailImageURLList.length; i++) {
       detailFileList[i] = await downloadFile(
         product.detailImageURLList[i],
         product.detailImageNameList[i]
       );
     }
+
+    for (let i = 0; i < product.extraImageURLList.length; i++) {
+      extraFileList[i] = await downloadFile(
+        product.extraImageURLList[i],
+        product.extraImageNameList[i]
+      );
+    }
     setMainImageFile(mainFile);
     setThumbnailImageFile(thumbnailFile);
     setDetailImageFileList(detailFileList);
+    setExtraImageFileList(extraFileList);
     setMemo(product.memo);
     setRefundExplanation(replaceBr(product.refundExplanation));
     setServiceExplanation(replaceBr(product.serviceExplanation));
@@ -985,6 +998,7 @@ export default function PartnerProductManage() {
     setMainImageFile(undefined);
     setThumbnailImageFile(undefined);
     setDetailImageFileList(Array(8).fill(undefined));
+    setExtraImageFileList(Array(8).fill(undefined));
     setMemo("");
     setRefundExplanation("");
     setServiceExplanation("");
@@ -1134,6 +1148,40 @@ export default function PartnerProductManage() {
     }
   }, [detailImageFileList]);
 
+  useEffect(() => {
+    for (let i = 0; i < extraImageFileList.length; i++) {
+      if (
+        extraImageFileList[i] !== undefined &&
+        extraImageFileList[i] !== null
+      ) {
+        const file: any = extraImageFileList[i];
+        if (file.size > 5 * 1024 ** 2) {
+          setNotice("업로드할 이미지의 크기는 5MB를 넘을 수 없습니다.");
+          setIsNoticeModalOpened(true);
+          editExtraImage(i, undefined);
+          return;
+        }
+
+        if (file.name.includes("/") || file.name.includes("|")) {
+          setNotice(
+            "업로드할 이미지의 이름에 '/' 또는 '|'이 들어갈 수 없습니다."
+          );
+          setIsNoticeModalOpened(true);
+          editExtraImage(i, undefined);
+          return;
+        }
+
+        const preview = document.getElementById(
+          `extraImagePreview_${i}`
+        ) as HTMLImageElement;
+        if (preview) {
+          preview.src = URL.createObjectURL(extraImageFileList[i]!);
+        } else {
+        }
+      }
+    }
+  }, [extraImageFileList]);
+
   //업로드 중 업로드됐는지 확인을 위한 인터벌
   useEffect(() => {
     var interval = setInterval(() => {
@@ -1196,7 +1244,9 @@ export default function PartnerProductManage() {
             fontWeight: "700",
           }}
         >
-          {`업로드 진행 중... (${imageUploadProgress.toFixed(2)}%)`}
+          {`업로드 진행 중... ${
+            isUploadRequestSent ? `(${imageUploadProgress.toFixed(2)}%)` : ""
+          } `}
           <br />
           {`도중에 페이지를 닫을 경우 오류가 발생할 수 있습니다.`}
         </div>
@@ -1595,8 +1645,15 @@ export default function PartnerProductManage() {
                 display: "flex",
               }}
             >
-              <LabelText style={{ marginTop: "10px" }}>
-                상세페이지 이미지
+              <LabelText
+                style={{
+                  marginTop: "10px",
+                  textAlign: "left",
+                  fontSize: "22px",
+                }}
+              >
+                상세페이지 <br />
+                좌우슬라이드 이미지
                 <div style={{ width: "10px", color: "red" }}>*</div>
               </LabelText>
               <div
@@ -1652,6 +1709,80 @@ export default function PartnerProductManage() {
                         <FileUploadButton
                           onClick={() => {
                             editDetailImage(index, undefined);
+                          }}
+                        >
+                          삭제
+                        </FileUploadButton>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <Space h={20} />
+            <div
+              style={{
+                display: "flex",
+              }}
+            >
+              <LabelText
+                style={{
+                  marginTop: "10px",
+                  textAlign: "left",
+                  fontSize: "22px",
+                }}
+              >
+                상세페이지 <br />
+                하단 첨부 이미지
+              </LabelText>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "auto auto auto auto",
+                  gap: "10px",
+                }}
+              >
+                {extraImageFileList.map((item, index) => {
+                  return (
+                    <div
+                      key={`ExtraImageItem_${index}`}
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        justifyContent: "left",
+                      }}
+                    >
+                      {extraImageFileList[index] == undefined ? (
+                        <PreviewImageAlt>{index + 1}</PreviewImageAlt>
+                      ) : (
+                        <PreviewImage id={`extraImagePreview_${index}`} />
+                      )}
+                      <FileUpload
+                        type="file"
+                        id={`uploadExtraImage_${index}`}
+                        accept=".png,.jpg,.jpeg,.svg"
+                        onChange={async (e) => {
+                          setIsLoading(true);
+                          if (e.target.files) {
+                            const resizedFile = await resizeFile(
+                              e.target.files[0],
+                              false
+                            );
+                            editExtraImage(index, resizedFile);
+                          }
+                          setIsLoading(false);
+                        }}
+                      />
+                      <Space h={12} />
+                      <div style={{ display: "flex" }}>
+                        <FileUploadButton htmlFor={`uploadExtraImage_${index}`}>
+                          추가
+                        </FileUploadButton>
+                        <Space w={10} />
+                        <FileUploadButton
+                          onClick={() => {
+                            editExtraImage(index, undefined);
                           }}
                         >
                           삭제
