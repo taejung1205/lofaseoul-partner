@@ -36,7 +36,7 @@ export async function resizeFile(file: File, isMinSizeRequired = true) {
   
 
   const sizeLimitedFile = await imageCompression(newFile, {
-    maxSizeMB: 5,
+    maxSizeMB: 3,
     useWebWorker: true,
     alwaysKeepResolution: isMinSizeRequired,
   });
