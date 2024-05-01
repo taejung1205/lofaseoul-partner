@@ -17,10 +17,7 @@ import styled from "styled-components";
 import { BlackButton } from "~/components/button";
 import { BasicModal, ModalButton } from "~/components/modal";
 import { PageLayout } from "~/components/page_layout";
-import {
-  LoadedProduct,
-  ProductWithoutFile,
-} from "~/components/product";
+import { LoadedProduct, ProductWithoutFile } from "~/components/product";
 import {
   addProductWithoutFile,
   deleteProduct,
@@ -31,7 +28,7 @@ import {
   uploadProductImage,
 } from "~/services/firebase.server";
 import { requireUser } from "~/services/session.server";
-import { resizeFile } from "~/utils/resize-image";
+import { cropImage, resizeFile } from "~/utils/resize-image";
 
 const EditInputBox = styled.input`
   font-size: 20px;
@@ -456,7 +453,8 @@ export default function PartnerProductManage() {
   const [loadedProducts, setLoadedProducts] = useState<LoadedProduct[]>([]); //로딩된 전체 주문건 아이템 리스트
 
   //업로드 대기 중 상태
-  const [isUploadWaitingInProgress, setIsUploadWaitingInProgress] = useState<boolean>(false);
+  const [isUploadWaitingInProgress, setIsUploadWaitingInProgress] =
+    useState<boolean>(false);
 
   //업로드 절차 상태 (해당 상태에선 퍼센트 얼마나 진행됐는지 요청 X)
   const [isUploadRequestSent, setIsUploadRequestSent] = useState<boolean>(true);
@@ -753,7 +751,7 @@ export default function PartnerProductManage() {
     }
 
     if (isLoadedProduct) {
-      if(isTempSave){
+      if (isTempSave) {
         formData.set("actionType", "tempsave-update");
         formData.set("prevProductName", loadedProduct?.productName ?? "");
       } else {
@@ -761,7 +759,7 @@ export default function PartnerProductManage() {
         formData.set("prevProductName", loadedProduct?.productName ?? "");
       }
     } else {
-      if(isTempSave){
+      if (isTempSave) {
         formData.set("actionType", "tempsave-add");
       } else {
         formData.set("actionType", "add");
@@ -1161,7 +1159,8 @@ export default function PartnerProductManage() {
     <>
       <LoadingOverlay
         visible={
-          (isLoading || navigation.state == "submitting") && !isUploadWaitingInProgress
+          (isLoading || navigation.state == "submitting") &&
+          !isUploadWaitingInProgress
         }
         overlayBlur={2}
       />
@@ -1514,8 +1513,13 @@ export default function PartnerProductManage() {
                   onChange={async (e) => {
                     setIsLoading(true);
                     if (e.target.files) {
-                      const file = await resizeFile(e.target.files[0]);
-                      setMainImageFile(file);
+                      const resizedFile = await resizeFile(e.target.files[0]);
+                      const croppedFile = await cropImage(
+                        resizedFile,
+                        1000,
+                        1250
+                      );
+                      setMainImageFile(croppedFile);
                     }
                     setIsLoading(false);
                   }}
@@ -1550,8 +1554,13 @@ export default function PartnerProductManage() {
                   onChange={async (e) => {
                     setIsLoading(true);
                     if (e.target.files) {
-                      const file = await resizeFile(e.target.files[0]);
-                      setThumbnailImageFile(file);
+                      const resizedFile = await resizeFile(e.target.files[0]);
+                      const croppedFile = await cropImage(
+                        resizedFile,
+                        1000,
+                        1250
+                      );
+                      setThumbnailImageFile(croppedFile);
                     }
                     setIsLoading(false);
                   }}
@@ -1619,8 +1628,15 @@ export default function PartnerProductManage() {
                         onChange={async (e) => {
                           setIsLoading(true);
                           if (e.target.files) {
-                            const file = await resizeFile(e.target.files[0]);
-                            editDetailImage(index, file);
+                            const resizedFile = await resizeFile(
+                              e.target.files[0]
+                            );
+                            const croppedFile = await cropImage(
+                              resizedFile,
+                              1000,
+                              1250
+                            );
+                            editDetailImage(index, croppedFile);
                           }
                           setIsLoading(false);
                         }}
