@@ -294,7 +294,7 @@ export default function AdminProductManage() {
           products[i].productName,
           "마우스후버이미지",
           1,
-          products[i].mainImageName.split(".").pop() ?? "jpg"
+          products[i].thumbnailImageName.split(".").pop() ?? "jpg"
         )
       );
 
@@ -306,12 +306,26 @@ export default function AdminProductManage() {
           makeFileName(
             products[i].partnerName,
             products[i].productName,
-            "상세페이지이미지",
+            "상세페이지_좌우슬라이드이미지",
             j+1,
-            products[i].mainImageName.split(".").pop() ?? "jpg"
+            products[i].detailImageNameList[j].split(".").pop() ?? "jpg"
           )
         );
         zip.file(detailFile.name, detailFile);
+      }
+
+      for (let j = 0; j < products[i].extraImageURLList.length; j++) {
+        const extraFile = await downloadFile(
+          products[i].extraImageURLList[j],
+          makeFileName(
+            products[i].partnerName,
+            products[i].productName,
+            "상세페이지_하단추가이미지",
+            j+1,
+            products[i].extraImageNameList[j].split(".").pop() ?? "jpg"
+          )
+        );
+        zip.file(extraFile.name, extraFile);
       }
     }
     zip.generateAsync({ type: "blob" }).then((content) => {
@@ -485,7 +499,7 @@ export default function AdminProductManage() {
               alignItems: "center",
             }}
           >
-            <DetailTitle>상세 페이지 이미지</DetailTitle>
+            <DetailTitle>상세 페이지 <br /> 좌우슬라이드 이미지</DetailTitle>
             <div
               style={{
                 width: "568px",
@@ -495,6 +509,26 @@ export default function AdminProductManage() {
               }}
             >
               {detailProduct?.detailImageURLList.map((url) => (
+                <DetailImage src={url} />
+              ))}
+            </div>
+          </div>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+            }}
+          >
+            <DetailTitle>상세 페이지 <br /> 하단추가 이미지</DetailTitle>
+            <div
+              style={{
+                width: "568px",
+                overflowX: "auto",
+                display: "flex",
+                justifyContent: "start",
+              }}
+            >
+              {detailProduct?.extraImageURLList.map((url) => (
                 <DetailImage src={url} />
               ))}
             </div>

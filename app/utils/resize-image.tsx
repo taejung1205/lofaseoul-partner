@@ -1,35 +1,41 @@
 import imageCompression from "browser-image-compression";
 import Resizer from "react-image-file-resizer";
 
-export async function resizeFile(file: File) {
-  let fileType = "JPEG";
-  switch (file.type) {
-    case "image/png":
-      fileType = "PNG";
-      break;
+export async function resizeFile(file: File, isMinSizeRequired = true) {
+  let newFile: File;
+  if(isMinSizeRequired){
+    let fileType = "JPEG";
+    switch (file.type) {
+      case "image/png":
+        fileType = "PNG";
+        break;
+    }
+  
+    const resizeWithSizeLimit = (file: File) =>
+      new Promise((resolve) =>
+        Resizer.imageFileResizer(
+          file,
+          100,
+          100,
+          fileType,
+          100,
+          0,
+          (uri) => {
+            resolve(uri);
+          },
+          "file",
+          1000,
+          1250
+        )
+      );
+  
+    newFile = (await resizeWithSizeLimit(file)) as File;
+  } else {
+    newFile = file;
   }
+  
 
-  const resizeWithSizeLimit = (file: File) =>
-    new Promise((resolve) =>
-      Resizer.imageFileResizer(
-        file,
-        100,
-        100,
-        fileType,
-        100,
-        0,
-        (uri) => {
-          resolve(uri);
-        },
-        "file",
-        1000,
-        1250
-      )
-    );
-
-  const resizedFile = (await resizeWithSizeLimit(file)) as File;
-
-  const sizeLimitedFile = await imageCompression(resizedFile, {
+  const sizeLimitedFile = await imageCompression(newFile, {
     maxSizeMB: 5,
     useWebWorker: true,
     alwaysKeepResolution: true,

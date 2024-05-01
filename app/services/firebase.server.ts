@@ -1570,6 +1570,11 @@ export async function deleteProduct({ productName }: { productName: string }) {
         const detailPath = `${data.productName}/detail/${detailNameList[i]}`;
         await deleteObject(ref(storage, detailPath));
       }
+      const extraNameList = data.extraImageNameList;
+      for (let i = 0; i < extraNameList.length; i++) {
+        const extraPath = `${data.productName}/extra/${extraNameList[i]}`;
+        await deleteObject(ref(storage, extraPath));
+      }
     }
   } catch (error: any) {
     return error.message ?? error;
@@ -1606,6 +1611,11 @@ export async function deleteProducts({
         for (let i = 0; i < detailNameList.length; i++) {
           const detailPath = `${data.productName}/detail/${detailNameList[i]}`;
           await deleteObject(ref(storage, detailPath));
+        }
+        const extraNameList = data.extraImageNameList;
+        for (let i = 0; i < extraNameList.length; i++) {
+          const extraPath = `${data.productName}/extra/${extraNameList[i]}`;
+          await deleteObject(ref(storage, extraPath));
         }
       }
     }
@@ -1723,6 +1733,10 @@ export async function getProductUploadProgress({
         total += data[`detailTotalBytes_${i}`];
         transferred += data[`detailBytesTransferred_${i}`];
       }
+      for (let i = 0; i < data.extraLength; i++) {
+        total += data[`extraTotalBytes_${i}`];
+        transferred += data[`extraBytesTransferred_${i}`];
+      }
       const progress = (transferred / total) * 100;
       return progress;
     } else {
@@ -1741,7 +1755,9 @@ export async function initializeUploadProductImage(
   thumbnailSize: number,
   thumbnailName: string,
   detailSizeList: number[],
-  detailNameList: string[]
+  detailNameList: string[],
+  extraSizeList: number[],
+  extraNameList: string[]
 ) {
   let data: any = {
     mainTotalBytes: mainSize,
@@ -1751,12 +1767,19 @@ export async function initializeUploadProductImage(
     mainName: mainName,
     thumbnailName: thumbnailName,
     detailLength: detailSizeList.length,
+    extraLength: extraSizeList.length,
   };
 
   for (let i = 0; i < detailSizeList.length; i++) {
     data[`detailBytesTransferred_${i}`] = 0;
     data[`detailTotalBytes_${i}`] = Number(detailSizeList[i]);
     data[`detailName_${i}`] = detailNameList[i];
+  }
+
+  for (let i = 0; i < extraSizeList.length; i++) {
+    data[`extraBytesTransferred_${i}`] = 0;
+    data[`extraTotalBytes_${i}`] = Number(extraSizeList[i]);
+    data[`extraName_${i}`] = extraNameList[i];
   }
   await setDoc(doc(firestore, "products-progress", productName), data);
 }
@@ -1800,6 +1823,16 @@ export async function uploadProductImage(
               doc(firestore, "products-progress", productName),
               detailData
             );
+            break;
+          case "extra":
+            let extraData: any = {};
+            extraData[`extraBytesTransferred_${detailIndex}`] =
+              snapshot.bytesTransferred;
+            updateDoc(
+              doc(firestore, "products-progress", productName),
+              extraData
+            );
+            break;
         }
       }
     },
@@ -1830,6 +1863,17 @@ export async function uploadProductImage(
               doc(firestore, "products-progress", productName),
               detailData
             );
+            break;
+          case "extra":
+            let extraData: any = {};
+            extraData[`extraBytesTransferred_${detailIndex}`] =
+              arrayBuffer.byteLength;
+            extraData[`extraURL_${detailIndex}`] = url;
+            updateDoc(
+              doc(firestore, "products-progress", productName),
+              extraData
+            );
+            break;
         }
       });
     }
@@ -1853,12 +1897,19 @@ export async function isProductImageUploadFinished({
       const data = docSnap.data();
       const detailURLList = [];
       const detailNameList = [];
+      const extraURLList = [];
+      const extraNameList = [];
       if (!data.mainURL) return false;
       if (!data.thumbnailURL) return false;
       for (let i = 0; i < data.detailLength; i++) {
         if (!data[`detailURL_${i}`]) return false;
         detailURLList.push(data[`detailURL_${i}`]);
         detailNameList.push(data[`detailName_${i}`]);
+      }
+      for (let i = 0; i < data.extraLength; i++) {
+        if (!data[`extraURL_${i}`]) return false;
+        extraURLList.push(data[`extraURL_${i}`]);
+        extraNameList.push(data[`extraName_${i}`]);
       }
 
       await updateDoc(doc(firestore, "products", productName), {
@@ -1867,7 +1918,9 @@ export async function isProductImageUploadFinished({
         thumbnailImageURL: data.thumbnailURL,
         thumbnailImageName: data.thumbnailName,
         detailImageURLList: detailURLList,
-        detailImageNameList: detailNameList
+        detailImageNameList: detailNameList,
+        extraImageURLList: extraURLList,
+        extraImageNameList: extraNameList,
       });
 
       await deleteDoc(doc(firestore, "products-progress", productName));
