@@ -1495,6 +1495,14 @@ export async function addProductWithoutFile({
     serviceExplanation: product.serviceExplanation,
     status: product.status,
     memo: product.memo,
+    detailImageNameList: [],
+    detailImageURLList: [],
+    extraImageNameList: [],
+    extraImageURLList: [],
+    mainImageName: "",
+    mainImageURL: "",
+    thumbnailImageName: "",
+    thumbnailImageURL: ""
   });
 
   return null;
