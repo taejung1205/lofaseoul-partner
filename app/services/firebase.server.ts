@@ -1495,6 +1495,14 @@ export async function addProductWithoutFile({
     serviceExplanation: product.serviceExplanation,
     status: product.status,
     memo: product.memo,
+    detailImageNameList: [],
+    detailImageURLList: [],
+    extraImageNameList: [],
+    extraImageURLList: [],
+    mainImageName: "",
+    mainImageURL: "",
+    thumbnailImageName: "",
+    thumbnailImageURL: ""
   });
 
   return null;
@@ -1562,18 +1570,35 @@ export async function deleteProduct({ productName }: { productName: string }) {
       await deleteDoc(doc(firestore, "products", productName));
 
       const mainPath = `${data.productName}/main/${data.mainImageName}`;
-      await deleteObject(ref(storage, mainPath));
+      try {
+        await deleteObject(ref(storage, mainPath));
+      } catch(error: any){
+        console.log("mainPath file not found");
+      }
+      
       const thumbnailPath = `${data.productName}/thumbnail/${data.thumbnailImageName}`;
-      await deleteObject(ref(storage, thumbnailPath));
+      try {
+        await deleteObject(ref(storage, thumbnailPath));
+      } catch(error: any){
+        console.log("thumbnailPath file not found");
+      }
       const detailNameList = data.detailImageNameList;
       for (let i = 0; i < detailNameList.length; i++) {
         const detailPath = `${data.productName}/detail/${detailNameList[i]}`;
-        await deleteObject(ref(storage, detailPath));
+        try {
+          await deleteObject(ref(storage, detailPath));
+        } catch(error: any){
+          console.log("detailPath file not found");
+        }
       }
       const extraNameList = data.extraImageNameList;
       for (let i = 0; i < extraNameList.length; i++) {
         const extraPath = `${data.productName}/extra/${extraNameList[i]}`;
-        await deleteObject(ref(storage, extraPath));
+        try {
+          await deleteObject(ref(storage, extraPath));
+        } catch(error: any){
+          console.log("extraPath file not found");
+        }
       }
     }
   } catch (error: any) {
