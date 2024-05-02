@@ -79,46 +79,34 @@ export const action: ActionFunction = async ({ request }) => {
     const productNameList = body.get("productNameList")?.toString();
     if (productNameList !== undefined) {
       const jsonArr: string[] = JSON.parse(productNameList);
-      const result = await deleteProducts({
+      deleteProducts({
         productNameList: jsonArr,
       });
-      if (result == null) {
-        return json({ message: "삭제가 완료되었습니다." });
-      } else {
-        return json({
-          message: `삭제 중 문제가 발생했습니다.${"\n"}${result}`,
-        });
-      }
+      {
+        return json({ message: "해당 상품들을 삭제하였습니다. 잠시 후 해당 상품들이 삭제될 예정입니다." });
+      } 
     }
   } else if (actionType === "accept") {
     const productNameList = body.get("productNameList")?.toString();
     if (productNameList !== undefined) {
       const jsonArr: string[] = JSON.parse(productNameList);
-      const result = await acceptProducts({
+      acceptProducts({
         productNameList: jsonArr,
       });
-      if (result == null) {
-        return json({ message: "승인이 완료되었습니다." });
-      } else {
-        return json({
-          message: `승인 중 문제가 발생했습니다.${"\n"}${result}`,
-        });
-      }
+      {
+        return json({ message: "해당 상품들을 승인하였습니다. 잠시 후 해당 상품들이 승인될 예정입니다." });
+      } 
     }
   } else if (actionType === "decline") {
     const productNameList = body.get("productNameList")?.toString();
     if (productNameList !== undefined) {
       const jsonArr: string[] = JSON.parse(productNameList);
-      const result = await declineProducts({
+      declineProducts({
         productNameList: jsonArr,
       });
-      if (result == null) {
-        return json({ message: "거부가 완료되었습니다." });
-      } else {
-        return json({
-          message: `거부 중 문제가 발생했습니다.${"\n"}${result}`,
-        });
-      }
+      {
+        return json({ message: "해당 상품들을 거부하였습니다. 잠시 후 해당 상품들이 거부될 예정입니다." });
+      } 
     }
   }
 
