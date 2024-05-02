@@ -1502,7 +1502,7 @@ export async function addProductWithoutFile({
     mainImageName: "",
     mainImageURL: "",
     thumbnailImageName: "",
-    thumbnailImageURL: ""
+    thumbnailImageURL: "",
   });
 
   return null;
@@ -1572,14 +1572,14 @@ export async function deleteProduct({ productName }: { productName: string }) {
       const mainPath = `${data.productName}/main/${data.mainImageName}`;
       try {
         await deleteObject(ref(storage, mainPath));
-      } catch(error: any){
+      } catch (error: any) {
         console.log("mainPath file not found");
       }
-      
+
       const thumbnailPath = `${data.productName}/thumbnail/${data.thumbnailImageName}`;
       try {
         await deleteObject(ref(storage, thumbnailPath));
-      } catch(error: any){
+      } catch (error: any) {
         console.log("thumbnailPath file not found");
       }
       const detailNameList = data.detailImageNameList;
@@ -1587,7 +1587,7 @@ export async function deleteProduct({ productName }: { productName: string }) {
         const detailPath = `${data.productName}/detail/${detailNameList[i]}`;
         try {
           await deleteObject(ref(storage, detailPath));
-        } catch(error: any){
+        } catch (error: any) {
           console.log("detailPath file not found");
         }
       }
@@ -1596,7 +1596,7 @@ export async function deleteProduct({ productName }: { productName: string }) {
         const extraPath = `${data.productName}/extra/${extraNameList[i]}`;
         try {
           await deleteObject(ref(storage, extraPath));
-        } catch(error: any){
+        } catch (error: any) {
           console.log("extraPath file not found");
         }
       }
@@ -1862,7 +1862,12 @@ export async function uploadProductImage(
       }
     },
     (error) => {
-      console.log("ERROR", error.code);
+      updateDoc(
+        doc(firestore, "products-progress", productName),
+        {
+          error: error.message
+        }
+      );
     },
     () => {
       getDownloadURL(uploadTask.snapshot.ref).then((url) => {
@@ -1957,4 +1962,25 @@ export async function isProductImageUploadFinished({
   } catch (error: any) {
     return false;
   }
+}
+
+export async function fixProduct() {
+  const productsRef = collection(firestore, `products`);
+  const querySnapshot = await getDocs(productsRef);
+  querySnapshot.forEach((item) => {
+    const docId = item.id;
+    const data = item.data();
+    if (!data.mainImageURL) {
+      updateDoc(doc(firestore, `products/${docId}`), {
+        detailImageNameList: [],
+        detailImageURLList: [],
+        extraImageNameList: [],
+        extraImageURLList: [],
+        mainImageName: "",
+        mainImageURL: "",
+        thumbnailImageName: "",
+        thumbnailImageURL: "",
+      });
+    }
+  });
 }
