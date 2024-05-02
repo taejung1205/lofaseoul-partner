@@ -307,7 +307,7 @@ export default function AdminProductManage() {
             products[i].partnerName,
             products[i].productName,
             "상세페이지_좌우슬라이드이미지",
-            j+1,
+            j + 1,
             products[i].detailImageNameList[j].split(".").pop() ?? "jpg"
           )
         );
@@ -321,7 +321,7 @@ export default function AdminProductManage() {
             products[i].partnerName,
             products[i].productName,
             "상세페이지_하단추가이미지",
-            j+1,
+            j + 1,
             products[i].extraImageNameList[j].split(".").pop() ?? "jpg"
           )
         );
@@ -499,7 +499,9 @@ export default function AdminProductManage() {
               alignItems: "center",
             }}
           >
-            <DetailTitle>상세 페이지 <br /> 좌우슬라이드 이미지</DetailTitle>
+            <DetailTitle>
+              상세 페이지 <br /> 좌우슬라이드 이미지
+            </DetailTitle>
             <div
               style={{
                 width: "568px",
@@ -519,7 +521,9 @@ export default function AdminProductManage() {
               alignItems: "center",
             }}
           >
-            <DetailTitle>상세 페이지 <br /> 하단추가 이미지</DetailTitle>
+            <DetailTitle>
+              상세 페이지 <br /> 하단추가 이미지
+            </DetailTitle>
             <div
               style={{
                 width: "568px",
@@ -820,13 +824,21 @@ const schema = [
   {
     column: "품목 구성방식",
     type: String,
-    value: (item: LoadedProduct) => (item.isUsingOption ? "F" : ""),
+    value: (item: LoadedProduct) => {
+      const option = item.option;
+      const optionArr = option.split("//");
+      return item.isUsingOption ? (optionArr.length > 1 ? "T" : "F") : "";
+    },
     width: 20,
   },
   {
     column: "옵션 표시방식",
     type: String,
-    value: (item: LoadedProduct) => (item.isUsingOption ? "C" : ""),
+    value: (item: LoadedProduct) => {
+      const option = item.option;
+      const optionArr = option.split("//");
+      return optionArr.length > 1 ? "C" : "";
+    },
     width: 20,
   },
   {
@@ -838,17 +850,23 @@ const schema = [
   {
     column: "옵션 스타일",
     type: String,
-    value: (item: LoadedProduct) => {
-      let str = "";
-      if (item.option.length > 0) {
-        const optionList = item.option.split("//");
-        for (let i = 0; i < optionList.length - 1; i++) {
-          str += "S,";
-        }
-        str += "S";
-      }
-      return str;
-    },
+    value: (item: LoadedProduct) =>
+      //   {
+      //   let str = "";
+      //   if (item.option.length > 0) {
+      //     const optionList = item.option.split("//");
+      //     for (let i = 0; i < optionList.length - 1; i++) {
+      //       str += "S,";
+      //     }
+      //     str += "S";
+      //   }
+      //   return str;
+      // },
+      {
+        const option = item.option;
+        const optionArr = option.split("//");
+        return optionArr.length > 1 ? "S" : "";
+      },
     width: 20,
   },
   {

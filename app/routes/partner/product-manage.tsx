@@ -427,7 +427,6 @@ export default function PartnerProductManage() {
   const [explanation, setExplanation] = useState<string>(""); //상품 설명
   const [keyword, setKeyword] = useState<string>(); //검색어 설정
   const [sellerPrice, setSellerPrice] = useState<number>(0); //판매가 (필수)
-  const [isUsingOption, setIsUsingOption] = useState<boolean>(false); // 옵션 사용 여부
   const [optionCategoryList, setOptionCategoryList] = useState<string[]>([""]); //옵션 카테고리 목록
   const [optionDetailList, setOptionDetailList] = useState<string[]>([""]); //옵션 세부항목 목록
   const [mainImageFile, setMainImageFile] = useState<File>(); //메인 이미지 (필수)
@@ -801,7 +800,7 @@ export default function PartnerProductManage() {
     formData.set("explanation", newExplanation);
     formData.set("keyword", keyword ?? "");
     formData.set("sellerPrice", sellerPrice.toString());
-    formData.set("isUsingOption", isUsingOption.toString());
+    formData.set("isUsingOption", newOption.length > 0 ? "true" : "false");
     formData.set("option", newOption);
     formData.set("memo", memo);
     formData.set("refundExplanation", newRefundExplanation);
@@ -936,7 +935,6 @@ export default function PartnerProductManage() {
     setExplanation(replaceBr(product.explanation));
     setKeyword(product.keyword);
     setSellerPrice(product.sellerPrice);
-    setIsUsingOption(product.isUsingOption);
     if (product.option.length == 0) {
       setOptionCategoryList([""]);
       setOptionDetailList([""]);
@@ -992,7 +990,6 @@ export default function PartnerProductManage() {
     setExplanation("");
     setKeyword("");
     setSellerPrice(0);
-    setIsUsingOption(false);
     setOptionCategoryList([""]);
     setOptionDetailList([""]);
     setMainImageFile(undefined);
