@@ -44,6 +44,7 @@ import { sendAligoMessage } from "./aligo.server";
 import { NoticeItem } from "~/components/notice";
 import { ProductWithoutFile } from "~/components/product";
 import { SettlementSumItem } from "~/components/settlement_sum";
+import { fi } from "date-fns/locale";
 
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
@@ -1893,13 +1894,15 @@ export async function uploadProductImage(
         }
       }
     },
-    (error) => {
-      updateDoc(
-        doc(firestore, "products-progress", productName),
-        {
-          error: error.message
-        }
-      );
+    async (error) => {
+      await new Promise((resolve) => setTimeout(resolve, 3000));
+      uploadProductImage(
+        file,
+        fileName,
+        usage,
+        productName,
+        detailIndex
+      )
     },
     () => {
       getDownloadURL(uploadTask.snapshot.ref).then((url) => {
