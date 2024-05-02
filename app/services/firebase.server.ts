@@ -1626,21 +1626,21 @@ export async function deleteProducts({
       const docSnap = await getDoc(docRef);
       if (docSnap.exists()) {
         const data = docSnap.data();
-        await deleteDoc(doc(firestore, "products", productNameList[i]));
+        deleteDoc(doc(firestore, "products", productNameList[i]));
 
         const mainPath = `${data.productName}/main/${data.mainImageName}`;
-        await deleteObject(ref(storage, mainPath));
+        deleteObject(ref(storage, mainPath));
         const thumbnailPath = `${data.productName}/thumbnail/${data.thumbnailImageName}`;
-        await deleteObject(ref(storage, thumbnailPath));
+        deleteObject(ref(storage, thumbnailPath));
         const detailNameList = data.detailImageNameList;
         for (let i = 0; i < detailNameList.length; i++) {
           const detailPath = `${data.productName}/detail/${detailNameList[i]}`;
-          await deleteObject(ref(storage, detailPath));
+          deleteObject(ref(storage, detailPath));
         }
         const extraNameList = data.extraImageNameList;
         for (let i = 0; i < extraNameList.length; i++) {
           const extraPath = `${data.productName}/extra/${extraNameList[i]}`;
-          await deleteObject(ref(storage, extraPath));
+          deleteObject(ref(storage, extraPath));
         }
       }
     }
@@ -1668,7 +1668,7 @@ export async function acceptProducts({
       const docRef = doc(firestore, "products", productNameList[i]);
       const docSnap = await getDoc(docRef);
       if (docSnap.exists()) {
-        await updateDoc(doc(firestore, "products", productNameList[i]), {
+        updateDoc(doc(firestore, "products", productNameList[i]), {
           status: "승인완료",
         });
       }
@@ -1697,7 +1697,7 @@ export async function declineProducts({
       const docRef = doc(firestore, "products", productNameList[i]);
       const docSnap = await getDoc(docRef);
       if (docSnap.exists()) {
-        await updateDoc(doc(firestore, "products", productNameList[i]), {
+        updateDoc(doc(firestore, "products", productNameList[i]), {
           status: "승인거부",
         });
       }
@@ -1894,6 +1894,12 @@ export async function uploadProductImage(
       }
     },
     async (error) => {
+      let errorData: any = {}
+      errorData[`${usage}-${detailIndex}-errorData`] = error.message;
+      updateDoc(
+        doc(firestore, "products-progress", productName),
+        errorData
+      );
       await new Promise((resolve) => setTimeout(resolve, 3000));
       uploadProductImage(
         file,
