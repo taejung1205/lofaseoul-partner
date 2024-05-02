@@ -44,7 +44,6 @@ import { sendAligoMessage } from "./aligo.server";
 import { NoticeItem } from "~/components/notice";
 import { ProductWithoutFile } from "~/components/product";
 import { SettlementSumItem } from "~/components/settlement_sum";
-import { fi } from "date-fns/locale";
 
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
