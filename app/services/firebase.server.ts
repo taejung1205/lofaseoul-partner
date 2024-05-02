@@ -1821,6 +1821,38 @@ export async function uploadProductImage(
   const imageStorageRef = ref(storage, imagePath);
   const uploadTask = uploadBytesResumable(imageStorageRef, arrayBuffer);
 
+
+  switch (usage) {
+    case "main":
+      updateDoc(doc(firestore, "products-progress", productName), {
+        mainStarted: "true",
+      });
+      break;
+    case "thumbnail":
+      updateDoc(doc(firestore, "products-progress", productName), {
+        thumbnailStarted: "true",
+      });
+      break;
+    case "detail":
+      let detailData: any = {};
+      detailData[`detailStarted_${detailIndex}`] =
+        "true";
+      updateDoc(
+        doc(firestore, "products-progress", productName),
+        detailData
+      );
+      break;
+    case "extra":
+      let extraData: any = {};
+      extraData[`extraStarted_${detailIndex}`] =
+        "true";
+      updateDoc(
+        doc(firestore, "products-progress", productName),
+        extraData
+      );
+      break;
+  }
+  
   let progress = 0;
   let stair = 50000;
 
