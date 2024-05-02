@@ -1893,13 +1893,15 @@ export async function uploadProductImage(
         }
       }
     },
-    (error) => {
-      updateDoc(
-        doc(firestore, "products-progress", productName),
-        {
-          error: error.message
-        }
-      );
+    async (error) => {
+      await new Promise((resolve) => setTimeout(resolve, 3000));
+      uploadProductImage(
+        file,
+        fileName,
+        usage,
+        productName,
+        detailIndex
+      )
     },
     () => {
       getDownloadURL(uploadTask.snapshot.ref).then((url) => {
