@@ -556,6 +556,12 @@ export default function PartnerProductManage() {
       return false;
     }
 
+    if (productName.includes('/')) {
+      setNotice("상품명에 '/'가 들어갈 수 없습니다.");
+      setIsNoticeModalOpened(true);
+      return false;
+    }
+
     if (explanation.length == 0) {
       setNotice("상품 간략설명을 입력해야 합니다.");
       setIsNoticeModalOpened(true);
