@@ -228,7 +228,6 @@ export function AdminNotice({
         onClose={() => {
           setIsEditModalOpened(false);
         }}
-        size="xl"
       >
         <Form method="post" id="edit">
           <input type="hidden" value={"edit"} name="action" required />
