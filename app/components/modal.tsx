@@ -1,21 +1,50 @@
 import { Modal } from "@mantine/core";
 import styled from "styled-components";
 
+const ModalOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5); /* semi-transparent overlay */
+  z-index: 1000; /* ensures modal is on top of other elements */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+`;
+
+const ModalContent = styled.div`
+  background-color: white;
+  padding: 20px;
+  border-radius: 8px;
+  font-size: 20px;
+`;
 export function BasicModal({
   opened,
   onClose,
   children,
-  size = "md"
 }: {
   opened: boolean;
   onClose: () => void;
   children: React.ReactNode;
-  size?: string
 }) {
+  // return (
+  //   <Modal centered opened={opened} onClose={onClose} withCloseButton={false} size={size}>
+  //     {children}
+  //   </Modal>
+  // );
+
+  if (!opened) {
+    return null;
+  }
+
   return (
-    <Modal centered opened={opened} onClose={onClose} withCloseButton={false} size={size}>
-      {children}
-    </Modal>
+    <ModalOverlay onClick={onClose}>
+      <ModalContent>
+        {children}
+      </ModalContent>
+    </ModalOverlay>
   );
 }
 
