@@ -89,7 +89,7 @@ export function PartnerProfile({
               <ModalButton onClick={() => setIsDeleteModalOpened(false)}>
                 취소
               </ModalButton>
-              <Form method="post">
+              <Form method="post" onSubmit={() => setIsDeleteModalOpened(false)}>
                 <input type="hidden" value={"delete"} name="action" required />
                 <input
                   type="hidden"
@@ -100,7 +100,6 @@ export function PartnerProfile({
                 <ModalButton
                   type="submit"
                   style={{ borderColor: "red", color: "red" }}
-                  onClick={() => setIsDeleteModalOpened(false)}
                 >
                   삭제
                 </ModalButton>

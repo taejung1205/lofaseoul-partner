@@ -301,7 +301,6 @@ export default function AdminAlert() {
         onClose={() => {
           setIsNewNoticeModalOpened(false);
         }}
-        size="xl"
       >
         <div
           style={{
