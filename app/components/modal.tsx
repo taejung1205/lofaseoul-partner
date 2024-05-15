@@ -41,7 +41,7 @@ export function BasicModal({
 
   return (
     <ModalOverlay onClick={onClose}>
-      <ModalContent>
+      <ModalContent onClick={(e)=>e.stopPropagation()}>
         {children}
       </ModalContent>
     </ModalOverlay>

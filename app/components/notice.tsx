@@ -151,7 +151,7 @@ export function AdminNotice({
             <ModalButton onClick={() => setIsDeleteModalOpened(false)}>
               취소
             </ModalButton>
-            <Form method="post">
+            <Form method="post" onSubmit={() => setIsDeleteModalOpened(false)}>
               <input type="hidden" value={"delete"} name="action" required />
               <input
                 type="hidden"
@@ -163,7 +163,6 @@ export function AdminNotice({
               <ModalButton
                 type="submit"
                 style={{ borderColor: "red", color: "red" }}
-                onClick={() => setIsDeleteModalOpened(false)}
               >
                 삭제
               </ModalButton>
@@ -191,7 +190,7 @@ export function AdminNotice({
             <ModalButton onClick={() => setIsShareModalOpened(false)}>
               취소
             </ModalButton>
-            <Form method="post">
+            <Form method="post" onSubmit={() => setIsShareModalOpened(false)}>
               <input type="hidden" value={"share"} name="action" required />
               <input
                 type="hidden"
@@ -212,12 +211,7 @@ export function AdminNotice({
                 name="topic"
                 required
               />
-              <ModalButton
-                type="submit"
-                onClick={() => setIsShareModalOpened(false)}
-              >
-                공유
-              </ModalButton>
+              <ModalButton type="submit">공유</ModalButton>
             </Form>
           </div>
         </div>
@@ -229,7 +223,11 @@ export function AdminNotice({
           setIsEditModalOpened(false);
         }}
       >
-        <Form method="post" id="edit">
+        <Form
+          method="post"
+          id="edit"
+          onSubmit={() => setIsEditModalOpened(false)}
+        >
           <input type="hidden" value={"edit"} name="action" required />
           <input type="hidden" value={noticeItem.docId} name="id" required />
           <input type="hidden" value={monthStr} name="month" required />
@@ -280,12 +278,7 @@ export function AdminNotice({
               <ModalButton onClick={() => setIsEditModalOpened(false)}>
                 취소
               </ModalButton>
-              <ModalButton
-                type="submit"
-                onClick={() => setIsEditModalOpened(false)}
-              >
-                수정
-              </ModalButton>
+              <ModalButton type="submit">수정</ModalButton>
             </div>
           </div>
         </Form>
