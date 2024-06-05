@@ -149,7 +149,7 @@ export function setSettlementFee(
   } else {
     item.shippingFee = 0;
   }
-  if (item.seller == "로파공홈") {
+  if (item.seller == "로파공홈" || item.seller == "용산쇼룸") {
     item.fee = partnerProfile.lofaFee;
   } else {
     item.fee = partnerProfile.otherFee;
