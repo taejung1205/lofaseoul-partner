@@ -60,8 +60,12 @@ export function getAllSellerSettlementSum(sums: any) {
   let settlement = 0;
   let shippingFee = 0;
   PossibleSellers.forEach((seller) => {
-    settlement += sums[`settlement_${seller}`];
-    shippingFee += sums[`shipping_${seller}`];
+    if(sums[`settlement_${seller}`]){
+      settlement += sums[`settlement_${seller}`];
+    }
+    if(sums[`shipping_${seller}`]){
+      shippingFee += sums[`shipping_${seller}`];
+    }
   });
   settlement += sums[`settlement_etc`];
   shippingFee += sums[`shipping_etc`];
