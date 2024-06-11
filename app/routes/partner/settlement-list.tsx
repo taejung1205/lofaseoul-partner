@@ -381,12 +381,12 @@ export default function AdminSettlementShare() {
               settlement={
                 seller == "all"
                   ? allSum.settlement
-                  : sums[`settlement_${seller}`]
+                  : sums[`settlement_${seller}`] ?? 0
               }
               shippingFee={
                 seller == "all"
                   ? allSum.shippingFee
-                  : sums[`shipping_${seller}`]
+                  : sums[`shipping_${seller}`] ?? 0
               }
             />
           </>
