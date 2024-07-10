@@ -1,3 +1,4 @@
+import { Space } from "@mantine/core";
 import { ActionFunction, json, LoaderFunction } from "@remix-run/node";
 import { useActionData, useLoaderData } from "@remix-run/react";
 import { DocumentData } from "firebase/firestore";
@@ -10,18 +11,18 @@ import {
   deletePartnerProfile,
   getPartnerProfiles,
 } from "~/services/firebase.server";
+import writeXlsxFile from "write-excel-file";
 
-const NewProfileButton = styled.button`
+const MyButton = styled.button`
   background-color: white;
   border: 3px solid black;
   font-size: 20px;
   font-weight: 700;
-  width: 110px;
+  width: 180px;
   line-height: 1;
   padding: 6px 6px 6px 6px;
   cursor: pointer;
 `;
-
 
 export const action: ActionFunction = async ({ request }) => {
   const body = await request.formData();
@@ -38,6 +39,8 @@ export const action: ActionFunction = async ({ request }) => {
     const shippingFee = Number(body.get("shippingFee"));
     const brn = body.get("brn")?.toString();
     const bankAccount = body.get("bankAccount")?.toString();
+    const businessName = body.get("businessName")?.toString();
+    const businessTaxStandard = body.get("businessTaxStandard")?.toString();
 
     if (
       typeof name == "undefined" ||
@@ -59,7 +62,9 @@ export const action: ActionFunction = async ({ request }) => {
         otherFee: otherFee,
         shippingFee: shippingFee,
         brn: brn ?? "",
-        bankAccount: bankAccount ?? ""
+        bankAccount: bankAccount ?? "",
+        businessName: businessName ?? "",
+        businessTaxStandard : businessTaxStandard ?? ""
       };
       const addPartnerResult = await addPartnerProfile({
         partnerProfile,
@@ -104,6 +109,19 @@ export default function AdminPartnerList() {
     setCurrentEdit(-1);
   }, [actionData]);
 
+  async function writeExcel() {
+    await writeXlsxFile(loaderData, {
+      schema,
+      headerStyle: {
+        fontWeight: "bold",
+        align: "center",
+      },
+      fileName: `파트너목록.xlsx`,
+      fontFamily: "맑은 고딕",
+      fontSize: 10,
+    });
+  }
+
   return (
     <PageLayout>
       {actionData?.error?.length > 0 ? (
@@ -111,9 +129,16 @@ export default function AdminPartnerList() {
       ) : (
         <></>
       )}
-      <NewProfileButton onClick={() => setIsCreatingProfile((prev) => !prev)}>
-        신규 생성
-      </NewProfileButton>
+      <div style={{ display: "flex" }}>
+        <MyButton onClick={() => setIsCreatingProfile((prev) => !prev)}>
+          신규 생성
+        </MyButton>
+        <Space w={20} />
+        <MyButton onClick={() => writeExcel()}>
+          목록 다운로드
+        </MyButton>
+      </div>
+
       <div style={{ minHeight: "40px" }} />
       {isCreatingProfile ? (
         <PartnerProfile
@@ -127,7 +152,9 @@ export default function AdminPartnerList() {
             otherFee: 0,
             shippingFee: 0,
             brn: "",
-            bankAccount: ""
+            bankAccount: "",
+            businessName: "",
+            businessTaxStandard: ""
           }}
           isNew={true}
           isEdit={true}
@@ -151,7 +178,9 @@ export default function AdminPartnerList() {
               otherFee: doc.otherFee,
               shippingFee: doc.shippingFee,
               brn: doc.brn,
-              bankAccount: doc.bankAccount
+              bankAccount: doc.bankAccount,
+              businessName: doc.businessName,
+              businessTaxStandard: doc.businessTaxStandard
             }}
             isEdit={currentEdit == index}
             onEditClick={() => {
@@ -166,3 +195,89 @@ export default function AdminPartnerList() {
     </PageLayout>
   );
 }
+
+
+
+const schema = [
+  {
+    column: "파트너명",
+    type: String,
+    value: (profile: PartnerProfile) => profile.name,
+    width: 30,
+    wrap: true,
+  },
+  {
+    column: "아이디",
+    type: String,
+    value: (profile: PartnerProfile) => profile.id,
+    width: 30,
+    wrap: true,
+  },
+  {
+    column: "비밀번호",
+    type: String,
+    value: (profile: PartnerProfile) => profile.password,
+    width: 30,
+    wrap: true,
+  },
+  {
+    column: "이메일",
+    type: String,
+    value: (profile: PartnerProfile) => profile.email,
+    width: 30,
+    wrap: true,
+  },
+  {
+    column: "전화번호",
+    type: String,
+    value: (profile: PartnerProfile) => profile.phone,
+    width: 30,
+    wrap: true,
+  },
+  {
+    column: "로파채널 수수료",
+    type: Number,
+    value: (profile: PartnerProfile) => profile.lofaFee,
+    width: 20,
+  },
+  {
+    column: "외부채널 수수료",
+    type: Number,
+    value: (profile: PartnerProfile) => profile.otherFee,
+    width: 20,
+  },
+  {
+    column: "배송비",
+    type: Number,
+    value: (profile: PartnerProfile) => profile.shippingFee,
+    width: 20,
+  },
+  {
+    column: "사업자등록번호",
+    type: String,
+    value: (profile: PartnerProfile) => profile.brn,
+    width: 30,
+    wrap: true,
+  },
+  {
+    column: "계좌번호",
+    type: String,
+    value: (profile: PartnerProfile) => profile.bankAccount,
+    width: 40,
+    wrap: true,
+  },
+  {
+    column: "사업자명",
+    type: String,
+    value: (profile: PartnerProfile) => profile.businessName,
+    width: 30,
+    wrap: true,
+  },
+  {
+    column: "사업자과세기준",
+    type: String,
+    value: (profile: PartnerProfile) => profile.businessTaxStandard,
+    width: 30,
+    wrap: true,
+  },
+];
