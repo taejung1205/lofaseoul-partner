@@ -14,6 +14,8 @@ export type PartnerProfile = {
   shippingFee: number;
   brn: string;
   bankAccount: string;
+  businessName: string;
+  businessTaxStandard: string;
 };
 
 const PartnerProfileBox = styled.div`
@@ -68,6 +70,8 @@ export function PartnerProfile({
   );
   const [brnEdit, setBrnEdit] = useState(partnerProfile.brn);
   const [bankAccountEdit, setBankAccountEdit] = useState(partnerProfile.bankAccount);
+  const [businessNameEdit, setBusinessNameEdit] = useState(partnerProfile.businessName);
+  const [businessTaxStandardEdit, setBusinessTaxStandardEdit] = useState(partnerProfile.businessTaxStandard);
 
   if (!isEdit) {
     return (
@@ -194,6 +198,14 @@ export function PartnerProfile({
             <ProfileGridItem>
               <div style={{ padding: "13px", width: "120px" }}>계좌번호</div>
               <div style={{ padding: "13px" }}>{partnerProfile.bankAccount}</div>
+            </ProfileGridItem>
+            <ProfileGridItem>
+              <div style={{ padding: "13px", width: "180px" }}>사업자명</div>
+              <div style={{ padding: "13px" }}>{partnerProfile.businessName}</div>
+            </ProfileGridItem>
+            <ProfileGridItem>
+              <div style={{ padding: "13px", width: "180px" }}>사업자과세기준</div>
+              <div style={{ padding: "13px" }}>{partnerProfile.businessTaxStandard}</div>
             </ProfileGridItem>
           </ProfileGridContainer>
         </PartnerProfileBox>
@@ -338,6 +350,24 @@ export function PartnerProfile({
                 name="bankAccount"
                 value={bankAccountEdit}
                 onChange={(e) => setBankAccountEdit(e.target.value)}
+              />
+            </ProfileGridItem>
+            <ProfileGridItem>
+              <div style={{ padding: "13px", width: "180px" }}>사업자명</div>
+              <InputBox
+                type="text"
+                name="businessName"
+                value={businessNameEdit}
+                onChange={(e) => setBusinessNameEdit(e.target.value)}
+              />
+            </ProfileGridItem>
+            <ProfileGridItem>
+              <div style={{ padding: "13px", width: "180px" }}>사업자과세기준</div>
+              <InputBox
+                type="text"
+                name="businessTaxStandard"
+                value={businessTaxStandardEdit}
+                onChange={(e) => setBusinessTaxStandardEdit(e.target.value)}
               />
             </ProfileGridItem>
           </ProfileGridContainer>

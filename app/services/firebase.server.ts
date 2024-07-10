@@ -180,6 +180,8 @@ export async function addPartnerProfile({
     shippingFee: partnerProfile.shippingFee,
     brn: partnerProfile.brn,
     bankAccount: partnerProfile.bankAccount,
+    businessName: partnerProfile.businessName,
+    businessTaxStandard: partnerProfile.businessTaxStandard,
     isAdmin: false,
   }).catch((error) => {
     return error.message;
