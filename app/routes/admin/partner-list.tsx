@@ -235,7 +235,7 @@ const schema = [
     wrap: true,
   },
   {
-    column: "로파채널 수수로",
+    column: "로파채널 수수료",
     type: Number,
     value: (profile: PartnerProfile) => profile.lofaFee,
     width: 20,
@@ -263,7 +263,7 @@ const schema = [
     column: "계좌번호",
     type: String,
     value: (profile: PartnerProfile) => profile.bankAccount,
-    width: 30,
+    width: 40,
     wrap: true,
   },
   {
