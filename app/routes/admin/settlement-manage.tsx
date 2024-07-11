@@ -1,5 +1,5 @@
 import { json, LoaderFunction } from "@remix-run/node";
-import { Link, useLoaderData } from "@remix-run/react";
+import { Link, useLoaderData, useNavigation, useTransition } from "@remix-run/react";
 import { useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
 import { BlackButton, GetListButton } from "~/components/button";
@@ -20,6 +20,7 @@ import {
 } from "~/components/settlement_sum";
 import { getAllSettlementSum } from "~/services/firebase.server";
 import writeXlsxFile from "write-excel-file";
+import { LoadingOverlay } from "@mantine/core";
 
 const EmptySettlementBox = styled.div`
   display: flex;
@@ -55,6 +56,7 @@ export default function AdminSettlementManage() {
   const [selectedMonthStr, setSelectedMonthStr] = useState<string>();
   const [seller, setSeller] = useState<string>("all");
   const loaderData = useLoaderData();
+  const navigation = useNavigation();
 
   const selectedMonthNumeral = useMemo(
     () => dateToNumeralMonth(selectedDate ?? new Date()),
@@ -128,6 +130,10 @@ export default function AdminSettlementManage() {
 
   return (
     <PageLayout>
+      <LoadingOverlay
+        visible={navigation.state == "loading"}
+        overlayBlur={2}
+      />
       <div
         style={{
           display: "flex",

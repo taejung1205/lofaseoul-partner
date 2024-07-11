@@ -1,7 +1,12 @@
 import { PageLayout } from "~/components/page_layout";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useActionData, useLoaderData, useSubmit } from "@remix-run/react";
+import {
+  useActionData,
+  useLoaderData,
+  useNavigation,
+  useSubmit,
+} from "@remix-run/react";
 import {
   ActionFunction,
   json,
@@ -16,6 +21,7 @@ import {
   shareDelayedWaybills,
 } from "~/services/firebase.server";
 import { requireUser } from "~/services/session.server";
+import { LoadingOverlay } from "@mantine/core";
 
 const EmptySettlementBox = styled.div`
   display: flex;
@@ -90,6 +96,7 @@ export default function PartnerDelayedOrder() {
   const loaderData = useLoaderData();
   const actionData = useActionData();
   const formRef = useRef<HTMLFormElement>(null);
+  const navigation = useNavigation();
 
   //loaderData에서 불러온 에러 정보를 바탕으로 한 에러 메세지
   const errorOrderStr = useMemo(() => {
@@ -161,6 +168,7 @@ export default function PartnerDelayedOrder() {
 
   return (
     <>
+      <LoadingOverlay visible={navigation.state == "loading"} overlayBlur={2} />
       {/* 안내용 모달 */}
       <BasicModal
         opened={isNoticeModalOpened}

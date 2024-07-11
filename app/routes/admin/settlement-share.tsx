@@ -3,8 +3,8 @@ import { ActionFunction, json, LoaderFunction } from "@remix-run/node";
 import {
   useActionData,
   useLoaderData,
+  useNavigation,
   useSubmit,
-  useTransition,
 } from "@remix-run/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import styled from "styled-components";
@@ -87,7 +87,9 @@ export const action: ActionFunction = async ({ request }) => {
         monthStr: month,
       });
       if (result === true) {
-        return json({ message: `${month} 정산내역 공유가 등록되었습니다. 잠시 후 기록이 반영될 예정입니다.` });
+        return json({
+          message: `${month} 정산내역 공유가 등록되었습니다. 잠시 후 기록이 반영될 예정입니다.`,
+        });
       } else {
         throw Error();
       }
@@ -115,7 +117,7 @@ export default function AdminSettlementShare() {
   const [isShareModalOpened, setIsShareModalOpened] = useState<boolean>(false);
   const [noticeModalStr, setNoticeModalStr] = useState<string>("에러");
 
-  const transition = useTransition();
+  const navigation = useNavigation();
   const submit = useSubmit();
   const loaderData = useLoaderData();
   const actionData = useActionData();
@@ -160,7 +162,7 @@ export default function AdminSettlementShare() {
   }
 
   async function submitAddSettlements(settlementList: SettlementItem[]) {
-    console.log('submit add settlement, length:', settlementList.length);
+    console.log("submit add settlement, length:", settlementList.length);
     const data = JSON.stringify(settlementList);
     const formData = new FormData(formRef.current ?? undefined);
     formData.set("settlement", data);
@@ -197,13 +199,13 @@ export default function AdminSettlementShare() {
             fee: -1,
             shippingFee: -1,
             orderTag: element.주문태그?.toString() ?? "",
-            sale: element.세일적용 ?? 0
+            sale: element.세일적용 ?? 0,
           };
 
           let checkValidResult = isSettlementItemValid(item);
 
           if (checkValidResult !== "ok") {
-            if(i == 0){
+            if (i == 0) {
               setNoticeModalStr(
                 `유효하지 않은 엑셀 파일입니다.
                 첫 번째 줄의 ${checkValidResult}
@@ -259,10 +261,7 @@ export default function AdminSettlementShare() {
 
   return (
     <>
-      <LoadingOverlay
-        visible={transition.state == "loading"}
-        overlayBlur={2}
-      />
+      <LoadingOverlay visible={navigation.state == "loading"} overlayBlur={2} />
       <BasicModal
         opened={isNoticeModalOpened}
         onClose={() => setIsNoticeModalOpened(false)}
@@ -272,7 +271,7 @@ export default function AdminSettlementShare() {
             justifyContent: "center",
             textAlign: "center",
             fontWeight: "700",
-            whiteSpace: "pre-line"
+            whiteSpace: "pre-line",
           }}
         >
           {noticeModalStr}

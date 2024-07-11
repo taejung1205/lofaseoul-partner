@@ -1,5 +1,6 @@
+import { LoadingOverlay } from "@mantine/core";
 import { LoaderFunction, redirect } from "@remix-run/node";
-import { useLoaderData } from "@remix-run/react";
+import { useLoaderData, useNavigation } from "@remix-run/react";
 import { json } from "react-router";
 import styled from "styled-components";
 import { PageLayout } from "~/components/page_layout";
@@ -47,9 +48,11 @@ export const loader: LoaderFunction = async ({ request }) => {
 
 export default function PartnerDashboard() {
   const loaderData = useLoaderData();
+  const navigation = useNavigation();
 
   return (
     <>
+      <LoadingOverlay visible={navigation.state == "loading"} overlayBlur={2} />
       <PageLayout>
         <div style={{ display: "flex", width: "inherit" }}>
           <DashboardItemBox>

@@ -3,8 +3,8 @@ import {
   Link,
   useActionData,
   useLoaderData,
+  useNavigation,
   useSubmit,
-  useTransition,
 } from "@remix-run/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import styled from "styled-components";
@@ -125,16 +125,15 @@ export const action: ActionFunction = async ({ request }) => {
   if (actionType === "delete") {
     const settlement = body.get("settlement")?.toString();
     const month = body.get("month")?.toString();
-    if (
-      settlement !== undefined &&
-      month !== undefined
-    ) {
+    if (settlement !== undefined && month !== undefined) {
       const result = await deleteSettlements({
         settlements: settlement,
-        monthStr: month
+        monthStr: month,
       });
       if (result == true) {
-        return json({ message: `삭제가 등록되었습니다. 잠시 후 새로고침하여 확인해주세요.` });
+        return json({
+          message: `삭제가 등록되었습니다. 잠시 후 새로고침하여 확인해주세요.`,
+        });
       } else {
         throw Error(result);
       }
@@ -150,7 +149,7 @@ export const action: ActionFunction = async ({ request }) => {
     ) {
       const result_1 = await deleteSettlements({
         settlements: `[${deletingItem}]`,
-        monthStr: month
+        monthStr: month,
       });
 
       if (result_1 !== true) {
@@ -163,7 +162,9 @@ export const action: ActionFunction = async ({ request }) => {
       });
 
       if (result_2 == true) {
-        return json({ message: `수정이 등록되었습니다. 잠시 후 새로고침하여 확인해주세요.` });
+        return json({
+          message: `수정이 등록되었습니다. 잠시 후 새로고침하여 확인해주세요.`,
+        });
       } else {
         throw Error(result_2);
       }
@@ -171,16 +172,15 @@ export const action: ActionFunction = async ({ request }) => {
   } else if (actionType == "shipping-delete") {
     const settlement = body.get("settlement")?.toString();
     const month = body.get("month")?.toString();
-    if (
-      settlement !== undefined &&
-      month !== undefined
-    ) {
+    if (settlement !== undefined && month !== undefined) {
       const result = await deleteSettlementsShippingFee({
         settlements: settlement,
         monthStr: month,
       });
       if (result == true) {
-        return json({ message: `배송비 삭제가 등록되었습니다. 잠시 후 새로고침하여 확인해주세요.` });
+        return json({
+          message: `배송비 삭제가 등록되었습니다. 잠시 후 새로고침하여 확인해주세요.`,
+        });
       } else {
         throw Error(result);
       }
@@ -200,7 +200,9 @@ export const action: ActionFunction = async ({ request }) => {
       });
 
       if (result == true) {
-        return json({ message: `추가가 등록되었습니다. 잠시 후 새로고침하여 확인해주세요.` });
+        return json({
+          message: `추가가 등록되었습니다. 잠시 후 새로고침하여 확인해주세요.`,
+        });
       } else {
         throw Error(result);
       }
@@ -283,7 +285,7 @@ export default function AdminSettlementShare() {
   const [isEdit, setIsEdit] = useState<boolean>(false);
 
   const formRef = useRef<HTMLFormElement>(null);
-  const transition = useTransition();
+  const navigation = useNavigation();
   const actionData = useActionData();
   const loaderData = useLoaderData();
   const submit = useSubmit();
@@ -429,7 +431,7 @@ export default function AdminSettlementShare() {
 
   //정산건 삭제를 post합니다.
   function submitDeleteSettlements(settlementList: SettlementItem[]) {
-    console.log('submit delete settlement, length:', settlementList.length);
+    console.log("submit delete settlement, length:", settlementList.length);
     const data = JSON.stringify(settlementList);
     const formData = new FormData(formRef.current ?? undefined);
     formData.set("settlement", data);
@@ -440,7 +442,7 @@ export default function AdminSettlementShare() {
 
   //정산건 배송비 제거를 post합니다.
   function submitShippingFeeDelete(settlementList: SettlementItem[]) {
-    console.log('submit delete shipping fee, length:', settlementList.length);
+    console.log("submit delete shipping fee, length:", settlementList.length);
     const data = JSON.stringify(settlementList);
     const formData = new FormData(formRef.current ?? undefined);
     formData.set("settlement", data);
@@ -570,10 +572,7 @@ export default function AdminSettlementShare() {
 
   return (
     <>
-      <LoadingOverlay
-        visible={transition.state == "loading"}
-        overlayBlur={2}
-      />
+      <LoadingOverlay visible={navigation.state == "loading"} overlayBlur={2} />
       {/* 안내용 모달 */}
       <BasicModal
         opened={isNoticeModalOpened}
@@ -1072,5 +1071,5 @@ const schema = [
     type: String,
     value: (item: SettlementItem) => item.orderTag,
     width: 10,
-  }
+  },
 ];

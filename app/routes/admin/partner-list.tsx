@@ -1,4 +1,4 @@
-import { Space } from "@mantine/core";
+import { LoadingOverlay, Space } from "@mantine/core";
 import { ActionFunction, json, LoaderFunction } from "@remix-run/node";
 import { useActionData, useLoaderData } from "@remix-run/react";
 import { DocumentData } from "firebase/firestore";
@@ -12,6 +12,7 @@ import {
   getPartnerProfiles,
 } from "~/services/firebase.server";
 import writeXlsxFile from "write-excel-file";
+import { useNavigation } from "@remix-run/react";
 
 const MyButton = styled.button`
   background-color: white;
@@ -64,7 +65,7 @@ export const action: ActionFunction = async ({ request }) => {
         brn: brn ?? "",
         bankAccount: bankAccount ?? "",
         businessName: businessName ?? "",
-        businessTaxStandard : businessTaxStandard ?? ""
+        businessTaxStandard: businessTaxStandard ?? "",
       };
       const addPartnerResult = await addPartnerProfile({
         partnerProfile,
@@ -103,6 +104,7 @@ export default function AdminPartnerList() {
   const [isCreatingProfile, setIsCreatingProfile] = useState<boolean>(false);
   const loaderData = useLoaderData(); //Partner Profile List
   const actionData = useActionData();
+  const navigation = useNavigation();
 
   useEffect(() => {
     setIsCreatingProfile(false);
@@ -124,6 +126,7 @@ export default function AdminPartnerList() {
 
   return (
     <PageLayout>
+      <LoadingOverlay visible={navigation.state == "loading"} overlayBlur={2} />
       {actionData?.error?.length > 0 ? (
         <div style={{ margin: "10px" }}>{actionData.error}</div>
       ) : (
@@ -134,9 +137,7 @@ export default function AdminPartnerList() {
           신규 생성
         </MyButton>
         <Space w={20} />
-        <MyButton onClick={() => writeExcel()}>
-          목록 다운로드
-        </MyButton>
+        <MyButton onClick={() => writeExcel()}>목록 다운로드</MyButton>
       </div>
 
       <div style={{ minHeight: "40px" }} />
@@ -154,7 +155,7 @@ export default function AdminPartnerList() {
             brn: "",
             bankAccount: "",
             businessName: "",
-            businessTaxStandard: ""
+            businessTaxStandard: "",
           }}
           isNew={true}
           isEdit={true}
@@ -180,7 +181,7 @@ export default function AdminPartnerList() {
               brn: doc.brn,
               bankAccount: doc.bankAccount,
               businessName: doc.businessName,
-              businessTaxStandard: doc.businessTaxStandard
+              businessTaxStandard: doc.businessTaxStandard,
             }}
             isEdit={currentEdit == index}
             onEditClick={() => {
@@ -195,8 +196,6 @@ export default function AdminPartnerList() {
     </PageLayout>
   );
 }
-
-
 
 const schema = [
   {

@@ -114,11 +114,13 @@ export function TopicSelect({
 export function AdminNotice({
   noticeItem,
   monthStr,
+  key
 }: // isEdit,
 // onEditClick,
 {
   noticeItem: NoticeItem;
   monthStr: string;
+  key: string;
   // isEdit: boolean;
   // onEditClick: () => void;
 }) {
@@ -132,7 +134,7 @@ export function AdminNotice({
   const [topicEdit, setTopicEdit] = useState<string>(noticeItem.topic);
   const [detailEdit, setDetailEdit] = useState<string>(noticeItem.detail);
   return (
-    <>
+    <div key={key}>
       {/* 삭제 모달*/}
       <BasicModal
         opened={isDeleteModalOpened}
@@ -378,7 +380,7 @@ export function AdminNotice({
       ) : (
         <></>
       )}
-    </>
+    </div>
   );
 }
 
