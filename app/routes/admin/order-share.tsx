@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { dateToDayStr, getTimezoneDate } from "~/components/date";
+import { dateToDayStr } from "~/components/date";
 
 import dayPickerStyles from "react-day-picker/dist/style.css";
 import styled from "styled-components";
@@ -13,7 +13,12 @@ import {
   adjustSellerName,
 } from "~/components/order";
 import * as xlsx from "xlsx";
-import { useActionData, useLoaderData, useSubmit } from "@remix-run/react";
+import {
+  useActionData,
+  useLoaderData,
+  useNavigation,
+  useSubmit,
+} from "@remix-run/react";
 import {
   addOrders,
   getPartnerProfiles,
@@ -21,6 +26,7 @@ import {
 } from "~/services/firebase.server";
 import { PartnerProfile } from "~/components/partner_profile";
 import { BasicModal, ModalButton } from "~/components/modal";
+import { LoadingOverlay } from "@mantine/core";
 
 const FileNameBox = styled.div`
   border: 3px solid #000000;
@@ -79,10 +85,12 @@ export const action: ActionFunction = async ({ request }) => {
     if (order !== undefined && day !== undefined) {
       const jsonArr: OrderItem[] = JSON.parse(order);
       const result = await addOrders({ orders: jsonArr, dayStr: day });
-      if(result == true){
+      if (result == true) {
         return json({ message: `${day} 주문 공유가 완료되었습니다.` });
       } else {
-        return json({ message: `주문 공유 중 오류가 발생했습니다.${"\n"}${result}` });
+        return json({
+          message: `주문 공유 중 오류가 발생했습니다.${"\n"}${result}`,
+        });
       }
     }
   }
@@ -113,6 +121,7 @@ export default function AdminOrderShare() {
   const formRef = useRef<HTMLFormElement>(null);
   const actionData = useActionData();
   const submit = useSubmit();
+  const navigation = useNavigation();
 
   const partnerProfiles = useMemo(() => {
     let map = new Map();
@@ -242,6 +251,7 @@ export default function AdminOrderShare() {
 
   return (
     <>
+      <LoadingOverlay visible={navigation.state == "loading"} overlayBlur={2} />
       <BasicModal
         opened={isNoticeModalOpened}
         onClose={() => setIsNoticeModalOpened(false)}

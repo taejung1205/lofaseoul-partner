@@ -8,6 +8,7 @@ import {
   Link,
   useActionData,
   useLoaderData,
+  useNavigation,
   useSubmit,
 } from "@remix-run/react";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -34,6 +35,7 @@ import { GetListButton } from "~/components/button";
 import { requireUser } from "~/services/session.server";
 import { sendAligoMessage } from "~/services/aligo.server";
 import { BasicModal, ModalButton } from "~/components/modal";
+import { LoadingOverlay } from "@mantine/core";
 
 const EmptySettlementBox = styled.div`
   display: flex;
@@ -136,6 +138,7 @@ export default function AdminSettlementShare() {
   const loaderData = useLoaderData();
   const submit = useSubmit();
   const formRef = useRef<HTMLFormElement>(null);
+  const navigation = useNavigation();
 
   const monthNumeral = useMemo(
     () => dateToNumeralMonth(selectedDate ?? new Date()),
@@ -235,6 +238,7 @@ export default function AdminSettlementShare() {
 
   return (
     <>
+      <LoadingOverlay visible={navigation.state == "loading"} overlayBlur={2} />
       <BasicModal
         opened={isNoticeModalOpened}
         onClose={() => setIsNoticeModalOpened(false)}

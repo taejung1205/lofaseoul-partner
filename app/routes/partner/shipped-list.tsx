@@ -6,6 +6,7 @@ import {
   Link,
   useActionData,
   useLoaderData,
+  useNavigation,
   useSubmit,
 } from "@remix-run/react";
 import {
@@ -26,6 +27,7 @@ import styled from "styled-components";
 import { editWaybills, getPartnerWaybills } from "~/services/firebase.server";
 import { BasicModal, ModalButton } from "~/components/modal";
 import { requireUser } from "~/services/session.server";
+import { LoadingOverlay } from "@mantine/core";
 
 const EmptySettlementBox = styled.div`
   display: flex;
@@ -124,6 +126,7 @@ export default function AdminOrderList() {
   const actionData = useActionData();
   const loaderData = useLoaderData();
   const formRef = useRef<HTMLFormElement>(null);
+  const navigation = useNavigation();
 
   const selectedDayStr = useMemo(
     () => dateToDayStr(selectedDate ?? new Date()),
@@ -211,6 +214,7 @@ export default function AdminOrderList() {
   }
   return (
     <>
+      <LoadingOverlay visible={navigation.state == "loading"} overlayBlur={2} />
       <BasicModal
         opened={isNoticeModalOpened}
         onClose={() => setIsNoticeModalOpened(false)}

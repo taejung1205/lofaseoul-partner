@@ -1,5 +1,6 @@
+import { LoadingOverlay } from "@mantine/core";
 import { LoaderFunction, redirect } from "@remix-run/node";
-import { useLoaderData } from "@remix-run/react";
+import { useLoaderData, useNavigation } from "@remix-run/react";
 import { PageLayout } from "~/components/page_layout";
 import { PartnerProfile } from "~/components/partner_profile";
 import { getPartnerProfile } from "~/services/firebase.server";
@@ -19,9 +20,11 @@ export let loader: LoaderFunction = async ({ request }) => {
 
 export default function AdminPartnerList() {
   const loaderData = useLoaderData(); //Partner Profile List
+  const navigation = useNavigation();
 
   return (
     <PageLayout>
+      <LoadingOverlay visible={navigation.state == "loading"} overlayBlur={2} />
       {loaderData == null ? (
         <></>
       ) : (
@@ -35,6 +38,10 @@ export default function AdminPartnerList() {
             lofaFee: loaderData.lofaFee,
             otherFee: loaderData.otherFee,
             shippingFee: loaderData.shippingFee,
+            brn: loaderData.brn,
+            bankAccount: loaderData.bankAccount,
+            businessName: loaderData.businessName,
+            businessTaxStandard: loaderData.businessTaxStandard,
           }}
           isNew={false}
           isEdit={false}

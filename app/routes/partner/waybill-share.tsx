@@ -6,6 +6,7 @@ import {
   Link,
   useActionData,
   useLoaderData,
+  useNavigation,
   useSubmit,
 } from "@remix-run/react";
 import {
@@ -35,6 +36,7 @@ import * as xlsx from "xlsx";
 import { BasicModal, ModalButton } from "~/components/modal";
 import { PossibleShippingCompanies } from "~/components/shipping_company";
 import { requireUser } from "~/services/session.server";
+import { LoadingOverlay } from "@mantine/core";
 
 const FileNameBox = styled.div`
   border: 3px solid #000000;
@@ -166,6 +168,7 @@ export default function AdminOrderList() {
   const submit = useSubmit();
   const loaderData = useLoaderData();
   const formRef = useRef<HTMLFormElement>(null);
+  const navigation = useNavigation();
 
   const selectedDayStr = useMemo(
     () => dateToDayStr(selectedDate ?? new Date()),
@@ -466,6 +469,7 @@ export default function AdminOrderList() {
 
   return (
     <>
+      <LoadingOverlay visible={navigation.state == "loading"} overlayBlur={2} />
       <BasicModal
         opened={isNoticeModalOpened}
         onClose={() => setIsNoticeModalOpened(false)}

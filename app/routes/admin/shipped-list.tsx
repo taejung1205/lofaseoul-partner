@@ -2,7 +2,7 @@ import { PageLayout } from "~/components/page_layout";
 
 import dayPickerStyles from "react-day-picker/dist/style.css";
 import { useEffect, useMemo, useState } from "react";
-import { Link, useLoaderData } from "@remix-run/react";
+import { Link, useLoaderData, useNavigation } from "@remix-run/react";
 import {
   dateToDayStr,
   DaySelectPopover,
@@ -21,6 +21,7 @@ import {
 } from "~/services/firebase.server";
 import { PossibleSellers, SellerSelect } from "~/components/seller";
 import writeXlsxFile from "write-excel-file";
+import { LoadingOverlay } from "@mantine/core";
 
 const EmptySettlementBox = styled.div`
   display: flex;
@@ -125,6 +126,7 @@ export default function AdminShippedList() {
   const [partnerName, setPartnerName] = useState<string>(""); //파트너명 (조회된 파트너명으로 시작, 입력창으로 수정 및 조회)
 
   const loaderData = useLoaderData();
+  const navigation = useNavigation();
 
   const selectedDayStr = useMemo(
     () => dateToDayStr(selectedDate ?? new Date()),
@@ -217,6 +219,7 @@ export default function AdminShippedList() {
 
   return (
     <>
+      <LoadingOverlay visible={navigation.state == "loading"} overlayBlur={2} />
       <PageLayout>
         <div
           style={{

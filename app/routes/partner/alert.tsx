@@ -1,8 +1,10 @@
+import { LoadingOverlay } from "@mantine/core";
 import { ActionFunction, json, redirect } from "@remix-run/node";
 import {
   Link,
   useActionData,
   useLoaderData,
+  useNavigation,
   useSubmit,
 } from "@remix-run/react";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -97,6 +99,7 @@ export default function AdminAlert() {
   const loaderData = useLoaderData();
   const actionData = useActionData();
   const submit = useSubmit();
+  const navigation = useNavigation();
 
   useEffect(() => {
     if (monthStr !== null) {
@@ -130,6 +133,7 @@ export default function AdminAlert() {
 
   return (
     <>
+      <LoadingOverlay visible={navigation.state == "loading"} overlayBlur={2} />
       {/* 안내용 모달 */}
       <BasicModal
         opened={isNoticeModalOpened}
