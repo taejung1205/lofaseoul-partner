@@ -415,13 +415,13 @@ export async function getAllSettlementSum({ monthStr }: { monthStr: string }) {
   for (let i = 0; i < querySnap.docs.length; i++) {
     const start = performance.now();
     const doc = querySnap.docs[i];
-    const partnerProfile = await getPartnerProfile({ name: doc.id });
+    // const partnerProfile = await getPartnerProfile({ name: doc.id });
     let brn = "";
     let bankAccount = "";
-    if (partnerProfile !== null) {
-      brn = partnerProfile.brn;
-      bankAccount = partnerProfile.bankAccount;
-    }
+    // if (partnerProfile !== null) {
+    //   brn = partnerProfile.brn;
+    //   bankAccount = partnerProfile.bankAccount;
+    // }
 
     result.push({
       partnerName: doc.id,
