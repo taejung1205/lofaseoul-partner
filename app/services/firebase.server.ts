@@ -410,9 +410,10 @@ export async function getAllSettlementSum({ monthStr }: { monthStr: string }) {
   );
   const querySnap = await getDocs(settlementsRef);
   const result: SettlementSumItem[] = [];
+  const profilesMap = await getPartnerProfiles();
   for (let i = 0; i < querySnap.docs.length; i++) {
     const doc = querySnap.docs[i];
-    const partnerProfile = await getPartnerProfile({ name: doc.id });
+    const partnerProfile = profilesMap.get(doc.id);
     let brn = "";
     let bankAccount = "";
     if (partnerProfile !== null) {
