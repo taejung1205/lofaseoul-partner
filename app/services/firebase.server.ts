@@ -405,23 +405,25 @@ export async function getSettlementSum({
  */
 export async function getAllSettlementSum({ monthStr }: { monthStr: string }) {
  
+  const totalStart = performance.now();
   const settlementsRef = collection(
     firestore,
     `settlements/${monthStr}/partners`
   );
   const querySnap = await getDocs(settlementsRef);
+  const profilesMap =  await getPartnerProfiles();
   const result: SettlementSumItem[] = [];
   const times: number[] = [];
   for (let i = 0; i < querySnap.docs.length; i++) {
     const start = performance.now();
     const doc = querySnap.docs[i];
-    // const partnerProfile = await getPartnerProfile({ name: doc.id });
+    const partnerProfile = profilesMap.get(doc.id);
     let brn = "";
     let bankAccount = "";
-    // if (partnerProfile !== null) {
-    //   brn = partnerProfile.brn;
-    //   bankAccount = partnerProfile.bankAccount;
-    // }
+    if (partnerProfile !== null) {
+      brn = partnerProfile.brn;
+      bankAccount = partnerProfile.bankAccount;
+    }
 
     result.push({
       partnerName: doc.id,
@@ -432,6 +434,8 @@ export async function getAllSettlementSum({ monthStr }: { monthStr: string }) {
     const end = performance.now();
     times.push(end - start);
   }
+  const totalEnd = performance.now();
+  times.push(totalEnd - totalStart);
   return {result, times};
 }
 
