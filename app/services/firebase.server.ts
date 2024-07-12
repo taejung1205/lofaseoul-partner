@@ -404,6 +404,7 @@ export async function getSettlementSum({
  *  해당 월 모든 파트너의 판매처별 정산 금액 합 ([partnerName, data: {settlement_{판매처이름}, shipping_{판매처이름...}])
  */
 export async function getAllSettlementSum({ monthStr }: { monthStr: string }) {
+  const start = performance.now();
   const settlementsRef = collection(
     firestore,
     `settlements/${monthStr}/partners`
@@ -426,7 +427,8 @@ export async function getAllSettlementSum({ monthStr }: { monthStr: string }) {
       bankAccount: bankAccount,
     });
   }
-  return result;
+  const end = performance.now();
+  return {result, time: end - start};
 }
 
 /**

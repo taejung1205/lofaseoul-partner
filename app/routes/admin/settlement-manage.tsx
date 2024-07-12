@@ -45,7 +45,7 @@ export const loader: LoaderFunction = async ({ request }) => {
     const sums = await getAllSettlementSum({
       monthStr: monthStr,
     });
-    return json({ sums: sums, month: month });
+    return json({ sums: sums.result, month: month, time: sums.time });
   } else {
     return null;
   }
@@ -67,6 +67,7 @@ export default function AdminSettlementManage() {
     if (loaderData == null) {
       return null;
     } else {
+      console.log("spent time", loaderData.time);
       return loaderData.sums;
     }
   }, [loaderData]);
