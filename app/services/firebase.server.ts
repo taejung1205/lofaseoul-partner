@@ -404,14 +404,16 @@ export async function getSettlementSum({
  *  해당 월 모든 파트너의 판매처별 정산 금액 합 ([partnerName, data: {settlement_{판매처이름}, shipping_{판매처이름...}])
  */
 export async function getAllSettlementSum({ monthStr }: { monthStr: string }) {
-  const start = performance.now();
+ 
   const settlementsRef = collection(
     firestore,
     `settlements/${monthStr}/partners`
   );
   const querySnap = await getDocs(settlementsRef);
   const result: SettlementSumItem[] = [];
+  const times: number[] = [];
   for (let i = 0; i < querySnap.docs.length; i++) {
+    const start = performance.now();
     const doc = querySnap.docs[i];
     const partnerProfile = await getPartnerProfile({ name: doc.id });
     let brn = "";
@@ -420,15 +422,17 @@ export async function getAllSettlementSum({ monthStr }: { monthStr: string }) {
       brn = partnerProfile.brn;
       bankAccount = partnerProfile.bankAccount;
     }
+
     result.push({
       partnerName: doc.id,
       data: doc.data(),
       brn: brn,
       bankAccount: bankAccount,
     });
+    const end = performance.now();
+    times.push(end - start);
   }
-  const end = performance.now();
-  return {result, time: end - start};
+  return {result, times};
 }
 
 /**
@@ -1825,7 +1829,6 @@ export async function uploadProductImage(
   const imageStorageRef = ref(storage, imagePath);
   const uploadTask = uploadBytesResumable(imageStorageRef, arrayBuffer);
 
-
   switch (usage) {
     case "main":
       updateDoc(doc(firestore, "products-progress", productName), {
@@ -1839,24 +1842,16 @@ export async function uploadProductImage(
       break;
     case "detail":
       let detailData: any = {};
-      detailData[`detailStarted_${detailIndex}`] =
-        "true";
-      updateDoc(
-        doc(firestore, "products-progress", productName),
-        detailData
-      );
+      detailData[`detailStarted_${detailIndex}`] = "true";
+      updateDoc(doc(firestore, "products-progress", productName), detailData);
       break;
     case "extra":
       let extraData: any = {};
-      extraData[`extraStarted_${detailIndex}`] =
-        "true";
-      updateDoc(
-        doc(firestore, "products-progress", productName),
-        extraData
-      );
+      extraData[`extraStarted_${detailIndex}`] = "true";
+      updateDoc(doc(firestore, "products-progress", productName), extraData);
       break;
   }
-  
+
   let progress = 0;
   let stair = 50000;
 
@@ -1898,20 +1893,11 @@ export async function uploadProductImage(
       }
     },
     async (error) => {
-      let errorData: any = {}
+      let errorData: any = {};
       errorData[`${usage}-${detailIndex}-errorData`] = error.message;
-      updateDoc(
-        doc(firestore, "products-progress", productName),
-        errorData
-      );
+      updateDoc(doc(firestore, "products-progress", productName), errorData);
       await new Promise((resolve) => setTimeout(resolve, 3000));
-      uploadProductImage(
-        file,
-        fileName,
-        usage,
-        productName,
-        detailIndex
-      )
+      uploadProductImage(file, fileName, usage, productName, detailIndex);
     },
     () => {
       getDownloadURL(uploadTask.snapshot.ref).then((url) => {

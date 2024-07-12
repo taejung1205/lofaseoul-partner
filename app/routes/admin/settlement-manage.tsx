@@ -1,5 +1,10 @@
 import { json, LoaderFunction } from "@remix-run/node";
-import { Link, useLoaderData, useNavigation, useTransition } from "@remix-run/react";
+import {
+  Link,
+  useLoaderData,
+  useNavigation,
+  useTransition,
+} from "@remix-run/react";
 import { useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
 import { BlackButton, GetListButton } from "~/components/button";
@@ -33,7 +38,7 @@ const EmptySettlementBox = styled.div`
 `;
 
 const DownloadButton = styled(GetListButton)`
-width: 200px;
+  width: 200px;
 `;
 
 export const loader: LoaderFunction = async ({ request }) => {
@@ -45,7 +50,7 @@ export const loader: LoaderFunction = async ({ request }) => {
     const sums = await getAllSettlementSum({
       monthStr: monthStr,
     });
-    return json({ sums: sums.result, month: month, time: sums.time });
+    return json({ sums: sums.result, month: month, times: sums.times });
   } else {
     return null;
   }
@@ -67,7 +72,9 @@ export default function AdminSettlementManage() {
     if (loaderData == null) {
       return null;
     } else {
-      console.log("spent time", loaderData.time);
+      loaderData.times.forEach((time: any) => {
+        console.log("spent time", time);
+      });
       return loaderData.sums;
     }
   }, [loaderData]);
@@ -113,9 +120,9 @@ export default function AdminSettlementManage() {
       partnerName: "합계",
       data: totalSum,
       brn: "",
-      bankAccount: ""
-    }
-    copy.push(totalSumItem)
+      bankAccount: "",
+    };
+    copy.push(totalSumItem);
     await writeXlsxFile(copy, {
       schema,
       headerStyle: {
@@ -125,16 +132,12 @@ export default function AdminSettlementManage() {
       fileName: `정산합계_${loaderData.month}.xlsx`,
       fontFamily: "맑은 고딕",
       fontSize: 10,
-
     });
   }
 
   return (
     <PageLayout>
-      <LoadingOverlay
-        visible={navigation.state == "loading"}
-        overlayBlur={2}
-      />
+      <LoadingOverlay visible={navigation.state == "loading"} overlayBlur={2} />
       <div
         style={{
           display: "flex",
@@ -161,11 +164,17 @@ export default function AdminSettlementManage() {
           <Link to={`/admin/settlement-manage?month=${selectedMonthNumeral}`}>
             <GetListButton>조회하기</GetListButton>
           </Link>
-          {sums == null || sums.length == 0 ? <></> :
-            <DownloadButton onClick={async () => {
-              await writeExcel(sums);
-            }
-            }>엑셀 다운로드</DownloadButton>}
+          {sums == null || sums.length == 0 ? (
+            <></>
+          ) : (
+            <DownloadButton
+              onClick={async () => {
+                await writeExcel(sums);
+              }}
+            >
+              엑셀 다운로드
+            </DownloadButton>
+          )}
         </div>
 
         <SellerSelect seller={seller} setSeller={setSeller} />
@@ -278,9 +287,9 @@ const schema = [
         return item.data.shippingFee + item.data.settlement;
       } else {
         const sum = getAllSellerSettlementSum(item.data);
-        return sum.shippingFee + sum.settlement
+        return sum.shippingFee + sum.settlement;
       }
     },
     width: 30,
-  }
+  },
 ];
