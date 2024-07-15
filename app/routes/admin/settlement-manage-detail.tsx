@@ -39,8 +39,8 @@ import {
 } from "~/services/firebase.server";
 import { BasicModal, ModalButton } from "~/components/modal";
 import { PageLayout } from "~/components/page_layout";
-import { GetListButton } from "~/components/button";
-import { LoadingOverlay } from "@mantine/core";
+import { CommonButton, GetListButton } from "~/components/button";
+import { LoadingOverlay, Space } from "@mantine/core";
 import writeXlsxFile from "write-excel-file";
 
 const EmptySettlementBox = styled.div`
@@ -883,6 +883,13 @@ export default function AdminSettlementShare() {
               }
             >
               <GetListButton>조회하기</GetListButton>
+            </Link>
+            <Space w={20} />
+            <Link
+              to={`/admin/settlement-manage?month=${monthNumeral}`
+              }
+            >
+              <CommonButton>목록으로</CommonButton>
             </Link>
           </div>
 
