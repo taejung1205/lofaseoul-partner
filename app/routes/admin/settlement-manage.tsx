@@ -9,6 +9,7 @@ import {
   dateToNumeralMonth,
   numeralMonthToKorean,
   getTimezoneDate,
+  koreanMonthToDate,
 } from "~/components/date";
 import { PageLayout } from "~/components/page_layout";
 import { SellerSelect } from "~/components/seller";
@@ -38,14 +39,14 @@ width: 200px;
 
 export const loader: LoaderFunction = async ({ request }) => {
   const url = new URL(request.url);
-  const month = url.searchParams.get("month");
+  const numeralMonth = url.searchParams.get("month");
 
-  if (month !== null) {
-    const monthStr = numeralMonthToKorean(month);
+  if (numeralMonth !== null) {
+    const monthStr = numeralMonthToKorean(numeralMonth);
     const sums = await getAllSettlementSum({
       monthStr: monthStr,
     });
-    return json({ sums: sums, month: month });
+    return json({ sums: sums, numeralMonth: numeralMonth });
   } else {
     return null;
   }
@@ -97,14 +98,19 @@ export default function AdminSettlementManage() {
   }, [sums, seller]);
 
   useEffect(() => {
-    setSelectedDate(getTimezoneDate(new Date()));
-  }, []);
+    if(loaderData && loaderData.numeralMonth){
+      setSelectedDate(koreanMonthToDate(numeralMonthToKorean(loaderData.numeralMonth)));
+    } else {
+      setSelectedDate(getTimezoneDate(new Date()));
+    }
+  }, [loaderData]);
 
   useEffect(() => {
-    if (selectedDate !== undefined) {
+    if (selectedDate) {
       setSelectedMonthStr(dateToKoreanMonth(selectedDate));
     }
   }, [selectedDate]);
+
 
   async function writeExcel(sumItems: SettlementSumItem[]) {
     const copy = sumItems.map((item) => item);
@@ -121,7 +127,7 @@ export default function AdminSettlementManage() {
         fontWeight: "bold",
         align: "center",
       },
-      fileName: `정산합계_${loaderData.month}.xlsx`,
+      fileName: `정산합계_${loaderData.numeralMonth}.xlsx`,
       fontFamily: "맑은 고딕",
       fontSize: 10,
 
@@ -188,7 +194,7 @@ export default function AdminSettlementManage() {
         <SettlementSumTable
           items={sums}
           seller={seller}
-          monthNumeral={loaderData.month}
+          numeralMonth={loaderData.numeralMonth}
         />
       ) : (
         <EmptySettlementBox

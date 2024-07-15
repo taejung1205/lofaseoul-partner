@@ -150,11 +150,11 @@ export function SettlementSumBar({
 export function SettlementSumTable({
   items,
   seller,
-  monthNumeral
+  numeralMonth
 }: {
   items: SettlementSumItem[];
   seller: string;
-  monthNumeral: string
+  numeralMonth: string
 }) {
   const [isAllSum, setIsAllSum] = useState<boolean>(false);
   useEffect(() => {
@@ -205,7 +205,7 @@ export function SettlementSumTable({
                   item.data[`shipping_${seller}`]}
               </TextBox>
               <Link
-                to={`/admin/settlement-manage-detail?partner=${item.partnerName}&month=${monthNumeral}`}
+                to={`/admin/settlement-manage-detail?partner=${item.partnerName}&month=${numeralMonth}`}
                 style={{ width: "10%" }}
               >
                 <TextBox style={{ color: "#1859FF" }}>
