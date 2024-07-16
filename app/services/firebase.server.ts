@@ -44,6 +44,9 @@ import { sendAligoMessage } from "./aligo.server";
 import { NoticeItem } from "~/components/notice";
 import { ProductWithoutFile } from "~/components/product";
 import { SettlementSumItem } from "~/components/settlement_sum";
+import { sendResendEmail } from "./resend.server";
+import { ht } from "date-fns/locale";
+import { json } from "@remix-run/node";
 
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
@@ -1824,7 +1827,6 @@ export async function uploadProductImage(
   const imageStorageRef = ref(storage, imagePath);
   const uploadTask = uploadBytesResumable(imageStorageRef, arrayBuffer);
 
-
   switch (usage) {
     case "main":
       updateDoc(doc(firestore, "products-progress", productName), {
@@ -1838,24 +1840,16 @@ export async function uploadProductImage(
       break;
     case "detail":
       let detailData: any = {};
-      detailData[`detailStarted_${detailIndex}`] =
-        "true";
-      updateDoc(
-        doc(firestore, "products-progress", productName),
-        detailData
-      );
+      detailData[`detailStarted_${detailIndex}`] = "true";
+      updateDoc(doc(firestore, "products-progress", productName), detailData);
       break;
     case "extra":
       let extraData: any = {};
-      extraData[`extraStarted_${detailIndex}`] =
-        "true";
-      updateDoc(
-        doc(firestore, "products-progress", productName),
-        extraData
-      );
+      extraData[`extraStarted_${detailIndex}`] = "true";
+      updateDoc(doc(firestore, "products-progress", productName), extraData);
       break;
   }
-  
+
   let progress = 0;
   let stair = 50000;
 
@@ -1897,20 +1891,11 @@ export async function uploadProductImage(
       }
     },
     async (error) => {
-      let errorData: any = {}
+      let errorData: any = {};
       errorData[`${usage}-${detailIndex}-errorData`] = error.message;
-      updateDoc(
-        doc(firestore, "products-progress", productName),
-        errorData
-      );
+      updateDoc(doc(firestore, "products-progress", productName), errorData);
       await new Promise((resolve) => setTimeout(resolve, 3000));
-      uploadProductImage(
-        file,
-        fileName,
-        usage,
-        productName,
-        detailIndex
-      )
+      uploadProductImage(file, fileName, usage, productName, detailIndex);
     },
     () => {
       getDownloadURL(uploadTask.snapshot.ref).then((url) => {
@@ -2005,6 +1990,44 @@ export async function isProductImageUploadFinished({
   } catch (error: any) {
     return false;
   }
+}
+
+export async function sendSettlementNoticeEmail({
+  partnerList,
+}: {
+  partnerList: string[];
+}) {
+  const profilesMap = await getPartnerProfiles();
+  for (let i = 0; i < partnerList.length; i++) {
+    const partnerName = partnerList[i];
+    const partnerProfile = profilesMap.get(partnerName);
+    if (partnerProfile) {
+      const email = partnerProfile.email;
+      if (email && email.length > 0) {
+        const html =
+          "<p>로파파트너 정산내역이 새로 공유되었습니다. 사이트를 확인해주세요.</p>";
+        const result = await sendResendEmail({
+          to: email,
+          subject: `[로파파트너] ${partnerName} 정산내역 공유 알림`,
+          html: html,
+        });
+        if (result.error) {
+          return {
+            status: "error",
+            message: result.error.message,
+            partnerName: partnerName,
+          };
+        }
+      }
+    } else {
+      return {
+        status: "error",
+        message: `partner profile '${partnerName}' not found`,
+        partnerName: partnerName,
+      };
+    }
+  }
+  return { status: "ok" };
 }
 
 export async function fixProduct() {

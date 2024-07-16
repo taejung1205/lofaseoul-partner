@@ -1,8 +1,15 @@
-import { json, LoaderFunction } from "@remix-run/node";
-import { Link, useLoaderData, useNavigation, useTransition } from "@remix-run/react";
-import { useEffect, useMemo, useState } from "react";
+import { ActionFunction, json, LoaderFunction } from "@remix-run/node";
+import {
+  Link,
+  useActionData,
+  useLoaderData,
+  useNavigation,
+  useSubmit,
+  useTransition,
+} from "@remix-run/react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import styled from "styled-components";
-import { BlackButton, GetListButton } from "~/components/button";
+import { BlackButton, CommonButton, GetListButton } from "~/components/button";
 import {
   MonthSelectPopover,
   dateToKoreanMonth,
@@ -19,9 +26,14 @@ import {
   SettlementSumItem,
   SettlementSumTable,
 } from "~/components/settlement_sum";
-import { getAllSettlementSum } from "~/services/firebase.server";
+import {
+  getAllSettlementSum,
+  sendSettlementNoticeEmail,
+} from "~/services/firebase.server";
 import writeXlsxFile from "write-excel-file";
-import { LoadingOverlay } from "@mantine/core";
+import { LoadingOverlay, Space } from "@mantine/core";
+import { BasicModal, ModalButton } from "~/components/modal";
+import { sendResendEmail } from "~/services/resend.server";
 
 const EmptySettlementBox = styled.div`
   display: flex;
@@ -31,10 +43,6 @@ const EmptySettlementBox = styled.div`
   align-items: center;
   justify-content: center;
   width: inherit;
-`;
-
-const DownloadButton = styled(GetListButton)`
-width: 200px;
 `;
 
 export const loader: LoaderFunction = async ({ request }) => {
@@ -52,19 +60,56 @@ export const loader: LoaderFunction = async ({ request }) => {
   }
 };
 
+export const action: ActionFunction = async ({ request }) => {
+  const body = await request.formData();
+  const actionType = body.get("action")?.toString();
+  switch (actionType) {
+    case "send-email":
+      const partnerList = body.get("partners")?.toString();
+      const partners = JSON.parse(partnerList ?? "");
+      const result = await sendSettlementNoticeEmail({
+        partnerList: partners,
+      });
+      if (result.status == "error") {
+        return {
+          status: "error",
+          message: `${result.partnerName}에게 메일 전송 중에 오류가 발생했습니다.\n${result.message}`,
+        };
+      } else {
+        return { status: "ok", message: "메일 전송을 완료하였습니다." };
+      }
+      break;
+  }
+
+  return null;
+};
+
 export default function AdminSettlementManage() {
   const [selectedDate, setSelectedDate] = useState<Date>();
   const [selectedMonthStr, setSelectedMonthStr] = useState<string>();
   const [seller, setSeller] = useState<string>("all");
+
+  const [itemsChecked, setItemsChecked] = useState<boolean[]>([]); //체크된 정산내역 index 배열
+  const [selectedPartners, setSelectedPartners] = useState<string[]>([]);
+
+  const [noticeModalStr, setNoticeModalStr] = useState<string>(""); //안내 모달창에서 뜨는 메세지
+  const [isNoticeModalOpened, setIsNoticeModalOpened] =
+    useState<boolean>(false);
+  const [isSendEmailConfirmModalOpened, setIsSendEmailConfirmModalOpened] =
+    useState<boolean>(false);
+
   const loaderData = useLoaderData();
+  const actionData = useActionData();
   const navigation = useNavigation();
+  const submit = useSubmit();
+  const formRef = useRef<HTMLFormElement>(null);
 
   const selectedMonthNumeral = useMemo(
     () => dateToNumeralMonth(selectedDate ?? new Date()),
     [selectedDate]
   );
 
-  const sums: SettlementSumItem[] = useMemo(() => {
+  const sumItems: SettlementSumItem[] = useMemo(() => {
     if (loaderData == null) {
       return null;
     } else {
@@ -73,19 +118,19 @@ export default function AdminSettlementManage() {
   }, [loaderData]);
 
   const totalSum = useMemo(() => {
-    if (sums == null) {
+    if (sumItems == null) {
       return null;
     } else {
       let settlementSum = 0;
       let shippingSum = 0;
       if (seller == "all") {
-        sums.forEach((item) => {
+        sumItems.forEach((item) => {
           const sum = getAllSellerSettlementSum(item.data);
           settlementSum += sum.settlement;
           shippingSum += sum.shippingFee;
         });
       } else {
-        sums.forEach((item) => {
+        sumItems.forEach((item) => {
           settlementSum += item.data[`settlement_${seller}`];
           shippingSum += item.data[`shipping_${seller}`];
         });
@@ -95,15 +140,24 @@ export default function AdminSettlementManage() {
         shippingFee: shippingSum,
       };
     }
-  }, [sums, seller]);
+  }, [sumItems, seller]);
 
   useEffect(() => {
-    if(loaderData && loaderData.numeralMonth){
-      setSelectedDate(koreanMonthToDate(numeralMonthToKorean(loaderData.numeralMonth)));
+    if (loaderData && loaderData.numeralMonth) {
+      setSelectedDate(
+        koreanMonthToDate(numeralMonthToKorean(loaderData.numeralMonth))
+      );
     } else {
       setSelectedDate(getTimezoneDate(new Date()));
     }
   }, [loaderData]);
+
+  useEffect(() => {
+    if (actionData) {
+      setNoticeModalStr(actionData.message);
+      setIsNoticeModalOpened(true);
+    }
+  }, [actionData]);
 
   useEffect(() => {
     if (selectedDate) {
@@ -111,16 +165,15 @@ export default function AdminSettlementManage() {
     }
   }, [selectedDate]);
 
-
   async function writeExcel(sumItems: SettlementSumItem[]) {
     const copy = sumItems.map((item) => item);
     const totalSumItem: SettlementSumItem = {
       partnerName: "합계",
       data: totalSum,
       brn: "",
-      bankAccount: ""
-    }
-    copy.push(totalSumItem)
+      bankAccount: "",
+    };
+    copy.push(totalSumItem);
     await writeXlsxFile(copy, {
       schema,
       headerStyle: {
@@ -130,16 +183,107 @@ export default function AdminSettlementManage() {
       fileName: `정산합계_${loaderData.numeralMonth}.xlsx`,
       fontFamily: "맑은 고딕",
       fontSize: 10,
-
     });
+  }
+
+  async function sendEmail() {
+    const selectedPartners = updateCheckedItems();
+    if (selectedPartners.length > 0) {
+      setIsSendEmailConfirmModalOpened(true);
+    } else {
+      setNoticeModalStr("선택된 파트너가 없습니다.");
+      setIsNoticeModalOpened(true);
+    }
+  }
+
+  function onItemCheck(index: number, isChecked: boolean) {
+    itemsChecked[index] = isChecked;
+  }
+
+  function onCheckAll(isChecked: boolean) {
+    setItemsChecked(Array(sumItems.length ?? 0).fill(isChecked));
+  }
+
+  //체크박스로 선택된 파트너 목록을 업뎃합니다. 수정된 리스트를 반환합니다.
+  function updateCheckedItems() {
+    let selectedPartners = [];
+    for (let i = 0; i < sumItems.length; i++) {
+      if (itemsChecked[i]) {
+        selectedPartners.push(sumItems[i].partnerName);
+      }
+    }
+    setSelectedPartners(selectedPartners);
+    return selectedPartners;
+  }
+
+  //안내메일 전송 요청을 post합니다.
+  function submitSendEmail(partnerList: string[]) {
+    const data = JSON.stringify(partnerList);
+    const formData = new FormData(formRef.current ?? undefined);
+    formData.set("partners", data);
+    formData.set("action", "send-email");
+    submit(formData, { method: "post" });
   }
 
   return (
     <PageLayout>
-      <LoadingOverlay
-        visible={navigation.state == "loading"}
-        overlayBlur={2}
-      />
+      <LoadingOverlay visible={navigation.state == "loading"} overlayBlur={2} />
+
+      {/* 안내용 모달 */}
+      <BasicModal
+        opened={isNoticeModalOpened}
+        onClose={() => setIsNoticeModalOpened(false)}
+      >
+        <div
+          style={{
+            justifyContent: "center",
+            textAlign: "center",
+            fontWeight: "700",
+            whiteSpace: "pre-line"
+          }}
+        >
+          {noticeModalStr}
+          <div style={{ height: "20px" }} />
+          <div style={{ display: "flex", justifyContent: "center" }}>
+            <ModalButton onClick={() => setIsNoticeModalOpened(false)}>
+              확인
+            </ModalButton>
+          </div>
+        </div>
+      </BasicModal>
+
+      {/* 메일 전송 확인 모달 */}
+      <BasicModal
+        opened={isSendEmailConfirmModalOpened}
+        onClose={() => setIsSendEmailConfirmModalOpened(false)}
+      >
+        <div
+          style={{
+            justifyContent: "center",
+            textAlign: "center",
+            fontWeight: "700",
+          }}
+        >
+          {`선택된 파트너 ${selectedPartners.length}곳에 안내 메일을 전송하시겠습니까?`}
+          <div style={{ height: "20px" }} />
+          <div style={{ display: "flex", justifyContent: "center" }}>
+            <ModalButton
+              onClick={() => setIsSendEmailConfirmModalOpened(false)}
+            >
+              취소
+            </ModalButton>
+            <ModalButton
+              onClick={async () => {
+                submitSendEmail(selectedPartners);
+                setIsSendEmailConfirmModalOpened(false);
+              }}
+            >
+              전송
+            </ModalButton>
+          </div>
+        </div>
+      </BasicModal>
+
       <div
         style={{
           display: "flex",
@@ -163,20 +307,40 @@ export default function AdminSettlementManage() {
             }
             monthStr={selectedMonthStr ?? ""}
           />
+          <Space w={20} />
           <Link to={`/admin/settlement-manage?month=${selectedMonthNumeral}`}>
-            <GetListButton>조회하기</GetListButton>
+            <CommonButton>조회하기</CommonButton>
           </Link>
-          {sums == null || sums.length == 0 ? <></> :
-            <DownloadButton onClick={async () => {
-              await writeExcel(sums);
-            }
-            }>엑셀 다운로드</DownloadButton>}
+          <Space w={20} />
+          {sumItems == null || sumItems.length == 0 ? (
+            <></>
+          ) : (
+            <>
+              <CommonButton
+                onClick={async () => {
+                  await writeExcel(sumItems);
+                }}
+                width={180}
+              >
+                엑셀 다운로드
+              </CommonButton>
+              <Space w={20} />
+              <CommonButton
+                width={180}
+                onClick={() => {
+                  sendEmail();
+                }}
+              >
+                안내메일 전송
+              </CommonButton>
+            </>
+          )}
         </div>
 
         <SellerSelect seller={seller} setSeller={setSeller} />
       </div>
       <div style={{ height: "20px" }} />
-      {sums == null ? (
+      {sumItems == null ? (
         <EmptySettlementBox
           style={{
             display: "flex",
@@ -190,11 +354,15 @@ export default function AdminSettlementManage() {
         >
           조회하기 버튼을 클릭하여 정산내역을 확인할 수 있습니다.
         </EmptySettlementBox>
-      ) : sums.length > 0 ? (
+      ) : sumItems.length > 0 ? (
         <SettlementSumTable
-          items={sums}
+          items={sumItems}
           seller={seller}
           numeralMonth={loaderData.numeralMonth}
+          itemsChecked={itemsChecked}
+          onItemCheck={onItemCheck}
+          onCheckAll={onCheckAll}
+          defaultAllCheck={false}
         />
       ) : (
         <EmptySettlementBox
@@ -211,7 +379,7 @@ export default function AdminSettlementManage() {
           공유된 정산내역이 없습니다.
         </EmptySettlementBox>
       )}
-      {sums !== null && sums.length > 0 && totalSum !== null ? (
+      {sumItems !== null && sumItems.length > 0 && totalSum !== null ? (
         <>
           <div style={{ height: "40px" }} />
           <SettlementSumBar
@@ -283,9 +451,9 @@ const schema = [
         return item.data.shippingFee + item.data.settlement;
       } else {
         const sum = getAllSellerSettlementSum(item.data);
-        return sum.shippingFee + sum.settlement
+        return sum.shippingFee + sum.settlement;
       }
     },
     width: 30,
-  }
+  },
 ];
