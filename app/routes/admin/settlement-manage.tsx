@@ -1,6 +1,7 @@
 import { ActionFunction, json, LoaderFunction } from "@remix-run/node";
 import {
   Link,
+  useActionData,
   useLoaderData,
   useNavigation,
   useSubmit,
@@ -25,7 +26,10 @@ import {
   SettlementSumItem,
   SettlementSumTable,
 } from "~/components/settlement_sum";
-import { getAllSettlementSum, sendSettlementNoticeEmail } from "~/services/firebase.server";
+import {
+  getAllSettlementSum,
+  sendSettlementNoticeEmail,
+} from "~/services/firebase.server";
 import writeXlsxFile from "write-excel-file";
 import { LoadingOverlay, Space } from "@mantine/core";
 import { BasicModal, ModalButton } from "~/components/modal";
@@ -59,19 +63,24 @@ export const loader: LoaderFunction = async ({ request }) => {
 export const action: ActionFunction = async ({ request }) => {
   const body = await request.formData();
   const actionType = body.get("action")?.toString();
-  switch(actionType){
-    case("send-email"):
+  switch (actionType) {
+    case "send-email":
       const partnerList = body.get("partners")?.toString();
       const partners = JSON.parse(partnerList ?? "");
       const result = await sendSettlementNoticeEmail({
-        partnerList: partners
+        partnerList: partners,
       });
-      if(result.status == "error"){
-        console.log(result.partnerName, result.message);
+      if (result.status == "error") {
+        return {
+          status: "error",
+          message: `${result.partnerName}에게 메일 전송 중에 오류가 발생했습니다.\n${result.message}`,
+        };
+      } else {
+        return { status: "ok", message: "메일 전송을 완료하였습니다." };
       }
       break;
   }
- 
+
   return null;
 };
 
@@ -90,6 +99,7 @@ export default function AdminSettlementManage() {
     useState<boolean>(false);
 
   const loaderData = useLoaderData();
+  const actionData = useActionData();
   const navigation = useNavigation();
   const submit = useSubmit();
   const formRef = useRef<HTMLFormElement>(null);
@@ -141,6 +151,13 @@ export default function AdminSettlementManage() {
       setSelectedDate(getTimezoneDate(new Date()));
     }
   }, [loaderData]);
+
+  useEffect(() => {
+    if (actionData) {
+      setNoticeModalStr(actionData.message);
+      setIsNoticeModalOpened(true);
+    }
+  }, [actionData]);
 
   useEffect(() => {
     if (selectedDate) {
@@ -222,6 +239,7 @@ export default function AdminSettlementManage() {
             justifyContent: "center",
             textAlign: "center",
             fontWeight: "700",
+            whiteSpace: "pre-line"
           }}
         >
           {noticeModalStr}
