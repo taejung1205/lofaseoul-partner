@@ -2,6 +2,7 @@ import { Link } from "@remix-run/react";
 import { useEffect, useState } from "react";
 import styled from "styled-components";
 import { PossibleSellers } from "./seller";
+import { Checkbox } from "@mantine/core";
 
 export type SettlementSumItem = {
   partnerName: string;
@@ -60,10 +61,10 @@ export function getAllSellerSettlementSum(sums: any) {
   let settlement = 0;
   let shippingFee = 0;
   PossibleSellers.forEach((seller) => {
-    if(sums[`settlement_${seller}`]){
+    if (sums[`settlement_${seller}`]) {
       settlement += sums[`settlement_${seller}`];
     }
-    if(sums[`shipping_${seller}`]){
+    if (sums[`shipping_${seller}`]) {
       shippingFee += sums[`shipping_${seller}`];
     }
   });
@@ -150,20 +151,43 @@ export function SettlementSumBar({
 export function SettlementSumTable({
   items,
   seller,
-  numeralMonth
+  numeralMonth,
+  itemsChecked,
+  onItemCheck,
+  onCheckAll,
+  defaultAllCheck = false,
 }: {
   items: SettlementSumItem[];
   seller: string;
-  numeralMonth: string
+  numeralMonth: string;
+  itemsChecked: boolean[];
+  onItemCheck: (index: number, isChecked: boolean) => void;
+  onCheckAll: (isChecked: boolean) => void;
+  defaultAllCheck: boolean;
 }) {
   const [isAllSum, setIsAllSum] = useState<boolean>(false);
   useEffect(() => {
     setIsAllSum(seller == "all");
   }, [seller]);
+
+  const [allChecked, setAllChecked] = useState<boolean>(false);
+
+  useEffect(() => {
+    setAllChecked(defaultAllCheck);
+  }, [items]);
+
   return (
     <SettlementBox>
       <SettlementHeader>
-        <TextBox style={{ width: "20%", textAlign: "left" }}>업체명</TextBox>
+        <Checkbox
+          checked={allChecked}
+          onChange={(event) => {
+            const val = event.currentTarget.checked;
+            setAllChecked(val);
+            onCheckAll(val);
+          }}
+        />
+        <TextBox style={{ width: "18%", textAlign: "left" }}>업체명</TextBox>
         <TextBox style={{ width: "14%" }}>사업자등록번호</TextBox>
         <TextBox style={{ width: "14%" }}>계좌번호</TextBox>
         <TextBox style={{ width: "14%" }}>정산금액</TextBox>
@@ -174,48 +198,82 @@ export function SettlementSumTable({
       </SettlementHeader>
       <SettlementItemsBox>
         {items.map((item: SettlementSumItem, index: number) => {
-          let allSettlement = 0;
-          let allShipping = 0;
-          if (isAllSum) {
-            const sum = getAllSellerSettlementSum(item.data);
-            allSettlement = sum.settlement;
-            allShipping = sum.shippingFee;
-          }
           return (
-            <SettlementItemBox key={`SettlementSumItem-${index}`}>
-              <TextBox style={{ width: "20%", textAlign: "left" }}>
-                {item.partnerName}
-              </TextBox>
-              <TextBox style={{ width: "14%" }}>
-                {item.brn}
-              </TextBox>
-              <TextBox style={{ width: "14%" }}>
-                {item.bankAccount}
-              </TextBox>
-              <TextBox style={{ width: "14%" }}>
-                {isAllSum ? allSettlement : item.data[`settlement_${seller}`]}
-              </TextBox>
-              <TextBox style={{ width: "14%" }}>
-                {isAllSum ? allShipping : item.data[`shipping_${seller}`]}
-              </TextBox>
-              <TextBox style={{ width: "14%" }}>
-                {isAllSum
-                  ? allShipping + allSettlement
-                  : item.data[`settlement_${seller}`] +
-                  item.data[`shipping_${seller}`]}
-              </TextBox>
-              <Link
-                to={`/admin/settlement-manage-detail?partner=${item.partnerName}&month=${numeralMonth}`}
-                style={{ width: "10%" }}
-              >
-                <TextBox style={{ color: "#1859FF" }}>
-                  자세히보기
-                </TextBox>
-              </Link>
-            </SettlementItemBox>
+            <SettlementSumItem
+              item={item}
+              index={index}
+              check={itemsChecked[index] ?? false}
+              onItemCheck={onItemCheck}
+              isAllSum={isAllSum}
+              seller={seller}
+              numeralMonth={numeralMonth}
+            />
           );
         })}
       </SettlementItemsBox>
     </SettlementBox>
+  );
+}
+
+function SettlementSumItem({
+  item,
+  index,
+  check,
+  isAllSum,
+  seller,
+  onItemCheck,
+  numeralMonth,
+}: {
+  item: SettlementSumItem;
+  index: number;
+  check: boolean;
+  onItemCheck: (index: number, isChecked: boolean) => void;
+  isAllSum: boolean;
+  seller: string;
+  numeralMonth: string;
+}) {
+  let allSettlement = 0;
+  let allShipping = 0;
+  if (isAllSum) {
+    const sum = getAllSellerSettlementSum(item.data);
+    allSettlement = sum.settlement;
+    allShipping = sum.shippingFee;
+  }
+  useEffect(() => {
+    setIsChecked(check);
+  }, [check]);
+  const [isChecked, setIsChecked] = useState<boolean>(check);
+  return (
+    <SettlementItemBox key={`SettlementSumItem-${index}`}>
+      <Checkbox
+        checked={isChecked}
+        onChange={(event) => {
+          setIsChecked(event.currentTarget.checked);
+          onItemCheck(index, event.currentTarget.checked);
+        }}
+      />
+      <TextBox style={{ width: "18%", textAlign: "left" }}>
+        {item.partnerName}
+      </TextBox>
+      <TextBox style={{ width: "14%" }}>{item.brn}</TextBox>
+      <TextBox style={{ width: "14%" }}>{item.bankAccount}</TextBox>
+      <TextBox style={{ width: "14%" }}>
+        {isAllSum ? allSettlement : item.data[`settlement_${seller}`]}
+      </TextBox>
+      <TextBox style={{ width: "14%" }}>
+        {isAllSum ? allShipping : item.data[`shipping_${seller}`]}
+      </TextBox>
+      <TextBox style={{ width: "14%" }}>
+        {isAllSum
+          ? allShipping + allSettlement
+          : item.data[`settlement_${seller}`] + item.data[`shipping_${seller}`]}
+      </TextBox>
+      <Link
+        to={`/admin/settlement-manage-detail?partner=${item.partnerName}&month=${numeralMonth}`}
+        style={{ width: "10%" }}
+      >
+        <TextBox style={{ color: "#1859FF" }}>자세히보기</TextBox>
+      </Link>
+    </SettlementItemBox>
   );
 }
