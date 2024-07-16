@@ -46,6 +46,7 @@ import { ProductWithoutFile } from "~/components/product";
 import { SettlementSumItem } from "~/components/settlement_sum";
 import { sendResendEmail } from "./resend.server";
 import { ht } from "date-fns/locale";
+import { json } from "@remix-run/node";
 
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
@@ -1998,16 +1999,20 @@ export async function sendSettlementNoticeEmail({
 }) {
   const profilesMap = await getPartnerProfiles();
   for (let i = 0; i < partnerList.length; i++) {
-    const partnerProfile = profilesMap.get(partnerList[i]);
+    const partnerName = partnerList[i]
+    const partnerProfile = profilesMap.get(partnerName);
     const email = partnerProfile.email;
     const html = "<p>로파파트너 정산내역이 새로 공유되었습니다. 사이트를 확인해주세요.</p>";
     const result = await sendResendEmail({
       to: email,
-      subject: `[로파파트너] ${partnerProfile[i]} 정산내역 공유 알림`,
+      subject: `[로파파트너] ${partnerName} 정산내역 공유 알림`,
       html: html,
     });
+    if(result.error){
+      return {status: "error", message: result.error.message, partnerName: partnerName};
+    }
   }
-  return;
+  return {status: "ok"};
 }
 
 export async function fixProduct() {

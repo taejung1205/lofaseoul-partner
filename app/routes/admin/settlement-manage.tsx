@@ -25,7 +25,7 @@ import {
   SettlementSumItem,
   SettlementSumTable,
 } from "~/components/settlement_sum";
-import { getAllSettlementSum } from "~/services/firebase.server";
+import { getAllSettlementSum, sendSettlementNoticeEmail } from "~/services/firebase.server";
 import writeXlsxFile from "write-excel-file";
 import { LoadingOverlay, Space } from "@mantine/core";
 import { BasicModal, ModalButton } from "~/components/modal";
@@ -62,12 +62,13 @@ export const action: ActionFunction = async ({ request }) => {
   switch(actionType){
     case("send-email"):
       const partnerList = body.get("partners")?.toString();
-      const result = await sendResendEmail({
-        to: "immcoc1@naver.com",
-        subject: "hello",
-        html: `<p>${partnerList}</p>`
+      const partners = JSON.parse(partnerList ?? "");
+      const result = await sendSettlementNoticeEmail({
+        partnerList: partners
       });
-      console.log(result);
+      if(result.status == "error"){
+        console.log(result.partnerName, result.message);
+      }
       break;
   }
  

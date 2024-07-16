@@ -44,13 +44,6 @@ const TextBox = styled.div`
   text-align: center;
 `;
 
-const DetailButton = styled.button`
-  margin-left: 10px;
-  font-weight: 700;
-  font-size: 16px;
-  line-height: 16px;
-  text-align: center;
-`;
 
 /**
  * 모든 판매처의 정산금액을 합친 금액을 계산합니다.
