@@ -189,7 +189,12 @@ export default function AdminSettlementManage() {
   async function sendEmail() {
     const selectedPartners = updateCheckedItems();
     if (selectedPartners.length > 0) {
-      setIsSendEmailConfirmModalOpened(true);
+      if(selectedPartners.length <= 2){ 
+        setIsSendEmailConfirmModalOpened(true);
+      } else {
+        setNoticeModalStr("현재는 한 번에 최대 2통의 메일을 보낼 수 있습니다.");
+        setIsNoticeModalOpened(true);
+      }
     } else {
       setNoticeModalStr("선택된 파트너가 없습니다.");
       setIsNoticeModalOpened(true);
