@@ -244,7 +244,7 @@ export default function AdminSettlementShare() {
         fontWeight: "bold",
         align: "center",
       },
-      fileName: `정산내역_${monthNumeral}.xlsx`,
+      fileName: `정산내역_${loaderData.monthStr}.xlsx`,
       fontFamily: "맑은 고딕",
       fontSize: 10,
     });
