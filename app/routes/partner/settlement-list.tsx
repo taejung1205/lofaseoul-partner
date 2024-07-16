@@ -31,11 +31,12 @@ import {
 } from "~/components/settlement_sum";
 import { getSettlements, getSettlementSum } from "~/services/firebase.server";
 import { PageLayout } from "~/components/page_layout";
-import { GetListButton } from "~/components/button";
+import { CommonButton, GetListButton } from "~/components/button";
 import { requireUser } from "~/services/session.server";
 import { sendAligoMessage } from "~/services/aligo.server";
 import { BasicModal, ModalButton } from "~/components/modal";
-import { LoadingOverlay } from "@mantine/core";
+import { LoadingOverlay, Space } from "@mantine/core";
+import writeXlsxFile from "write-excel-file";
 
 const EmptySettlementBox = styled.div`
   display: flex;
@@ -236,6 +237,19 @@ export default function AdminSettlementShare() {
     submit(formData, { method: "post" });
   }
 
+  async function writeExcel() {
+    await writeXlsxFile(items, {
+      schema,
+      headerStyle: {
+        fontWeight: "bold",
+        align: "center",
+      },
+      fileName: `정산내역_${loaderData.monthStr}.xlsx`,
+      fontFamily: "맑은 고딕",
+      fontSize: 10,
+    });
+  }
+
   return (
     <>
       <LoadingOverlay visible={navigation.state == "loading"} overlayBlur={2} />
@@ -317,6 +331,10 @@ export default function AdminSettlementShare() {
             <Link to={`/partner/settlement-list?month=${monthNumeral}`}>
               <GetListButton>조회하기</GetListButton>
             </Link>
+            <Space w={20} />
+            <CommonButton width={180} onClick={() => writeExcel()}>
+              엑셀 다운로드
+            </CommonButton>
           </div>
 
           <SellerSelect seller={seller} setSeller={setSeller} />
@@ -401,3 +419,75 @@ export default function AdminSettlementShare() {
     </>
   );
 }
+
+const schema = [
+  {
+    column: "판매처",
+    type: String,
+    value: (item: SettlementItem) => item.seller,
+    width: 15,
+    wrap: true,
+  },
+  {
+    column: "주문번호",
+    type: String,
+    value: (item: SettlementItem) => item.orderNumber,
+    width: 30,
+    wrap: true,
+  },
+  {
+    column: "상품명",
+    type: String,
+    value: (item: SettlementItem) => {
+      return item.productName;
+    },
+    width: 60,
+    wrap: true,
+  },
+  {
+    column: "옵션명",
+    type: String,
+    value: (item: SettlementItem) => item.optionName,
+    width: 30,
+  },
+  {
+    column: "판매단가",
+    type: Number,
+    value: (item: SettlementItem) => {
+      return Number(item.price);
+    },
+    width: 15,
+  },
+  {
+    column: "수량",
+    type: Number,
+    value: (item: SettlementItem) => {
+      return Number(item.amount);
+    },
+    width: 10,
+  },
+  {
+    column: "주문자",
+    type: String,
+    value: (item: SettlementItem) => item.orderer,
+    width: 10,
+  },
+  {
+    column: "송신자",
+    type: String,
+    value: (item: SettlementItem) => item.receiver,
+    width: 10,
+  },
+  {
+    column: "세일반영",
+    type: Number,
+    value: (item: SettlementItem) => item.sale,
+    width: 10,
+  },
+  {
+    column: "주문태그",
+    type: String,
+    value: (item: SettlementItem) => item.orderTag,
+    width: 10,
+  },
+];
