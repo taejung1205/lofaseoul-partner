@@ -114,7 +114,7 @@ export function TopicSelect({
 export function AdminNotice({
   noticeItem,
   monthStr,
-  key
+  key,
 }: // isEdit,
 // onEditClick,
 {
@@ -353,7 +353,17 @@ export function AdminNotice({
           </NoticeGridItem>
           <NoticeGridItem style={{ gridColumnStart: "span 2" }}>
             <div style={{ padding: "13px", width: "120px" }}>상세 사유</div>
-            <div style={{ padding: "13px" }}>{noticeItem.detail}</div>
+            <div
+              style={{
+                display: "flex",
+                padding: "13px",
+                width: "calc(100% - 120px)",
+                whiteSpace: "pre-line",
+                lineHeight: "1.5",
+              }}
+            >
+              {noticeItem.detail}
+            </div>
           </NoticeGridItem>
           {noticeItem.replies.length > 0 ? (
             <NoticeGridItem style={{ gridColumnStart: "span 2" }}>
@@ -362,9 +372,9 @@ export function AdminNotice({
               >
                 업체 회신
               </div>
-              <div>
+              <div style={{ width: "calc(100% - 120px)" }}>
                 {noticeItem.replies.map((reply: string, index: number) => {
-                  return <div style={{ padding: "13px" }}>{reply}</div>;
+                  return <div style={{ padding: "13px", whiteSpace: "pre-line" }}>{reply}</div>;
                 })}
               </div>
             </NoticeGridItem>
@@ -408,7 +418,17 @@ export function PartnerNotice({
             </NoticeGridItem>
             <NoticeGridItem style={{ gridColumnStart: "span 2" }}>
               <div style={{ padding: "13px", width: "120px" }}>상세 사유</div>
-              <div style={{ padding: "13px" }}>{noticeItem.detail}</div>
+              <div
+                style={{
+                  display: "flex",
+                  padding: "13px",
+                  width: "calc(100% - 120px)",
+                  whiteSpace: "pre-line",
+                  lineHeight: "1.5",
+                }}
+              >
+                {noticeItem.detail}
+              </div>
             </NoticeGridItem>
             {noticeItem.replies.length > 0 ? (
               <NoticeGridItem style={{ gridColumnStart: "span 2" }}>
@@ -417,9 +437,13 @@ export function PartnerNotice({
                 >
                   회신 완료
                 </div>
-                <div>
+                <div style={{ width: "calc(100% - 120px)" }}>
                   {noticeItem.replies.map((reply: string, index: number) => {
-                    return <div style={{ padding: "13px" }}>{reply}</div>;
+                    return (
+                      <div style={{ padding: "13px", whiteSpace: "pre-line" }}>
+                        {reply}
+                      </div>
+                    );
                   })}
                 </div>
               </NoticeGridItem>
