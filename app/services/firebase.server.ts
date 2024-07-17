@@ -1449,10 +1449,10 @@ export async function replyNotice({
 }) {
   try {
     const time = getTimezoneDate(new Date());
-    const timeStr = `${dateToDayStr(
-      new Date()
-    )} ${time.getHours()}:${time.getMinutes()}`;
-    const replyStr = `[${timeStr}] ${reply}`;
+    const dateStr = dateToDayStr(time);
+    const timeStr = `${dateStr} ${time.getHours()}:${String(time.getMinutes()).padStart(2, "0")}`;
+    const replyStr = `[${timeStr}]
+    ${reply}`;
     await updateDoc(doc(firestore, `notices/${monthStr}/items/${id}`), {
       replies: arrayUnion(replyStr),
     });

@@ -370,7 +370,7 @@ export default function AdminAlert() {
         </div>
       </BasicModal>
 
-      <PageLayout>
+      <PageLayout style={{display: "block"}}>
         <div
           style={{
             display: "flex",
