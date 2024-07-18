@@ -73,6 +73,7 @@ export const action: ActionFunction = async ({ request }) => {
         monthStr: month,
         id: id,
         reply: reply,
+        isAdmin: false
       });
       if (result == true) {
         return json({ message: `답신이 완료되었습니다.` });
@@ -86,7 +87,7 @@ export const action: ActionFunction = async ({ request }) => {
   return null;
 };
 
-export default function AdminAlert() {
+export default function PartnerAlert() {
   const [selectedDate, setSelectedDate] = useState<Date>(); // 선택중인 날짜 (현재 조회된 월이 아닌, MonthSelectPopover로 선택중인 날짜)
   const [selectedMonthStr, setSelectedMonthStr] = useState<string>(); //선택중인 날짜의 string (XX년 XX월)
   const [partnerName, setPartnerName] = useState<string>(""); //파트너명 (조회된 파트너명으로 시작, 입력창으로 수정 및 조회)
@@ -95,10 +96,8 @@ export default function AdminAlert() {
   const [isNoticeModalOpened, setIsNoticeModalOpened] =
     useState<boolean>(false);
 
-  const formRef = useRef<HTMLFormElement>(null);
   const loaderData = useLoaderData();
   const actionData = useActionData();
-  const submit = useSubmit();
   const navigation = useNavigation();
 
   useEffect(() => {
