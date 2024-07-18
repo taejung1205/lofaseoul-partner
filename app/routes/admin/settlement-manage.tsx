@@ -218,37 +218,7 @@ export default function AdminSettlementManage() {
 
   //안내메일 전송 요청을 post합니다.
   function submitSendEmail(partnerList: string[]) {
-    const temp = [
-      "김태정 테스트계정",
-      "김태정 테스트계정",
-      "김태정 테스트계정",
-      "김태정 테스트계정",
-      "김태정 테스트계정",
-      "김태정 테스트계정",
-      "김태정 테스트계정",
-      "김태정 테스트계정",
-      "김태정 테스트계정",
-      "김태정 테스트계정",
-      "김태정 테스트계정",
-      "김태정 테스트계정",
-      "김태정 테스트계정",
-      "김태정 테스트계정",
-      "김태정 테스트계정",
-      "김태정 테스트계정",
-      "김태정 테스트계정",
-      "김태정 테스트계정",
-      "김태정 테스트계정",
-      "김태정 테스트계정",
-      "김태정 테스트계정",
-      "김태정 테스트계정",
-      "김태정 테스트계정",
-      "김태정 테스트계정",
-      "김태정 테스트계정",
-      "김태정 테스트계정",
-      "김태정 테스트계정",
-      "김태정 테스트계정",
-    ];
-    const data = JSON.stringify(temp);
+    const data = JSON.stringify(partnerList);
     const formData = new FormData(formRef.current ?? undefined);
     formData.set("partners", data);
     formData.set("action", "send-email");
@@ -295,7 +265,7 @@ export default function AdminSettlementManage() {
           }}
         >
           {`선택된 파트너 ${selectedPartners.length}곳에 안내 메일을 전송하시겠습니까?
-          (10곳 당 약 2초 소요)`}
+          (건당 약 0.5초 소요)`}
           <div style={{ height: "20px" }} />
           <div style={{ display: "flex", justifyContent: "center" }}>
             <ModalButton
