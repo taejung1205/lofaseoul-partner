@@ -1451,7 +1451,7 @@ export async function replyNotice({
 }) {
   try {
     const time = getTimezoneDate(new Date());
-    const dateStr = dateToDayStr(time);
+    const dateStr = dateToDayStr(new Date());
     const timeStr = `${dateStr} ${time.getHours()}:${String(time.getMinutes()).padStart(2, "0")}`;
     const replyStr = `${isAdmin ? "(어드민)" : "(파트너)"}[${timeStr}]
     ${reply}`;
