@@ -1998,7 +1998,23 @@ export async function sendSettlementNoticeEmail({
   partnerList: string[];
 }) {
   const profilesMap = await getPartnerProfiles();
+  let countForRateLimit = 0;
+  let successCount = 0;
+  let start = performance.now();
   for (let i = 0; i < partnerList.length; i++) {
+    countForRateLimit++;
+    if(countForRateLimit >= 10){
+      countForRateLimit = 0;
+      const end = performance.now();
+      const spentTime = end - start;
+      if(spentTime < 1000){
+        await new Promise(resolve => setTimeout(resolve, 1000 - spentTime));
+        console.log(`At index i, Waited for ${1000 - spentTime} milisecond`);
+      } else {
+        console.log(`At index i, spent time is ${spentTime}`);
+      }
+      start = performance.now();
+    }
     const partnerName = partnerList[i];
     const partnerProfile = profilesMap.get(partnerName);
     if (partnerProfile) {
@@ -2011,6 +2027,7 @@ export async function sendSettlementNoticeEmail({
           subject: `[로파파트너] ${partnerName} 정산내역 공유 알림`,
           html: html,
         });
+        successCount++;
         if (result.error) {
           return {
             status: "error",
@@ -2027,7 +2044,7 @@ export async function sendSettlementNoticeEmail({
       };
     }
   }
-  return { status: "ok" };
+  return { status: "ok", message: `파트너 ${successCount}곳에 메일이 전송되었습니다. (메일이 누락된 경우 제외 처리)` };
 }
 
 export async function fixProduct() {

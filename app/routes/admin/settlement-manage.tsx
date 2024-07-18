@@ -76,7 +76,7 @@ export const action: ActionFunction = async ({ request }) => {
           message: `${result.partnerName}에게 메일 전송 중에 오류가 발생했습니다.\n${result.message}`,
         };
       } else {
-        return { status: "ok", message: "메일 전송을 완료하였습니다." };
+        return { status: "ok", message: result.message };
       }
       break;
   }
@@ -189,12 +189,7 @@ export default function AdminSettlementManage() {
   async function sendEmail() {
     const selectedPartners = updateCheckedItems();
     if (selectedPartners.length > 0) {
-      if(selectedPartners.length <= 2){ 
-        setIsSendEmailConfirmModalOpened(true);
-      } else {
-        setNoticeModalStr("현재는 한 번에 최대 2통의 메일을 보낼 수 있습니다.");
-        setIsNoticeModalOpened(true);
-      }
+      setIsSendEmailConfirmModalOpened(true);
     } else {
       setNoticeModalStr("선택된 파트너가 없습니다.");
       setIsNoticeModalOpened(true);
@@ -232,7 +227,7 @@ export default function AdminSettlementManage() {
 
   return (
     <PageLayout>
-      <LoadingOverlay visible={navigation.state == "loading"} overlayBlur={2} />
+      <LoadingOverlay visible={navigation.state == "loading" || navigation.state == "submitting"} overlayBlur={2} />
 
       {/* 안내용 모달 */}
       <BasicModal
@@ -244,7 +239,7 @@ export default function AdminSettlementManage() {
             justifyContent: "center",
             textAlign: "center",
             fontWeight: "700",
-            whiteSpace: "pre-line"
+            whiteSpace: "pre-line",
           }}
         >
           {noticeModalStr}
@@ -269,7 +264,8 @@ export default function AdminSettlementManage() {
             fontWeight: "700",
           }}
         >
-          {`선택된 파트너 ${selectedPartners.length}곳에 안내 메일을 전송하시겠습니까?`}
+          {`선택된 파트너 ${selectedPartners.length}곳에 안내 메일을 전송하시겠습니까?
+          (건당 약 0.5초 소요)`}
           <div style={{ height: "20px" }} />
           <div style={{ display: "flex", justifyContent: "center" }}>
             <ModalButton
