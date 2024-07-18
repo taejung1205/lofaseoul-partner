@@ -186,7 +186,7 @@ export function AdminNotice({
           }}
         >
           해당 알림을 공유하시겠십니까? <br />
-          공유한 알림은 수정하거나 삭제할 수 없습니다.
+          공유한 알림은 수정할 수 없습니다.
           <div style={{ height: "20px" }} />
           <div style={{ display: "flex", justifyContent: "center" }}>
             <ModalButton onClick={() => setIsShareModalOpened(false)}>
@@ -332,7 +332,18 @@ export function AdminNotice({
               />{" "}
             </div>
           ) : (
-            <></>
+            <div style={{ display: "flex" }}>
+              <img
+                src={"/images/icon_trash.svg"}
+                onClick={() => setIsDeleteModalOpened(true)}
+                style={{
+                  width: "30px",
+                  height: "30px",
+                  marginRight: "10px",
+                  cursor: "pointer",
+                }}
+              />
+            </div>
           )}
         </div>
         <NoticeGridContainer>
@@ -374,13 +385,38 @@ export function AdminNotice({
               </div>
               <div style={{ width: "calc(100% - 120px)" }}>
                 {noticeItem.replies.map((reply: string, index: number) => {
-                  return <div style={{ padding: "13px", whiteSpace: "pre-line" }}>{reply}</div>;
+                  return (
+                    <div
+                      style={{ padding: "13px", whiteSpace: "pre-line" }}
+                      key={`Reply_${index}`}
+                    >
+                      {reply}
+                    </div>
+                  );
                 })}
               </div>
             </NoticeGridItem>
           ) : (
             <></>
           )}
+          <NoticeGridItem
+            style={{ gridColumnStart: "span 2" }}
+          >
+            <Form method="post" style={{display: "flex", width: "100%"}} id="reply-form">
+              <ReplyInputBox name={"reply"} />
+              <input type="hidden" value={"reply"} name="action" required />
+              <input
+                type="hidden"
+                value={noticeItem.docId}
+                name="id"
+                required
+              />
+              <input type="hidden" value={monthStr} name="month" required />
+              <BlackButton style={{ fontSize: "16px" }} type="submit">
+                {"메세지 추가"}
+              </BlackButton>
+            </Form>
+          </NoticeGridItem>
         </NoticeGridContainer>
       </NoticeBox>
       {noticeItem.replies.length == 0 && noticeItem.sharedDate != undefined ? (

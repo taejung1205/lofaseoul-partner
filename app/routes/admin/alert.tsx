@@ -25,6 +25,8 @@ import {
   editNotice,
   getNotices,
   getPartnerProfile,
+  isAdmin,
+  replyNotice,
   shareNotice,
 } from "~/services/firebase.server";
 
@@ -219,6 +221,34 @@ export const action: ActionFunction = async ({ request }) => {
         });
       }
     }
+  } else if (actionType == "reply") {
+    const id = body.get("id")?.toString();
+    const month = body.get("month")?.toString();
+    const reply = body.get("reply")?.toString();
+    if (
+      id !== undefined &&
+      month !== undefined &&
+      reply !== undefined &&
+      reply.length > 0
+    ) {
+      const result = await replyNotice({
+        monthStr: month,
+        id: id,
+        reply: reply,
+        isAdmin: true,
+      });
+      if (result == true) {
+        return json({ message: `추가 메세지 전송이 완료되었습니다.` });
+      } else {
+        return json({
+          message: `메세지 전송 과정 중 문제가 발생했습니다.${"\n"}${result}`,
+        });
+      }
+    } else {
+      return json({
+        message: `메세지 내용이 잘못되었습니다. 다시 시도해주세요.`,
+      });
+    }
   }
   return null;
 };
@@ -277,7 +307,12 @@ export default function AdminAlert() {
 
   return (
     <>
-      <LoadingOverlay visible={navigation.state == "loading"} overlayBlur={2} />
+      <LoadingOverlay
+        visible={
+          navigation.state == "loading" || navigation.state == "submitting"
+        }
+        overlayBlur={2}
+      />
       {/* 안내용 모달 */}
       <BasicModal
         opened={isNoticeModalOpened}
@@ -370,7 +405,7 @@ export default function AdminAlert() {
         </div>
       </BasicModal>
 
-      <PageLayout style={{display: "block"}}>
+      <PageLayout style={{ display: "block" }}>
         <div
           style={{
             display: "flex",

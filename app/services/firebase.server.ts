@@ -1442,16 +1442,18 @@ export async function replyNotice({
   monthStr,
   id,
   reply,
+  isAdmin
 }: {
   monthStr: string;
   id: string;
   reply: string;
+  isAdmin: boolean
 }) {
   try {
     const time = getTimezoneDate(new Date());
     const dateStr = dateToDayStr(time);
     const timeStr = `${dateStr} ${time.getHours()}:${String(time.getMinutes()).padStart(2, "0")}`;
-    const replyStr = `[${timeStr}]
+    const replyStr = `${isAdmin ? "(어드민)" : "(파트너)"}[${timeStr}]
     ${reply}`;
     await updateDoc(doc(firestore, `notices/${monthStr}/items/${id}`), {
       replies: arrayUnion(replyStr),
