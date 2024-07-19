@@ -1,24 +1,27 @@
 import styled from "styled-components";
 import { Link, useLocation } from "@remix-run/react";
 import { useEffect, useState } from "react";
+import { useViewportSize } from "@mantine/hooks";
 
-const SidebarBox = styled.div`
+const SidebarBox = styled.div<{ isMobile?: boolean }>`
   width: 285px;
   min-width: 285px;
   height: 100%;
   background-color: black;
   overflow: hidden;
-  padding-top: 35px;
+  padding-top: ${(props) => (props.isMobile ? "0px" : "35px")};
   display: flex;
   flex-flow: column;
+  position: ${(props) => (props.isMobile ? "fixed" : "relative")};
+  z-index: 10;
 `;
 
-const NormalSidebarButton = styled.button`
+const NormalSidebarButton = styled.button<{ screenHeight: number }>`
   background-color: transparent;
   border: none;
   color: #ffffff80;
-  margin-bottom: 40px;
-  font-size: 23px;
+  margin-bottom: ${(props) => (props.screenHeight < 700 ? "25px" : "40px")};
+  font-size: ${(props) => (props.screenHeight < 700 ? "20px" : "23px")};
   font-weight: 700;
   line-height: 1;
   text-align: left;
@@ -54,9 +57,16 @@ type PartnerPathname =
   | "shipped-list"
   | "product-manage";
 
-export function AdminSidebar() {
+export function AdminSidebar({
+  isMobile = false,
+  onSidebarClose,
+}: {
+  isMobile?: boolean;
+  onSidebarClose?: () => void;
+}) {
   const location = useLocation();
   const [currentPage, setCurrentPage] = useState<AdminPathname>(null);
+  const viewportSize = useViewportSize();
 
   function SidebarButton({
     name,
@@ -66,14 +76,20 @@ export function AdminSidebar() {
     pathname: AdminPathname;
   }) {
     if (currentPage === pathname) {
-      return <SelectedSidebarButton>{name}</SelectedSidebarButton>;
+      return (
+        <SelectedSidebarButton screenHeight={viewportSize.height}>
+          {name}
+        </SelectedSidebarButton>
+      );
     } else {
       return (
         <Link
           to={`/admin/${pathname}`}
           style={{ display: "flex", textDecoration: "none" }}
         >
-          <NormalSidebarButton>{name}</NormalSidebarButton>
+          <NormalSidebarButton screenHeight={viewportSize.height}>
+            {name}
+          </NormalSidebarButton>
         </Link>
       );
     }
@@ -123,7 +139,18 @@ export function AdminSidebar() {
     }
   }, [location.pathname]);
   return (
-    <SidebarBox>
+    <SidebarBox isMobile={isMobile}>
+      {isMobile ? (
+        <img
+          src="/images/icon_x_white.svg"
+          width={25}
+          height={25}
+          onClick={onSidebarClose}
+          style={{ cursor: "pointer", margin: "15px", marginBottom: "40px" }}
+        />
+      ) : (
+        <></>
+      )}
       <SidebarButton name="대쉬보드" pathname="dashboard" />
       <SidebarButton name="계약 업체 목록" pathname="partner-list" />
       <SidebarButton name="주문서 공유" pathname="order-share" />
@@ -138,9 +165,16 @@ export function AdminSidebar() {
   );
 }
 
-export function PartnerSidebar() {
+export function PartnerSidebar({
+  isMobile = false,
+  onSidebarClose,
+}: {
+  isMobile?: boolean;
+  onSidebarClose?: () => void;
+}) {
   const location = useLocation();
   const [currentPage, setCurrentPage] = useState<PartnerPathname>(null);
+  const viewportSize = useViewportSize();
 
   function SidebarButton({
     name,
@@ -150,14 +184,20 @@ export function PartnerSidebar() {
     pathname: PartnerPathname;
   }) {
     if (currentPage === pathname) {
-      return <SelectedSidebarButton>{name}</SelectedSidebarButton>;
+      return (
+        <SelectedSidebarButton screenHeight={viewportSize.height}>
+          {name}
+        </SelectedSidebarButton>
+      );
     } else {
       return (
         <Link
           to={`/partner/${pathname}`}
           style={{ display: "flex", textDecoration: "none" }}
         >
-          <NormalSidebarButton>{name}</NormalSidebarButton>
+          <NormalSidebarButton screenHeight={viewportSize.height}>
+            {name}
+          </NormalSidebarButton>
         </Link>
       );
     }
@@ -197,7 +237,18 @@ export function PartnerSidebar() {
     }
   }, [location.pathname]);
   return (
-    <SidebarBox>
+    <SidebarBox isMobile={isMobile}>
+      {isMobile ? (
+        <img
+          src="/images/icon_x_white.svg"
+          width={25}
+          height={25}
+          onClick={onSidebarClose}
+          style={{ cursor: "pointer", margin: "15px", marginBottom: "40px" }}
+        />
+      ) : (
+        <></>
+      )}
       <SidebarButton name="대쉬보드" pathname="dashboard" />
       <SidebarButton name="내 계약 정보" pathname="my-info" />
       <SidebarButton name="운송장 공유" pathname="waybill-share" />
