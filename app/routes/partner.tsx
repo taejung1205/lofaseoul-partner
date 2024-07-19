@@ -1,19 +1,12 @@
-import {
-  Outlet,
-  useLoaderData,
-  useSubmit,
-  useTransition,
-} from "@remix-run/react";
-import {
-  json,
-  LoaderFunction,
-  redirect
-} from "@remix-run/node";
+import { Outlet, useLoaderData, useSubmit } from "@remix-run/react";
+import { json, LoaderFunction, redirect } from "@remix-run/node";
 import styled from "styled-components";
-import { PartnerHeader } from "~/components/header";
+import { MobilePartnerHeader, PartnerHeader } from "~/components/header";
 import { PartnerSidebar } from "~/components/sidebar";
-import { LoadingOverlay } from "@mantine/core";
 import { requireUser } from "~/services/session.server";
+import { useState } from "react";
+import { useViewportSize } from "@mantine/hooks";
+import { isMobile } from "~/utils/mobile";
 
 const PartnerPage = styled.div`
   width: inherit;
@@ -53,7 +46,8 @@ export let loader: LoaderFunction = async ({ request }) => {
 export default function Partner() {
   const loaderData = useLoaderData();
   const submit = useSubmit();
-  const transition = useTransition();
+  const viewportSize = useViewportSize();
+  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
 
   return (
     <>
@@ -64,12 +58,25 @@ export default function Partner() {
         overlayBlur={2}
       /> */}
       <PartnerPage>
-        <PartnerHeader
-          username={loaderData.name}
-          onLogoutClick={() =>
-            submit(null, { method: "post", action: "/logout" })
-          }
-        />
+        {isMobile(viewportSize.width) ? (
+          <MobilePartnerHeader
+            username={loaderData.name}
+            onLogoutClick={() =>
+              submit(null, { method: "post", action: "/logout" })
+            }
+            isSidebarOpen={isSidebarOpen}
+            onSidebarOpen={() => setIsSidebarOpen(true)}
+            onSidebarClose={() => setIsSidebarOpen(false)}
+          />
+        ) : (
+          <PartnerHeader
+            username={loaderData.name}
+            onLogoutClick={() =>
+              submit(null, { method: "post", action: "/logout" })
+            }
+          />
+        )}
+
         <div
           style={{
             display: "flex",
@@ -77,7 +84,11 @@ export default function Partner() {
             width: "100%",
           }}
         >
-          <PartnerSidebar />
+          {isMobile(viewportSize.width) ? (
+            <></>
+          ) : (
+            <PartnerSidebar isMobile={false} />
+          )}
           <Outlet />
         </div>
       </PartnerPage>

@@ -1,9 +1,12 @@
 import { Outlet, useSubmit } from "@remix-run/react";
 import { LoaderFunction, redirect } from "@remix-run/node";
 import styled from "styled-components";
-import { AdminHeader } from "~/components/header";
+import { AdminHeader, MobileAdminHeader } from "~/components/header";
 import { AdminSidebar } from "~/components/sidebar";
 import { requireUser } from "~/services/session.server";
+import { useViewportSize } from "@mantine/hooks";
+import { useState } from "react";
+import { isMobile } from "~/utils/mobile";
 
 const AdminPage = styled.div`
   width: inherit;
@@ -38,15 +41,29 @@ export let loader: LoaderFunction = async ({ request }) => {
 
 export default function Admin() {
   const submit = useSubmit();
+  const viewportSize = useViewportSize();
+  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
 
   return (
     <>
       <AdminPage>
-        <AdminHeader
-          onLogoutClick={() => {
-            submit(null, { method: "post", action: "/logout" });
-          }}
-        />
+        {isMobile(viewportSize.width) ? (
+          <MobileAdminHeader
+            onLogoutClick={() => {
+              submit(null, { method: "post", action: "/logout" });
+            }}
+            isSidebarOpen={isSidebarOpen}
+            onSidebarOpen={() => setIsSidebarOpen(true)}
+            onSidebarClose={() => setIsSidebarOpen(false)}
+          />
+        ) : (
+          <AdminHeader
+            onLogoutClick={() => {
+              submit(null, { method: "post", action: "/logout" });
+            }}
+          />
+        )}
+
         <div
           style={{
             display: "flex",
@@ -54,7 +71,11 @@ export default function Admin() {
             width: "100%",
           }}
         >
-          <AdminSidebar />
+          {isMobile(viewportSize.width) ? (
+            <></>
+          ) : (
+            <AdminSidebar isMobile={false} />
+          )}
           <Outlet />
         </div>
       </AdminPage>
