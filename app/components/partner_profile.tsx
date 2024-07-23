@@ -1,7 +1,9 @@
 import { Form } from "@remix-run/react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import styled from "styled-components";
 import { BasicModal, ModalButton } from "./modal";
+import { useViewportSize } from "@mantine/hooks";
+import { isMobile } from "~/utils/mobile";
 
 export type PartnerProfile = {
   name: string;
@@ -25,16 +27,17 @@ const PartnerProfileBox = styled.div`
   margin-bottom: 40px;
 `;
 
-const ProfileGridContainer = styled.div`
+const ProfileGridContainer = styled.div<{isMobile: boolean}>`
   display: grid;
-  grid-template-columns: auto auto;
+  grid-template-columns: ${(props) => (props.isMobile ? "auto" : "auto auto")};
 `;
 
-const ProfileGridItem = styled.div`
+const ProfileGridItem = styled.div<{isMobile: boolean}>`
   background-color: #f0f0f0;
   border: 0.5px solid black;
   text-align: left;
   display: flex;
+  flex-direction: ${(props) => (props.isMobile ? "column" : "row")};
 `;
 
 const InputBox = styled.input`
@@ -72,6 +75,11 @@ export function PartnerProfile({
   const [bankAccountEdit, setBankAccountEdit] = useState(partnerProfile.bankAccount);
   const [businessNameEdit, setBusinessNameEdit] = useState(partnerProfile.businessName);
   const [businessTaxStandardEdit, setBusinessTaxStandardEdit] = useState(partnerProfile.businessTaxStandard);
+
+  const viewportSize = useViewportSize();
+  const isMobileMemo: boolean = useMemo(() => {
+    return isMobile(viewportSize.width);
+  }, [viewportSize]);
 
   if (!isEdit) {
     return (
@@ -150,24 +158,24 @@ export function PartnerProfile({
               </div>
             )}
           </div>
-          <ProfileGridContainer>
-            <ProfileGridItem>
+          <ProfileGridContainer isMobile={isMobileMemo}>
+            <ProfileGridItem isMobile={isMobileMemo}>
               <div style={{ padding: "13px", width: "120px" }}>아이디</div>
               <div style={{ padding: "13px" }}>{partnerProfile.id}</div>
             </ProfileGridItem>
-            <ProfileGridItem>
+            <ProfileGridItem isMobile={isMobileMemo}>
               <div style={{ padding: "13px", width: "120px" }}>비밀번호</div>
               <div style={{ padding: "13px" }}>{partnerProfile.password}</div>
             </ProfileGridItem>
-            <ProfileGridItem>
+            <ProfileGridItem isMobile={isMobileMemo}>
               <div style={{ padding: "13px", width: "120px" }}>이메일</div>
               <div style={{ padding: "13px" }}>{partnerProfile.email}</div>
             </ProfileGridItem>
-            <ProfileGridItem>
+            <ProfileGridItem isMobile={isMobileMemo}>
               <div style={{ padding: "13px", width: "120px" }}>연락처</div>
               <div style={{ padding: "13px" }}>{partnerProfile.phone}</div>
             </ProfileGridItem>
-            <ProfileGridItem>
+            <ProfileGridItem isMobile={isMobileMemo}>
               <div style={{ padding: "13px", width: "120px" }}>수수료</div>
               <div
                 style={{
@@ -177,33 +185,33 @@ export function PartnerProfile({
                   paddingLeft: "13px",
                 }}
               >
-                <div style={{ fontSize: "15px" }}>로파 공홈 및 쇼룸</div>
+                <div style={{ fontSize: "12px" }}>로파 공홈 및 쇼룸</div>
                 <div style={{ padding: "13px" }}>{partnerProfile.lofaFee}%</div>
-                <div style={{ fontSize: "15px" }}>타 채널</div>
+                <div style={{ fontSize: "12px" }}>타 채널</div>
                 <div style={{ padding: "13px" }}>
                   {partnerProfile.otherFee}%
                 </div>
               </div>
             </ProfileGridItem>
-            <ProfileGridItem>
+            <ProfileGridItem isMobile={isMobileMemo}>
               <div style={{ padding: "13px", width: "120px" }}>배송비</div>
               <div style={{ padding: "13px" }}>
                 {partnerProfile.shippingFee}원
               </div>
             </ProfileGridItem>
-            <ProfileGridItem>
+            <ProfileGridItem isMobile={isMobileMemo}>
               <div style={{ padding: "13px", width: "180px" }}>사업자등록번호</div>
               <div style={{ padding: "13px" }}>{partnerProfile.brn}</div>
             </ProfileGridItem>
-            <ProfileGridItem>
+            <ProfileGridItem isMobile={isMobileMemo}>
               <div style={{ padding: "13px", width: "120px" }}>계좌번호</div>
               <div style={{ padding: "13px" }}>{partnerProfile.bankAccount}</div>
             </ProfileGridItem>
-            <ProfileGridItem>
+            <ProfileGridItem isMobile={isMobileMemo}>
               <div style={{ padding: "13px", width: "180px" }}>사업자명</div>
               <div style={{ padding: "13px" }}>{partnerProfile.businessName}</div>
             </ProfileGridItem>
-            <ProfileGridItem>
+            <ProfileGridItem isMobile={isMobileMemo}>
               <div style={{ padding: "13px", width: "180px" }}>사업자과세기준</div>
               <div style={{ padding: "13px" }}>{partnerProfile.businessTaxStandard}</div>
             </ProfileGridItem>
@@ -255,8 +263,8 @@ export function PartnerProfile({
               }}
             />
           </div>
-          <ProfileGridContainer>
-            <ProfileGridItem>
+          <ProfileGridContainer isMobile={isMobileMemo}>
+            <ProfileGridItem isMobile={isMobileMemo}>
               <div style={{ padding: "13px", width: "120px" }}>아이디</div>
               <InputBox
                 type="text"
@@ -266,7 +274,7 @@ export function PartnerProfile({
                 required
               />
             </ProfileGridItem>
-            <ProfileGridItem>
+            <ProfileGridItem isMobile={isMobileMemo}>
               <div style={{ padding: "13px", width: "120px" }}>비밀번호</div>
               <InputBox
                 type="text"
@@ -276,7 +284,7 @@ export function PartnerProfile({
                 required
               />
             </ProfileGridItem>
-            <ProfileGridItem>
+            <ProfileGridItem isMobile={isMobileMemo}>
               <div style={{ padding: "13px", width: "120px" }}>이메일</div>
               <InputBox
                 type="email"
@@ -285,7 +293,7 @@ export function PartnerProfile({
                 onChange={(e) => setEmailEdit(e.target.value)}
               />
             </ProfileGridItem>
-            <ProfileGridItem>
+            <ProfileGridItem isMobile={isMobileMemo}>
               <div style={{ padding: "13px", width: "120px" }}>연락처</div>
               <InputBox
                 type="phone"
@@ -294,7 +302,7 @@ export function PartnerProfile({
                 onChange={(e) => setPhoneEdit(e.target.value)}
               />
             </ProfileGridItem>
-            <ProfileGridItem>
+            <ProfileGridItem isMobile={isMobileMemo}>
               <div style={{ padding: "13px", width: "120px" }}>수수료</div>
               <div
                 style={{
@@ -324,7 +332,7 @@ export function PartnerProfile({
                 />
               </div>
             </ProfileGridItem>
-            <ProfileGridItem>
+            <ProfileGridItem isMobile={isMobileMemo}>
               <div style={{ padding: "13px", width: "120px" }}>배송비</div>
               <InputBox
                 type="number"
@@ -334,7 +342,7 @@ export function PartnerProfile({
                 required
               />
             </ProfileGridItem>
-            <ProfileGridItem>
+            <ProfileGridItem isMobile={isMobileMemo}>
               <div style={{ padding: "13px", width: "180px" }}>사업자등록번호</div>
               <InputBox
                 type="text"
@@ -343,7 +351,7 @@ export function PartnerProfile({
                 onChange={(e) => setBrnEdit(e.target.value)}
               />
             </ProfileGridItem>
-            <ProfileGridItem>
+            <ProfileGridItem isMobile={isMobileMemo}>
               <div style={{ padding: "13px", width: "120px" }}>계좌번호</div>
               <InputBox
                 type="text"
@@ -352,7 +360,7 @@ export function PartnerProfile({
                 onChange={(e) => setBankAccountEdit(e.target.value)}
               />
             </ProfileGridItem>
-            <ProfileGridItem>
+            <ProfileGridItem isMobile={isMobileMemo}>
               <div style={{ padding: "13px", width: "180px" }}>사업자명</div>
               <InputBox
                 type="text"
@@ -361,7 +369,7 @@ export function PartnerProfile({
                 onChange={(e) => setBusinessNameEdit(e.target.value)}
               />
             </ProfileGridItem>
-            <ProfileGridItem>
+            <ProfileGridItem isMobile={isMobileMemo}>
               <div style={{ padding: "13px", width: "180px" }}>사업자과세기준</div>
               <InputBox
                 type="text"

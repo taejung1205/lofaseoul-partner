@@ -1,6 +1,8 @@
 import { LoadingOverlay } from "@mantine/core";
+import { useViewportSize } from "@mantine/hooks";
 import { LoaderFunction, redirect } from "@remix-run/node";
 import { useLoaderData, useNavigation } from "@remix-run/react";
+import { useMemo } from "react";
 import { json } from "react-router";
 import styled from "styled-components";
 import { PageLayout } from "~/components/page_layout";
@@ -10,9 +12,10 @@ import {
   getPartnerTodayWaybillsCount,
 } from "~/services/firebase.server";
 import { requireUser } from "~/services/session.server";
+import { isMobile } from "~/utils/mobile";
 
-const DashboardItemBox = styled.div`
-  width: 40%;
+const DashboardItemBox = styled.div<{ isMobile: boolean }>`
+  width: ${(props) => (props.isMobile ? "" : "40%")};
   background-color: #f0f0f0;
   padding-left: 15px;
   padding-top: 15px;
@@ -23,7 +26,7 @@ const DashboardItemBox = styled.div`
   flex-direction: column;
   justify-content: space-between;
   font-weight: 700;
-  height: 200px;
+  min-height: 200px;
 `;
 
 export const loader: LoaderFunction = async ({ request }) => {
@@ -50,12 +53,24 @@ export default function PartnerDashboard() {
   const loaderData = useLoaderData();
   const navigation = useNavigation();
 
+  const viewportSize = useViewportSize();
+
+  const isMobileMemo: boolean = useMemo(() => {
+    return isMobile(viewportSize.width);
+  }, [viewportSize]);
+
   return (
     <>
       <LoadingOverlay visible={navigation.state == "loading"} overlayBlur={2} />
       <PageLayout>
-        <div style={{ display: "flex", width: "inherit" }}>
-          <DashboardItemBox>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: isMobileMemo ? "column" : "row",
+            width: "inherit",
+          }}
+        >
+          <DashboardItemBox isMobile={isMobileMemo}>
             <div style={{ fontSize: "20px", textAlign: "left" }}>
               금일 공유된 주문건
             </div>
@@ -63,7 +78,7 @@ export default function PartnerDashboard() {
               {loaderData.ordersCount}건
             </div>
           </DashboardItemBox>
-          <DashboardItemBox>
+          <DashboardItemBox isMobile={isMobileMemo}>
             <div style={{ fontSize: "20px", textAlign: "left" }}>
               어제 운송장 입력 완료된 주문 건
             </div>
@@ -72,8 +87,14 @@ export default function PartnerDashboard() {
             </div>
           </DashboardItemBox>
         </div>
-        <div style={{ display: "flex", width: "inherit" }}>
-          <DashboardItemBox>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: isMobileMemo ? "column" : "row",
+            width: "inherit",
+          }}
+        >
+          <DashboardItemBox isMobile={isMobileMemo}>
             <div style={{ fontSize: "20px", textAlign: "left" }}>
               3일 이상 미출고된 주문건
             </div>
@@ -81,7 +102,6 @@ export default function PartnerDashboard() {
               {loaderData.delayedOrdersCount}건
             </div>
           </DashboardItemBox>
-          <DashboardItemBox></DashboardItemBox>
         </div>
       </PageLayout>
     </>
