@@ -2,38 +2,40 @@ import {
   Form,
   useActionData,
   useLoaderData,
+  useNavigation,
   useSubmit,
-  useTransition,
 } from "@remix-run/react";
 import { ActionFunction, LoaderFunction, json } from "@remix-run/node";
 import styled from "styled-components";
-import { HeaderBox } from "~/components/header";
+import { HeaderBox, MobileHeaderBox } from "~/components/header";
 import { LoadingOverlay } from "@mantine/core";
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { getSignInToken } from "~/services/auth.client";
 import { getFirebaseConfig, isAdmin } from "~/services/firebase.server";
 import { createUserSession, User } from "~/services/session.server";
-import { dateToDayStr } from "~/components/date";
+import { isMobile } from "~/utils/mobile";
+import { useViewportSize } from "@mantine/hooks";
 
-const LoginPage = styled.div`
+const LoginPage = styled.div<{ isMobile: boolean }>`
   width: inherit;
-  font-size: 33px;
+  font-size: ${(props) => (props.isMobile ? "20px" : "33px")};
   text-align: center;
   font-weight: 700;
   line-height: 1;
 `;
 
-const InputBox = styled.input`
-  width: 730px;
-  height: 75px;
+const InputBox = styled.input<{ isMobile: boolean }>`
+  width: ${(props) => (props.isMobile ? "70%" : "730px")};
+  display: flex;
+  height: ${(props) => (props.isMobile ? "40px" : "75px")};
   border: 3px solid black;
   margin-left: auto;
   margin-right: auto;
-  padding-left: 27px;
+  padding-left: ${(props) => (props.isMobile ? "12px" : "27px")};
   padding-top: 12px;
   padding-bottom: 12px;
   text-align: left;
-  font-size: 35px;
+  font-size: ${(props) => (props.isMobile ? "20px" : "35px")};
   ::placeholder {
     color: black;
     font-weight: 700;
@@ -99,11 +101,16 @@ export default function Login() {
   const [password, setPassword] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState<string>("");
 
-  const transition = useTransition();
+  const navigation = useNavigation();
   const loaderData = useLoaderData();
   const actionData = useActionData();
   const submit = useSubmit();
   const formRef = useRef<HTMLFormElement>(null);
+  const viewportSize = useViewportSize();
+
+  const isMobileMemo: boolean = useMemo(() => {
+    return isMobile(viewportSize.width);
+  }, [viewportSize])
 
   async function handleLogin() {
     if (id.length == 0 || password.length == 0) {
@@ -141,15 +148,15 @@ export default function Login() {
     <>
       <LoadingOverlay
         visible={
-          transition.state == "loading" || transition.state == "submitting"
+          navigation.state == "loading" || navigation.state == "submitting"
         }
         overlayBlur={2}
       />
-      <LoginPage>
-        <HeaderBox />
-        <div style={{ height: "100px" }} />
+      <LoginPage isMobile={isMobileMemo}>
+        {isMobileMemo ? <MobileHeaderBox /> : <HeaderBox />}
+        <div style={{ height: isMobileMemo ? "50px" : "100px" }} />
         로파 서울 파트너사이트입니다.
-        <div style={{ height: "150px" }} />
+        <div style={{ height: isMobileMemo ? "50px" : "150px" }} />
         <Form onSubmit={handleLogin}>
           <InputBox
             type="string"
@@ -157,14 +164,16 @@ export default function Login() {
             required
             value={id}
             onChange={(event) => setId(event.target.value)}
+            isMobile={isMobileMemo}
           />
-          <div style={{ height: "40px" }} />
+          <div style={{ height: isMobileMemo ? "20px" : "40px" }} />
           <InputBox
             type="password"
             placeholder="PW"
             autoComplete="current-password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
+            isMobile={isMobileMemo}
           />
           <div style={{ height: "100px" }} />
           <LoginButton type="submit">로그인</LoginButton>
