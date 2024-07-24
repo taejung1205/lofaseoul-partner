@@ -50,12 +50,6 @@ const SettlementHeader = styled(SettlementItemBox)`
   
 `;
 
-const SettlementFooter = styled.div`
-  display: flex;
-  height: 20px;
-  background-color: #ebebeb;
-`;
-
 const TextBox = styled.div<{ isMobile: boolean }>`
   margin-left: 10px;
   font-weight: 700;
