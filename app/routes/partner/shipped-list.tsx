@@ -275,7 +275,7 @@ export default function AdminOrderList() {
         </div>
       </BasicModal>
 
-      <PageLayout>
+      <PageLayout isMobile={isMobileMemo}>
         <div
           style={{
             display: "flex",

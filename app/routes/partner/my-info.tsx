@@ -1,10 +1,13 @@
 import { LoadingOverlay } from "@mantine/core";
+import { useViewportSize } from "@mantine/hooks";
 import { LoaderFunction, redirect } from "@remix-run/node";
 import { useLoaderData, useNavigation } from "@remix-run/react";
+import { useMemo } from "react";
 import { PageLayout } from "~/components/page_layout";
 import { PartnerProfile } from "~/components/partner_profile";
 import { getPartnerProfile } from "~/services/firebase.server";
 import { requireUser } from "~/services/session.server";
+import { isMobile } from "~/utils/mobile";
 
 export let loader: LoaderFunction = async ({ request }) => {
   let partnerName: string;
@@ -21,9 +24,14 @@ export let loader: LoaderFunction = async ({ request }) => {
 export default function AdminPartnerList() {
   const loaderData = useLoaderData(); //Partner Profile List
   const navigation = useNavigation();
+  const viewportSize = useViewportSize();
+
+  const isMobileMemo: boolean = useMemo(() => {
+    return isMobile(viewportSize.width);
+  }, [viewportSize]);
 
   return (
-    <PageLayout>
+    <PageLayout isMobile={isMobileMemo}>
       <LoadingOverlay visible={navigation.state == "loading"} overlayBlur={2} />
       {loaderData == null ? (
         <></>

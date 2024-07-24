@@ -304,7 +304,7 @@ export default function AdminSettlementShare() {
         </div>
       </BasicModal>
 
-      <PageLayout>
+      <PageLayout isMobile={isMobileMemo}>
         <div
           style={{
             display: "flex",
