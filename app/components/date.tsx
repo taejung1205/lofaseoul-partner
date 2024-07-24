@@ -136,6 +136,7 @@ export function DaySelectPopover({
 const MonthBox = styled.div`
   border: 3px solid #000000;
   width: 140px;
+  min-width: 140px;
   font-size: 20px;
   line-height: 20px;
   padding: 6px;
