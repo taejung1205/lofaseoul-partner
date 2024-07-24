@@ -78,7 +78,6 @@ const EmptySettlementBox = styled.div`
   width: inherit;
 `;
 
-
 export function links() {
   return [{ rel: "stylesheet", href: dayPickerStyles }];
 }
@@ -136,7 +135,7 @@ export const loader: LoaderFunction = async ({ request }) => {
   }
 };
 
-export default function AdminOrderList() {
+export default function PartnerWaybillShare() {
   const [fileName, setFileName] = useState<string>("");
   const [selectedDate, setSelectedDate] = useState<Date>();
   const [itemsChecked, setItemsChecked] = useState<boolean[]>([]); //체크된 주문건 index 배열
@@ -517,7 +516,13 @@ export default function AdminOrderList() {
       </BasicModal>
 
       <PageLayout>
-        <div style={{ display: "flex", alignItems: "center" }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            width: isMobileMemo ? "100%" : "",
+          }}
+        >
           {isMobileMemo ? <></> : <img src="/images/icon_calendar.svg" />}
           {isMobileMemo ? <></> : <Space w={20} />}
           <DaySelectPopover
@@ -525,8 +530,11 @@ export default function AdminOrderList() {
             setSelectedDate={setSelectedDate}
           />
           <Space w={20} />
-          <Link to={`/partner/waybill-share?day=${selectedDayStr}`}>
-            <CommonButton>조회하기</CommonButton>
+          <Link
+            to={`/partner/waybill-share?day=${selectedDayStr}`}
+            style={{ width: "calc(100% - 160px)" }}
+          >
+            <CommonButton style={{ width: "100%" }}>조회하기</CommonButton>
           </Link>
         </div>
         <Space h={10} />

@@ -15,7 +15,11 @@ import {
   dayStrToDate,
   getTimezoneDate,
 } from "~/components/date";
-import { BlackBottomButton, CommonButton, GetListButton } from "~/components/button";
+import {
+  BlackBottomButton,
+  CommonButton,
+  GetListButton,
+} from "~/components/button";
 import {
   ActionFunction,
   json,
@@ -272,7 +276,13 @@ export default function AdminOrderList() {
       </BasicModal>
 
       <PageLayout>
-        <div style={{ display: "flex", alignItems: "center" }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            width: isMobileMemo ? "100%" : "",
+          }}
+        >
           {isMobileMemo ? <></> : <img src="/images/icon_calendar.svg" />}
           {isMobileMemo ? <></> : <Space w={20} />}
           <DaySelectPopover
@@ -280,8 +290,11 @@ export default function AdminOrderList() {
             setSelectedDate={setSelectedDate}
           />
           <Space w={20} />
-          <Link to={`/partner/shipped-list?day=${selectedDayStr}`}>
-            <CommonButton>조회하기</CommonButton>
+          <Link
+            to={`/partner/shipped-list?day=${selectedDayStr}`}
+            style={{ width: "calc(100% - 160px)" }}
+          >
+            <CommonButton style={{ width: "100%" }}>조회하기</CommonButton>
           </Link>
         </div>
 
