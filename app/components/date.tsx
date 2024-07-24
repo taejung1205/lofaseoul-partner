@@ -142,6 +142,5 @@ const MonthBox = styled.div`
   height: 40px;
   text-align: center;
   align-items: center;
-  margin-left: 20px;
   cursor: pointer;
 `;

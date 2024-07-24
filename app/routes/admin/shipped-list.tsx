@@ -21,7 +21,7 @@ import {
 } from "~/services/firebase.server";
 import { PossibleSellers, SellerSelect } from "~/components/seller";
 import writeXlsxFile from "write-excel-file";
-import { LoadingOverlay } from "@mantine/core";
+import { LoadingOverlay, Space } from "@mantine/core";
 
 const EmptySettlementBox = styled.div`
   display: flex;
@@ -231,6 +231,7 @@ export default function AdminShippedList() {
         >
           <div style={{ display: "flex", alignItems: "center" }}>
             <img src="/images/icon_calendar.svg" />
+            <Space w={20}/>
             <DaySelectPopover
               selectedDate={selectedDate}
               setSelectedDate={setSelectedDate}

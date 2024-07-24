@@ -1,8 +1,10 @@
 import { Link } from "@remix-run/react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
 import { PossibleSellers } from "./seller";
-import { Checkbox } from "@mantine/core";
+import { Checkbox, Space } from "@mantine/core";
+import { useViewportSize } from "@mantine/hooks";
+import { isMobile } from "~/utils/mobile";
 
 export type SettlementSumItem = {
   partnerName: string;
@@ -44,7 +46,6 @@ const TextBox = styled.div`
   text-align: center;
 `;
 
-
 /**
  * 모든 판매처의 정산금액을 합친 금액을 계산합니다.
  *  @param item : getSettlementSum()으로 가져온 json
@@ -76,6 +77,11 @@ export function SettlementSumBar({
   shippingFee: number;
 }) {
   const [sellerStr, setSellerStr] = useState<string>("");
+  const viewportSize = useViewportSize();
+
+  const isMobileMemo: boolean = useMemo(() => {
+    return isMobile(viewportSize.width);
+  }, [viewportSize]);
 
   useEffect(() => {
     if (seller == "all") {
@@ -97,6 +103,7 @@ export function SettlementSumBar({
         display: "flex",
         justifyContent: "space-between",
         padding: "16px",
+        flexDirection: isMobileMemo ? "column" : "row",
       }}
     >
       <div
@@ -108,31 +115,33 @@ export function SettlementSumBar({
       >
         {sellerStr}
       </div>
+      <Space h={15} />
       <div
         style={{
           display: "flex",
           fontSize: "16px",
           fontWeight: "700",
-          alignItems: "center",
+          alignItems: isMobileMemo ? "start" : "center",
           textAlign: "center",
+          flexDirection: isMobileMemo ? "column" : "row",
         }}
       >
         정산 금액
-        <div style={{ width: "15px" }} />
+        <Space w={15} h={10}/>
         <div style={{ color: "#1859FF" }}>
           {" "}
           {`${settlement.toLocaleString()}원`}
         </div>
-        <div style={{ width: "25px" }} />
+        <Space w={25} h={15}/>
         배송비 별도 정산
-        <div style={{ width: "15px" }} />
+        <Space w={15} h={10}/>
         <div style={{ color: "#1859FF" }}>
           {" "}
           {`${shippingFee.toLocaleString()}원`}
         </div>
-        <div style={{ width: "25px" }} />
+        <Space w={25} h={15}/>
         정산 총계 (정산 금액 + 배송비)
-        <div style={{ width: "15px" }} />
+        <Space w={15} h={10}/>
         <div style={{ color: "#1859FF" }}>
           {`${(settlement + shippingFee).toLocaleString()}원`}
         </div>

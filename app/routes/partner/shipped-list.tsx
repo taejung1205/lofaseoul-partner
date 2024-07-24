@@ -15,7 +15,7 @@ import {
   dayStrToDate,
   getTimezoneDate,
 } from "~/components/date";
-import { GetListButton } from "~/components/button";
+import { BlackBottomButton, CommonButton, GetListButton } from "~/components/button";
 import {
   ActionFunction,
   json,
@@ -27,12 +27,14 @@ import styled from "styled-components";
 import { editWaybills, getPartnerWaybills } from "~/services/firebase.server";
 import { BasicModal, ModalButton } from "~/components/modal";
 import { requireUser } from "~/services/session.server";
-import { LoadingOverlay } from "@mantine/core";
+import { LoadingOverlay, Space } from "@mantine/core";
+import { useViewportSize } from "@mantine/hooks";
+import { isMobile } from "~/utils/mobile";
 
 const EmptySettlementBox = styled.div`
   display: flex;
   text-align: center;
-  font-size: 24px;
+  font-size: 20px;
   height: 100px;
   align-items: center;
   justify-content: center;
@@ -44,11 +46,10 @@ const EditButton = styled.button`
   color: white;
   font-size: 24px;
   font-weight: 700;
-  width: 220px;
+  width: 100%;
   height: 50px;
   line-height: 1;
   padding: 6px 6px 6px 6px;
-  margin-right: 40px;
   cursor: pointer;
 `;
 
@@ -127,6 +128,11 @@ export default function AdminOrderList() {
   const loaderData = useLoaderData();
   const formRef = useRef<HTMLFormElement>(null);
   const navigation = useNavigation();
+  const viewportSize = useViewportSize();
+
+  const isMobileMemo: boolean = useMemo(() => {
+    return isMobile(viewportSize.width);
+  }, [viewportSize]);
 
   const selectedDayStr = useMemo(
     () => dateToDayStr(selectedDate ?? new Date()),
@@ -267,13 +273,15 @@ export default function AdminOrderList() {
 
       <PageLayout>
         <div style={{ display: "flex", alignItems: "center" }}>
-          <img src="/images/icon_calendar.svg" />
+          {isMobileMemo ? <></> : <img src="/images/icon_calendar.svg" />}
+          {isMobileMemo ? <></> : <Space w={20} />}
           <DaySelectPopover
             selectedDate={selectedDate}
             setSelectedDate={setSelectedDate}
           />
+          <Space w={20} />
           <Link to={`/partner/shipped-list?day=${selectedDayStr}`}>
-            <GetListButton>조회하기</GetListButton>
+            <CommonButton>조회하기</CommonButton>
           </Link>
         </div>
 
@@ -294,12 +302,12 @@ export default function AdminOrderList() {
               <div style={{ height: "20px" }} />
               <div
                 style={{
-                  width: "inherit",
+                  width: isMobileMemo ? "100%" : "220px",
                   display: "flex",
                   justifyContent: "center",
                 }}
               >
-                <EditButton
+                <BlackBottomButton
                   onClick={() => {
                     const updatedList = updateCheckedItems();
                     if (updatedList == null) {
@@ -318,7 +326,7 @@ export default function AdminOrderList() {
                   }}
                 >
                   수정 재전송
-                </EditButton>
+                </BlackBottomButton>
               </div>
             </>
           ) : (

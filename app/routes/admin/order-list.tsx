@@ -21,7 +21,7 @@ import { BasicModal, ModalButton } from "~/components/modal";
 import { OrderItem, OrderTable } from "~/components/order";
 import styled from "styled-components";
 import { deleteOrders, getAllOrders } from "~/services/firebase.server";
-import { LoadingOverlay } from "@mantine/core";
+import { LoadingOverlay, Space } from "@mantine/core";
 
 const EmptySettlementBox = styled.div`
   display: flex;
@@ -244,6 +244,7 @@ export default function AdminOrderList() {
       <PageLayout>
         <div style={{ display: "flex", alignItems: "center" }}>
           <img src="/images/icon_calendar.svg" />
+          <Space w={20} />
           <DaySelectPopover
             selectedDate={selectedDate}
             setSelectedDate={setSelectedDate}

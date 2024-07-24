@@ -1,9 +1,11 @@
-import { Checkbox } from "@mantine/core";
-import React from "react";
+import { Checkbox, Space } from "@mantine/core";
+import React, { useMemo } from "react";
 import { useEffect, useState } from "react";
 import styled from "styled-components";
 import { PartnerProfile } from "./partner_profile";
 import { PossibleSellers } from "./seller";
+import { useViewportSize } from "@mantine/hooks";
+import { isMobile } from "~/utils/mobile";
 
 export type SettlementItem = {
   seller: string;
@@ -21,26 +23,31 @@ export type SettlementItem = {
   sale: number;
 };
 
-const SettlementBox = styled.div`
+const SettlementBox = styled.div<{ isMobile: boolean }>`
   width: inherit;
   height: 60%;
   min-height: 60%;
   position: relative;
+  overflow: ${(props) => (props.isMobile ? "scroll" : "")};
+  border: 1px solid #ebebeb;
+  border-bottom: 20px solid #ebebeb;
 `;
 
-const SettlementItemsBox = styled.div`
-  max-height: 85%;
-  overflow-y: scroll;
+const SettlementItemsBox = styled.div<{ isMobile: boolean }>`
+  max-height: calc(100% - 42px);
+  overflow-y: ${(props) => (props.isMobile ? "visible" : "scroll")};
 `;
 
-const SettlementItemBox = styled.div`
+const SettlementItemBox = styled.div<{ isMobile: boolean }>`
   display: flex;
   align-items: center;
   padding: 10px 6px 10px 6px;
+  width: ${(props) => (props.isMobile ? "fit-content" : "")}
 `;
 
 const SettlementHeader = styled(SettlementItemBox)`
   background-color: #ebebeb;
+  
 `;
 
 const SettlementFooter = styled.div`
@@ -49,7 +56,7 @@ const SettlementFooter = styled.div`
   background-color: #ebebeb;
 `;
 
-const TextBox = styled.div`
+const TextBox = styled.div<{ isMobile: boolean }>`
   margin-left: 10px;
   font-weight: 700;
   font-size: 16px;
@@ -57,7 +64,7 @@ const TextBox = styled.div`
   text-align: center;
   text-overflow: ellipsis;
   white-space: nowrap;
-  overflow: hidden;
+  overflow: ${(props) => (props.isMobile ? "" : "hidden")};
 `;
 
 /**
@@ -68,27 +75,24 @@ const TextBox = styled.div`
  *  유효할 경우 "ok", 아닐 경우 어디가 문제인지 나타내는 string
  */
 export function isSettlementItemValid(item: SettlementItem) {
-  if (item.seller == undefined ||
-    item.seller == "") {
-    return "판매처가 누락되었습니다."
+  if (item.seller == undefined || item.seller == "") {
+    return "판매처가 누락되었습니다.";
   }
 
-  if (item.orderNumber == undefined ||
-    item.orderNumber == "") {
-    return "주문번호가 누락되었습니다."
+  if (item.orderNumber == undefined || item.orderNumber == "") {
+    return "주문번호가 누락되었습니다.";
   }
 
-  if (item.productName == undefined ||
-    item.productName == "") {
-    return "상품명이 누락되었습니다."
+  if (item.productName == undefined || item.productName == "") {
+    return "상품명이 누락되었습니다.";
   }
 
   if (item.price == undefined) {
-    return "판매단가가 누락되었습니다"
+    return "판매단가가 누락되었습니다";
   }
 
   if (item.amount == undefined) {
-    return "수량이 누락되었습니다."
+    return "수량이 누락되었습니다.";
   }
   return "ok";
 }
@@ -157,11 +161,11 @@ export function setSettlementFee(
 }
 
 //주문태그를 바탕으로 배송비가 적용될 지, 되지 않을 지를 판단합니다.
-//  직접출고 -> 배송비 정산 x 
-// 직접 추가출고 -> 배송비 정산 x 
-// 3PL출고(별이무역) -> 배송비 정산 x 
-// 외부출고 -> 배송비 정산 O 
-// 외부 추가출고 -> 배송비 정산 O  
+//  직접출고 -> 배송비 정산 x
+// 직접 추가출고 -> 배송비 정산 x
+// 3PL출고(별이무역) -> 배송비 정산 x
+// 외부출고 -> 배송비 정산 O
+// 외부 추가출고 -> 배송비 정산 O
 function isShippingFeeApplied(item: SettlementItem) {
   if (item.orderTag == "외부출고" || item.orderTag == "외부 추가출고") {
     return true;
@@ -181,6 +185,12 @@ function SettlementItem({
   check: boolean;
   onItemCheck: (index: number, isChecked: boolean) => void;
 }) {
+  const viewportSize = useViewportSize();
+
+  const isMobileMemo: boolean = useMemo(() => {
+    return isMobile(viewportSize.width);
+  }, [viewportSize]);
+
   useEffect(() => {
     setIsChecked(check);
   }, [check]);
@@ -194,7 +204,7 @@ function SettlementItem({
     saleString = item.sale + "";
   }
   return (
-    <SettlementItemBox key={`SettlementItem-${index}`}>
+    <SettlementItemBox isMobile={isMobileMemo} key={`SettlementItem-${index}`}>
       <Checkbox
         color={"gray"}
         size={"sm"}
@@ -204,22 +214,51 @@ function SettlementItem({
           onItemCheck(index, event.currentTarget.checked);
         }}
       />
-      <TextBox style={{ width: "90px" }}>{item.seller}</TextBox>
-      <TextBox style={{ width: "150px", fontSize: "12px" }}>
+      <TextBox isMobile={isMobileMemo} style={{ width: "90px" }}>
+        {item.seller}
+      </TextBox>
+      <TextBox
+        isMobile={isMobileMemo}
+        style={{ width: "150px", fontSize: "12px" }}
+      >
         {item.orderNumber}
       </TextBox>
-      <TextBox style={{ width: "calc(50% - 340px)", fontSize: "12px" }}>
+      <TextBox
+        isMobile={isMobileMemo}
+        style={{
+          width: isMobileMemo ? "300px" : "calc(50% - 348px)",
+          fontSize: "12px",
+        }}
+      >
         {item.productName}
       </TextBox>
-      <TextBox style={{ width: "calc(50% - 430px)", fontSize: "12px" }}>
+      <TextBox
+        isMobile={isMobileMemo}
+        style={{
+          width: isMobileMemo ? "300px" : "calc(50% - 438px)",
+          fontSize: "12px",
+        }}
+      >
         {item.optionName}
       </TextBox>
-      <TextBox style={{ width: "60px" }}>{item.price}</TextBox>
-      <TextBox style={{ width: "60px" }}>{saleString}</TextBox>
-      <TextBox style={{ width: "90px" }}>{item.shippingFee == 0 ? "X" : "O"}</TextBox>
-      <TextBox style={{ width: "30px" }}>{item.amount}</TextBox>
-      <TextBox style={{ width: "90px" }}>{item.orderer}</TextBox>
-      <TextBox style={{ width: "90px" }}>{item.receiver}</TextBox>
+      <TextBox isMobile={isMobileMemo} style={{ width: "60px" }}>
+        {item.price}
+      </TextBox>
+      <TextBox isMobile={isMobileMemo} style={{ width: "60px" }}>
+        {saleString}
+      </TextBox>
+      <TextBox isMobile={isMobileMemo} style={{ width: "90px" }}>
+        {item.shippingFee == 0 ? "X" : "O"}
+      </TextBox>
+      <TextBox isMobile={isMobileMemo} style={{ width: "30px" }}>
+        {item.amount}
+      </TextBox>
+      <TextBox isMobile={isMobileMemo} style={{ width: "90px" }}>
+        {item.orderer}
+      </TextBox>
+      <TextBox isMobile={isMobileMemo} style={{ width: "90px" }}>
+        {item.receiver}
+      </TextBox>
     </SettlementItemBox>
   );
 }
@@ -238,53 +277,81 @@ export function SettlementTable({
   defaultAllCheck: boolean;
 }) {
   const [allChecked, setAllChecked] = useState<boolean>(false);
+  const viewportSize = useViewportSize();
+
+  const isMobileMemo: boolean = useMemo(() => {
+    return isMobile(viewportSize.width);
+  }, [viewportSize]);
 
   useEffect(() => {
     setAllChecked(defaultAllCheck);
   }, [items]);
 
   return (
-    <>
-      <SettlementBox>
-        <SettlementHeader>
-          <Checkbox
-            color={"gray"}
-            size={"sm"}
-            checked={allChecked}
-            onChange={(event) => {
-              const val = event.currentTarget.checked;
-              setAllChecked(val);
-              onCheckAll(val);
-            }}
-          />
-          <TextBox style={{ width: "90px" }}>판매처</TextBox>
-          <TextBox style={{ width: "150px" }}>주문번호</TextBox>
-          <TextBox style={{ width: "calc(50% - 348px)" }}>상품명</TextBox>
-          <TextBox style={{ width: "calc(50% - 438px)" }}>옵션명</TextBox>
-          <TextBox style={{ width: "60px" }}>판매단가</TextBox>
-          <TextBox style={{ width: "60px" }}>세일적용</TextBox>
-          <TextBox style={{ width: "90px" }}>배송비 정산</TextBox>
-          <TextBox style={{ width: "30px" }}>수량</TextBox>
-          <TextBox style={{ width: "90px" }}>주문자</TextBox>
-          <TextBox style={{ width: "90px" }}>송신자</TextBox>
-          <div style={{ width: "16px" }} />
-        </SettlementHeader>
-        <SettlementItemsBox>
-          {items.map((item, index) => {
-            return (
-              <SettlementItem
-                key={`SettlementItem-${index}`}
-                index={index}
-                item={item}
-                check={itemsChecked[index] ?? false}
-                onItemCheck={onItemCheck}
-              />
-            );
-          })}
-        </SettlementItemsBox>
-        {items.length > 0 ? <SettlementFooter /> : <></>}
-      </SettlementBox>
-    </>
+    <SettlementBox isMobile={isMobileMemo}>
+      <SettlementHeader isMobile={isMobileMemo}>
+        <Checkbox
+          color={"gray"}
+          size={"sm"}
+          checked={allChecked}
+          onChange={(event) => {
+            const val = event.currentTarget.checked;
+            setAllChecked(val);
+            onCheckAll(val);
+          }}
+        />
+        <TextBox isMobile={isMobileMemo} style={{ width: "90px" }}>
+          판매처
+        </TextBox>
+        <TextBox isMobile={isMobileMemo} style={{ width: "150px" }}>
+          주문번호
+        </TextBox>
+        <TextBox
+          isMobile={isMobileMemo}
+          style={{ width: isMobileMemo ? "300px" : "calc(50% - 348px)" }}
+        >
+          상품명
+        </TextBox>
+        <TextBox
+          isMobile={isMobileMemo}
+          style={{ width: isMobileMemo ? "300px" : "calc(50% - 438px)" }}
+        >
+          옵션명
+        </TextBox>
+        <TextBox isMobile={isMobileMemo} style={{ width: "60px" }}>
+          판매단가
+        </TextBox>
+        <TextBox isMobile={isMobileMemo} style={{ width: "60px" }}>
+          세일적용
+        </TextBox>
+        <TextBox isMobile={isMobileMemo} style={{ width: "90px" }}>
+          배송비 정산
+        </TextBox>
+        <TextBox isMobile={isMobileMemo} style={{ width: "30px" }}>
+          수량
+        </TextBox>
+        <TextBox isMobile={isMobileMemo} style={{ width: "90px" }}>
+          주문자
+        </TextBox>
+        <TextBox isMobile={isMobileMemo} style={{ width: "90px" }}>
+          송신자
+        </TextBox>
+        <div style={{ width: "16px" }} />
+      </SettlementHeader>
+      <SettlementItemsBox isMobile={isMobileMemo}>
+        {items.map((item, index) => {
+          return (
+            <SettlementItem
+              key={`SettlementItem-${index}`}
+              index={index}
+              item={item}
+              check={itemsChecked[index] ?? false}
+              onItemCheck={onItemCheck}
+            />
+          );
+        })}
+      </SettlementItemsBox>
+    </SettlementBox>
   );
 }
 
