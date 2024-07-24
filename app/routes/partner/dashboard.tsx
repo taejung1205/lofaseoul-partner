@@ -62,7 +62,7 @@ export default function PartnerDashboard() {
   return (
     <>
       <LoadingOverlay visible={navigation.state == "loading"} overlayBlur={2} />
-      <PageLayout>
+      <PageLayout isMobile={isMobileMemo}>
         <div
           style={{
             display: "flex",

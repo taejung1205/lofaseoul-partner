@@ -515,7 +515,7 @@ export default function PartnerWaybillShare() {
         </div>
       </BasicModal>
 
-      <PageLayout>
+      <PageLayout isMobile={isMobileMemo}>
         <div
           style={{
             display: "flex",

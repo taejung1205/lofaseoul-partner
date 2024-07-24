@@ -474,7 +474,7 @@ export default function PartnerProductManage() {
   const [imageUploadProgress, setImageUploadProgress] = useState<number>(0);
 
   //업로드 중 확인 요청 용 타이머
-  const [queryIntervalId, setQueryIntervalId] = useState<NodeJS.Timer>();
+  const [queryIntervalId, setQueryIntervalId] = useState<NodeJS.Timeout>();
 
   //로딩 중
   const [isLoading, setIsLoading] = useState<boolean>(false);

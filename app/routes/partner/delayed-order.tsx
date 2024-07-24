@@ -216,7 +216,7 @@ export default function PartnerDelayedOrder() {
         </div>
       </BasicModal>
 
-      <PageLayout>
+      <PageLayout isMobile={isMobileMemo}>
         {loaderData.error == undefined ? (
           items.length > 0 ? (
             <>
