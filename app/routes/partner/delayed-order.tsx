@@ -22,6 +22,9 @@ import {
 } from "~/services/firebase.server";
 import { requireUser } from "~/services/session.server";
 import { LoadingOverlay } from "@mantine/core";
+import { BlackBottomButton } from "~/components/button";
+import { useViewportSize } from "@mantine/hooks";
+import { isMobile } from "~/utils/mobile";
 
 const EmptySettlementBox = styled.div`
   display: flex;
@@ -31,19 +34,6 @@ const EmptySettlementBox = styled.div`
   align-items: center;
   justify-content: center;
   width: inherit;
-`;
-
-const SendNoticeButton = styled.button`
-  background-color: black;
-  color: white;
-  font-size: 24px;
-  font-weight: 700;
-  width: 220px;
-  height: 50px;
-  line-height: 1;
-  padding: 6px 6px 6px 6px;
-  margin-right: 40px;
-  cursor: pointer;
 `;
 
 export const action: ActionFunction = async ({ request }) => {
@@ -97,6 +87,11 @@ export default function PartnerDelayedOrder() {
   const actionData = useActionData();
   const formRef = useRef<HTMLFormElement>(null);
   const navigation = useNavigation();
+  const viewportSize = useViewportSize();
+
+  const isMobileMemo: boolean = useMemo(() => {
+    return isMobile(viewportSize.width);
+  }, [viewportSize]);
 
   //loaderData에서 불러온 에러 정보를 바탕으로 한 에러 메세지
   const errorOrderStr = useMemo(() => {
@@ -239,12 +234,12 @@ export default function PartnerDelayedOrder() {
               <div style={{ height: "20px" }} />
               <div
                 style={{
-                  width: "inherit",
+                  width: isMobileMemo ? "100%" : "220px",
                   display: "flex",
                   justifyContent: "center",
                 }}
               >
-                <SendNoticeButton
+                <BlackBottomButton
                   onClick={() => {
                     const updatedList = updateCheckedItems();
                     if (updatedList == null) {
@@ -263,7 +258,7 @@ export default function PartnerDelayedOrder() {
                   }}
                 >
                   운송장 공유
-                </SendNoticeButton>
+                </BlackBottomButton>
               </div>
             </>
           ) : (

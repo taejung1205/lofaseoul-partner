@@ -31,12 +31,18 @@ import {
 } from "~/components/settlement_sum";
 import { getSettlements, getSettlementSum } from "~/services/firebase.server";
 import { PageLayout } from "~/components/page_layout";
-import { CommonButton, GetListButton } from "~/components/button";
+import {
+  BlackBottomButton,
+  CommonButton,
+  GetListButton,
+} from "~/components/button";
 import { requireUser } from "~/services/session.server";
 import { sendAligoMessage } from "~/services/aligo.server";
 import { BasicModal, ModalButton } from "~/components/modal";
 import { LoadingOverlay, Space } from "@mantine/core";
 import writeXlsxFile from "write-excel-file";
+import { useViewportSize } from "@mantine/hooks";
+import { isMobile } from "~/utils/mobile";
 
 const EmptySettlementBox = styled.div`
   display: flex;
@@ -48,24 +54,13 @@ const EmptySettlementBox = styled.div`
   width: inherit;
 `;
 
-const ReportButton = styled.button`
-  background-color: black;
-  color: white;
-  font-size: 24px;
-  font-weight: 700;
-  width: 220px;
-  height: 50px;
-  line-height: 1;
-  padding: 6px 6px 6px 6px;
-  margin-right: 40px;
-  cursor: pointer;
-`;
-
-const InfoText = styled.text`
-  font-size: 16px;
+const InfoText = styled.text<{ isMobile: boolean }>`
+  font-size: ${(props) => (props.isMobile ? "12px" : "16px")};
   font-weight: 700;
   line-height: 1;
   padding: 6px 6px 6px 6px;
+  text-align: left;
+  white-space: pre-line;
 `;
 
 export const action: ActionFunction = async ({ request }) => {
@@ -140,6 +135,11 @@ export default function AdminSettlementShare() {
   const submit = useSubmit();
   const formRef = useRef<HTMLFormElement>(null);
   const navigation = useNavigation();
+  const viewportSize = useViewportSize();
+
+  const isMobileMemo: boolean = useMemo(() => {
+    return isMobile(viewportSize.width);
+  }, [viewportSize]);
 
   const monthNumeral = useMemo(
     () => dateToNumeralMonth(selectedDate ?? new Date()),
@@ -311,10 +311,18 @@ export default function AdminSettlementShare() {
             alignItems: "center",
             justifyContent: "space-between",
             width: "inherit",
+            flexDirection: isMobileMemo ? "column" : "row",
           }}
         >
-          <div style={{ display: "flex", alignItems: "center" }}>
-            <img src="/images/icon_calendar.svg" />
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              width: isMobileMemo ? "100%" : "",
+            }}
+          >
+            {isMobileMemo ? <></> : <img src="/images/icon_calendar.svg" />}
+            {isMobileMemo ? <></> : <Space w={20} />}
             <MonthSelectPopover
               onLeftClick={() =>
                 setSelectedDate(
@@ -328,18 +336,28 @@ export default function AdminSettlementShare() {
               }
               monthStr={selectedMonthStr ?? ""}
             />
-            <Link to={`/partner/settlement-list?month=${monthNumeral}`}>
-              <GetListButton>조회하기</GetListButton>
-            </Link>
             <Space w={20} />
-            <CommonButton width={180} onClick={() => writeExcel()}>
+            <Link
+              to={`/partner/settlement-list?month=${monthNumeral}`}
+              style={{ width: "calc(100% - 160px)" }}
+            >
+              <CommonButton style={{ width: "100%" }}>조회하기</CommonButton>
+            </Link>
+          </div>
+          <Space h={10} />
+          <div style={{ display: "flex" }}>
+            <CommonButton
+              width={isMobileMemo ? 150 : 180}
+              fontSize={isMobileMemo ? 12 : 20}
+              onClick={() => writeExcel()}
+            >
               엑셀 다운로드
             </CommonButton>
+            <Space w={20} />
+            <SellerSelect seller={seller} setSeller={setSeller} />
           </div>
-
-          <SellerSelect seller={seller} setSeller={setSeller} />
         </div>
-        <div style={{ height: "20px" }} />
+        <Space h={10} />
         {settlements == null ? (
           <EmptySettlementBox
             style={{
@@ -379,24 +397,36 @@ export default function AdminSettlementShare() {
         )}
         {items.length > 0 && allSum !== null ? (
           <>
-            <div style={{ height: "20px" }} />
-            <InfoText>{`* 합배송 정산내역에 대한 배송비는 중복으로 적용되지 않습니다. (주문번호가 동일한 경우)`}</InfoText>
-            <div style={{ height: "20px" }} />
-            <div style={{ display: "flex", alignItems: "center" }}>
-              <ReportButton
+            <Space h={20} />
+            <InfoText
+              isMobile={isMobileMemo}
+            >{`* 합배송 정산내역에 대한 배송비는 중복으로 적용되지 않습니다.${
+              isMobileMemo ? "\n" : ""
+            }(주문번호가 동일한 경우)`}</InfoText>
+            <Space h={20} />
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                flexDirection: isMobileMemo ? "column" : "row",
+                width: "100%"
+              }}
+            >
+              <BlackBottomButton
                 onClick={() => {
                   setIsSendModalOpened(true);
                 }}
               >
                 오류 보고
-              </ReportButton>
-              <div style={{ marginLeft: "30px" }}>
+              </BlackBottomButton>
+              <Space h={20} w={30}/>
+              <div style={{ width: "100%", textAlign: "left", fontSize: isMobileMemo ? "16px" : "20px" }}>
                 다량의 오류가 보일 시에는 kyj@tabacpress.xyz로 문의
                 부탁드립니다.
               </div>
             </div>
 
-            <div style={{ height: "20px" }} />
+            <Space h={20} />
 
             <SettlementSumBar
               seller={seller ?? "all"}

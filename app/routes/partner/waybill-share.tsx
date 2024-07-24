@@ -15,7 +15,13 @@ import {
   dayStrToDate,
   getTimezoneDate,
 } from "~/components/date";
-import { GetListButton } from "~/components/button";
+import {
+  BlackBottomButton,
+  CommonButton,
+  CommonLabel,
+  GetListButton,
+  MobileCommonButton,
+} from "~/components/button";
 import {
   ActionFunction,
   json,
@@ -36,31 +42,22 @@ import * as xlsx from "xlsx";
 import { BasicModal, ModalButton } from "~/components/modal";
 import { PossibleShippingCompanies } from "~/components/shipping_company";
 import { requireUser } from "~/services/session.server";
-import { LoadingOverlay } from "@mantine/core";
+import { LoadingOverlay, Space } from "@mantine/core";
+import { useViewportSize } from "@mantine/hooks";
+import { isMobile } from "~/utils/mobile";
 
-const FileNameBox = styled.div`
+const FileNameBox = styled.div<{ isMobile: boolean }>`
   border: 3px solid #000000;
   background-color: #efefef;
-  width: 550px;
+  width: ${(props) => (props.isMobile ? "calc(100% - 80px)" : "550px")};
   max-width: 70%;
-  font-size: 20px;
-  line-height: 20px;
+  font-size: ${(props) => (props.isMobile ? "12px" : "20px")};
+  line-height: 1;
   text-overflow: ellipsis;
   white-space: nowrap;
   overflow: hidden;
   padding: 6px;
   text-align: left;
-`;
-
-const FileUploadButton = styled.label`
-  background-color: white;
-  border: 3px solid black;
-  font-size: 20px;
-  font-weight: 700;
-  width: 110px;
-  line-height: 24px;
-  padding: 6px;
-  cursor: pointer;
 `;
 
 const FileUpload = styled.input`
@@ -79,19 +76,6 @@ const EmptySettlementBox = styled.div`
   align-items: center;
   justify-content: center;
   width: inherit;
-`;
-
-const BottomButton = styled.button`
-  background-color: black;
-  color: white;
-  font-size: 24px;
-  font-weight: 700;
-  width: 220px;
-  height: 50px;
-  line-height: 1;
-  padding: 6px 6px 6px 6px;
-  margin-right: 40px;
-  cursor: pointer;
 `;
 
 export function links() {
@@ -151,7 +135,7 @@ export const loader: LoaderFunction = async ({ request }) => {
   }
 };
 
-export default function AdminOrderList() {
+export default function PartnerWaybillShare() {
   const [fileName, setFileName] = useState<string>("");
   const [selectedDate, setSelectedDate] = useState<Date>();
   const [itemsChecked, setItemsChecked] = useState<boolean[]>([]); //체크된 주문건 index 배열
@@ -169,6 +153,11 @@ export default function AdminOrderList() {
   const loaderData = useLoaderData();
   const formRef = useRef<HTMLFormElement>(null);
   const navigation = useNavigation();
+  const viewportSize = useViewportSize();
+
+  const isMobileMemo: boolean = useMemo(() => {
+    return isMobile(viewportSize.width);
+  }, [viewportSize]);
 
   const selectedDayStr = useMemo(
     () => dateToDayStr(selectedDate ?? new Date()),
@@ -527,20 +516,41 @@ export default function AdminOrderList() {
       </BasicModal>
 
       <PageLayout>
-        <div style={{ display: "flex", alignItems: "center" }}>
-          <img src="/images/icon_calendar.svg" />
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            width: isMobileMemo ? "100%" : "",
+          }}
+        >
+          {isMobileMemo ? <></> : <img src="/images/icon_calendar.svg" />}
+          {isMobileMemo ? <></> : <Space w={20} />}
           <DaySelectPopover
             selectedDate={selectedDate}
             setSelectedDate={setSelectedDate}
           />
-          <Link to={`/partner/waybill-share?day=${selectedDayStr}`}>
-            <GetListButton>조회하기</GetListButton>
+          <Space w={20} />
+          <Link
+            to={`/partner/waybill-share?day=${selectedDayStr}`}
+            style={{ width: "calc(100% - 160px)" }}
+          >
+            <CommonButton style={{ width: "100%" }}>조회하기</CommonButton>
           </Link>
         </div>
-        <div style={{ display: "flex" }} className="fileBox">
-          <FileNameBox>{fileName}</FileNameBox>
+        <Space h={10} />
+        <div
+          style={{ display: "flex", width: isMobileMemo ? "100%" : "" }}
+          className="fileBox"
+        >
+          <FileNameBox isMobile={isMobileMemo}>{fileName}</FileNameBox>
           <div style={{ width: "20px" }} />
-          <FileUploadButton htmlFor="uploadFile">파일 첨부</FileUploadButton>
+          <CommonLabel
+            htmlFor="uploadFile"
+            fontSize={isMobileMemo ? 12 : 20}
+            height={isMobileMemo ? 30 : 40}
+          >
+            파일 첨부
+          </CommonLabel>
           <FileUpload
             type="file"
             onChange={readExcel}
@@ -563,15 +573,22 @@ export default function AdminOrderList() {
                 onItemWaybillNumberEdit={onItemWaybillNumberEdit}
               />
               <div style={{ height: "20px" }} />
-              <div style={{ display: "flex" }}>
-                <BottomButton
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: isMobileMemo ? "column" : "row",
+                  width: "100%",
+                }}
+              >
+                <BlackBottomButton
                   onClick={async () => {
                     await writeExcel();
                   }}
                 >
                   주문서 다운로드
-                </BottomButton>
-                <BottomButton
+                </BlackBottomButton>
+                <Space w={40} h={10} />
+                <BlackBottomButton
                   onClick={() => {
                     const updatedList = updateCheckedItems();
                     if (updatedList == null) {
@@ -590,7 +607,7 @@ export default function AdminOrderList() {
                   }}
                 >
                   운송장 공유
-                </BottomButton>
+                </BlackBottomButton>
               </div>
             </>
           ) : (

@@ -51,6 +51,7 @@ export default function AdminPartnerList() {
       )}
       <div style={{ height: "100px" }} />
       정보 수정 요청은 kyj@tabacpress.xyz 로 문의 부탁드립니다.
+      <div style={{ height: "100px" }} />
     </PageLayout>
   );
 }
