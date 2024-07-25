@@ -1,69 +1,118 @@
-import styled from "styled-components";
+interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  styleOverrides?: React.CSSProperties;
+}
 
-export const CommonButton = styled.button<{width?: number, height?: number, fontSize?: number}>`
-  background-color: white;
-  border: 3px solid black;
-  font-size: ${props => props.fontSize ? props.fontSize + "px" : "20px"};
-  font-weight: 700;
-  width: ${props => props.width ? props.width + "px" : "110px"};
-  height: ${props => props.height ? props.height + "px" : "40px"};
-  line-height: 1;
-  padding: 6px 6px 6px 6px;
-  cursor: pointer;
-`
+interface LabelProps extends React.LabelHTMLAttributes<HTMLLabelElement> {
+  styleOverrides?: React.CSSProperties;
+}
 
-export const MobileCommonButton = styled(CommonButton)`
-  width: ${props => props.width ? props.width + "px" : "80px"};
-  height: ${props => props.height ? props.height + "px" : "30px"};
-  font-size: 12px;
-`
+interface CommonButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  width?: number;
+  height?: number;
+  fontSize?: number;
+  styleOverrides?: React.CSSProperties;
+}
 
-export const GetListButton = styled.button`
-  background-color: white;
-  border: 3px solid black;
-  font-size: 20px;
-  font-weight: 700;
-  width: 110px;
-  height: 40px;
-  line-height: 1;
-  margin-left: 20px;
-  padding: 6px 6px 6px 6px;
-  cursor: pointer;
-`;
+export function CommonButton({
+  width,
+  height,
+  fontSize,
+  styleOverrides,
+  children,
+  ...props
+}: CommonButtonProps) {
+  const defaultStyles: React.CSSProperties = {
+    backgroundColor: "white",
+    border: "3px solid black",
+    fontSize: fontSize ? `${fontSize}px` : "20px",
+    fontWeight: 700,
+    width: width ? `${width}px` : "110px",
+    height: height ? `${height}px` : "40px",
+    lineHeight: 1,
+    padding: "6px",
+    cursor: "pointer",
+    ...styleOverrides,
+  };
 
-export const BlackBottomButton = styled.button`
-  background-color: black;
-  color: white;
-  font-size: 24px;
-  font-weight: 700;
-  width: 100%;
-  height: 50px;
-  line-height: 1;
-  padding: 6px 6px 6px 6px;
-  cursor: pointer;
-`
+  return (
+    <button style={defaultStyles} {...props}>
+      {children}
+    </button>
+  );
+}
 
-export const BlackButton = styled.button`
-  background-color: black;
-  color: white;
-  font-size: 20px;
-  font-weight: 700;
-  width: 120px;
-  height: 40px;
-  line-height: 1;
-  padding: 6px 6px 6px 6px;
-  margin: 10px;
-  cursor: pointer;
-`;
+export function BlackBottomButton({
+  children,
+  styleOverrides,
+  ...props
+}: ButtonProps) {
+  const buttonStyle: React.CSSProperties = {
+    backgroundColor: "black",
+    color: "white",
+    fontSize: "24px",
+    fontWeight: 700,
+    width: "100%",
+    height: "50px",
+    lineHeight: 1,
+    padding: "6px",
+    cursor: "pointer",
+    ...styleOverrides,
+  };
 
-export const CommonLabel = styled.label<{width?: number, height?: number, fontSize?: number}>`
-  background-color: white;
-  border: 3px solid black;
-  font-size: ${props => props.fontSize ? props.fontSize + "px" : "20px"};
-  font-weight: 700;
-  width: ${props => props.width ? props.width + "px" : "110px"};
-  height: ${props => props.height ? props.height + "px" : "40px"};
-  line-height: 1;
-  padding: 6px;
-  cursor: pointer;
-`;
+  return (
+    <button style={buttonStyle} {...props}>
+      {children}
+    </button>
+  );
+}
+
+export function BlackButton({
+  children,
+  styleOverrides,
+  ...props
+}: ButtonProps) {
+  const buttonStyle: React.CSSProperties = {
+    backgroundColor: "black",
+    color: "white",
+    fontSize: "20px",
+    fontWeight: 700,
+    minWidth: "120px",
+    height: "40px",
+    lineHeight: 1,
+    padding: "6px",
+    margin: "10px",
+    cursor: "pointer",
+  };
+
+  return (
+    <button style={buttonStyle} {...props}>
+      {children}
+    </button>
+  );
+}
+
+export function CommonLabel({
+  styleOverrides,
+  children,
+  ...props
+}: LabelProps) {
+  const defaultStyles: React.CSSProperties = {
+    backgroundColor: "white",
+    border: "3px solid black",
+    fontSize: "20px",
+    fontWeight: 700,
+    width: "110px",
+    height: "40px",
+    lineHeight: 1,
+    padding: "6px",
+    cursor: "pointer",
+    ...styleOverrides,
+  };
+
+  return (
+    <label style={defaultStyles} {...props}>
+      {children}
+    </label>
+  );
+}

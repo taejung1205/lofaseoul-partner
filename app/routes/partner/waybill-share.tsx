@@ -19,8 +19,6 @@ import {
   BlackBottomButton,
   CommonButton,
   CommonLabel,
-  GetListButton,
-  MobileCommonButton,
 } from "~/components/button";
 import {
   ActionFunction,
@@ -35,7 +33,6 @@ import {
   setOrderPartnerName,
   adjustSellerName,
 } from "~/components/order";
-import styled from "styled-components";
 import { getPartnerOrders, addWaybills } from "~/services/firebase.server";
 import writeXlsxFile from "write-excel-file";
 import * as xlsx from "xlsx";
@@ -46,37 +43,52 @@ import { LoadingOverlay, Space } from "@mantine/core";
 import { useViewportSize } from "@mantine/hooks";
 import { isMobile } from "~/utils/mobile";
 
-const FileNameBox = styled.div<{ isMobile: boolean }>`
-  border: 3px solid #000000;
-  background-color: #efefef;
-  width: ${(props) => (props.isMobile ? "calc(100% - 80px)" : "550px")};
-  max-width: 70%;
-  font-size: ${(props) => (props.isMobile ? "12px" : "20px")};
-  line-height: 1;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  overflow: hidden;
-  padding: 6px;
-  text-align: left;
-`;
+function FileNameBox({
+  isMobile,
+  ...props
+}: React.HTMLProps<HTMLDivElement> & { isMobile: boolean }) {
+  const styles: React.CSSProperties = {
+    border: "3px solid #000000",
+    backgroundColor: "#efefef",
+    width: isMobile ? "calc(100% - 80px)" : "550px",
+    maxWidth: "70%",
+    fontSize: isMobile ? "12px" : "20px",
+    lineHeight: 1,
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    padding: "6px",
+    textAlign: "left",
+  };
 
-const FileUpload = styled.input`
-  width: 0;
-  height: 0;
-  padding: 0;
-  overflow: hidden;
-  border: 0;
-`;
+  return <div style={styles} {...props} />;
+}
 
-const EmptySettlementBox = styled.div`
-  display: flex;
-  text-align: center;
-  font-size: 24px;
-  height: 100px;
-  align-items: center;
-  justify-content: center;
-  width: inherit;
-`;
+function FileUpload(props: React.InputHTMLAttributes<HTMLInputElement>) {
+  const styles: React.CSSProperties = {
+    width: 0,
+    height: 0,
+    padding: 0,
+    overflow: "hidden",
+    border: 0,
+  };
+
+  return <input type="file" style={styles} {...props} />;
+}
+
+function EmptySettlementBox(props: React.HTMLProps<HTMLDivElement>) {
+  const styles: React.CSSProperties = {
+    display: "flex",
+    textAlign: "center",
+    fontSize: "24px",
+    height: "100px",
+    alignItems: "center",
+    justifyContent: "center",
+    width: "inherit",
+  };
+
+  return <div style={styles} {...props} />;
+}
 
 export function links() {
   return [{ rel: "stylesheet", href: dayPickerStyles }];
@@ -534,7 +546,9 @@ export default function PartnerWaybillShare() {
             to={`/partner/waybill-share?day=${selectedDayStr}`}
             style={{ width: "calc(100% - 160px)" }}
           >
-            <CommonButton style={{ width: "100%" }}>조회하기</CommonButton>
+            <CommonButton styleOverrides={{ width: "100%" }}>
+              조회하기
+            </CommonButton>
           </Link>
         </div>
         <Space h={10} />
@@ -546,8 +560,10 @@ export default function PartnerWaybillShare() {
           <div style={{ width: "20px" }} />
           <CommonLabel
             htmlFor="uploadFile"
-            fontSize={isMobileMemo ? 12 : 20}
-            height={isMobileMemo ? 30 : 40}
+            styleOverrides={{
+              fontSize: isMobileMemo ? 12 : 20,
+              height: isMobileMemo ? 30 : 40,
+            }}
           >
             파일 첨부
           </CommonLabel>

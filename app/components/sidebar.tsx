@@ -1,37 +1,85 @@
-import styled from "styled-components";
 import { Link, useLocation } from "@remix-run/react";
 import { useEffect, useState } from "react";
 import { useViewportSize } from "@mantine/hooks";
 
-const SidebarBox = styled.div<{ isMobile?: boolean }>`
-  width: 285px;
-  min-width: 285px;
-  height: 100%;
-  background-color: black;
-  overflow: hidden;
-  padding-top: ${(props) => (props.isMobile ? "0px" : "35px")};
-  display: flex;
-  flex-flow: column;
-  position: ${(props) => (props.isMobile ? "fixed" : "relative")};
-  z-index: 10;
-`;
+interface Props extends React.HTMLAttributes<HTMLDivElement> {
+  isMobile?: boolean;
+}
 
-const NormalSidebarButton = styled.button<{ screenHeight: number }>`
-  background-color: transparent;
-  border: none;
-  color: #ffffff80;
-  margin-bottom: ${(props) => (props.screenHeight < 700 ? "25px" : "40px")};
-  font-size: ${(props) => (props.screenHeight < 700 ? "20px" : "23px")};
-  font-weight: 700;
-  line-height: 1;
-  text-align: left;
-  padding-left: 20px;
-  cursor: pointer;
-`;
+interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  screenHeight: number;
+}
 
-const SelectedSidebarButton = styled(NormalSidebarButton)`
-  color: white;
-`;
+export function SidebarBox({ isMobile, children, ...props }: Props) {
+  const boxStyles: React.CSSProperties = {
+    width: "285px",
+    minWidth: "285px",
+    height: "100%",
+    backgroundColor: "black",
+    overflow: "hidden",
+    paddingTop: isMobile ? "0px" : "35px",
+    display: "flex",
+    flexFlow: "column",
+    position: isMobile ? "fixed" : "relative",
+    zIndex: 10,
+  };
+
+  return (
+    <div style={boxStyles} {...props}>
+      {children}
+    </div>
+  );
+}
+
+export function NormalSidebarButton({
+  screenHeight,
+  children,
+  ...props
+}: ButtonProps) {
+  const buttonStyles: React.CSSProperties = {
+    backgroundColor: "transparent",
+    border: "none",
+    color: "#ffffff80",
+    marginBottom: screenHeight < 700 ? "25px" : "40px",
+    fontSize: screenHeight < 700 ? "20px" : "23px",
+    fontWeight: 700,
+    lineHeight: 1,
+    textAlign: "left",
+    paddingLeft: "20px",
+    cursor: "pointer",
+  };
+
+  return (
+    <button style={buttonStyles} {...props}>
+      {children}
+    </button>
+  );
+}
+
+export function SelectedSidebarButton({
+  screenHeight,
+  children,
+  ...props
+}: ButtonProps) {
+  const buttonStyles: React.CSSProperties = {
+    backgroundColor: "transparent",
+    border: "none",
+    color: "white",
+    marginBottom: screenHeight < 700 ? "25px" : "40px",
+    fontSize: screenHeight < 700 ? "20px" : "23px",
+    fontWeight: 700,
+    lineHeight: 1,
+    textAlign: "left",
+    paddingLeft: "20px",
+    cursor: "pointer",
+  };
+
+  return (
+    <button style={buttonStyles} {...props}>
+      {children}
+    </button>
+  );
+}
 
 type AdminPathname =
   | null

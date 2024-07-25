@@ -1,9 +1,12 @@
-import { Select } from "@mantine/core";
+import { Modal, Select } from "@mantine/core";
 import { Form } from "@remix-run/react";
 import { useState } from "react";
-import styled from "styled-components";
 import { BlackButton } from "./button";
 import { BasicModal, ModalButton } from "./modal";
+
+interface Props extends  React.HTMLAttributes<HTMLDivElement> {
+  styleOverrides?: React.CSSProperties;
+}
 
 export type NoticeItem = {
   partnerName: string;
@@ -25,48 +28,100 @@ type NoticeTopic =
   | "재고요청"
   | "기타";
 
-const NoticeBox = styled.div`
-  background-color: #d9d9d9;
-  border: 1px solid black;
-  width: inherit;
-  margin-top: 40px;
-`;
+function NoticeBox({
+  children,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) {
+  const boxStyles: React.CSSProperties = {
+    backgroundColor: "#d9d9d9",
+    border: "1px solid black",
+    width: "inherit",
+    marginTop: "40px",
+  };
 
-const NoticeGridContainer = styled.div`
-  display: grid;
-  grid-template-columns: auto auto;
-`;
+  return (
+    <div style={boxStyles} {...props}>
+      {children}
+    </div>
+  );
+}
 
-const NoticeGridItem = styled.div`
-  background-color: #f0f0f0;
-  border: 0.5px solid black;
-  text-align: left;
-  display: flex;
-`;
+function NoticeGridContainer({
+  children,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) {
+  const gridStyles: React.CSSProperties = {
+    display: "grid",
+    gridTemplateColumns: "auto auto",
+  };
 
-const EditInputBox = styled.input`
-  font-size: 20px;
-  font-weight: 700;
-  width: 200px;
-  height: 40px;
-  margin: 4px;
-`;
+  return (
+    <div style={gridStyles} {...props}>
+      {children}
+    </div>
+  );
+}
 
-const LongEditInputBox = styled.textarea`
-  font-size: 20px;
-  font-weight: 700;
-  width: 612px;
-  margin: 4px;
-`;
+function NoticeGridItem({
+  children,
+  styleOverrides,
+  ...props
+}: Props) {
+  const gridItemStyles: React.CSSProperties = {
+    backgroundColor: "#f0f0f0",
+    border: "0.5px solid black",
+    textAlign: "left",
+    display: "flex",
+    ...styleOverrides
+  };
 
-const ReplyInputBox = styled.textarea`
-  font-size: 20px;
-  font-weight: 700;
-  width: 100%;
-  margin: 10px;
-  padding: 10px;
-  min-height: 100px;
-`;
+  return (
+    <div style={gridItemStyles} {...props}>
+      {children}
+    </div>
+  );
+}
+
+function EditInputBox({
+  ...props
+}: React.InputHTMLAttributes<HTMLInputElement>) {
+  const inputStyles: React.CSSProperties = {
+    fontSize: "20px",
+    fontWeight: 700,
+    width: "200px",
+    height: "40px",
+    margin: "4px",
+  };
+
+  return <input style={inputStyles} {...props} />;
+}
+function LongEditInputBox({
+  ...props
+}: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
+  const textareaStyles: React.CSSProperties = {
+    fontSize: "20px",
+    fontWeight: 700,
+    width: "612px",
+    margin: "4px",
+  };
+
+  return <textarea style={textareaStyles} {...props} />;
+}
+
+function ReplyInputBox({
+  ...props
+}: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
+  const replyInputStyles: React.CSSProperties = {
+    fontSize: "20px",
+    fontWeight: 700,
+    width: "100%",
+    margin: "10px",
+    padding: "10px",
+    minHeight: "100px",
+  };
+
+  return <textarea style={replyInputStyles} {...props} />;
+}
 
 export function TopicSelect({
   topic,
@@ -163,8 +218,8 @@ export function AdminNotice({
               />
               <input type="hidden" value={monthStr} name="month" required />
               <ModalButton
-                type="submit"
-                style={{ borderColor: "red", color: "red" }}
+                type='submit'
+                styleOverrides={{ borderColor: "red", color: "red" }}
               >
                 삭제
               </ModalButton>
@@ -362,7 +417,7 @@ export function AdminNotice({
             <div style={{ padding: "13px", width: "120px" }}>공유 주제</div>
             <div style={{ padding: "13px" }}>{noticeItem.topic}</div>
           </NoticeGridItem>
-          <NoticeGridItem style={{ gridColumnStart: "span 2" }}>
+          <NoticeGridItem styleOverrides={{ gridColumnStart: "span 2" }}>
             <div style={{ padding: "13px", width: "120px" }}>상세 사유</div>
             <div
               style={{
@@ -377,7 +432,7 @@ export function AdminNotice({
             </div>
           </NoticeGridItem>
           {noticeItem.replies.length > 0 ? (
-            <NoticeGridItem style={{ gridColumnStart: "span 2" }}>
+            <NoticeGridItem styleOverrides={{ gridColumnStart: "span 2" }}>
               <div
                 style={{ padding: "13px", width: "120px", color: "#1859FF" }}
               >
@@ -399,10 +454,12 @@ export function AdminNotice({
           ) : (
             <></>
           )}
-          <NoticeGridItem
-            style={{ gridColumnStart: "span 2" }}
-          >
-            <Form method="post" style={{display: "flex", width: "100%"}} id="reply-form">
+          <NoticeGridItem styleOverrides={{ gridColumnStart: "span 2" }}>
+            <Form
+              method="post"
+              style={{ display: "flex", width: "100%" }}
+              id="reply-form"
+            >
               <ReplyInputBox name={"reply"} />
               <input type="hidden" value={"reply"} name="action" required />
               <input
@@ -412,7 +469,7 @@ export function AdminNotice({
                 required
               />
               <input type="hidden" value={monthStr} name="month" required />
-              <BlackButton style={{ fontSize: "16px" }} type="submit">
+              <BlackButton styleOverrides={{ fontSize: "16px" }} type="submit">
                 {"메세지 추가"}
               </BlackButton>
             </Form>
@@ -452,7 +509,7 @@ export function PartnerNotice({
               <div style={{ padding: "13px", width: "120px" }}>공유 주제</div>
               <div style={{ padding: "13px" }}>{noticeItem.topic}</div>
             </NoticeGridItem>
-            <NoticeGridItem style={{ gridColumnStart: "span 2" }}>
+            <NoticeGridItem styleOverrides={{ gridColumnStart: "span 2" }}>
               <div style={{ padding: "13px", width: "120px" }}>상세 사유</div>
               <div
                 style={{

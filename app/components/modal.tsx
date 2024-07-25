@@ -1,25 +1,64 @@
-import { Modal } from "@mantine/core";
-import styled from "styled-components";
+interface ButtonProps extends  React.ButtonHTMLAttributes<HTMLButtonElement> {
+  styleOverrides?: React.CSSProperties;
+}
 
-const ModalOverlay = styled.div`
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5); /* semi-transparent overlay */
-  z-index: 1000; /* ensures modal is on top of other elements */
-  display: flex;
-  justify-content: center;
-  align-items: center;
-`;
+export function ModalOverlay({ children, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+  const overlayStyles: React.CSSProperties = {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    width: '100%',
+    height: '100%',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)', // semi-transparent overlay
+    zIndex: 1000, // ensures modal is on top of other elements
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+  };
 
-const ModalContent = styled.div`
-  background-color: white;
-  padding: 20px;
-  border-radius: 8px;
-  font-size: 20px;
-`;
+  return (
+    <div style={overlayStyles} {...props}>
+      {children}
+    </div>
+  );
+}
+export function ModalContent({ children, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+  const contentStyles: React.CSSProperties = {
+    backgroundColor: 'white',
+    padding: '20px',
+    borderRadius: '8px',
+    fontSize: '20px',
+  };
+
+  return (
+    <div style={contentStyles} {...props}>
+      {children}
+    </div>
+  );
+}
+
+export function ModalButton({ children, styleOverrides, ...props }: ButtonProps) {
+  const buttonStyles: React.CSSProperties = {
+    backgroundColor: 'white',
+    border: '2px solid black',
+    fontSize: '16px',
+    fontWeight: 700,
+    width: '80px',
+    lineHeight: 1,
+    margin: '5px',
+    padding: '6px',
+    borderRadius: '1px',
+    cursor: 'pointer',
+    ...styleOverrides
+  };
+
+  return (
+    <button style={buttonStyles} {...props}>
+      {children}
+    </button>
+  );
+}
+
 export function BasicModal({
   opened,
   onClose,
@@ -48,15 +87,3 @@ export function BasicModal({
   );
 }
 
-export const ModalButton = styled.button`
-  background-color: white;
-  border: 2px solid black;
-  font-size: 16px;
-  font-weight: 700;
-  width: 80px;
-  line-height: 1;
-  margin: 5px;
-  padding: 6px 6px 6px 6px;
-  border-radius: 1px;
-  cursor: pointer;
-`;

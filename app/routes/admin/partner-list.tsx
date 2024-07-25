@@ -3,7 +3,6 @@ import { ActionFunction, json, LoaderFunction } from "@remix-run/node";
 import { useActionData, useLoaderData } from "@remix-run/react";
 import { DocumentData } from "firebase/firestore";
 import { useEffect, useState } from "react";
-import styled from "styled-components";
 import { PageLayout } from "~/components/page_layout";
 import { PartnerProfile } from "~/components/partner_profile";
 import {
@@ -14,16 +13,27 @@ import {
 import writeXlsxFile from "write-excel-file";
 import { useNavigation } from "@remix-run/react";
 
-const MyButton = styled.button`
-  background-color: white;
-  border: 3px solid black;
-  font-size: 20px;
-  font-weight: 700;
-  width: 180px;
-  line-height: 1;
-  padding: 6px 6px 6px 6px;
-  cursor: pointer;
-`;
+function MyButton({
+  children,
+  ...props
+}: React.ButtonHTMLAttributes<HTMLButtonElement>) {
+  const buttonStyles: React.CSSProperties = {
+    backgroundColor: "white",
+    border: "3px solid black",
+    fontSize: "20px",
+    fontWeight: 700,
+    width: "180px",
+    lineHeight: 1,
+    padding: "6px",
+    cursor: "pointer",
+  };
+
+  return (
+    <button style={buttonStyles} {...props}>
+      {children}
+    </button>
+  );
+}
 
 export const action: ActionFunction = async ({ request }) => {
   const body = await request.formData();

@@ -7,7 +7,6 @@ import {
   useSubmit,
 } from "@remix-run/react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import styled from "styled-components";
 import {
   dateToKoreanMonth,
   MonthSelectPopover,
@@ -39,85 +38,122 @@ import {
 } from "~/services/firebase.server";
 import { BasicModal, ModalButton } from "~/components/modal";
 import { PageLayout } from "~/components/page_layout";
-import { CommonButton, GetListButton } from "~/components/button";
+import { CommonButton } from "~/components/button";
 import { LoadingOverlay, Space } from "@mantine/core";
 import writeXlsxFile from "write-excel-file";
 
-const EmptySettlementBox = styled.div`
-  display: flex;
-  text-align: center;
-  font-size: 24px;
-  height: 100px;
-  align-items: center;
-  justify-content: center;
-  width: inherit;
-`;
+interface EmptySettlementBoxProps extends React.HTMLProps<HTMLDivElement> {}
 
-const PartnerNameInputBox = styled.input`
-  width: 140px;
-  height: 40px;
-  border: 3px solid black;
-  padding: 6px;
-  text-align: left;
-  font-size: 20px;
-  font-weight: 700;
-  margin-left: 20px;
-  ::placeholder {
-    color: black;
-    font-weight: 700;
-    opacity: 1;
-  }
-  :focus::placeholder {
-    color: transparent;
-  }
-`;
+const EmptySettlementBox: React.FC<EmptySettlementBoxProps> = (props) => {
+  const styles: React.CSSProperties = {
+    display: "flex",
+    textAlign: "center",
+    fontSize: "24px",
+    height: "100px",
+    alignItems: "center",
+    justifyContent: "center",
+    width: "inherit",
+  };
 
-const EditInputBox = styled.input`
-  font-size: 20px;
-  font-weight: 700;
-  width: 250px;
-  margin: 4px;
-`;
+  return <div style={styles} {...props} />;
+};
 
-const LongEditInputBox = styled.input`
-  font-size: 20px;
-  font-weight: 700;
-  width: 608px;
-  margin: 4px;
-`;
+interface PartnerNameInputBoxProps
+  extends React.InputHTMLAttributes<HTMLInputElement> {}
 
-const InfoText = styled.text`
-  font-size: 16px;
-  font-weight: 700;
-  line-height: 1;
-  padding: 6px 6px 6px 6px;
-`;
+const PartnerNameInputBox: React.FC<PartnerNameInputBoxProps> = (props) => {
+  const styles: React.CSSProperties = {
+    width: "140px",
+    height: "40px",
+    border: "3px solid black",
+    padding: "6px",
+    textAlign: "left",
+    fontSize: "20px",
+    fontWeight: 700,
+    marginLeft: "20px",
+  };
 
-const Button1 = styled.button`
-  background-color: black;
-  color: white;
-  font-size: 24px;
-  font-weight: 700;
-  width: 240px;
-  height: 50px;
-  line-height: 1;
-  padding: 6px 6px 6px 6px;
-  margin-right: 40px;
-  cursor: pointer;
-`;
+  return <input style={styles} {...props} />;
+};
 
-const Button2 = styled.button`
-  background-color: black;
-  color: white;
-  font-size: 20px;
-  font-weight: 700;
-  width: 240px;
-  height: 50px;
-  line-height: 1;
-  padding: 6px 6px 6px 6px;
-  margin-right: 40px;
-  cursor: pointer;
-`;
+interface EditInputBoxProps
+  extends React.InputHTMLAttributes<HTMLInputElement> {}
+
+const EditInputBox: React.FC<EditInputBoxProps> = (props) => {
+  const styles: React.CSSProperties = {
+    fontSize: "20px",
+    fontWeight: 700,
+    width: "250px",
+    margin: "4px",
+  };
+
+  return <input style={styles} {...props} />;
+};
+
+interface LongEditInputBoxProps
+  extends React.InputHTMLAttributes<HTMLInputElement> {}
+
+const LongEditInputBox: React.FC<LongEditInputBoxProps> = (props) => {
+  const styles: React.CSSProperties = {
+    fontSize: "20px",
+    fontWeight: 700,
+    width: "608px",
+    margin: "4px",
+  };
+
+  return <input style={styles} {...props} />;
+};
+
+interface InfoTextProps extends React.HTMLProps<HTMLDivElement> {}
+
+const InfoText: React.FC<InfoTextProps> = (props) => {
+  const styles: React.CSSProperties = {
+    fontSize: "16px",
+    fontWeight: 700,
+    lineHeight: "1",
+    padding: "6px",
+  };
+
+  return <div style={styles} {...props} />;
+};
+
+interface Button1Props extends React.ButtonHTMLAttributes<HTMLButtonElement> {}
+
+const Button1: React.FC<Button1Props> = (props) => {
+  const styles: React.CSSProperties = {
+    backgroundColor: "black",
+    color: "white",
+    fontSize: "24px",
+    fontWeight: 700,
+    width: "240px",
+    height: "50px",
+    lineHeight: "1",
+    padding: "6px",
+    marginRight: "40px",
+    cursor: "pointer",
+  };
+
+  return <button style={styles} {...props} />;
+};
+
+interface Button2Props extends React.ButtonHTMLAttributes<HTMLButtonElement> {}
+
+const Button2: React.FC<Button2Props> = (props) => {
+  const styles: React.CSSProperties = {
+    backgroundColor: "black",
+    color: "white",
+    fontSize: "20px",
+    fontWeight: 700,
+    width: "240px",
+    height: "50px",
+    lineHeight: "1",
+    padding: "6px",
+    marginRight: "40px",
+    cursor: "pointer",
+  };
+
+  return <button style={styles} {...props} />;
+};
 
 export const action: ActionFunction = async ({ request }) => {
   const body = await request.formData();
@@ -825,7 +861,7 @@ export default function AdminSettlementShare() {
               취소
             </ModalButton>
             <ModalButton
-              type="submit"
+              type={"submit"}
               onClick={async () => {
                 const checkResult = checkEdit();
                 if (checkResult !== null) {
@@ -875,6 +911,7 @@ export default function AdminSettlementShare() {
               onChange={(e) => setPartnerName(e.target.value)}
               required
             />
+            <Space w={20} />
             <Link
               to={
                 partnerName.length > 0
@@ -882,13 +919,10 @@ export default function AdminSettlementShare() {
                   : `/admin/settlement-manage-detail?month=${monthNumeral}`
               }
             >
-              <GetListButton>조회하기</GetListButton>
+              <CommonButton>조회하기</CommonButton>
             </Link>
             <Space w={20} />
-            <Link
-              to={`/admin/settlement-manage?month=${monthNumeral}`
-              }
-            >
+            <Link to={`/admin/settlement-manage?month=${monthNumeral}`}>
               <CommonButton>목록으로</CommonButton>
             </Link>
           </div>

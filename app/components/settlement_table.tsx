@@ -1,7 +1,6 @@
-import { Checkbox, Space } from "@mantine/core";
+import { Checkbox } from "@mantine/core";
 import React, { useMemo } from "react";
 import { useEffect, useState } from "react";
-import styled from "styled-components";
 import { PartnerProfile } from "./partner_profile";
 import { PossibleSellers } from "./seller";
 import { useViewportSize } from "@mantine/hooks";
@@ -23,43 +22,97 @@ export type SettlementItem = {
   sale: number;
 };
 
-const SettlementBox = styled.div<{ isMobile: boolean }>`
-  width: inherit;
-  height: 60%;
-  min-height: 60%;
-  position: relative;
-  overflow: ${(props) => (props.isMobile ? "scroll" : "")};
-  border: 1px solid #ebebeb;
-  border-bottom: 20px solid #ebebeb;
-`;
+interface Props extends React.HTMLAttributes<HTMLDivElement> {
+  isMobile: boolean;
+  styleOverrides?: React.CSSProperties;
+}
 
-const SettlementItemsBox = styled.div<{ isMobile: boolean }>`
-  max-height: calc(100% - 42px);
-  overflow-y: ${(props) => (props.isMobile ? "visible" : "scroll")};
-`;
+export function SettlementBox({ isMobile, children, ...props }: Props) {
+  const boxStyles: React.CSSProperties = {
+    width: "inherit",
+    height: "60%",
+    minHeight: "60%",
+    position: "relative",
+    overflow: isMobile ? "scroll" : "hidden",
+    border: "1px solid #ebebeb",
+    borderBottom: "20px solid #ebebeb",
+  };
 
-const SettlementItemBox = styled.div<{ isMobile: boolean }>`
-  display: flex;
-  align-items: center;
-  padding: 10px 6px 10px 6px;
-  width: ${(props) => (props.isMobile ? "fit-content" : "")}
-`;
+  return (
+    <div style={boxStyles} {...props}>
+      {children}
+    </div>
+  );
+}
 
-const SettlementHeader = styled(SettlementItemBox)`
-  background-color: #ebebeb;
-  
-`;
+export function SettlementItemsBox({ isMobile, children, ...props }: Props) {
+  const itemsBoxStyles: React.CSSProperties = {
+    maxHeight: "calc(100% - 42px)",
+    overflowY: isMobile ? "visible" : "scroll",
+  };
 
-const TextBox = styled.div<{ isMobile: boolean }>`
-  margin-left: 10px;
-  font-weight: 700;
-  font-size: 16px;
-  line-height: 20px;
-  text-align: center;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  overflow: ${(props) => (props.isMobile ? "" : "hidden")};
-`;
+  return (
+    <div style={itemsBoxStyles} {...props}>
+      {children}
+    </div>
+  );
+}
+
+export function SettlementItemBox({ isMobile, children, ...props }: Props) {
+  const itemBoxStyles: React.CSSProperties = {
+    display: "flex",
+    alignItems: "center",
+    padding: "10px 6px",
+    width: isMobile ? "fit-content" : "auto",
+  };
+
+  return (
+    <div style={itemBoxStyles} {...props}>
+      {children}
+    </div>
+  );
+}
+
+export function SettlementHeader({ isMobile, children, ...props }: Props) {
+  const itemBoxStyles: React.CSSProperties = {
+    display: "flex",
+    alignItems: "center",
+    padding: "10px 6px",
+    width: isMobile ? "fit-content" : "auto",
+    backgroundColor: "#ebebeb",
+  };
+
+  return (
+    <div style={itemBoxStyles} {...props}>
+      {children}
+    </div>
+  );
+}
+
+export function TextBox({
+  isMobile,
+  styleOverrides,
+  children,
+  ...props
+}: Props) {
+  const textBoxStyles: React.CSSProperties = {
+    marginLeft: "10px",
+    fontWeight: 700,
+    fontSize: "16px",
+    lineHeight: "20px",
+    textAlign: "center",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
+    overflow: isMobile ? "visible" : "hidden",
+    ...styleOverrides,
+  };
+
+  return (
+    <div style={textBoxStyles} {...props}>
+      {children}
+    </div>
+  );
+}
 
 /**
  * 엑셀에서 읽어온 해당 정산아이템이 유효한 지를 확인합니다.
@@ -208,18 +261,18 @@ function SettlementItem({
           onItemCheck(index, event.currentTarget.checked);
         }}
       />
-      <TextBox isMobile={isMobileMemo} style={{ width: "90px" }}>
+      <TextBox isMobile={isMobileMemo} styleOverrides={{ width: "90px" }}>
         {item.seller}
       </TextBox>
       <TextBox
         isMobile={isMobileMemo}
-        style={{ width: "150px", fontSize: "12px" }}
+        styleOverrides={{ width: "150px", fontSize: "12px" }}
       >
         {item.orderNumber}
       </TextBox>
       <TextBox
         isMobile={isMobileMemo}
-        style={{
+        styleOverrides={{
           width: isMobileMemo ? "300px" : "calc(50% - 348px)",
           fontSize: "12px",
         }}
@@ -228,29 +281,29 @@ function SettlementItem({
       </TextBox>
       <TextBox
         isMobile={isMobileMemo}
-        style={{
+        styleOverrides={{
           width: isMobileMemo ? "300px" : "calc(50% - 438px)",
           fontSize: "12px",
         }}
       >
         {item.optionName}
       </TextBox>
-      <TextBox isMobile={isMobileMemo} style={{ width: "60px" }}>
+      <TextBox isMobile={isMobileMemo} styleOverrides={{ width: "60px" }}>
         {item.price}
       </TextBox>
-      <TextBox isMobile={isMobileMemo} style={{ width: "60px" }}>
+      <TextBox isMobile={isMobileMemo} styleOverrides={{ width: "60px" }}>
         {saleString}
       </TextBox>
-      <TextBox isMobile={isMobileMemo} style={{ width: "90px" }}>
+      <TextBox isMobile={isMobileMemo} styleOverrides={{ width: "90px" }}>
         {item.shippingFee == 0 ? "X" : "O"}
       </TextBox>
-      <TextBox isMobile={isMobileMemo} style={{ width: "30px" }}>
+      <TextBox isMobile={isMobileMemo} styleOverrides={{ width: "30px" }}>
         {item.amount}
       </TextBox>
-      <TextBox isMobile={isMobileMemo} style={{ width: "90px" }}>
+      <TextBox isMobile={isMobileMemo} styleOverrides={{ width: "90px" }}>
         {item.orderer}
       </TextBox>
-      <TextBox isMobile={isMobileMemo} style={{ width: "90px" }}>
+      <TextBox isMobile={isMobileMemo} styleOverrides={{ width: "90px" }}>
         {item.receiver}
       </TextBox>
     </SettlementItemBox>
@@ -294,40 +347,40 @@ export function SettlementTable({
             onCheckAll(val);
           }}
         />
-        <TextBox isMobile={isMobileMemo} style={{ width: "90px" }}>
+        <TextBox isMobile={isMobileMemo} styleOverrides={{ width: "90px" }}>
           판매처
         </TextBox>
-        <TextBox isMobile={isMobileMemo} style={{ width: "150px" }}>
+        <TextBox isMobile={isMobileMemo} styleOverrides={{ width: "150px" }}>
           주문번호
         </TextBox>
         <TextBox
           isMobile={isMobileMemo}
-          style={{ width: isMobileMemo ? "300px" : "calc(50% - 348px)" }}
+          styleOverrides={{ width: isMobileMemo ? "300px" : "calc(50% - 348px)" }}
         >
           상품명
         </TextBox>
         <TextBox
           isMobile={isMobileMemo}
-          style={{ width: isMobileMemo ? "300px" : "calc(50% - 438px)" }}
+          styleOverrides={{ width: isMobileMemo ? "300px" : "calc(50% - 438px)" }}
         >
           옵션명
         </TextBox>
-        <TextBox isMobile={isMobileMemo} style={{ width: "60px" }}>
+        <TextBox isMobile={isMobileMemo} styleOverrides={{ width: "60px" }}>
           판매단가
         </TextBox>
-        <TextBox isMobile={isMobileMemo} style={{ width: "60px" }}>
+        <TextBox isMobile={isMobileMemo} styleOverrides={{ width: "60px" }}>
           세일적용
         </TextBox>
-        <TextBox isMobile={isMobileMemo} style={{ width: "90px" }}>
+        <TextBox isMobile={isMobileMemo} styleOverrides={{ width: "90px" }}>
           배송비 정산
         </TextBox>
-        <TextBox isMobile={isMobileMemo} style={{ width: "30px" }}>
+        <TextBox isMobile={isMobileMemo} styleOverrides={{ width: "30px" }}>
           수량
         </TextBox>
-        <TextBox isMobile={isMobileMemo} style={{ width: "90px" }}>
+        <TextBox isMobile={isMobileMemo} styleOverrides={{ width: "90px" }}>
           주문자
         </TextBox>
-        <TextBox isMobile={isMobileMemo} style={{ width: "90px" }}>
+        <TextBox isMobile={isMobileMemo} styleOverrides={{ width: "90px" }}>
           송신자
         </TextBox>
         <div style={{ width: "16px" }} />

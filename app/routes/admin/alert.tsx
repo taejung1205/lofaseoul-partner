@@ -1,4 +1,4 @@
-import { LoadingOverlay } from "@mantine/core";
+import { LoadingOverlay, Space } from "@mantine/core";
 import { ActionFunction, json } from "@remix-run/node";
 import {
   Link,
@@ -9,8 +9,7 @@ import {
 } from "@remix-run/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { LoaderFunction } from "react-router-dom";
-import styled from "styled-components";
-import { GetListButton } from "~/components/button";
+import { CommonButton } from "~/components/button";
 import {
   dateToKoreanMonth,
   koreanMonthToDate,
@@ -25,66 +24,98 @@ import {
   editNotice,
   getNotices,
   getPartnerProfile,
-  isAdmin,
   replyNotice,
   shareNotice,
 } from "~/services/firebase.server";
 
-const EmptyNoticeBox = styled.div`
-  display: flex;
-  text-align: center;
-  font-size: 24px;
-  height: 100px;
-  align-items: center;
-  justify-content: center;
-  width: inherit;
-`;
+interface EmptyNoticeBoxProps extends React.HTMLProps<HTMLDivElement> {}
 
-const PartnerNameInputBox = styled.input`
-  width: 140px;
-  height: 40px;
-  border: 3px solid black;
-  padding: 6px;
-  text-align: left;
-  font-size: 20px;
-  font-weight: 700;
-  margin-left: 20px;
-  ::placeholder {
-    color: black;
-    font-weight: 700;
-    opacity: 1;
-  }
-  :focus::placeholder {
-    color: transparent;
-  }
-`;
+const EmptyNoticeBox: React.FC<EmptyNoticeBoxProps> = (props) => {
+  const styles: React.CSSProperties = {
+    display: "flex",
+    textAlign: "center",
+    fontSize: "30px",
+    height: "100px",
+    alignItems: "center",
+    justifyContent: "center",
+    width: "inherit",
+  };
 
-const NewNoticeButton = styled.button`
-  background-color: white;
-  border: 3px solid black;
-  font-size: 20px;
-  font-weight: 700;
-  width: 110px;
-  line-height: 1;
-  padding: 6px 6px 6px 6px;
-  cursor: pointer;
-`;
+  return <div style={styles} {...props} />;
+};
 
-const EditInputBox = styled.input`
-  font-size: 20px;
-  font-weight: 700;
-  width: 200px;
-  height: 40px;
-  margin: 4px;
-`;
+interface PartnerNameInputBoxProps
+  extends React.InputHTMLAttributes<HTMLInputElement> {}
 
-const LongEditInputBox = styled.textarea`
-  font-size: 20px;
-  font-weight: 700;
-  width: 612px;
-  margin: 4px;
-`;
+const PartnerNameInputBox: React.FC<PartnerNameInputBoxProps> = (props) => {
+  const styles: React.CSSProperties = {
+    width: "140px",
+    height: "40px",
+    border: "3px solid black",
+    padding: "6px",
+    textAlign: "left",
+    fontSize: "20px",
+    fontWeight: 700,
+    marginLeft: "20px",
+  };
 
+  return (
+    <input
+      style={styles}
+      placeholder="Placeholder"
+      {...props}
+      // Adding styles for placeholder and focus
+      // (inline styles for these cannot be applied directly to the element; they need to be in CSS or styled-components)
+    />
+  );
+};
+
+interface NewNoticeButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement> {}
+
+const NewNoticeButton: React.FC<NewNoticeButtonProps> = (props) => {
+  const styles: React.CSSProperties = {
+    backgroundColor: "white",
+    border: "3px solid black",
+    fontSize: "20px",
+    fontWeight: 700,
+    width: "110px",
+    lineHeight: "1",
+    padding: "6px",
+    cursor: "pointer",
+  };
+
+  return <button style={styles} {...props} />;
+};
+
+interface EditInputBoxProps
+  extends React.InputHTMLAttributes<HTMLInputElement> {}
+
+const EditInputBox: React.FC<EditInputBoxProps> = (props) => {
+  const styles: React.CSSProperties = {
+    fontSize: "20px",
+    fontWeight: 700,
+    width: "200px",
+    height: "40px",
+    margin: "4px",
+  };
+
+  return <input style={styles} {...props} />;
+};
+
+interface LongEditInputBoxProps
+  extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {}
+
+const LongEditInputBox: React.FC<LongEditInputBoxProps> = (props) => {
+  const styles: React.CSSProperties = {
+    fontSize: "20px",
+    fontWeight: 700,
+    width: "612px",
+    margin: "4px",
+  };
+
+  return <textarea style={styles} {...props} />;
+};
 export const loader: LoaderFunction = async ({ request }) => {
   const url = new URL(request.url);
   const month = url.searchParams.get("month");
@@ -405,7 +436,7 @@ export default function AdminAlert() {
         </div>
       </BasicModal>
 
-      <PageLayout style={{ display: "block" }}>
+      <PageLayout styleOverrides={{ display: "block" }}>
         <div
           style={{
             display: "flex",
@@ -437,6 +468,7 @@ export default function AdminAlert() {
               onChange={(e) => setPartnerName(e.target.value)}
               required
             />
+            <Space w={20} />
             <Link
               to={
                 partnerName.length > 0
@@ -444,7 +476,7 @@ export default function AdminAlert() {
                   : `/admin/alert?month=${selectedMonthStr}`
               }
             >
-              <GetListButton>조회하기</GetListButton>
+              <CommonButton>조회하기</CommonButton>
             </Link>
           </div>
           <NewNoticeButton onClick={() => setIsNewNoticeModalOpened(true)}>

@@ -6,7 +6,6 @@ import {
   useSubmit,
 } from "@remix-run/react";
 import { ActionFunction, LoaderFunction, json } from "@remix-run/node";
-import styled from "styled-components";
 import { HeaderBox, MobileHeaderBox } from "~/components/header";
 import { LoadingOverlay } from "@mantine/core";
 import { useMemo, useRef, useState } from "react";
@@ -16,45 +15,59 @@ import { createUserSession, User } from "~/services/session.server";
 import { isMobile } from "~/utils/mobile";
 import { useViewportSize } from "@mantine/hooks";
 
-const LoginPage = styled.div<{ isMobile: boolean }>`
-  width: inherit;
-  font-size: ${(props) => (props.isMobile ? "20px" : "33px")};
-  text-align: center;
-  font-weight: 700;
-  line-height: 1;
-`;
+interface LoginPageProps extends React.HTMLProps<HTMLDivElement> {
+  isMobile: boolean;
+}
 
-const InputBox = styled.input<{ isMobile: boolean }>`
-  width: ${(props) => (props.isMobile ? "70%" : "730px")};
-  display: flex;
-  height: ${(props) => (props.isMobile ? "40px" : "75px")};
-  border: 3px solid black;
-  margin-left: auto;
-  margin-right: auto;
-  padding-left: ${(props) => (props.isMobile ? "12px" : "27px")};
-  padding-top: 12px;
-  padding-bottom: 12px;
-  text-align: left;
-  font-size: ${(props) => (props.isMobile ? "20px" : "35px")};
-  ::placeholder {
-    color: black;
-    font-weight: 700;
-    opacity: 1;
-  }
-  :focus::placeholder {
-    color: transparent;
-  }
-`;
+export function LoginPage({ isMobile, ...props }: LoginPageProps) {
+  const styles: React.CSSProperties = {
+    width: "inherit",
+    fontSize: isMobile ? "20px" : "33px",
+    textAlign: "center",
+    fontWeight: 700,
+    lineHeight: 1,
+  };
 
-const LoginButton = styled.button`
-  width: 266px;
-  height: 60px;
-  background-color: black;
-  color: white;
-  font-weight: 700;
-  font-size: 33px;
-  cursor: pointer;
-`;
+  return <div style={styles} {...props} />;
+}
+
+interface InputBoxProps extends React.InputHTMLAttributes<HTMLInputElement> {
+  isMobile: boolean;
+}
+
+export function InputBox({ isMobile, ...props }: InputBoxProps) {
+  const styles: React.CSSProperties = {
+    width: isMobile ? "70%" : "730px",
+    display: "flex",
+    height: isMobile ? "40px" : "75px",
+    border: "3px solid black",
+    marginLeft: "auto",
+    marginRight: "auto",
+    paddingLeft: isMobile ? "12px" : "27px",
+    paddingTop: "12px",
+    paddingBottom: "12px",
+    textAlign: "left",
+    fontSize: isMobile ? "20px" : "35px",
+  };
+
+  return <input style={styles} {...props} />;
+}
+
+export function LoginButton(
+  props: React.ButtonHTMLAttributes<HTMLButtonElement>
+) {
+  const styles: React.CSSProperties = {
+    width: "266px",
+    height: "60px",
+    backgroundColor: "black",
+    color: "white",
+    fontWeight: 700,
+    fontSize: "33px",
+    cursor: "pointer",
+  };
+
+  return <button style={styles} {...props} />;
+}
 
 /**
  * 로그인
@@ -110,7 +123,7 @@ export default function Login() {
 
   const isMobileMemo: boolean = useMemo(() => {
     return isMobile(viewportSize.width);
-  }, [viewportSize])
+  }, [viewportSize]);
 
   async function handleLogin() {
     if (id.length == 0 || password.length == 0) {
