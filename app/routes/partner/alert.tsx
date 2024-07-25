@@ -1,16 +1,14 @@
-import { LoadingOverlay } from "@mantine/core";
+import { LoadingOverlay, Space } from "@mantine/core";
 import { ActionFunction, json, redirect } from "@remix-run/node";
 import {
   Link,
   useActionData,
   useLoaderData,
   useNavigation,
-  useSubmit,
 } from "@remix-run/react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { LoaderFunction } from "react-router-dom";
-import styled from "styled-components";
-import { GetListButton } from "~/components/button";
+import { CommonButton } from "~/components/button";
 import {
   dateToKoreanMonth,
   koreanMonthToDate,
@@ -22,15 +20,26 @@ import { PageLayout } from "~/components/page_layout";
 import { getSharedNotices, replyNotice } from "~/services/firebase.server";
 import { requireUser } from "~/services/session.server";
 
-const EmptyNoticeBox = styled.div`
-  display: flex;
-  text-align: center;
-  font-size: 24px;
-  height: 100px;
-  align-items: center;
-  justify-content: center;
-  width: inherit;
-`;
+function EmptyNoticeBox({
+  children,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) {
+  const boxStyles: React.CSSProperties = {
+    display: "flex",
+    textAlign: "center",
+    fontSize: "30px",
+    height: "100px",
+    alignItems: "center",
+    justifyContent: "center",
+    width: "inherit",
+  };
+
+  return (
+    <div style={boxStyles} {...props}>
+      {children}
+    </div>
+  );
+}
 
 export const loader: LoaderFunction = async ({ request }) => {
   let partnerName: string;
@@ -73,7 +82,7 @@ export const action: ActionFunction = async ({ request }) => {
         monthStr: month,
         id: id,
         reply: reply,
-        isAdmin: false
+        isAdmin: false,
       });
       if (result == true) {
         return json({ message: `답신이 완료되었습니다.` });
@@ -179,8 +188,9 @@ export default function PartnerAlert() {
               }
               monthStr={selectedMonthStr ?? ""}
             />
+            <Space w={20} />
             <Link to={`/partner/alert?month=${selectedMonthStr}`}>
-              <GetListButton>조회하기</GetListButton>
+              <CommonButton>조회하기</CommonButton>
             </Link>
           </div>
         </div>
@@ -203,19 +213,7 @@ export default function PartnerAlert() {
             {RepliedNoticeItems(loaderData.notices, monthStr)}
           </>
         ) : (
-          <EmptyNoticeBox
-            style={{
-              display: "flex",
-              textAlign: "center",
-              fontSize: "30px",
-              height: "100px",
-              alignItems: "center",
-              justifyContent: "center",
-              width: "inherit",
-            }}
-          >
-            공유된 알림이 없습니다.
-          </EmptyNoticeBox>
+          <EmptyNoticeBox>공유된 알림이 없습니다.</EmptyNoticeBox>
         )}
 
         <div style={{ minHeight: "70px" }} />

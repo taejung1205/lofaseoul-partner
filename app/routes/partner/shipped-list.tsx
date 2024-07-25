@@ -15,11 +15,7 @@ import {
   dayStrToDate,
   getTimezoneDate,
 } from "~/components/date";
-import {
-  BlackBottomButton,
-  CommonButton,
-  GetListButton,
-} from "~/components/button";
+import { BlackBottomButton, CommonButton } from "~/components/button";
 import {
   ActionFunction,
   json,
@@ -27,7 +23,6 @@ import {
   redirect,
 } from "@remix-run/node";
 import { OrderItem, OrderTable } from "~/components/order";
-import styled from "styled-components";
 import { editWaybills, getPartnerWaybills } from "~/services/firebase.server";
 import { BasicModal, ModalButton } from "~/components/modal";
 import { requireUser } from "~/services/session.server";
@@ -35,27 +30,19 @@ import { LoadingOverlay, Space } from "@mantine/core";
 import { useViewportSize } from "@mantine/hooks";
 import { isMobile } from "~/utils/mobile";
 
-const EmptySettlementBox = styled.div`
-  display: flex;
-  text-align: center;
-  font-size: 20px;
-  height: 100px;
-  align-items: center;
-  justify-content: center;
-  width: inherit;
-`;
+function EmptySettlementBox(props: React.HTMLProps<HTMLDivElement>) {
+  const styles: React.CSSProperties = {
+    display: "flex",
+    textAlign: "center",
+    fontSize: "20px",
+    height: "100px",
+    alignItems: "center",
+    justifyContent: "center",
+    width: "inherit",
+  };
 
-const EditButton = styled.button`
-  background-color: black;
-  color: white;
-  font-size: 24px;
-  font-weight: 700;
-  width: 100%;
-  height: 50px;
-  line-height: 1;
-  padding: 6px 6px 6px 6px;
-  cursor: pointer;
-`;
+  return <div style={styles} {...props} />;
+}
 
 export function links() {
   return [{ rel: "stylesheet", href: dayPickerStyles }];
@@ -294,7 +281,9 @@ export default function AdminOrderList() {
             to={`/partner/shipped-list?day=${selectedDayStr}`}
             style={{ width: "calc(100% - 160px)" }}
           >
-            <CommonButton style={{ width: "100%" }}>조회하기</CommonButton>
+            <CommonButton styleOverrides={{ width: "100%" }}>
+              조회하기
+            </CommonButton>
           </Link>
         </div>
 

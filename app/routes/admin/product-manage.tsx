@@ -2,7 +2,6 @@ import { Checkbox, LoadingOverlay, Modal } from "@mantine/core";
 import { ActionFunction, LoaderFunction, json } from "@remix-run/node";
 import { useActionData, useLoaderData, useSubmit } from "@remix-run/react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import styled from "styled-components";
 import { BasicModal, ModalButton } from "~/components/modal";
 import { PageLayout } from "~/components/page_layout";
 import { LoadedProduct } from "~/components/product";
@@ -16,61 +15,120 @@ import writeXlsxFile from "write-excel-file";
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
 
-const EmptyProductsBox = styled.div`
-  display: flex;
-  text-align: center;
-  font-size: 24px;
-  height: 100px;
-  align-items: center;
-  justify-content: center;
-  width: inherit;
-`;
+function EmptyProductsBox({
+  children,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) {
+  const boxStyles: React.CSSProperties = {
+    display: "flex",
+    textAlign: "center",
+    fontSize: "24px",
+    height: "100px",
+    alignItems: "center",
+    justifyContent: "center",
+    width: "inherit",
+  };
 
-const DetailButton = styled.button`
-  font-size: 16px;
-  background-color: black;
-  width: 60px;
-  height: 32px;
-  margin: 4px;
-  color: white;
-  border: none;
-  font-weight: 700;
-  cursor: pointer;
-`;
+  return (
+    <div style={boxStyles} {...props}>
+      {children}
+    </div>
+  );
+}
 
-const FunctionButton = styled.button`
-  background-color: black;
-  color: white;
-  font-size: 24px;
-  font-weight: 700;
-  width: 210px;
-  height: 50px;
-  line-height: 1;
-  padding: 6px 6px 6px 6px;
-  cursor: pointer;
-`;
+function DetailButton({
+  children,
+  ...props
+}: React.ButtonHTMLAttributes<HTMLButtonElement>) {
+  const buttonStyles: React.CSSProperties = {
+    fontSize: "16px",
+    backgroundColor: "black",
+    width: "60px",
+    height: "32px",
+    margin: "4px",
+    color: "white",
+    border: "none",
+    fontWeight: 700,
+    cursor: "pointer",
+  };
 
-const DetailTitle = styled.div`
-  width: 160px;
-  display: flex;
-  justify-content: center;
-`;
+  return (
+    <button style={buttonStyles} {...props}>
+      {children}
+    </button>
+  );
+}
 
-const DetailBody = styled.div`
-  font-size: 20px;
-  font-weight: 700;
-  width: 568px;
-  margin: 4px;
-  min-height: 30px;
-  text-align: center;
-`;
+function FunctionButton({
+  children,
+  ...props
+}: React.ButtonHTMLAttributes<HTMLButtonElement>) {
+  const buttonStyles: React.CSSProperties = {
+    backgroundColor: "black",
+    color: "white",
+    fontSize: "24px",
+    fontWeight: 700,
+    width: "210px",
+    height: "50px",
+    lineHeight: 1,
+    padding: "6px",
+    cursor: "pointer",
+  };
 
-const DetailImage = styled.img`
-  object-fit: contain;
-  width: 200px;
-  height: 200px;
-  margin: 4px;
-`;
+  return (
+    <button style={buttonStyles} {...props}>
+      {children}
+    </button>
+  );
+}
+
+function DetailTitle({
+  children,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) {
+  const titleStyles: React.CSSProperties = {
+    width: "160px",
+    display: "flex",
+    justifyContent: "center",
+  };
+
+  return (
+    <div style={titleStyles} {...props}>
+      {children}
+    </div>
+  );
+}
+
+function DetailBody({
+  children,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) {
+  const bodyStyles: React.CSSProperties = {
+    fontSize: "20px",
+    fontWeight: 700,
+    width: "568px",
+    margin: "4px",
+    minHeight: "30px",
+    textAlign: "center",
+  };
+
+  return (
+    <div style={bodyStyles} {...props}>
+      {children}
+    </div>
+  );
+}
+
+function DetailImage(props: React.ImgHTMLAttributes<HTMLImageElement>) {
+  const imageStyles: React.CSSProperties = {
+    objectFit: "contain",
+    width: "200px",
+    height: "200px",
+    margin: "4px",
+  };
+
+  return <img style={imageStyles} {...props} />;
+}
 
 export const action: ActionFunction = async ({ request }) => {
   const body = await request.formData();
@@ -83,8 +141,11 @@ export const action: ActionFunction = async ({ request }) => {
         productNameList: jsonArr,
       });
       {
-        return json({ message: "해당 상품들을 삭제하였습니다. 잠시 후 해당 상품들이 삭제될 예정입니다." });
-      } 
+        return json({
+          message:
+            "해당 상품들을 삭제하였습니다. 잠시 후 해당 상품들이 삭제될 예정입니다.",
+        });
+      }
     }
   } else if (actionType === "accept") {
     const productNameList = body.get("productNameList")?.toString();
@@ -94,8 +155,11 @@ export const action: ActionFunction = async ({ request }) => {
         productNameList: jsonArr,
       });
       {
-        return json({ message: "해당 상품들을 승인하였습니다. 잠시 후 해당 상품들이 승인될 예정입니다." });
-      } 
+        return json({
+          message:
+            "해당 상품들을 승인하였습니다. 잠시 후 해당 상품들이 승인될 예정입니다.",
+        });
+      }
     }
   } else if (actionType === "decline") {
     const productNameList = body.get("productNameList")?.toString();
@@ -105,8 +169,11 @@ export const action: ActionFunction = async ({ request }) => {
         productNameList: jsonArr,
       });
       {
-        return json({ message: "해당 상품들을 거부하였습니다. 잠시 후 해당 상품들이 거부될 예정입니다." });
-      } 
+        return json({
+          message:
+            "해당 상품들을 거부하였습니다. 잠시 후 해당 상품들이 거부될 예정입니다.",
+        });
+      }
     }
   }
 

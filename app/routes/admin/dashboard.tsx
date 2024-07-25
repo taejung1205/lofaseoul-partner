@@ -2,7 +2,6 @@ import { LoadingOverlay } from "@mantine/core";
 import { LoaderFunction } from "@remix-run/node";
 import { useLoaderData, useNavigation } from "@remix-run/react";
 import { json } from "react-router";
-import styled from "styled-components";
 import { PageLayout } from "~/components/page_layout";
 import {
   getDelayedOrdersCount,
@@ -10,20 +9,28 @@ import {
   getTodayWaybillsCount,
 } from "~/services/firebase.server";
 
-const DashboardItemBox = styled.div`
-  width: 40%;
-  background-color: #f0f0f0;
-  padding-left: 15px;
-  padding-top: 15px;
-  padding-right: 30px;
-  padding-bottom: 30px;
-  margin: 10px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  font-weight: 700;
-  height: 200px;
-`;
+function DashboardItemBox({
+  children,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) {
+  const boxStyles: React.CSSProperties = {
+    width: "40%",
+    backgroundColor: "#f0f0f0",
+    padding: "15px 30px 30px 15px", // shorthand for padding properties
+    margin: "10px",
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "space-between",
+    fontWeight: 700,
+    height: "200px",
+  };
+
+  return (
+    <div style={boxStyles} {...props}>
+      {children}
+    </div>
+  );
+}
 
 export const loader: LoaderFunction = async ({ request }) => {
   const ordersCount = await getTodayOrdersCount();
@@ -43,10 +50,7 @@ export default function AdminDashboard() {
 
   return (
     <>
-      <LoadingOverlay
-        visible={navigation.state == "loading"}
-        overlayBlur={2}
-      />
+      <LoadingOverlay visible={navigation.state == "loading"} overlayBlur={2} />
       <PageLayout>
         <div style={{ display: "flex", width: "inherit" }}>
           <DashboardItemBox>

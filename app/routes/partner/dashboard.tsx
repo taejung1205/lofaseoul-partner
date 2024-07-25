@@ -4,7 +4,6 @@ import { LoaderFunction, redirect } from "@remix-run/node";
 import { useLoaderData, useNavigation } from "@remix-run/react";
 import { useMemo } from "react";
 import { json } from "react-router";
-import styled from "styled-components";
 import { PageLayout } from "~/components/page_layout";
 import {
   getPartnerDelayedOrdersCount,
@@ -14,20 +13,36 @@ import {
 import { requireUser } from "~/services/session.server";
 import { isMobile } from "~/utils/mobile";
 
-const DashboardItemBox = styled.div<{ isMobile: boolean }>`
-  width: ${(props) => (props.isMobile ? "" : "40%")};
-  background-color: #f0f0f0;
-  padding-left: 15px;
-  padding-top: 15px;
-  padding-right: 30px;
-  padding-bottom: 30px;
-  margin: 10px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  font-weight: 700;
-  min-height: 200px;
-`;
+interface DashboardItemBoxProps extends React.HTMLAttributes<HTMLDivElement> {
+  isMobile: boolean;
+}
+
+export function DashboardItemBox({
+  isMobile,
+  children,
+  ...props
+}: DashboardItemBoxProps) {
+  const boxStyles: React.CSSProperties = {
+    width: isMobile ? "100%" : "40%",
+    backgroundColor: "#f0f0f0",
+    paddingLeft: "15px",
+    paddingTop: "15px",
+    paddingRight: "30px",
+    paddingBottom: "30px",
+    margin: "10px",
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "space-between",
+    fontWeight: 700,
+    minHeight: "200px",
+  };
+
+  return (
+    <div style={boxStyles} {...props}>
+      {children}
+    </div>
+  );
+}
 
 export const loader: LoaderFunction = async ({ request }) => {
   let partnerName: string;

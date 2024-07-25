@@ -1,6 +1,5 @@
 import { Outlet, useLoaderData, useSubmit } from "@remix-run/react";
 import { json, LoaderFunction, redirect } from "@remix-run/node";
-import styled from "styled-components";
 import { MobilePartnerHeader, PartnerHeader } from "~/components/header";
 import { PartnerSidebar } from "~/components/sidebar";
 import { requireUser } from "~/services/session.server";
@@ -8,16 +7,22 @@ import { useState } from "react";
 import { useViewportSize } from "@mantine/hooks";
 import { isMobile } from "~/utils/mobile";
 
-const PartnerPage = styled.div`
-  width: inherit;
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  font-size: 33px;
-  text-align: center;
-  font-weight: 700;
-  line-height: 1;
-`;
+interface PartnerPageProps extends React.HTMLProps<HTMLDivElement> {}
+
+const PartnerPage: React.FC<PartnerPageProps> = (props) => {
+  const styles: React.CSSProperties = {
+    width: "inherit",
+    display: "flex",
+    flexDirection: "column",
+    height: "100%",
+    fontSize: "33px",
+    textAlign: "center",
+    fontWeight: 700,
+    lineHeight: 1,
+  };
+
+  return <div style={styles} {...props} />;
+};
 
 /**
  * check the user to see if there is an active session, if not

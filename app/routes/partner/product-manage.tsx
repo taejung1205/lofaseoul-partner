@@ -9,11 +9,9 @@ import {
   useActionData,
   useLoaderData,
   useSubmit,
-  useTransition,
   useNavigation,
 } from "@remix-run/react";
 import { useEffect, useRef, useState } from "react";
-import styled from "styled-components";
 import { BlackButton } from "~/components/button";
 import { BasicModal, ModalButton } from "~/components/modal";
 import { PageLayout } from "~/components/page_layout";
@@ -30,141 +28,225 @@ import {
 import { requireUser } from "~/services/session.server";
 import { cropImage, resizeFile } from "~/utils/resize-image";
 
-const EditInputBox = styled.input`
-  font-size: 20px;
-  font-weight: 700;
-  width: 360px;
-  height: 34px;
-  margin-top: 10px;
-  margin-bottom: 10px;
-  border: 1px solid black;
-`;
+interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+  styleOverrides?: React.CSSProperties;
+}
 
-const InfoBox = styled.div`
-  background-color: #f2f2f2;
-  padding-top: 20px;
-  padding-left: 25px;
-  padding-right: 25px;
-  padding-bottom: 20px;
-  text-align: left;
-  size: 18px;
-  line-height: 26px;
-`;
+function EditInputBox(props: InputProps) {
+  const styles: React.CSSProperties = {
+    fontSize: "20px",
+    fontWeight: 700,
+    width: "360px",
+    height: "34px",
+    marginTop: "10px",
+    marginBottom: "10px",
+    border: "1px solid black",
+    ...props.styleOverrides,
+  };
 
-const LongEditInputBox = styled(EditInputBox)`
-  width: 800px;
-`;
+  return <input style={styles} {...props} />;
+}
 
-const EditTextareaBox = styled.textarea`
-  font-size: 20px;
-  font-weight: 400;
-  width: 568px;
-  margin-top: 10px;
-  margin-bottom: 10px;
-  resize: vertical;
-  border: 1px solid black;
-`;
-const ListButton = styled.button`
-  font-size: 16px;
-  background-color: black;
-  width: 60px;
-  height: 32px;
-  margin-top: 10px;
-  margin-bottom: 10px;
-  color: white;
-  border: none;
-  font-weight: 700;
-  cursor: pointer;
-`;
+interface Props extends React.HTMLAttributes<HTMLDivElement> {
+  styleOverrides?: React.CSSProperties;
+}
 
-const DetailButton = styled.button`
-  font-size: 20px;
-  background-color: black;
-  width: 95px;
-  height: 32px;
-  color: white;
-  border: none;
-  font-weight: 700;
-  cursor: pointer;
-`;
+function InfoBox(props: Props) {
+  const styles: React.CSSProperties = {
+    backgroundColor: "#f2f2f2",
+    paddingTop: "20px",
+    paddingLeft: "25px",
+    paddingRight: "25px",
+    paddingBottom: "20px",
+    textAlign: "left",
+    fontSize: "18px",
+    lineHeight: "26px",
+    ...props.styleOverrides,
+  };
 
-const FileUploadButton = styled.label`
-  font-size: 16px;
-  background-color: black;
-  width: 60px;
-  height: 32px;
-  color: white;
-  border: none;
-  font-weight: 700;
-  line-height: 1.8;
-  cursor: pointer;
-`;
+  return <div style={styles} {...props} />;
+}
 
-const FileUpload = styled.input`
-  width: 0;
-  height: 0;
-  padding: 0;
-  overflow: hidden;
-  border: 0;
-`;
+function LongEditInputBox(props: InputProps) {
+  const styles: React.CSSProperties = {
+    fontSize: "20px",
+    fontWeight: 700,
+    width: "800px",
+    height: "34px",
+    marginTop: "10px",
+    marginBottom: "10px",
+    border: "1px solid black",
+    ...props.styleOverrides,
+  };
 
-const LoadedProductItem = styled.div`
-  display: flex;
-  width: inherit;
-  align-items: top;
-  background-color: #ebebeb4d;
-  padding: 10px;
-  margin-bottom: 6px;
-  line-height: 1;
-`;
+  return <input style={styles} {...props} />;
+}
 
-const LoadedProductThumbnail = styled.img`
-  object-fit: contain;
-  width: 100px;
-  height: 100px;
-`;
+function EditTextareaBox(
+  props: React.TextareaHTMLAttributes<HTMLTextAreaElement>
+) {
+  const styles: React.CSSProperties = {
+    fontSize: "20px",
+    fontWeight: 400,
+    width: "568px",
+    marginTop: "10px",
+    marginBottom: "10px",
+    resize: "vertical",
+    border: "1px solid black",
+  };
 
-const LabelText = styled.div`
-  font-size: 24px;
-  display: flex;
-  justify-content: left;
-  width: 200px;
-  font-weight: 700;
-  line-height: 35px;
-`;
+  return <textarea style={styles} {...props} />;
+}
 
-const HintText = styled.div`
-  font-size: 18px;
-  color: #acacac;
-  line-height: 26px;
-  font-weight: 700;
-  text-align: left;
-`;
+interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  styleOverrides?: React.CSSProperties;
+}
 
-const PreviewImage = styled.img`
-  width: 133px;
-  height: 168px;
-  object-fit: contain;
-  border: 1px solid black;
-  background-color: #f8f8f8;
-  color: black;
-  margin-top: 10px;
-`;
+function ListButton(props: ButtonProps) {
+  const styles: React.CSSProperties = {
+    fontSize: "16px",
+    backgroundColor: "black",
+    width: "60px",
+    height: "32px",
+    marginTop: "10px",
+    marginBottom: "10px",
+    color: "white",
+    border: "none",
+    fontWeight: 700,
+    cursor: "pointer",
+    ...props.styleOverrides,
+  };
 
-const PreviewImageAlt = styled.div`
-  width: 133px;
-  height: 168px;
-  border: 1px solid black;
-  background-color: #f8f8f8;
-  text-align: center;
-  align-items: center;
-  justify-content: center;
-  color: #9d9d9d;
-  font-size: 20px;
-  font-weight: 700;
-  display: flex;
-  margin-top: 10px;
-`;
+  return <button style={styles} {...props} />;
+}
+
+function DetailButton(props: React.ButtonHTMLAttributes<HTMLButtonElement>) {
+  const styles: React.CSSProperties = {
+    fontSize: "20px",
+    backgroundColor: "black",
+    width: "95px",
+    height: "32px",
+    color: "white",
+    border: "none",
+    fontWeight: 700,
+    cursor: "pointer",
+  };
+
+  return <button style={styles} {...props} />;
+}
+
+function FileUploadButton(props: React.LabelHTMLAttributes<HTMLLabelElement>) {
+  const styles: React.CSSProperties = {
+    fontSize: "16px",
+    backgroundColor: "black",
+    width: "60px",
+    height: "32px",
+    color: "white",
+    border: "none",
+    fontWeight: 700,
+    lineHeight: 1.8,
+    cursor: "pointer",
+  };
+
+  return <label style={styles} {...props} />;
+}
+
+function FileUpload(props: React.InputHTMLAttributes<HTMLInputElement>) {
+  const styles: React.CSSProperties = {
+    width: 0,
+    height: 0,
+    padding: 0,
+    overflow: "hidden",
+    border: 0,
+  };
+
+  return <input style={styles} {...props} />;
+}
+
+function LoadedProductItem(props: React.HTMLAttributes<HTMLDivElement>) {
+  const styles: React.CSSProperties = {
+    display: "flex",
+    width: "inherit",
+    alignItems: "top",
+    backgroundColor: "#ebebeb4d",
+    padding: "10px",
+    marginBottom: "6px",
+    lineHeight: 1,
+  };
+
+  return <div style={styles} {...props} />;
+}
+
+function LoadedProductThumbnail(
+  props: React.ImgHTMLAttributes<HTMLImageElement>
+) {
+  const styles: React.CSSProperties = {
+    objectFit: "contain",
+    width: "100px",
+    height: "100px",
+  };
+
+  return <img style={styles} {...props} />;
+}
+
+function LabelText(props: Props) {
+  const styles: React.CSSProperties = {
+    fontSize: "24px",
+    display: "flex",
+    justifyContent: "left",
+    width: "200px",
+    fontWeight: 700,
+    lineHeight: "35px",
+    ...props.styleOverrides,
+  };
+
+  return <div style={styles} {...props} />;
+}
+
+function HintText(props: React.HTMLAttributes<HTMLDivElement>) {
+  const styles: React.CSSProperties = {
+    fontSize: "18px",
+    color: "#acacac",
+    lineHeight: "26px",
+    fontWeight: 700,
+    textAlign: "left",
+  };
+
+  return <div style={styles} {...props} />;
+}
+
+function PreviewImage(props: React.ImgHTMLAttributes<HTMLImageElement>) {
+  const styles: React.CSSProperties = {
+    width: "133px",
+    height: "168px",
+    objectFit: "contain",
+    border: "1px solid black",
+    backgroundColor: "#f8f8f8",
+    color: "black",
+    marginTop: "10px",
+  };
+
+  return <img style={styles} {...props} />;
+}
+
+function PreviewImageAlt(props: React.HTMLAttributes<HTMLDivElement>) {
+  const styles: React.CSSProperties = {
+    width: "133px",
+    height: "168px",
+    border: "1px solid black",
+    backgroundColor: "#f8f8f8",
+    textAlign: "center",
+    alignItems: "center",
+    justifyContent: "center",
+    color: "#9d9d9d",
+    fontSize: "20px",
+    fontWeight: 700,
+    display: "flex",
+    marginTop: "10px",
+  };
+
+  return <div style={styles} {...props} />;
+}
 
 export const action: ActionFunction = async ({ request }) => {
   const body = await request.formData();
@@ -420,7 +502,6 @@ export const loader: LoaderFunction = async ({ request }) => {
 };
 
 export default function PartnerProductManage() {
-  const transition = useTransition();
   //상품 추가 모달 입력값
   const [productName, setProductName] = useState<string>(""); //상품명 (필수)
   const [englishProductName, setEnglishProductName] = useState<string>(""); //영문상품명
@@ -556,7 +637,7 @@ export default function PartnerProductManage() {
       return false;
     }
 
-    if (productName.includes('/')) {
+    if (productName.includes("/")) {
       setNotice("상품명에 '/'가 들어갈 수 없습니다.");
       setIsNoticeModalOpened(true);
       return false;
@@ -1356,7 +1437,7 @@ export default function PartnerProductManage() {
                 display: "flex",
               }}
             >
-              <LabelText style={{ marginTop: "10px" }}>
+              <LabelText styleOverrides={{ marginTop: "10px" }}>
                 상품 간략설명
                 <div style={{ width: "10px", color: "red" }}>*</div>
               </LabelText>
@@ -1448,7 +1529,7 @@ export default function PartnerProductManage() {
                       }}
                     >
                       <EditInputBox
-                        style={{ width: "200px" }}
+                        styleOverrides={{ width: "200px" }}
                         value={optionCategoryList[index]}
                         onChange={(e) =>
                           editOptionCategory(index, e.target.value)
@@ -1456,7 +1537,7 @@ export default function PartnerProductManage() {
                       />
                       <Space w={10} />
                       <EditInputBox
-                        style={{ width: "400px" }}
+                        styleOverrides={{ width: "400px" }}
                         value={optionDetailList[index]}
                         onChange={(e) =>
                           editOptionDetail(index, e.target.value)
@@ -1485,7 +1566,7 @@ export default function PartnerProductManage() {
                 alignItems: "center",
               }}
             >
-              <LabelText style={{ textAlign: "left" }}>
+              <LabelText styleOverrides={{ textAlign: "left" }}>
                 옵션 별 가격 <br /> 설정 및 관리자 <br />
                 전달 메모
               </LabelText>
@@ -1504,7 +1585,7 @@ export default function PartnerProductManage() {
                 alignItems: "top",
               }}
             >
-              <LabelText style={{ marginTop: "10px" }}>
+              <LabelText styleOverrides={{ marginTop: "10px" }}>
                 교환/반품 안내
               </LabelText>
               <EditTextareaBox
@@ -1522,7 +1603,7 @@ export default function PartnerProductManage() {
                 alignItems: "top",
               }}
             >
-              <LabelText style={{ marginTop: "10px" }}>
+              <LabelText styleOverrides={{ marginTop: "10px" }}>
                 서비스 문의/안내
               </LabelText>
               <EditTextareaBox
@@ -1542,7 +1623,7 @@ export default function PartnerProductManage() {
                 alignItems: "top",
               }}
             >
-              <LabelText style={{ marginTop: "10px" }}>
+              <LabelText styleOverrides={{ marginTop: "10px" }}>
                 썸네일 이미지
                 <div style={{ width: "10px", color: "red" }}>*</div>
               </LabelText>
@@ -1631,7 +1712,7 @@ export default function PartnerProductManage() {
               }}
             >
               <LabelText />
-              <InfoBox style={{ width: "800px" }}>
+              <InfoBox styleOverrides={{ width: "800px" }}>
                 상품 이미지는 가로 1000 세로 1250 의 4:5 배율로 업로드
                 부탁드립니다.
                 <br />
@@ -1649,7 +1730,7 @@ export default function PartnerProductManage() {
               }}
             >
               <LabelText
-                style={{
+                styleOverrides={{
                   marginTop: "10px",
                   textAlign: "left",
                   fontSize: "22px",
@@ -1730,7 +1811,7 @@ export default function PartnerProductManage() {
               }}
             >
               <LabelText
-                style={{
+                styleOverrides={{
                   marginTop: "10px",
                   textAlign: "left",
                   fontSize: "22px",
@@ -1802,7 +1883,7 @@ export default function PartnerProductManage() {
               <LabelText />
               <ListButton
                 type="submit"
-                style={{
+                styleOverrides={{
                   width: "225px",
                   height: "60px",
                   fontSize: "22px",

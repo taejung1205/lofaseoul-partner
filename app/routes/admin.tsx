@@ -1,6 +1,5 @@
 import { Outlet, useSubmit } from "@remix-run/react";
 import { LoaderFunction, redirect } from "@remix-run/node";
-import styled from "styled-components";
 import { AdminHeader, MobileAdminHeader } from "~/components/header";
 import { AdminSidebar } from "~/components/sidebar";
 import { requireUser } from "~/services/session.server";
@@ -8,16 +7,20 @@ import { useViewportSize } from "@mantine/hooks";
 import { useState } from "react";
 import { isMobile } from "~/utils/mobile";
 
-const AdminPage = styled.div`
-  width: inherit;
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  font-size: 33px;
-  text-align: center;
-  font-weight: 700;
-  line-height: 1;
-`;
+function AdminPage(props: React.HTMLProps<HTMLDivElement>) {
+  const styles: React.CSSProperties = {
+    width: "inherit",
+    display: "flex",
+    flexDirection: "column",
+    height: "100%",
+    fontSize: "33px",
+    textAlign: "center",
+    fontWeight: 700,
+    lineHeight: 1,
+  };
+
+  return <div style={styles} {...props} />;
+}
 
 /**
  * check the user to see if there is an active session, if not

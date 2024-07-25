@@ -1,11 +1,15 @@
 import { PageLayout } from "~/components/page_layout";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useActionData, useLoaderData, useNavigation, useSubmit } from "@remix-run/react";
+import {
+  useActionData,
+  useLoaderData,
+  useNavigation,
+  useSubmit,
+} from "@remix-run/react";
 import { ActionFunction, json, LoaderFunction } from "@remix-run/node";
 import { BasicModal, ModalButton } from "~/components/modal";
 import { OrderItem, OrderTable } from "~/components/order";
-import styled from "styled-components";
 import {
   getAllDelayedOrders,
   getPartnerProfile,
@@ -13,29 +17,50 @@ import {
 import { sendAligoMessage } from "~/services/aligo.server";
 import { LoadingOverlay } from "@mantine/core";
 
-const EmptySettlementBox = styled.div`
-  display: flex;
-  text-align: center;
-  font-size: 24px;
-  height: 100px;
-  align-items: center;
-  justify-content: center;
-  width: inherit;
-`;
+function EmptySettlementBox({
+  children,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) {
+  const boxStyles: React.CSSProperties = {
+    display: "flex",
+    textAlign: "center",
+    fontSize: "24px",
+    height: "100px",
+    alignItems: "center",
+    justifyContent: "center",
+    width: "inherit",
+  };
 
-const SendNoticeButton = styled.button`
-  background-color: black;
-  color: white;
-  font-size: 24px;
-  font-weight: 700;
-  width: 220px;
-  height: 50px;
-  line-height: 1;
-  padding: 6px 6px 6px 6px;
-  margin-right: 40px;
-  cursor: pointer;
-`;
+  return (
+    <div style={boxStyles} {...props}>
+      {children}
+    </div>
+  );
+}
 
+function SendNoticeButton({
+  children,
+  ...props
+}: React.ButtonHTMLAttributes<HTMLButtonElement>) {
+  const buttonStyles: React.CSSProperties = {
+    backgroundColor: "black",
+    color: "white",
+    fontSize: "24px",
+    fontWeight: 700,
+    width: "220px",
+    height: "50px",
+    lineHeight: 1,
+    padding: "6px",
+    marginRight: "40px",
+    cursor: "pointer",
+  };
+
+  return (
+    <button style={buttonStyles} {...props}>
+      {children}
+    </button>
+  );
+}
 export const action: ActionFunction = async ({ request }) => {
   try {
     const body = await request.formData();

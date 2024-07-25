@@ -1,7 +1,6 @@
 import { Checkbox } from "@mantine/core";
 import React from "react";
 import { useEffect, useState } from "react";
-import styled from "styled-components";
 import { dayStrToDate } from "./date";
 import { PossibleSellers } from "./seller";
 import { ShippingCompanySelect } from "./shipping_company";
@@ -28,39 +27,92 @@ export type OrderItem = {
   waybillSharedDate: string; //운송장이 마지막으로 공유된 날짜 XXXX-XX-XX
 };
 
-const OrderBox = styled.div`
-  width: inherit;
-  height: 60%;
-  min-height: 60%;
-  position: relative;
-  overflow: scroll;
-`;
+interface Props extends  React.HTMLAttributes<HTMLDivElement> {
+  styleOverrides?: React.CSSProperties;
+}
 
-const OrderItemsBox = styled.div`
-  max-height: 85%;
-`;
 
-const OrderItemBox = styled.div`
-  width: fit-content;
-  display: flex;
-  align-items: center;
-  padding: 10px 6px 10px 6px;
-`;
+function OrderBox({ children, styleOverrides, ...props }: Props) {
+  const orderBoxStyles: React.CSSProperties = {
+    width: 'inherit',
+    height: '60%',
+    minHeight: '60%',
+    position: 'relative',
+    overflow: 'scroll',
+    ...styleOverrides
+  };
 
-const OrderHeader = styled(OrderItemBox)`
-  background-color: #ebebeb;
-`;
+  return (
+    <div style={orderBoxStyles} {...props}>
+      {children}
+    </div>
+  );
+}
 
-const TextBox = styled.div`
-  margin-left: 10px;
-  font-weight: 700;
-  font-size: 16px;
-  line-height: 20px;
-  text-align: center;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  overflow: hidden;
-`;
+function OrderItemsBox({ children, styleOverrides,  ...props }: Props) {
+  const orderItemsBoxStyles: React.CSSProperties = {
+    maxHeight: '85%',
+  };
+
+  return (
+    <div style={orderItemsBoxStyles} {...props}>
+      {children}
+    </div>
+  );
+}
+
+function OrderItemBox({ children, styleOverrides, ...props }: Props) {
+  const orderItemBoxStyles: React.CSSProperties = {
+    width: 'fit-content',
+    display: 'flex',
+    alignItems: 'center',
+    padding: '10px 6px',
+    ...styleOverrides
+  };
+
+  return (
+    <div style={orderItemBoxStyles} {...props}>
+      {children}
+    </div>
+  );
+}
+
+function OrderHeader({ children, styleOverrides, ...props }: Props) {
+  const orderHeaderStyles: React.CSSProperties = {
+    backgroundColor: '#ebebeb',
+    width: 'fit-content',
+    display: 'flex',
+    alignItems: 'center',
+    padding: '10px 6px',
+    ...styleOverrides
+  };
+
+  return (
+    <div style={orderHeaderStyles} {...props}>
+      {children}
+    </div>
+  );
+}
+
+function TextBox({ children, styleOverrides, ...props }: Props) {
+  const textBoxStyles: React.CSSProperties = {
+    marginLeft: '10px',
+    fontWeight: 700,
+    fontSize: '16px',
+    lineHeight: '20px',
+    textAlign: 'center',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    ...styleOverrides
+  };
+
+  return (
+    <div style={textBoxStyles} {...props}>
+      {children}
+    </div>
+  );
+}
 
 /**
  * 엑셀에서 읽어온 해당 주문서 아이템이 유효한 지를 확인합니다.
@@ -202,11 +254,11 @@ function OrderItem({
       {isDelayedOrder ? (
         <>
           <TextBox
-            style={{ minWidth: "160px", fontSize: "16px", width: "160px" }}
+            styleOverrides={{ minWidth: "160px", fontSize: "16px", width: "160px" }}
           >
             {item.orderSharedDate}
           </TextBox>
-          <TextBox style={{ minWidth: "80px", width: "80px", color: "red" }}>
+          <TextBox styleOverrides={{ minWidth: "80px", width: "80px", color: "red" }}>
             {`+${Math.floor(
               (new Date().getTime() -
                 dayStrToDate(item.orderSharedDate).getTime()) /
@@ -217,24 +269,24 @@ function OrderItem({
       ) : (
         <></>
       )}
-      <TextBox style={{ minWidth: "90px", width: "90px" }}>
+      <TextBox styleOverrides={{ minWidth: "90px", width: "90px" }}>
         {item.managementNumber}
       </TextBox>
-      <TextBox style={{ minWidth: "90px", width: "90px" }}>
+      <TextBox styleOverrides={{ minWidth: "90px", width: "90px" }}>
         {item.seller}
       </TextBox>
-      <TextBox style={{ minWidth: "160px", fontSize: "12px", width: "160px" }}>
+      <TextBox styleOverrides={{ minWidth: "160px", fontSize: "12px", width: "160px" }}>
         {item.orderNumber}
       </TextBox>
       {isWaybill ? (
         <>
           <TextBox
-            style={{ minWidth: "160px", fontSize: "16px", width: "160px" }}
+            styleOverrides={{ minWidth: "160px", fontSize: "16px", width: "160px" }}
           >
             {item.shippingCompany}
           </TextBox>
           <TextBox
-            style={{ minWidth: "160px", fontSize: "12px", width: "160px" }}
+            styleOverrides={{ minWidth: "160px", fontSize: "12px", width: "160px" }}
           >
             {item.waybillNumber}
           </TextBox>
@@ -269,37 +321,37 @@ function OrderItem({
       ) : (
         <></>
       )}
-      <TextBox style={{ minWidth: "450px", fontSize: "12px", width: "450px" }}>
+      <TextBox styleOverrides={{ minWidth: "450px", fontSize: "12px", width: "450px" }}>
         {item.productName}
       </TextBox>
-      <TextBox style={{ minWidth: "250px", fontSize: "12px", width: "250px" }}>
+      <TextBox styleOverrides={{ minWidth: "250px", fontSize: "12px", width: "250px" }}>
         {item.optionName}
       </TextBox>
-      <TextBox style={{ minWidth: "30px", width: "30px" }}>
+      <TextBox styleOverrides={{ minWidth: "30px", width: "30px" }}>
         {item.amount}
       </TextBox>
-      <TextBox style={{ minWidth: "60px", width: "60px" }}>
+      <TextBox styleOverrides={{ minWidth: "60px", width: "60px" }}>
         {item.zipCode}
       </TextBox>
-      <TextBox style={{ minWidth: "400px", fontSize: "12px", width: "400px" }}>
+      <TextBox styleOverrides={{ minWidth: "400px", fontSize: "12px", width: "400px" }}>
         {item.address}
       </TextBox>
-      <TextBox style={{ minWidth: "160px", width: "160px" }}>
+      <TextBox styleOverrides={{ minWidth: "160px", width: "160px" }}>
         {item.phone}
       </TextBox>
-      <TextBox style={{ minWidth: "160px", width: "160px" }}>
+      <TextBox styleOverrides={{ minWidth: "160px", width: "160px" }}>
         {item.ordererPhone}
       </TextBox>
-      <TextBox style={{ minWidth: "90px", width: "90px" }}>
+      <TextBox styleOverrides={{ minWidth: "90px", width: "90px" }}>
         {item.orderer}
       </TextBox>
-      <TextBox style={{ minWidth: "90px", width: "90px" }}>
+      <TextBox styleOverrides={{ minWidth: "90px", width: "90px" }}>
         {item.receiver}
       </TextBox>
-      <TextBox style={{ minWidth: "90px", width: "90px" }}>
+      <TextBox styleOverrides={{ minWidth: "90px", width: "90px" }}>
         {item.customsCode}
       </TextBox>
-      <TextBox style={{ minWidth: "250px", fontSize: "12px", width: "250px" }}>
+      <TextBox styleOverrides={{ minWidth: "250px", fontSize: "12px", width: "250px" }}>
         {item.deliveryRequest}
       </TextBox>
     </OrderItemBox>
@@ -361,36 +413,36 @@ export function OrderTable({
 
           {isDelayedOrder ? (
             <>
-              <TextBox style={{ minWidth: "160px" }}>주문공유 날짜</TextBox>
-              <TextBox style={{ minWidth: "80px" }}>지연일</TextBox>
+              <TextBox styleOverrides={{ minWidth: "160px" }}>주문공유 날짜</TextBox>
+              <TextBox styleOverrides={{ minWidth: "80px" }}>지연일</TextBox>
             </>
           ) : (
             <></>
           )}
-          <TextBox style={{ minWidth: "90px" }}>관리번호</TextBox>
-          <TextBox style={{ minWidth: "90px" }}>판매처</TextBox>
-          <TextBox style={{ minWidth: "160px" }}>주문번호</TextBox>
+          <TextBox styleOverrides={{ minWidth: "90px" }}>관리번호</TextBox>
+          <TextBox styleOverrides={{ minWidth: "90px" }}>판매처</TextBox>
+          <TextBox styleOverrides={{ minWidth: "160px" }}>주문번호</TextBox>
 
           {isWaybillEdit || isWaybill ? (
             <>
-              <TextBox style={{ minWidth: "160px" }}>택배사</TextBox>
-              <TextBox style={{ minWidth: "160px" }}>송장번호</TextBox>
+              <TextBox styleOverrides={{ minWidth: "160px" }}>택배사</TextBox>
+              <TextBox styleOverrides={{ minWidth: "160px" }}>송장번호</TextBox>
             </>
           ) : (
             <></>
           )}
 
-          <TextBox style={{ minWidth: "450px" }}>상품명</TextBox>
-          <TextBox style={{ minWidth: "250px" }}>옵션명</TextBox>
-          <TextBox style={{ minWidth: "30px" }}>수량</TextBox>
-          <TextBox style={{ minWidth: "60px" }}>우편번호</TextBox>
-          <TextBox style={{ minWidth: "400px" }}>주소</TextBox>
-          <TextBox style={{ minWidth: "160px" }}>연락처</TextBox>
-          <TextBox style={{ minWidth: "160px" }}>주문자 전화번호</TextBox>
-          <TextBox style={{ minWidth: "90px" }}>주문자명</TextBox>
-          <TextBox style={{ minWidth: "90px" }}>수취인</TextBox>
-          <TextBox style={{ minWidth: "90px" }}>통관부호</TextBox>
-          <TextBox style={{ minWidth: "250px" }}>배송요청사항</TextBox>
+          <TextBox styleOverrides={{ minWidth: "450px" }}>상품명</TextBox>
+          <TextBox styleOverrides={{ minWidth: "250px" }}>옵션명</TextBox>
+          <TextBox styleOverrides={{ minWidth: "30px" }}>수량</TextBox>
+          <TextBox styleOverrides={{ minWidth: "60px" }}>우편번호</TextBox>
+          <TextBox styleOverrides={{ minWidth: "400px" }}>주소</TextBox>
+          <TextBox styleOverrides={{ minWidth: "160px" }}>연락처</TextBox>
+          <TextBox styleOverrides={{ minWidth: "160px" }}>주문자 전화번호</TextBox>
+          <TextBox styleOverrides={{ minWidth: "90px" }}>주문자명</TextBox>
+          <TextBox styleOverrides={{ minWidth: "90px" }}>수취인</TextBox>
+          <TextBox styleOverrides={{ minWidth: "90px" }}>통관부호</TextBox>
+          <TextBox styleOverrides={{ minWidth: "250px" }}>배송요청사항</TextBox>
           <div style={{ width: "16px" }} />
         </OrderHeader>
         <OrderItemsBox>

@@ -15,36 +15,48 @@ import {
   dayStrToDate,
   getTimezoneDate,
 } from "~/components/date";
-import { GetListButton } from "~/components/button";
+import { CommonButton } from "~/components/button";
 import { ActionFunction, json, LoaderFunction } from "@remix-run/node";
 import { BasicModal, ModalButton } from "~/components/modal";
 import { OrderItem, OrderTable } from "~/components/order";
-import styled from "styled-components";
 import { deleteOrders, getAllOrders } from "~/services/firebase.server";
 import { LoadingOverlay, Space } from "@mantine/core";
 
-const EmptySettlementBox = styled.div`
-  display: flex;
-  text-align: center;
-  font-size: 24px;
-  height: 100px;
-  align-items: center;
-  justify-content: center;
-  width: inherit;
-`;
+interface EmptySettlementBoxProps extends React.HTMLProps<HTMLDivElement> {}
 
-const DeleteButton = styled.button`
-  background-color: black;
-  color: white;
-  font-size: 24px;
-  font-weight: 700;
-  width: 220px;
-  height: 50px;
-  line-height: 1;
-  padding: 6px 6px 6px 6px;
-  margin-right: 40px;
-  cursor: pointer;
-`;
+const EmptySettlementBox: React.FC<EmptySettlementBoxProps> = (props) => {
+  const styles: React.CSSProperties = {
+    display: "flex",
+    textAlign: "center",
+    fontSize: "24px",
+    height: "100px",
+    alignItems: "center",
+    justifyContent: "center",
+    width: "inherit",
+  };
+
+  return <div style={styles} {...props} />;
+};
+
+interface DeleteButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement> {}
+
+const DeleteButton: React.FC<DeleteButtonProps> = (props) => {
+  const styles: React.CSSProperties = {
+    backgroundColor: "black",
+    color: "white",
+    fontSize: "24px",
+    fontWeight: 700,
+    width: "220px",
+    height: "50px",
+    lineHeight: "1",
+    padding: "6px",
+    marginRight: "40px",
+    cursor: "pointer",
+  };
+
+  return <button style={styles} {...props} />;
+};
 
 export function links() {
   return [{ rel: "stylesheet", href: dayPickerStyles }];
@@ -181,10 +193,7 @@ export default function AdminOrderList() {
 
   return (
     <>
-      <LoadingOverlay
-        visible={navigation.state == "loading"}
-        overlayBlur={2}
-      />
+      <LoadingOverlay visible={navigation.state == "loading"} overlayBlur={2} />
       {/* 안내용 모달 */}
       <BasicModal
         opened={isNoticeModalOpened}
@@ -249,8 +258,9 @@ export default function AdminOrderList() {
             selectedDate={selectedDate}
             setSelectedDate={setSelectedDate}
           />
+          <Space w={20} />
           <Link to={`/admin/order-list?day=${selectedDayStr}`}>
-            <GetListButton>조회하기</GetListButton>
+            <CommonButton>조회하기</CommonButton>
           </Link>
         </div>
         <div style={{ height: "20px" }} />

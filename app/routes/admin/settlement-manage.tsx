@@ -5,11 +5,9 @@ import {
   useLoaderData,
   useNavigation,
   useSubmit,
-  useTransition,
 } from "@remix-run/react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import styled from "styled-components";
-import { BlackButton, CommonButton, GetListButton } from "~/components/button";
+import { CommonButton } from "~/components/button";
 import {
   MonthSelectPopover,
   dateToKoreanMonth,
@@ -33,17 +31,22 @@ import {
 import writeXlsxFile from "write-excel-file";
 import { LoadingOverlay, Space } from "@mantine/core";
 import { BasicModal, ModalButton } from "~/components/modal";
-import { sendResendEmail } from "~/services/resend.server";
 
-const EmptySettlementBox = styled.div`
-  display: flex;
-  text-align: center;
-  font-size: 24px;
-  height: 100px;
-  align-items: center;
-  justify-content: center;
-  width: inherit;
-`;
+interface EmptySettlementBoxProps extends React.HTMLProps<HTMLDivElement> {}
+
+const EmptySettlementBox: React.FC<EmptySettlementBoxProps> = (props) => {
+  const styles: React.CSSProperties = {
+    display: "flex",
+    textAlign: "center",
+    fontSize: "30px",
+    height: "100px",
+    alignItems: "center",
+    justifyContent: "center",
+    width: "inherit",
+  };
+
+  return <div style={styles} {...props} />;
+};
 
 export const loader: LoaderFunction = async ({ request }) => {
   const url = new URL(request.url);
@@ -227,7 +230,12 @@ export default function AdminSettlementManage() {
 
   return (
     <PageLayout>
-      <LoadingOverlay visible={navigation.state == "loading" || navigation.state == "submitting"} overlayBlur={2} />
+      <LoadingOverlay
+        visible={
+          navigation.state == "loading" || navigation.state == "submitting"
+        }
+        overlayBlur={2}
+      />
 
       {/* 안내용 모달 */}
       <BasicModal
@@ -318,10 +326,10 @@ export default function AdminSettlementManage() {
           ) : (
             <>
               <CommonButton
+                width={180}
                 onClick={async () => {
                   await writeExcel(sumItems);
                 }}
-                width={180}
               >
                 엑셀 다운로드
               </CommonButton>

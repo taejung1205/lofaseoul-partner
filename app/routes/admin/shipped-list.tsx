@@ -9,10 +9,9 @@ import {
   dayStrToDate,
   getTimezoneDate,
 } from "~/components/date";
-import { GetListButton } from "~/components/button";
+import { CommonButton } from "~/components/button";
 import { json, LoaderFunction } from "@remix-run/node";
 import { OrderItem, OrderTable } from "~/components/order";
-import styled from "styled-components";
 import {
   getAllWaybills,
   getMonthWaybills,
@@ -23,47 +22,59 @@ import { PossibleSellers, SellerSelect } from "~/components/seller";
 import writeXlsxFile from "write-excel-file";
 import { LoadingOverlay, Space } from "@mantine/core";
 
-const EmptySettlementBox = styled.div`
-  display: flex;
-  text-align: center;
-  font-size: 24px;
-  height: 100px;
-  align-items: center;
-  justify-content: center;
-  width: inherit;
-`;
+interface EmptySettlementBoxProps extends React.HTMLProps<HTMLDivElement> {}
 
-const DownloadButton = styled.button`
-  background-color: black;
-  color: white;
-  font-size: 24px;
-  font-weight: 700;
-  width: 220px;
-  height: 50px;
-  line-height: 1;
-  padding: 6px 6px 6px 6px;
-  margin-right: 40px;
-  cursor: pointer;
-`;
+const EmptySettlementBox: React.FC<EmptySettlementBoxProps> = (props) => {
+  const styles: React.CSSProperties = {
+    display: "flex",
+    textAlign: "center",
+    fontSize: "24px",
+    height: "100px",
+    alignItems: "center",
+    justifyContent: "center",
+    width: "inherit",
+  };
 
-const SellerInputBox = styled.input`
-  width: 140px;
-  height: 40px;
-  border: 3px solid black;
-  padding: 6px;
-  text-align: left;
-  font-size: 20px;
-  font-weight: 700;
-  margin-left: 20px;
-  ::placeholder {
-    color: black;
-    font-weight: 700;
-    opacity: 1;
-  }
-  :focus::placeholder {
-    color: transparent;
-  }
-`;
+  return <div style={styles} {...props} />;
+};
+
+interface DownloadButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement> {}
+
+const DownloadButton: React.FC<DownloadButtonProps> = (props) => {
+  const styles: React.CSSProperties = {
+    backgroundColor: "black",
+    color: "white",
+    fontSize: "24px",
+    fontWeight: 700,
+    width: "220px",
+    height: "50px",
+    lineHeight: "1",
+    padding: "6px",
+    marginRight: "40px",
+    cursor: "pointer",
+  };
+
+  return <button style={styles} {...props} />;
+};
+
+interface SellerInputBoxProps
+  extends React.InputHTMLAttributes<HTMLInputElement> {}
+
+const SellerInputBox: React.FC<SellerInputBoxProps> = (props) => {
+  const styles: React.CSSProperties = {
+    width: "140px",
+    height: "40px",
+    border: "3px solid black",
+    padding: "6px",
+    textAlign: "left",
+    fontSize: "20px",
+    fontWeight: 700,
+    marginLeft: "20px",
+  };
+
+  return <input style={styles} placeholder={props.placeholder} {...props} />;
+};
 
 export function links() {
   return [{ rel: "stylesheet", href: dayPickerStyles }];
@@ -231,7 +242,7 @@ export default function AdminShippedList() {
         >
           <div style={{ display: "flex", alignItems: "center" }}>
             <img src="/images/icon_calendar.svg" />
-            <Space w={20}/>
+            <Space w={20} />
             <DaySelectPopover
               selectedDate={selectedDate}
               setSelectedDate={setSelectedDate}
@@ -243,6 +254,7 @@ export default function AdminShippedList() {
               onChange={(e) => setPartnerName(e.target.value)}
               required
             />
+            <Space w={20} />
             <Link
               to={
                 partnerName.length > 0
@@ -250,8 +262,9 @@ export default function AdminShippedList() {
                   : `/admin/shipped-list?day=${selectedDayStr}`
               }
             >
-              <GetListButton>조회하기</GetListButton>
+              <CommonButton>조회하기</CommonButton>
             </Link>
+            <Space w={20} />
             <Link
               to={
                 partnerName.length > 0
@@ -259,9 +272,7 @@ export default function AdminShippedList() {
                   : `/admin/shipped-list?day=${selectedDayStr}&getmonth=true`
               }
             >
-              <GetListButton style={{ width: "200px" }}>
-                월간 이력 다운로드
-              </GetListButton>
+              <CommonButton width={200}>월간 이력 다운로드</CommonButton>
             </Link>
           </div>
           <SellerSelect seller={seller} setSeller={setSeller} />

@@ -7,7 +7,6 @@ import {
   useSubmit,
 } from "@remix-run/react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import styled from "styled-components";
 import * as xlsx from "xlsx";
 import {
   dateToKoreanMonth,
@@ -31,49 +30,86 @@ import {
   getSettlementMonthes,
 } from "~/services/firebase.server";
 
-const FileNameBox = styled.div`
-  border: 3px solid #000000;
-  background-color: #efefef;
-  width: 550px;
-  max-width: 70%;
-  font-size: 20px;
-  line-height: 20px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  overflow: hidden;
-  padding: 6px;
-  text-align: left;
-`;
+function FileNameBox({
+  children,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) {
+  const boxStyles: React.CSSProperties = {
+    border: "3px solid #000000",
+    backgroundColor: "#efefef",
+    width: "550px",
+    maxWidth: "70%",
+    fontSize: "20px",
+    lineHeight: "20px",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    padding: "6px",
+    textAlign: "left",
+  };
 
-const FileUploadButton = styled.label`
-  background-color: white;
-  border: 3px solid black;
-  font-size: 20px;
-  font-weight: 700;
-  width: 110px;
-  line-height: 24px;
-  padding: 6px;
-  cursor: pointer;
-`;
+  return (
+    <div style={boxStyles} {...props}>
+      {children}
+    </div>
+  );
+}
 
-const FileUpload = styled.input`
-  width: 0;
-  height: 0;
-  padding: 0;
-  overflow: hidden;
-  border: 0;
-`;
+function FileUploadButton({
+  children,
+  ...props
+}: React.LabelHTMLAttributes<HTMLLabelElement>) {
+  const buttonStyles: React.CSSProperties = {
+    backgroundColor: "white",
+    border: "3px solid black",
+    fontSize: "20px",
+    fontWeight: 700,
+    width: "110px",
+    lineHeight: "24px",
+    padding: "6px",
+    cursor: "pointer",
+  };
 
-const ShareButton = styled.button`
-  background-color: black;
-  color: white;
-  font-size: 24px;
-  font-weight: 700;
-  width: 350px;
-  line-height: 1;
-  padding: 6px 6px 6px 6px;
-  cursor: pointer;
-`;
+  return (
+    <label style={buttonStyles} {...props}>
+      {children}
+    </label>
+  );
+}
+
+function FileUpload(props: React.InputHTMLAttributes<HTMLInputElement>) {
+  const inputStyles: React.CSSProperties = {
+    width: "0",
+    height: "0",
+    padding: "0",
+    overflow: "hidden",
+    border: "0",
+  };
+
+  return <input type="file" style={inputStyles} {...props} />;
+}
+
+function ShareButton({
+  children,
+  ...props
+}: React.ButtonHTMLAttributes<HTMLButtonElement>) {
+  const buttonStyles: React.CSSProperties = {
+    backgroundColor: "black",
+    color: "white",
+    fontSize: "24px",
+    fontWeight: 700,
+    width: "350px",
+    lineHeight: 1,
+    padding: "6px",
+    cursor: "pointer",
+  };
+
+  return (
+    <button style={buttonStyles} {...props}>
+      {children}
+    </button>
+  );
+}
 
 export const action: ActionFunction = async ({ request }) => {
   const body = await request.formData();

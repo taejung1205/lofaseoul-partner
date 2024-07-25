@@ -1,6 +1,5 @@
 import { Popover } from "@mantine/core";
 import { DayPicker } from "react-day-picker";
-import styled from "styled-components";
 
 import dayPickerStyles from "react-day-picker/dist/style.css";
 
@@ -60,7 +59,7 @@ export function dayStrToDate(dayStr: string) {
   return new Date(Number(year), Number(month) - 1, Number(day));
 }
 
-export function getIdFromTime(){
+export function getIdFromTime() {
   const date = new Date();
   const year = date.getFullYear().toString().substring(2);
   const month = (date.getMonth() + 1).toString().padStart(2, "0");
@@ -68,7 +67,7 @@ export function getIdFromTime(){
   const hour = date.getHours().toString().padStart(2, "0");
   const minute = date.getMinutes().toString().padStart(2, "0");
   const second = date.getSeconds().toString().padStart(2, "0");
-  return `${year}${month}${day}${hour}${minute}${second}`
+  return `${year}${month}${day}${hour}${minute}${second}`;
 }
 
 export function MonthSelectPopover({
@@ -133,15 +132,28 @@ export function DaySelectPopover({
   );
 }
 
-const MonthBox = styled.div`
-  border: 3px solid #000000;
-  width: 140px;
-  min-width: 140px;
-  font-size: 20px;
-  line-height: 20px;
-  padding: 6px;
-  height: 40px;
-  text-align: center;
-  align-items: center;
-  cursor: pointer;
-`;
+function MonthBox({
+  children,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) {
+  const defaultStyles: React.CSSProperties = {
+    border: "3px solid #000000",
+    width: "140px",
+    minWidth: "140px",
+    fontSize: "20px",
+    lineHeight: "20px",
+    padding: "6px",
+    height: "40px",
+    textAlign: "center",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    cursor: "pointer",
+  };
+
+  return (
+    <div style={defaultStyles} {...props}>
+      {children}
+    </div>
+  );
+}

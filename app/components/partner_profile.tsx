@@ -1,6 +1,5 @@
 import { Form } from "@remix-run/react";
 import { useMemo, useState } from "react";
-import styled from "styled-components";
 import { BasicModal, ModalButton } from "./modal";
 import { useViewportSize } from "@mantine/hooks";
 import { isMobile } from "~/utils/mobile";
@@ -20,31 +19,78 @@ export type PartnerProfile = {
   businessTaxStandard: string;
 };
 
-const PartnerProfileBox = styled.div`
-  background-color: #d9d9d9;
-  border: 1px solid black;
-  width: 100%;
-  margin-bottom: 40px;
-`;
+function PartnerProfileBox({
+  children,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) {
+  const boxStyles: React.CSSProperties = {
+    backgroundColor: "#d9d9d9",
+    border: "1px solid black",
+    width: "100%",
+    marginBottom: "40px",
+  };
 
-const ProfileGridContainer = styled.div<{ isMobile: boolean }>`
-  display: grid;
-  grid-template-columns: ${(props) => (props.isMobile ? "auto" : "auto auto")};
-`;
+  return (
+    <div style={boxStyles} {...props}>
+      {children}
+    </div>
+  );
+}
+interface ProfileGridContainerProps
+  extends React.HTMLAttributes<HTMLDivElement> {
+  isMobile: boolean;
+}
 
-const ProfileGridItem = styled.div<{ isMobile: boolean }>`
-  background-color: #f0f0f0;
-  border: 0.5px solid black;
-  text-align: left;
-  display: flex;
-  flex-direction: ${(props) => (props.isMobile ? "column" : "row")};
-`;
+function ProfileGridContainer({
+  isMobile,
+  children,
+  ...props
+}: ProfileGridContainerProps) {
+  const gridStyles: React.CSSProperties = {
+    display: "grid",
+    gridTemplateColumns: isMobile ? "auto" : "auto auto",
+  };
 
-const InputBox = styled.input`
-  font-size: 20px;
-  font-weight: 700;
-  margin: 4px;
-`;
+  return (
+    <div style={gridStyles} {...props}>
+      {children}
+    </div>
+  );
+}
+
+interface ProfileGridItemProps extends React.HTMLAttributes<HTMLDivElement> {
+  isMobile: boolean;
+}
+
+function ProfileGridItem({
+  isMobile,
+  children,
+  ...props
+}: ProfileGridItemProps) {
+  const itemStyles: React.CSSProperties = {
+    backgroundColor: "#f0f0f0",
+    border: "0.5px solid black",
+    textAlign: "left",
+    display: "flex",
+    flexDirection: isMobile ? "column" : "row",
+  };
+
+  return (
+    <div style={itemStyles} {...props}>
+      {children}
+    </div>
+  );
+}
+
+function InputBox({ ...props }: React.InputHTMLAttributes<HTMLInputElement>) {
+  const inputStyles: React.CSSProperties = {
+    fontSize: "20px",
+    fontWeight: 700,
+    margin: "4px",
+  };
+
+  return <input style={inputStyles} {...props} />;
+}
 
 export function PartnerProfile({
   partnerProfile,

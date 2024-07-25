@@ -12,7 +12,6 @@ import {
   useSubmit,
 } from "@remix-run/react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import styled from "styled-components";
 import {
   dateToKoreanMonth,
   MonthSelectPopover,
@@ -31,11 +30,7 @@ import {
 } from "~/components/settlement_sum";
 import { getSettlements, getSettlementSum } from "~/services/firebase.server";
 import { PageLayout } from "~/components/page_layout";
-import {
-  BlackBottomButton,
-  CommonButton,
-  GetListButton,
-} from "~/components/button";
+import { BlackBottomButton, CommonButton } from "~/components/button";
 import { requireUser } from "~/services/session.server";
 import { sendAligoMessage } from "~/services/aligo.server";
 import { BasicModal, ModalButton } from "~/components/modal";
@@ -44,24 +39,39 @@ import writeXlsxFile from "write-excel-file";
 import { useViewportSize } from "@mantine/hooks";
 import { isMobile } from "~/utils/mobile";
 
-const EmptySettlementBox = styled.div`
-  display: flex;
-  text-align: center;
-  font-size: 24px;
-  height: 100px;
-  align-items: center;
-  justify-content: center;
-  width: inherit;
-`;
+interface Props extends React.HTMLAttributes<HTMLDivElement> {
+  styleOverrides?: React.CSSProperties;
+}
 
-const InfoText = styled.text<{ isMobile: boolean }>`
-  font-size: ${(props) => (props.isMobile ? "12px" : "16px")};
-  font-weight: 700;
-  line-height: 1;
-  padding: 6px 6px 6px 6px;
-  text-align: left;
-  white-space: pre-line;
-`;
+function EmptySettlementBox(props: Props) {
+  const styles: React.CSSProperties = {
+    display: "flex",
+    textAlign: "center",
+    fontSize: "24px",
+    height: "100px",
+    alignItems: "center",
+    justifyContent: "center",
+    width: "inherit",
+    ...props.styleOverrides,
+  };
+
+  return <div style={styles} {...props} />;
+}
+
+function InfoText(
+  props: React.HTMLProps<HTMLDivElement> & { isMobile: boolean }
+) {
+  const styles: React.CSSProperties = {
+    fontSize: props.isMobile ? "12px" : "16px",
+    fontWeight: 700,
+    lineHeight: 1,
+    padding: "6px",
+    textAlign: "left",
+    whiteSpace: "pre-line",
+  };
+
+  return <div style={styles} {...props} />;
+}
 
 export const action: ActionFunction = async ({ request }) => {
   const body = await request.formData();
@@ -341,7 +351,9 @@ export default function AdminSettlementShare() {
               to={`/partner/settlement-list?month=${monthNumeral}`}
               style={{ width: "calc(100% - 160px)" }}
             >
-              <CommonButton style={{ width: "100%" }}>조회하기</CommonButton>
+              <CommonButton styleOverrides={{ width: "100%" }}>
+                조회하기
+              </CommonButton>
             </Link>
           </div>
           <Space h={10} />
@@ -360,7 +372,7 @@ export default function AdminSettlementShare() {
         <Space h={10} />
         {settlements == null ? (
           <EmptySettlementBox
-            style={{
+            styleOverrides={{
               display: "flex",
               textAlign: "center",
               fontSize: "30px",
@@ -382,7 +394,7 @@ export default function AdminSettlementShare() {
           />
         ) : (
           <EmptySettlementBox
-            style={{
+            styleOverrides={{
               display: "flex",
               textAlign: "center",
               fontSize: "30px",
@@ -409,7 +421,7 @@ export default function AdminSettlementShare() {
                 display: "flex",
                 alignItems: "center",
                 flexDirection: isMobileMemo ? "column" : "row",
-                width: "100%"
+                width: "100%",
               }}
             >
               <BlackBottomButton
@@ -419,8 +431,14 @@ export default function AdminSettlementShare() {
               >
                 오류 보고
               </BlackBottomButton>
-              <Space h={20} w={30}/>
-              <div style={{ width: "100%", textAlign: "left", fontSize: isMobileMemo ? "16px" : "20px" }}>
+              <Space h={20} w={30} />
+              <div
+                style={{
+                  width: "100%",
+                  textAlign: "left",
+                  fontSize: isMobileMemo ? "16px" : "20px",
+                }}
+              >
                 다량의 오류가 보일 시에는 kyj@tabacpress.xyz로 문의
                 부탁드립니다.
               </div>

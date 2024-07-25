@@ -1,6 +1,5 @@
 import { Link } from "@remix-run/react";
 import { useEffect, useMemo, useState } from "react";
-import styled from "styled-components";
 import { PossibleSellers } from "./seller";
 import { Checkbox, Space } from "@mantine/core";
 import { useViewportSize } from "@mantine/hooks";
@@ -13,38 +12,100 @@ export type SettlementSumItem = {
   bankAccount: string;
 };
 
-const SettlementBox = styled.div`
-  width: inherit;
-  height: 60%;
-  min-height: 60%;
-  position: relative;
-`;
+export function SettlementBox({
+  children,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) {
+  const boxStyles: React.CSSProperties = {
+    width: "inherit",
+    height: "60%",
+    minHeight: "60%",
+    position: "relative",
+  };
 
-const SettlementItemsBox = styled.div`
-  max-height: 85%;
-  overflow-y: scroll;
-`;
+  return (
+    <div style={boxStyles} {...props}>
+      {children}
+    </div>
+  );
+}
 
-const SettlementItemBox = styled.div`
-  display: flex;
-  align-items: center;
-  background-color: #ebebeb4d;
-  padding: 10px;
-  margin-top: 8px;
-  line-height: 1;
-`;
+export function SettlementItemsBox({
+  children,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) {
+  const itemsBoxStyles: React.CSSProperties = {
+    maxHeight: "85%",
+    overflowY: "scroll",
+  };
 
-const SettlementHeader = styled(SettlementItemBox)`
-  background-color: #ebebeb;
-`;
+  return (
+    <div style={itemsBoxStyles} {...props}>
+      {children}
+    </div>
+  );
+}
 
-const TextBox = styled.div`
-  margin-left: 10px;
-  font-weight: 700;
-  font-size: 16px;
-  line-height: 16px;
-  text-align: center;
-`;
+export function SettlementItemBox({
+  children,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) {
+  const itemBoxStyles: React.CSSProperties = {
+    display: "flex",
+    alignItems: "center",
+    backgroundColor: "#ebebeb4d",
+    padding: "10px",
+    marginTop: "8px",
+    lineHeight: 1,
+  };
+
+  return (
+    <div style={itemBoxStyles} {...props}>
+      {children}
+    </div>
+  );
+}
+
+export function SettlementHeader({
+  children,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) {
+  const headerStyles: React.CSSProperties = {
+    display: "flex",
+    alignItems: "center",
+    backgroundColor: "#ebebeb",
+    padding: "10px",
+    marginTop: "8px",
+    lineHeight: 1,
+  };
+
+  return (
+    <div style={headerStyles} {...props}>
+      {children}
+    </div>
+  );
+}
+
+interface Props extends React.HTMLAttributes<HTMLDivElement> {
+  styleOverrides?: React.CSSProperties;
+}
+
+export function TextBox({ children, styleOverrides, ...props }: Props) {
+  const textBoxStyles: React.CSSProperties = {
+    marginLeft: "10px",
+    fontWeight: 700,
+    fontSize: "16px",
+    lineHeight: "16px",
+    textAlign: "center",
+    ...styleOverrides,
+  };
+
+  return (
+    <div style={textBoxStyles} {...props}>
+      {children}
+    </div>
+  );
+}
 
 /**
  * 모든 판매처의 정산금액을 합친 금액을 계산합니다.
@@ -127,21 +188,21 @@ export function SettlementSumBar({
         }}
       >
         정산 금액
-        <Space w={15} h={10}/>
+        <Space w={15} h={10} />
         <div style={{ color: "#1859FF" }}>
           {" "}
           {`${settlement.toLocaleString()}원`}
         </div>
-        <Space w={25} h={15}/>
+        <Space w={25} h={15} />
         배송비 별도 정산
-        <Space w={15} h={10}/>
+        <Space w={15} h={10} />
         <div style={{ color: "#1859FF" }}>
           {" "}
           {`${shippingFee.toLocaleString()}원`}
         </div>
-        <Space w={25} h={15}/>
+        <Space w={25} h={15} />
         정산 총계 (정산 금액 + 배송비)
-        <Space w={15} h={10}/>
+        <Space w={15} h={10} />
         <div style={{ color: "#1859FF" }}>
           {`${(settlement + shippingFee).toLocaleString()}원`}
         </div>
@@ -189,13 +250,13 @@ export function SettlementSumTable({
             onCheckAll(val);
           }}
         />
-        <TextBox style={{ width: "18%", textAlign: "left" }}>업체명</TextBox>
-        <TextBox style={{ width: "14%" }}>사업자등록번호</TextBox>
-        <TextBox style={{ width: "14%" }}>계좌번호</TextBox>
-        <TextBox style={{ width: "14%" }}>정산금액</TextBox>
-        <TextBox style={{ width: "14%" }}>배송비 별도 정산</TextBox>
-        <TextBox style={{ width: "14%" }}>최종 정산 금액</TextBox>
-        <TextBox style={{ width: "10%" }}></TextBox>
+        <TextBox styleOverrides={{ width: "18%", textAlign: "left" }}>업체명</TextBox>
+        <TextBox styleOverrides={{ width: "14%" }}>사업자등록번호</TextBox>
+        <TextBox styleOverrides={{ width: "14%" }}>계좌번호</TextBox>
+        <TextBox styleOverrides={{ width: "14%" }}>정산금액</TextBox>
+        <TextBox styleOverrides={{ width: "14%" }}>배송비 별도 정산</TextBox>
+        <TextBox styleOverrides={{ width: "14%" }}>최종 정산 금액</TextBox>
+        <TextBox styleOverrides={{ width: "10%" }}></TextBox>
         <div style={{ width: "16px" }} />
       </SettlementHeader>
       <SettlementItemsBox>
@@ -254,18 +315,18 @@ function SettlementSumItem({
           onItemCheck(index, event.currentTarget.checked);
         }}
       />
-      <TextBox style={{ width: "18%", textAlign: "left" }}>
+      <TextBox styleOverrides={{ width: "18%", textAlign: "left" }}>
         {item.partnerName}
       </TextBox>
-      <TextBox style={{ width: "14%" }}>{item.brn}</TextBox>
-      <TextBox style={{ width: "14%" }}>{item.bankAccount}</TextBox>
-      <TextBox style={{ width: "14%" }}>
+      <TextBox styleOverrides={{ width: "14%" }}>{item.brn}</TextBox>
+      <TextBox styleOverrides={{ width: "14%" }}>{item.bankAccount}</TextBox>
+      <TextBox styleOverrides={{ width: "14%" }}>
         {isAllSum ? allSettlement : item.data[`settlement_${seller}`]}
       </TextBox>
-      <TextBox style={{ width: "14%" }}>
+      <TextBox styleOverrides={{ width: "14%" }}>
         {isAllSum ? allShipping : item.data[`shipping_${seller}`]}
       </TextBox>
-      <TextBox style={{ width: "14%" }}>
+      <TextBox styleOverrides={{ width: "14%" }}>
         {isAllSum
           ? allShipping + allSettlement
           : item.data[`settlement_${seller}`] + item.data[`shipping_${seller}`]}
@@ -274,7 +335,7 @@ function SettlementSumItem({
         to={`/admin/settlement-manage-detail?partner=${item.partnerName}&month=${numeralMonth}`}
         style={{ width: "10%" }}
       >
-        <TextBox style={{ color: "#1859FF" }}>자세히보기</TextBox>
+        <TextBox styleOverrides={{ color: "#1859FF" }}>자세히보기</TextBox>
       </Link>
     </SettlementItemBox>
   );

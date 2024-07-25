@@ -15,7 +15,6 @@ import {
 } from "@remix-run/node";
 import { BasicModal, ModalButton } from "~/components/modal";
 import { OrderItem, OrderTable } from "~/components/order";
-import styled from "styled-components";
 import {
   getPartnerDelayedOrders,
   shareDelayedWaybills,
@@ -26,15 +25,26 @@ import { BlackBottomButton } from "~/components/button";
 import { useViewportSize } from "@mantine/hooks";
 import { isMobile } from "~/utils/mobile";
 
-const EmptySettlementBox = styled.div`
-  display: flex;
-  text-align: center;
-  font-size: 24px;
-  height: 100px;
-  align-items: center;
-  justify-content: center;
-  width: inherit;
-`;
+function EmptySettlementBox({
+  children,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) {
+  const boxStyles: React.CSSProperties = {
+    display: "flex",
+    textAlign: "center",
+    fontSize: "24px",
+    height: "100px",
+    alignItems: "center",
+    justifyContent: "center",
+    width: "inherit",
+  };
+
+  return (
+    <div style={boxStyles} {...props}>
+      {children}
+    </div>
+  );
+}
 
 export const action: ActionFunction = async ({ request }) => {
   const body = await request.formData();

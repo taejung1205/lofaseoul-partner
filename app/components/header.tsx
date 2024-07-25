@@ -1,29 +1,55 @@
-import styled from "styled-components";
 import { AdminSidebar, PartnerSidebar } from "./sidebar";
 
-export const HeaderBox = styled.div`
-  width: inherit;
-  height: 75px;
-  background-color: #ebebeb;
-  padding-top: 23px;
-  padding-bottom: 23px;
-  padding-right: 40px;
-  display: flex;
-  justify-content: right;
-  font-size: 20px;
-  font-weight: 700;
-  line-height: 29px;
-`;
+export function HeaderBox({
+  children,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) {
+  const defaultStyles: React.CSSProperties = {
+    width: "inherit",
+    height: "75px",
+    backgroundColor: "#ebebeb",
+    paddingTop: "23px",
+    paddingBottom: "23px",
+    paddingRight: "40px",
+    display: "flex",
+    justifyContent: "flex-end", // Use `flex-end` to align content to the right
+    fontSize: "20px",
+    fontWeight: 700,
+    lineHeight: "29px",
+  };
 
-export const MobileHeaderBox = styled(HeaderBox)`
-  padding-top: 10px;
-  padding-bottom: 10px;
-  padding-left: 10px;
-  padding-right: 10px;
-  font-size: 16px;
-  height: 50px;
-  justify-content: space-between;
-`;
+  return (
+    <div style={defaultStyles} {...props}>
+      {children}
+    </div>
+  );
+}
+
+export function MobileHeaderBox({
+  children,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) {
+  const defaultStyles: React.CSSProperties = {
+    width: "inherit",
+    height: "75px",
+    backgroundColor: "#ebebeb",
+    paddingTop: "10px",
+    paddingBottom: "10px",
+    paddingLeft: "10px",
+    paddingRight: "10px",
+    display: "flex",
+    justifyContent: "space-between",
+    fontSize: "16px",
+    fontWeight: 700,
+    lineHeight: "50px",
+  };
+
+  return (
+    <div style={defaultStyles} {...props}>
+      {children}
+    </div>
+  );
+}
 
 export function AdminHeader({ onLogoutClick }: { onLogoutClick: () => void }) {
   return (
