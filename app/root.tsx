@@ -39,7 +39,6 @@ export function ErrorBoundary({ error }: { error: any }) {
       <head>
         <Meta />
         <Links />
-        {typeof document === "undefined" ? "__STYLES__" : null}
       </head>
       <body>
         <div
@@ -79,13 +78,12 @@ export default function App() {
         <head>
           <Meta />
           <Links />
-          {typeof document === "undefined" ? "__STYLES__" : null}
         </head>
         <body>
           <Outlet />
           <ScrollRestoration />
-          <Scripts />
           <LiveReload />
+          <Scripts />
         </body>
       </html>
     </MantineProvider>
