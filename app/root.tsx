@@ -10,11 +10,11 @@ import {
 import globalStyle from "~/styles/global.style.css";
 import { MantineProvider, createEmotionCache } from "@mantine/core";
 
-export const meta: MetaFunction = () => ({
-  charset: "utf-8",
-  title: "LOFASEOUL PARTNERS",
-  viewport: "width=device-width,initial-scale=1",
-});
+// export const meta: MetaFunction = () => ({
+//   charset: "utf-8",
+//   title: "LOFASEOUL PARTNERS",
+//   viewport: "width=device-width,initial-scale=1",
+// });
 
 createEmotionCache({ key: "mantine" });
 
@@ -39,7 +39,6 @@ export function ErrorBoundary({ error }: { error: any }) {
       <head>
         <Meta />
         <Links />
-        {typeof document === "undefined" ? "__STYLES__" : null}
       </head>
       <body>
         <div
@@ -84,8 +83,8 @@ export default function App() {
         <body>
           <Outlet />
           <ScrollRestoration />
-          <Scripts />
           <LiveReload />
+          <Scripts />
         </body>
       </html>
     </MantineProvider>
