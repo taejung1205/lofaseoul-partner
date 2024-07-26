@@ -73,20 +73,18 @@ export function ErrorBoundary({ error }: { error: any }) {
 
 export default function App() {
   return (
-    
-      <html lang="en">
-        <head>
-          <Meta />
-          <Links />
-        </head>
-        <body>
-          <MantineProvider>
+    <html lang="en">
+      <head>
+        <Meta />
+        <Links />
+      </head>
+      <body>
+        <MantineProvider>
           <Outlet />
           <ScrollRestoration />
-          <LiveReload />
           <Scripts />
-          </MantineProvider>
-        </body>
-      </html>
+        </MantineProvider>
+      </body>
+    </html>
   );
 }
