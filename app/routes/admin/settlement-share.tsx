@@ -26,7 +26,7 @@ import {
 import { SettlementItem } from "~/components/settlement_table";
 import {
   addSettlements,
-  getPartnerProfiles,
+  getAllPartnerProfiles,
   getSettlementMonthes,
 } from "~/services/firebase.server";
 
@@ -136,7 +136,7 @@ export const action: ActionFunction = async ({ request }) => {
 
 export let loader: LoaderFunction = async ({ request }) => {
   const monthes = await getSettlementMonthes();
-  const partnersMap = await getPartnerProfiles();
+  const partnersMap = await getAllPartnerProfiles();
   const partnersArr = Array.from(partnersMap.values());
   return json({ monthes: monthes, partners: partnersArr });
 };

@@ -1,11 +1,11 @@
 import { ActionFunction } from "@remix-run/node";
 import { useSubmit } from "@remix-run/react";
 import { useRef } from "react";
-import { fixProduct } from "~/services/firebase.server";
+import { debug_fixPartnerProfileTaxStandard } from "~/services/firebase.server";
 
 export const action: ActionFunction = async ({ request }) => {
   console.log("request submitted");
-  fixProduct();
+  debug_fixPartnerProfileTaxStandard();
   return null;
 };
 
@@ -20,7 +20,7 @@ export default function Debug() {
           submit(formData, { method: "post" });
         }}
       >
-        {" "}
+        {"DEBUG"}
       </button>
     </>
   );

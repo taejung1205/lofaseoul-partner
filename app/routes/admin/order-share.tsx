@@ -20,7 +20,7 @@ import {
 } from "@remix-run/react";
 import {
   addOrders,
-  getPartnerProfiles,
+  getAllPartnerProfiles,
   isTodayOrderShared,
 } from "~/services/firebase.server";
 import { PartnerProfile } from "~/components/partner_profile";
@@ -136,7 +136,7 @@ export const action: ActionFunction = async ({ request }) => {
 
 export const loader: LoaderFunction = async ({ request }) => {
   const isTodayShared = await isTodayOrderShared();
-  const partnersMap = await getPartnerProfiles();
+  const partnersMap = await getAllPartnerProfiles();
   const partnersArr = Array.from(partnersMap.values());
   return json({ isTodayShared: isTodayShared, partners: partnersArr });
 };

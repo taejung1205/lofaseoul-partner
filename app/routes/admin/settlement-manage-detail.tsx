@@ -31,7 +31,7 @@ import {
   addSettlements,
   deleteSettlements,
   getPartnerProfile,
-  getPartnerProfiles,
+  getAllPartnerProfiles,
   getSettlements,
   getSettlementSum,
   deleteSettlementsShippingFee,
@@ -252,7 +252,7 @@ export const loader: LoaderFunction = async ({ request }) => {
   const url = new URL(request.url);
   const month = url.searchParams.get("month");
   const partnerName = url.searchParams.get("partner");
-  const partnersMap = await getPartnerProfiles();
+  const partnersMap = await getAllPartnerProfiles();
   const partnersArr = Array.from(partnersMap.keys());
   if (month !== null && partnerName !== null) {
     const monthStr = numeralMonthToKorean(month);

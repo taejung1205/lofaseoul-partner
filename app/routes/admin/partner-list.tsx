@@ -4,11 +4,14 @@ import { useActionData, useLoaderData } from "@remix-run/react";
 import { DocumentData } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { PageLayout } from "~/components/page_layout";
-import { PartnerProfile } from "~/components/partner_profile";
+import {
+  BusinessTaxStandard,
+  PartnerProfile,
+} from "~/components/partner_profile";
 import {
   addPartnerProfile,
   deletePartnerProfile,
-  getPartnerProfiles,
+  getAllPartnerProfiles,
 } from "~/services/firebase.server";
 import writeXlsxFile from "write-excel-file";
 import { useNavigation } from "@remix-run/react";
@@ -51,7 +54,9 @@ export const action: ActionFunction = async ({ request }) => {
     const brn = body.get("brn")?.toString();
     const bankAccount = body.get("bankAccount")?.toString();
     const businessName = body.get("businessName")?.toString();
-    const businessTaxStandard = body.get("businessTaxStandard")?.toString();
+    const businessTaxStandard: BusinessTaxStandard = body
+      .get("businessTaxStandard")
+      ?.toString() as BusinessTaxStandard;
 
     if (
       typeof name == "undefined" ||
@@ -75,7 +80,7 @@ export const action: ActionFunction = async ({ request }) => {
         brn: brn ?? "",
         bankAccount: bankAccount ?? "",
         businessName: businessName ?? "",
-        businessTaxStandard: businessTaxStandard ?? "",
+        businessTaxStandard: businessTaxStandard ?? "일반",
       };
       const addPartnerResult = await addPartnerProfile({
         partnerProfile,
@@ -104,7 +109,7 @@ export const action: ActionFunction = async ({ request }) => {
 };
 
 export let loader: LoaderFunction = async ({ request }) => {
-  const profileDocs = await getPartnerProfiles();
+  const profileDocs = await getAllPartnerProfiles();
   const profileArr = Array.from(profileDocs.values());
   return profileArr;
 };
@@ -165,7 +170,7 @@ export default function AdminPartnerList() {
             brn: "",
             bankAccount: "",
             businessName: "",
-            businessTaxStandard: "",
+            businessTaxStandard: "일반",
           }}
           isNew={true}
           isEdit={true}

@@ -45,8 +45,6 @@ import { NoticeItem } from "~/components/notice";
 import { ProductWithoutFile } from "~/components/product";
 import { SettlementSumItem } from "~/components/settlement_sum";
 import { sendResendEmail } from "./resend.server";
-import { ht } from "date-fns/locale";
-import { json } from "@remix-run/node";
 
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
@@ -111,7 +109,7 @@ export async function isAdmin(email: string) {
  * @returns
  *  Map(key: (partner name), value: PartnerProfile)
  */
-export async function getPartnerProfiles() {
+export async function getAllPartnerProfiles() {
   const accountsRef = collection(firestore, "accounts");
   const partnerQuery = query(accountsRef, where("isAdmin", "==", false));
   const querySnap = await getDocs(partnerQuery);
@@ -413,7 +411,7 @@ export async function getAllSettlementSum({ monthStr }: { monthStr: string }) {
   );
   const querySnap = await getDocs(settlementsRef);
   const result: SettlementSumItem[] = [];
-  const profilesMap = await getPartnerProfiles();
+  const profilesMap = await getAllPartnerProfiles();
   for (let i = 0; i < querySnap.docs.length; i++) {
     const doc = querySnap.docs[i];
     const partnerProfile = profilesMap.get(doc.id);
@@ -464,7 +462,7 @@ export async function addOrders({
   dayStr: string;
 }) {
   try {
-    let partnerMap: Map<string, PartnerProfile> = await getPartnerProfiles();
+    let partnerMap: Map<string, PartnerProfile> = await getAllPartnerProfiles();
     const phoneList: string[] = [];
     const phoneOrderCount: Map<string, number> = new Map();
     let orderBatch = writeBatch(firestore);
@@ -1442,17 +1440,19 @@ export async function replyNotice({
   monthStr,
   id,
   reply,
-  isAdmin
+  isAdmin,
 }: {
   monthStr: string;
   id: string;
   reply: string;
-  isAdmin: boolean
+  isAdmin: boolean;
 }) {
   try {
     const time = getTimezoneDate(new Date());
     const dateStr = dateToDayStr(new Date());
-    const timeStr = `${dateStr} ${time.getHours()}:${String(time.getMinutes()).padStart(2, "0")}`;
+    const timeStr = `${dateStr} ${time.getHours()}:${String(
+      time.getMinutes()
+    ).padStart(2, "0")}`;
     const replyStr = `${isAdmin ? "(어드민)" : "(파트너)"}[${timeStr}]
     ${reply}`;
     await updateDoc(doc(firestore, `notices/${monthStr}/items/${id}`), {
@@ -1999,18 +1999,18 @@ export async function sendSettlementNoticeEmail({
 }: {
   partnerList: string[];
 }) {
-  const profilesMap = await getPartnerProfiles();
+  const profilesMap = await getAllPartnerProfiles();
   let countForRateLimit = 0;
   let successCount = 0;
   let start = performance.now();
   for (let i = 0; i < partnerList.length; i++) {
     countForRateLimit++;
-    if(countForRateLimit >= 10){
+    if (countForRateLimit >= 10) {
       countForRateLimit = 0;
       const end = performance.now();
       const spentTime = end - start;
-      if(spentTime < 1000){
-        await new Promise(resolve => setTimeout(resolve, 1000 - spentTime));
+      if (spentTime < 1000) {
+        await new Promise((resolve) => setTimeout(resolve, 1000 - spentTime));
         console.log(`At index i, Waited for ${1000 - spentTime} milisecond`);
       } else {
         console.log(`At index i, spent time is ${spentTime}`);
@@ -2046,10 +2046,13 @@ export async function sendSettlementNoticeEmail({
       };
     }
   }
-  return { status: "ok", message: `파트너 ${successCount}곳에 메일이 전송되었습니다. (메일이 누락된 경우 제외 처리)` };
+  return {
+    status: "ok",
+    message: `파트너 ${successCount}곳에 메일이 전송되었습니다. (메일이 누락된 경우 제외 처리)`,
+  };
 }
 
-export async function fixProduct() {
+export async function debug_fixProduct() {
   const productsRef = collection(firestore, `products`);
   const querySnapshot = await getDocs(productsRef);
   querySnapshot.forEach((item) => {
@@ -2065,6 +2068,22 @@ export async function fixProduct() {
         mainImageURL: "",
         thumbnailImageName: "",
         thumbnailImageURL: "",
+      });
+    }
+  });
+}
+
+export async function debug_fixPartnerProfileTaxStandard() {
+  const accountsRef = collection(firestore, "accounts");
+  const partnerQuery = query(accountsRef, where("isAdmin", "==", false));
+  const querySnap = await getDocs(partnerQuery);
+  querySnap.docs.forEach(async (item) => {
+    const data = item.data();
+    if (!data.businessTaxStandard) {
+      await updateDoc(doc(firestore, "accounts", data.name), {
+        businessTaxStandard: "일반",
+      }).catch((error) => {
+        return error.message;
       });
     }
   });
