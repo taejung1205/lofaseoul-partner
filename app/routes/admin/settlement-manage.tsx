@@ -175,6 +175,8 @@ export default function AdminSettlementManage() {
       data: totalSum,
       brn: "",
       bankAccount: "",
+      businessName: "",
+      businessTaxStandard: "",
     };
     copy.push(totalSumItem);
     await writeXlsxFile(copy, {
@@ -413,17 +415,31 @@ const schema = [
     wrap: true,
   },
   {
+    column: "사업자명",
+    type: String,
+    value: (item: SettlementSumItem) => item.businessName,
+    width: 20,
+    wrap: true,
+  },
+  {
+    column: "과세기준",
+    type: String,
+    value: (item: SettlementSumItem) => item.businessTaxStandard,
+    width: 10,
+    wrap: true,
+  },
+  {
     column: "사업자등록번호",
     type: String,
     value: (item: SettlementSumItem) => item.brn,
-    width: 30,
+    width: 20,
     wrap: true,
   },
   {
     column: "계좌번호",
     type: String,
     value: (item: SettlementSumItem) => item.bankAccount,
-    width: 30,
+    width: 60,
     wrap: true,
   },
   {
