@@ -10,6 +10,8 @@ export type SettlementSumItem = {
   data: any;
   brn: string;
   bankAccount: string;
+  businessName?: string;
+  businessTaxStandard?: string;
 };
 
 export function SettlementBox({
@@ -250,7 +252,9 @@ export function SettlementSumTable({
             onCheckAll(val);
           }}
         />
-        <TextBox styleOverrides={{ width: "18%", textAlign: "left" }}>업체명</TextBox>
+        <TextBox styleOverrides={{ width: "18%", textAlign: "left" }}>
+          업체명
+        </TextBox>
         <TextBox styleOverrides={{ width: "14%" }}>사업자등록번호</TextBox>
         <TextBox styleOverrides={{ width: "14%" }}>계좌번호</TextBox>
         <TextBox styleOverrides={{ width: "14%" }}>정산금액</TextBox>
