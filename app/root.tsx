@@ -16,7 +16,7 @@ export const meta: MetaFunction = () => ({
   viewport: "width=device-width,initial-scale=1",
 });
 
-createEmotionCache({ key: "mantine" });
+const emotionCache = createEmotionCache({ key: "mantine", prepend: true });
 
 export const links: LinksFunction = () => {
   return [
@@ -73,7 +73,7 @@ export function ErrorBoundary({ error }: { error: any }) {
 
 export default function App() {
   return (
-    <MantineProvider withGlobalStyles withNormalizeCSS>
+    <MantineProvider emotionCache={emotionCache} withGlobalStyles withNormalizeCSS>
       <html lang="en">
         <head>
           <Meta />
