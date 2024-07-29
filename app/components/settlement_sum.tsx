@@ -8,8 +8,8 @@ import { isMobile } from "~/utils/mobile";
 export type SettlementSumItem = {
   partnerName: string;
   data: any;
-  brn: string;
-  bankAccount: string;
+  brn?: string;
+  bankAccount?: string;
   businessName?: string;
   businessTaxStandard?: string;
 };

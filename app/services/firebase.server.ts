@@ -419,11 +419,11 @@ export async function getAllSettlementSum({ monthStr }: { monthStr: string }) {
     let bankAccount = "";
     let businessName = "";
     let businessTaxStandard = "";
-    if (partnerProfile !== null) {
-      brn = partnerProfile.brn;
-      bankAccount = partnerProfile.bankAccount;
-      businessName = partnerProfile.businessName;
-      businessTaxStandard = partnerProfile.businessTaxStandard;
+    if (partnerProfile) {
+      brn = partnerProfile.brn ?? "";
+      bankAccount = partnerProfile.bankAccount ?? "";
+      businessName = partnerProfile.businessName ?? "";
+      businessTaxStandard = partnerProfile.businessTaxStandard ?? "";
     }
     result.push({
       partnerName: doc.id,
