@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import { BasicModal, ModalButton } from "./modal";
 import { useViewportSize } from "@mantine/hooks";
 import { isMobile } from "~/utils/mobile";
+import { Select } from "@mantine/core";
 
 export type PartnerProfile = {
   name: string;
@@ -16,8 +17,11 @@ export type PartnerProfile = {
   brn: string;
   bankAccount: string;
   businessName: string;
-  businessTaxStandard: string;
+  businessTaxStandard: "일반" | "간이" | "비사업자" | "면세";
 };
+
+export const PossibleTaxStandard = ["일반", "간이", "비사업자", "면세"];
+export type BusinessTaxStandard = "일반" | "간이" | "비사업자" | "면세";
 
 function PartnerProfileBox({
   children,
@@ -448,12 +452,38 @@ export function PartnerProfile({
               <div style={{ padding: "13px", width: "180px" }}>
                 사업자과세기준
               </div>
-              <InputBox
+              <Select
+                value={businessTaxStandardEdit}
+                onChange={(val: BusinessTaxStandard) => {
+                  setBusinessTaxStandardEdit(val);
+                }}
+                name="businessTaxStandard"
+                data={[
+                  { value: "일반", label: "일반" },
+                  { value: "간이", label: "간이" },
+                  { value: "비사업자", label: "비사업자" },
+                  { value: "면세", label: "면세" },
+                ]}
+                styles={{
+                  input: {
+                    fontSize: "20px",
+                    fontWeight: "bold",
+                    borderRadius: 0,
+                    margin: "4px",
+                  },
+                  item: {
+                    "&[data-selected]": {
+                      backgroundColor: "grey",
+                    },
+                  },
+                }}
+              />
+              {/* <InputBox
                 type="text"
                 name="businessTaxStandard"
                 value={businessTaxStandardEdit}
                 onChange={(e) => setBusinessTaxStandardEdit(e.target.value)}
-              />
+              /> */}
             </ProfileGridItem>
           </ProfileGridContainer>
         </Form>
