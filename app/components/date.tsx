@@ -1,4 +1,5 @@
 import { Popover } from "@mantine/core";
+import { forwardRef } from "react";
 import { DayPicker } from "react-day-picker";
 
 import dayPickerStyles from "react-day-picker/dist/style.css";
@@ -82,7 +83,7 @@ export function MonthSelectPopover({
   return (
     <Popover>
       <Popover.Target>
-        <MonthBox>{monthStr}</MonthBox>
+        <DateTargetBox>{monthStr}</DateTargetBox>
       </Popover.Target>
       <Popover.Dropdown>
         <div style={{ display: "flex", fontSize: "20px", fontWeight: "700" }}>
@@ -107,9 +108,9 @@ export function DaySelectPopover({
   return (
     <Popover>
       <Popover.Target>
-        <MonthBox>
+        <DateTargetBox>
           {selectedDate !== undefined ? dateToDayStr(selectedDate) : ""}
-        </MonthBox>
+        </DateTargetBox>
       </Popover.Target>
       <Popover.Dropdown>
         <DayPicker
@@ -132,28 +133,25 @@ export function DaySelectPopover({
   );
 }
 
-function MonthBox({
-  children,
-  ...props
-}: React.HTMLAttributes<HTMLDivElement>) {
-  const defaultStyles: React.CSSProperties = {
-    border: "3px solid #000000",
-    width: "140px",
-    minWidth: "140px",
-    fontSize: "20px",
-    lineHeight: "20px",
-    padding: "6px",
-    height: "40px",
-    textAlign: "center",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    cursor: "pointer",
-  };
-
-  return (
-    <div style={defaultStyles} {...props}>
-      {children}
-    </div>
-  );
-}
+const DateTargetBox = forwardRef((props: any, ref: React.ForwardedRef<any>) => (
+  <div
+    ref={ref}
+    style={{
+      border: "3px solid #000000",
+      width: "140px",
+      minWidth: "140px",
+      fontSize: "20px",
+      lineHeight: "20px",
+      padding: "6px",
+      height: "40px",
+      textAlign: "center",
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+      cursor: "pointer",
+    }}
+    {...props}
+  >
+    {props.children}
+  </div>
+));
