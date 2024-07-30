@@ -223,6 +223,7 @@ export default function AdminSettlementShare() {
         for (let i = 0; i < json.length; i++) {
           let element = json[i];
           let item: SettlementItem = {
+            orderDate: element.주문일?.toString(),
             seller: element.판매처?.toString(),
             orderNumber: element.주문번호?.toString(),
             productName: element.상품명?.toString(),
@@ -276,7 +277,7 @@ export default function AdminSettlementShare() {
           const partnerProfile = partnerProfiles.get(item.partnerName);
           if (partnerProfile === undefined) {
             setNoticeModalStr(
-              `유효하지 않은 엑셀 파일입니다.\n상품명의 파트너가 계약 업체 목록에 있는지 확인해주세요. (${item.partnerName})`
+              `유효하지 않은 엑셀 파일입니다.\n상품명의 파트너가 계약업체목록에 있는지 확인해주세요. (${item.partnerName})`
             );
             setIsNoticeModalOpened(true);
             setFileName("");
