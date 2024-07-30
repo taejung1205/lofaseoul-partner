@@ -368,7 +368,17 @@ export async function getSettlements({
     where("partnerName", "==", partnerName)
   );
   const querySnap = await getDocs(settlementsQuery);
-  return querySnap.docs.map((doc) => doc.data());
+  return querySnap.docs.map((doc) => {
+    const data = doc.data();
+    if (data.orderDate) {
+      const date = data.orderDate.toDate();
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0"); // 월은 0부터 시작하므로 +1
+      const day = String(date.getDate()).padStart(2, "0");
+      data.orderDate = `${year}-${month}-${day}`;
+    }
+    return data;
+  });
 }
 
 /**

@@ -307,6 +307,7 @@ export default function AdminSettlementShare() {
   const [optionNameEdit, setOptionNameEdit] = useState<string>("");
   const [ordererEdit, setOrdererEdit] = useState<string>("");
   const [receiverEdit, setReceiverEdit] = useState<string>("");
+  const [orderDateEdit, setOrderDateEdit] = useState<string>("");
 
   // 모달 열림 여부
   const [isDeleteShippingFeeModalOpened, setIsDeleteShippingFeeModalOpened] =
@@ -503,6 +504,7 @@ export default function AdminSettlementShare() {
       setOrderTagEdit(settlement.orderTag);
       setOrdererEdit(settlement.orderer);
       setReceiverEdit(settlement.receiver);
+      setOrderDateEdit(settlement.orderDate ?? "");
     } else {
       setSellerEdit("");
       setOrderNumberEdit("");
@@ -514,6 +516,7 @@ export default function AdminSettlementShare() {
       setReceiverEdit("");
       setSaleEdit(0);
       setOrderTagEdit("");
+      setOrderDateEdit("");
     }
   }
 
@@ -522,6 +525,7 @@ export default function AdminSettlementShare() {
   // 정상적일 경우 해당 SettlementItem을 return합니다.
   function checkEdit() {
     const newSettlement: SettlementItem = {
+      orderDate: orderDateEdit,
       seller: sellerEdit,
       orderNumber: orderNumberEdit,
       productName: productNameEdit,
@@ -759,6 +763,20 @@ export default function AdminSettlementShare() {
               name="optionName"
               value={optionNameEdit}
               onChange={(e) => setOptionNameEdit(e.target.value)}
+            />
+          </div>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+            }}
+          >
+            <div style={{ width: "100px" }}>주문일</div>
+            <LongEditInputBox
+              type="text"
+              name="optionName"
+              value={orderDateEdit}
+              onChange={(e) => setOrderDateEdit(e.target.value)}
             />
           </div>
           <div
