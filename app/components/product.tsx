@@ -1,23 +1,4 @@
 export type Product = {
-  partnerName: string;
-  productName: string;
-  englishProductName: string;
-  explanation: string;
-  keyword: string;
-  sellerPrice: number;
-  isUsingOption: boolean;
-  option: string;
-  mainImageFile: File;
-  thumbnailImageFile: File;
-  detailImageFileList: any[];
-  extraImageFileList: any[];
-  memo: string;
-  refundExplanation: string;
-  serviceExplanation: string;
-  status: "승인대기" | "승인거부" | "승인완료" | "임시저장";
-};
-
-export type ProductWithoutFile = {
   id: string;
   partnerName: string;
   productName: string;
@@ -27,6 +8,14 @@ export type ProductWithoutFile = {
   sellerPrice: number;
   isUsingOption: boolean;
   option: string;
+  mainImageURL?: string;
+  mainImageName?: string;
+  thumbnailImageURL?: string;
+  thumbnailImageName?: string;
+  detailImageURLList?: string[];
+  extraImageURLList?: string[];
+  detailImageNameList?: string[];
+  extraImageNameList?: string[];
   memo: string;
   refundExplanation: string;
   serviceExplanation: string;
