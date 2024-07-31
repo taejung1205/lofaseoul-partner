@@ -18,6 +18,7 @@ export type Product = {
 };
 
 export type ProductWithoutFile = {
+  id: string;
   partnerName: string;
   productName: string;
   englishProductName: string;

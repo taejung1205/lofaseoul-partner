@@ -1503,10 +1503,8 @@ export async function addProductWithoutFile({
     return "이미 해당 이름의 상품이 등록되어 있습니다.";
   }
 
-  const id = getIdFromTime();
-
   setDoc(doc(firestore, "products", product.productName), {
-    id: id,
+    id: product.id,
     partnerName: product.partnerName,
     productName: product.productName,
     englishProductName: product.englishProductName,
