@@ -24,15 +24,11 @@ import {
   getDownloadURL,
   getStorage,
   ref,
+  uploadBytes,
   uploadBytesResumable,
 } from "firebase/storage";
 import { PartnerProfile } from "~/components/partner_profile";
-import {
-  dateToDayStr,
-  dayStrToDate,
-  getIdFromTime,
-  getTimezoneDate,
-} from "~/components/date";
+import { dateToDayStr, dayStrToDate, getTimezoneDate } from "~/components/date";
 import { OrderItem } from "~/components/order";
 import {
   createAuthAccount,
@@ -1835,123 +1831,16 @@ export async function uploadProductImage(
   file: File,
   fileName: string,
   usage: string,
-  productName: string,
-  detailIndex = 0
+  id: string,
+  index?: number
 ) {
   const arrayBuffer = await file.arrayBuffer();
-  const imagePath = `${productName}/${usage}/${fileName}`;
+  const imagePath = `product-images/${id}/${usage}/${fileName}`;
   const imageStorageRef = ref(storage, imagePath);
-  const uploadTask = uploadBytesResumable(imageStorageRef, arrayBuffer);
-
-  switch (usage) {
-    case "main":
-      updateDoc(doc(firestore, "products-progress", productName), {
-        mainStarted: "true",
-      });
-      break;
-    case "thumbnail":
-      updateDoc(doc(firestore, "products-progress", productName), {
-        thumbnailStarted: "true",
-      });
-      break;
-    case "detail":
-      let detailData: any = {};
-      detailData[`detailStarted_${detailIndex}`] = "true";
-      updateDoc(doc(firestore, "products-progress", productName), detailData);
-      break;
-    case "extra":
-      let extraData: any = {};
-      extraData[`extraStarted_${detailIndex}`] = "true";
-      updateDoc(doc(firestore, "products-progress", productName), extraData);
-      break;
-  }
-
-  let progress = 0;
-  let stair = 50000;
-
-  uploadTask.on(
-    "state_changed",
-    (snapshot) => {
-      if (snapshot.bytesTransferred > progress) {
-        progress += stair;
-        switch (usage) {
-          case "main":
-            updateDoc(doc(firestore, "products-progress", productName), {
-              mainBytesTransferred: snapshot.bytesTransferred,
-            });
-            break;
-          case "thumbnail":
-            updateDoc(doc(firestore, "products-progress", productName), {
-              thumbnailBytesTransferred: snapshot.bytesTransferred,
-            });
-            break;
-          case "detail":
-            let detailData: any = {};
-            detailData[`detailBytesTransferred_${detailIndex}`] =
-              snapshot.bytesTransferred;
-            updateDoc(
-              doc(firestore, "products-progress", productName),
-              detailData
-            );
-            break;
-          case "extra":
-            let extraData: any = {};
-            extraData[`extraBytesTransferred_${detailIndex}`] =
-              snapshot.bytesTransferred;
-            updateDoc(
-              doc(firestore, "products-progress", productName),
-              extraData
-            );
-            break;
-        }
-      }
-    },
-    async (error) => {
-      let errorData: any = {};
-      errorData[`${usage}-${detailIndex}-errorData`] = error.message;
-      updateDoc(doc(firestore, "products-progress", productName), errorData);
-      await new Promise((resolve) => setTimeout(resolve, 3000));
-      uploadProductImage(file, fileName, usage, productName, detailIndex);
-    },
-    () => {
-      getDownloadURL(uploadTask.snapshot.ref).then((url) => {
-        switch (usage) {
-          case "main":
-            updateDoc(doc(firestore, "products-progress", productName), {
-              mainBytesTransferred: arrayBuffer.byteLength,
-              mainURL: url,
-            });
-            break;
-          case "thumbnail":
-            updateDoc(doc(firestore, "products-progress", productName), {
-              thumbnailBytesTransferred: arrayBuffer.byteLength,
-              thumbnailURL: url,
-            });
-            break;
-          case "detail":
-            let detailData: any = {};
-            detailData[`detailBytesTransferred_${detailIndex}`] =
-              arrayBuffer.byteLength;
-            detailData[`detailURL_${detailIndex}`] = url;
-            updateDoc(
-              doc(firestore, "products-progress", productName),
-              detailData
-            );
-            break;
-          case "extra":
-            let extraData: any = {};
-            extraData[`extraBytesTransferred_${detailIndex}`] =
-              arrayBuffer.byteLength;
-            extraData[`extraURL_${detailIndex}`] = url;
-            updateDoc(
-              doc(firestore, "products-progress", productName),
-              extraData
-            );
-            break;
-        }
-      });
-    }
-  );
+  const downloadURL = await uploadBytes(imageStorageRef, arrayBuffer).then((snapshot) => {
+    return getDownloadURL(snapshot.ref);
+  });
+  return downloadURL;
 }
 
 /**

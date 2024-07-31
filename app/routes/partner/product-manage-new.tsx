@@ -29,6 +29,8 @@ import {
 import { requireUser } from "~/services/session.server";
 import { cropImage, resizeFile } from "~/utils/resize-image";
 
+type ImageUsage = "main" | "thumbnail" | "detail" | "extra";
+
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   styleoverrides?: React.CSSProperties;
 }
@@ -442,46 +444,39 @@ export const action: ActionFunction = async ({ request }) => {
       });
     }
   } else if (actionType == "upload-image") {
-    const productName = body.get("productName")?.toString();
+    const id = body.get("id")?.toString();
     const file = body.get("file");
     const usage = body.get("usage")?.toString();
     const filename = body.get("filename")?.toString();
-    const detailIndex = Number(body.get("detailIndex")?.toString() ?? "-1");
+    const index = Number(body.get("index")?.toString() ?? "-1");
     if (
-      productName !== undefined &&
+      id !== undefined &&
       file instanceof File &&
       usage !== undefined &&
-      detailIndex !== undefined &&
       filename !== undefined
     ) {
-      await uploadProductImage(file, filename, usage, productName, detailIndex);
+      const downloadURL = await uploadProductImage(
+        file,
+        filename,
+        usage,
+        id,
+        index
+      );
+      console.log(`${usage} image uploaded`, downloadURL);
+      return json({
+        status: "ok",
+        type: "downloadURL",
+        usage: usage,
+        index: index,
+        url: downloadURL,
+      });
+    } else {
+      console.log('error');
+      return json({
+        message: `이미지 업로드 과정에서 문제가 발생했습니다. 관리자에게 문의해주세요.`,
+        status: "error",
+      });
     }
-
-    let nextStep = "";
-    switch (usage) {
-      case "main":
-        nextStep = "thumbnail";
-        break;
-      case "thumbnail":
-        nextStep = "detail";
-        break;
-      case "detail":
-        nextStep = "detail";
-        break;
-      case "extra":
-        nextStep = "extra";
-        break;
-    }
-
-    const nextIndex = detailIndex + 1;
-    return json({
-      isWaiting: true,
-      progress: 0,
-      currentStep: "data-complete",
-      nextImageStep: nextStep,
-      detailIndex: nextIndex,
-      status: "ok",
-    });
   }
 };
 
@@ -515,12 +510,20 @@ export default function PartnerProductManage() {
   const [optionCategoryList, setOptionCategoryList] = useState<string[]>([""]); //옵션 카테고리 목록
   const [optionDetailList, setOptionDetailList] = useState<string[]>([""]); //옵션 세부항목 목록
   const [mainImageFile, setMainImageFile] = useState<File>(); //메인 이미지 (필수)
+  const [mainImageURL, setMainImageURL] = useState<string>();
   const [thumbnailImageFile, setThumbnailImageFile] = useState<File>(); //썸네일 이미지 (필수)
+  const [thumbnailImageURL, setThumbnailImageUrl] = useState<string>();
   const [detailImageFileList, setDetailImageFileList] = useState<
     (File | undefined)[]
   >(Array(8).fill(undefined)); //상세 이미지 - 좌우슬라이드 (최소 1개 필수)
+  const [detailImageURLList, setDetailImageURLList] = useState<
+    (string | undefined)[]
+  >(Array(8).fill(undefined)); //상세 이미지 - 좌우슬라이드 (최소 1개 필수)
   const [extraImageFileList, setExtraImageFileList] = useState<
     (File | undefined)[]
+  >(Array(8).fill(undefined)); //상세 이미지 - 하단첨부
+  const [extraImageURLList, setExtraImageURLList] = useState<
+    (string | undefined)[]
   >(Array(8).fill(undefined)); //상세 이미지 - 하단첨부
   const [memo, setMemo] = useState<string>(""); // 옵션 별 가격 설정 및 관리자 전달 메모
   const [refundExplanation, setRefundExplanation] = useState<string>(""); //교환/반품안내
@@ -633,6 +636,28 @@ export default function PartnerProductManage() {
       }
     });
     setExtraImageFileList(newExtraImageList);
+  }
+
+  function editDetailImageURL(index: number, val: string | undefined) {
+    const newDetailURLList = detailImageURLList.map((item, i) => {
+      if (i == index) {
+        return val;
+      } else {
+        return item;
+      }
+    });
+    setDetailImageURLList(newDetailURLList);
+  }
+
+  function editExtraImageURL(index: number, val: string | undefined) {
+    const newExtraURLList = extraImageURLList.map((item, i) => {
+      if (i == index) {
+        return val;
+      } else {
+        return item;
+      }
+    });
+    setExtraImageURLList(newExtraURLList);
   }
 
   //필수 입력 내용을 전부 제대로 입력했는지
@@ -974,6 +999,29 @@ export default function PartnerProductManage() {
     }
   }
 
+  async function submitUploadImage(
+    file: File,
+    usage: ImageUsage,
+    index?: number
+  ) {
+    let formData: any = new FormData(formRef.current ?? undefined);
+    formData.set("actionType", "upload-image");
+    formData.set("id", id);
+    formData.set("file", file);
+    formData.set("filename", file.name);
+    formData.set("usage", usage);
+    switch (usage) {
+      case "detail":
+      case "extra":
+        formData.set("index", index);
+        break;
+    }
+    submit(formData, {
+      method: "post",
+      encType: "multipart/form-data",
+    });
+  }
+
   //현재 보고 있는 상품 삭제 요청
   async function deleteProduct() {
     const formData = new FormData(formRef.current ?? undefined);
@@ -1081,28 +1129,26 @@ export default function PartnerProductManage() {
   //결과로 오는 거 바탕으로 안내모달
   useEffect(() => {
     if (actionData !== undefined && actionData !== null) {
-      if (actionData.isStartWaiting) {
-        setIsUploadWaitingInProgress(true);
-      }
-      if (actionData.isWaiting) {
-        setImageUploadProgress(actionData.progress);
-
-        if (actionData.currentStep == "initial-complete") {
-          submitProductData(actionData.isTempSave);
-        }
-
-        if (actionData.currentStep == "data-complete") {
-          submitImageFiles(actionData.nextImageStep, actionData.detailIndex);
-        }
-      } else {
-        setIsUploadWaitingInProgress(false);
-        setNotice(actionData.message ?? actionData.errorMessage ?? actionData);
+      if (actionData.status == "error") {
+        setNotice(`오류가 발생했습니다. ${actionData.message}`);
         setIsNoticeModalOpened(true);
-        //성공했으면 모달 닫기
-        if (actionData.status == "ok") {
-          clearInterval(queryIntervalId);
-          setImageUploadProgress(0);
-          setIsAddProductMenuOpened(false);
+      } else {
+        if (actionData.type == "downloadURL") {
+          console.log("download url", actionData.usage, actionData.index, actionData.url);
+          switch (actionData.usage) {
+            case "main":
+              setMainImageURL(actionData.url);
+              break;
+            case "thumbnail":
+              setThumbnailImageUrl(actionData.url);
+              break;
+            case "detail":
+              editDetailImageURL(actionData.index, actionData.url);
+              break;
+            case "extra":
+              editExtraImageURL(actionData.index, actionData.url);
+              break;
+          }
         }
       }
     }
@@ -1635,6 +1681,7 @@ export default function PartnerProductManage() {
                         1250
                       );
                       setMainImageFile(croppedFile);
+                      submitUploadImage(croppedFile, "main");
                     }
                     setIsLoading(false);
                   }}
@@ -1676,6 +1723,7 @@ export default function PartnerProductManage() {
                         1250
                       );
                       setThumbnailImageFile(croppedFile);
+                      submitUploadImage(croppedFile, "thumbnail");
                     }
                     setIsLoading(false);
                   }}
@@ -1759,6 +1807,8 @@ export default function PartnerProductManage() {
                               1250
                             );
                             editDetailImage(index, croppedFile);
+                            console.log("DETIAL");
+                            submitUploadImage(croppedFile, "detail", index);
                           }
                           setIsLoading(false);
                         }}
@@ -1774,6 +1824,7 @@ export default function PartnerProductManage() {
                         <FileUploadButton
                           onClick={() => {
                             editDetailImage(index, undefined);
+                            editDetailImageURL(index, undefined);
                           }}
                         >
                           삭제
@@ -1835,6 +1886,7 @@ export default function PartnerProductManage() {
                               false
                             );
                             editExtraImage(index, resizedFile);
+                            submitUploadImage(resizedFile, "extra", index);
                           }
                           setIsLoading(false);
                         }}
@@ -1848,6 +1900,7 @@ export default function PartnerProductManage() {
                         <FileUploadButton
                           onClick={() => {
                             editExtraImage(index, undefined);
+                            editExtraImageURL(index, undefined);
                           }}
                         >
                           삭제
