@@ -1,11 +1,11 @@
 import { ActionFunction } from "@remix-run/node";
 import { useSubmit } from "@remix-run/react";
 import { useRef } from "react";
-import { debug_fixPartnerProfileTaxStandard } from "~/services/firebase.server";
+import { debug_fixPartnerProfileTaxStandard, debug_fixProductStorage } from "~/services/firebase.server";
 
 export const action: ActionFunction = async ({ request }) => {
   console.log("request submitted");
-  debug_fixPartnerProfileTaxStandard();
+  debug_fixProductStorage();
   return null;
 };
 

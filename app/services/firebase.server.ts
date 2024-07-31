@@ -23,16 +23,12 @@ import {
   deleteObject,
   getDownloadURL,
   getStorage,
+  listAll,
   ref,
-  uploadBytesResumable,
+  uploadBytes,
 } from "firebase/storage";
 import { PartnerProfile } from "~/components/partner_profile";
-import {
-  dateToDayStr,
-  dayStrToDate,
-  getIdFromTime,
-  getTimezoneDate,
-} from "~/components/date";
+import { dateToDayStr, dayStrToDate, getTimezoneDate } from "~/components/date";
 import { OrderItem } from "~/components/order";
 import {
   createAuthAccount,
@@ -42,7 +38,7 @@ import {
 import { emailToId } from "~/utils/account";
 import { sendAligoMessage } from "./aligo.server";
 import { NoticeItem } from "~/components/notice";
-import { ProductWithoutFile } from "~/components/product";
+import { Product } from "~/components/product";
 import { SettlementSumItem } from "~/components/settlement_sum";
 import { sendResendEmail } from "./resend.server";
 
@@ -1492,42 +1488,14 @@ export async function replyNotice({
  * 에러가 있을 경우 string
  * 정상적일 경우 null
  */
-export async function addProductWithoutFile({
-  product,
-}: {
-  product: ProductWithoutFile;
-}) {
+export async function addProduct({ product }: { product: Product }) {
   const docRef = doc(firestore, "products", product.productName);
   const docSnap = await getDoc(docRef);
   if (docSnap.exists()) {
     return "이미 해당 이름의 상품이 등록되어 있습니다.";
   }
 
-  const id = getIdFromTime();
-
-  setDoc(doc(firestore, "products", product.productName), {
-    id: id,
-    partnerName: product.partnerName,
-    productName: product.productName,
-    englishProductName: product.englishProductName,
-    explanation: product.explanation,
-    keyword: product.keyword,
-    sellerPrice: product.sellerPrice,
-    isUsingOption: product.isUsingOption,
-    option: product.option,
-    refundExplanation: product.refundExplanation,
-    serviceExplanation: product.serviceExplanation,
-    status: product.status,
-    memo: product.memo,
-    detailImageNameList: [],
-    detailImageURLList: [],
-    extraImageNameList: [],
-    extraImageURLList: [],
-    mainImageName: "",
-    mainImageURL: "",
-    thumbnailImageName: "",
-    thumbnailImageURL: "",
-  });
+  setDoc(doc(firestore, "products", product.productName), product);
 
   return null;
 }
@@ -1591,39 +1559,31 @@ export async function deleteProduct({ productName }: { productName: string }) {
     const docSnap = await getDoc(docRef);
     if (docSnap.exists()) {
       const data = docSnap.data();
+      const id = data.id;
+      const usages = ["main", "thumbnail", "detail", "extra"];
+
+      try {
+        // 폴더 내의 모든 파일과 하위 폴더 목록 가져오기
+        usages.forEach(async (usage) => {
+          const folderRef = ref(storage, `product-images/${id}/${usage}`);
+          const listResult = await listAll(folderRef);
+
+          // 모든 파일 삭제
+          const deletePromises = listResult.items.map((itemRef) => {
+            return deleteObject(itemRef);
+          });
+
+          // 모든 삭제 작업이 완료될 때까지 기다림
+          await Promise.all(deletePromises);
+          console.log(
+            `All files in folder '${id} ${usage}' have been deleted.`
+          );
+        });
+      } catch (error) {
+        console.error("Error deleting files in folder:", error);
+      }
+
       await deleteDoc(doc(firestore, "products", productName));
-
-      const mainPath = `${data.productName}/main/${data.mainImageName}`;
-      try {
-        await deleteObject(ref(storage, mainPath));
-      } catch (error: any) {
-        console.log("mainPath file not found");
-      }
-
-      const thumbnailPath = `${data.productName}/thumbnail/${data.thumbnailImageName}`;
-      try {
-        await deleteObject(ref(storage, thumbnailPath));
-      } catch (error: any) {
-        console.log("thumbnailPath file not found");
-      }
-      const detailNameList = data.detailImageNameList;
-      for (let i = 0; i < detailNameList.length; i++) {
-        const detailPath = `${data.productName}/detail/${detailNameList[i]}`;
-        try {
-          await deleteObject(ref(storage, detailPath));
-        } catch (error: any) {
-          console.log("detailPath file not found");
-        }
-      }
-      const extraNameList = data.extraImageNameList;
-      for (let i = 0; i < extraNameList.length; i++) {
-        const extraPath = `${data.productName}/extra/${extraNameList[i]}`;
-        try {
-          await deleteObject(ref(storage, extraPath));
-        } catch (error: any) {
-          console.log("extraPath file not found");
-        }
-      }
     }
   } catch (error: any) {
     return error.message ?? error;
@@ -1650,22 +1610,31 @@ export async function deleteProducts({
       const docSnap = await getDoc(docRef);
       if (docSnap.exists()) {
         const data = docSnap.data();
-        deleteDoc(doc(firestore, "products", productNameList[i]));
+        const id = data.id;
+        const usages = ["main", "thumbnail", "detail", "extra"];
 
-        const mainPath = `${data.productName}/main/${data.mainImageName}`;
-        deleteObject(ref(storage, mainPath));
-        const thumbnailPath = `${data.productName}/thumbnail/${data.thumbnailImageName}`;
-        deleteObject(ref(storage, thumbnailPath));
-        const detailNameList = data.detailImageNameList;
-        for (let i = 0; i < detailNameList.length; i++) {
-          const detailPath = `${data.productName}/detail/${detailNameList[i]}`;
-          deleteObject(ref(storage, detailPath));
+        try {
+          // 폴더 내의 모든 파일과 하위 폴더 목록 가져오기
+          usages.forEach(async (usage) => {
+            const folderRef = ref(storage, `product-images/${id}/${usage}`);
+            const listResult = await listAll(folderRef);
+
+            // 모든 파일 삭제
+            const deletePromises = listResult.items.map((itemRef) => {
+              return deleteObject(itemRef);
+            });
+
+            // 모든 삭제 작업이 완료될 때까지 기다림
+            await Promise.all(deletePromises);
+            console.log(
+              `All files in folder '${id} ${usage}' have been deleted.`
+            );
+          });
+        } catch (error) {
+          console.error("Error deleting files in folder:", error);
         }
-        const extraNameList = data.extraImageNameList;
-        for (let i = 0; i < extraNameList.length; i++) {
-          const extraPath = `${data.productName}/extra/${extraNameList[i]}`;
-          deleteObject(ref(storage, extraPath));
-        }
+
+        await deleteDoc(doc(firestore, "products", data.productName));
       }
     }
   } catch (error: any) {
@@ -1797,163 +1766,26 @@ export async function getProductUploadProgress({
   }
 }
 
-export async function initializeUploadProductImage(
-  productName: string,
-  mainSize: number,
-  mainName: string,
-  thumbnailSize: number,
-  thumbnailName: string,
-  detailSizeList: number[],
-  detailNameList: string[],
-  extraSizeList: number[],
-  extraNameList: string[]
-) {
-  let data: any = {
-    mainTotalBytes: mainSize,
-    thumbnailTotalBytes: thumbnailSize,
-    mainBytesTransferred: 0,
-    thumbnailBytesTransferred: 0,
-    mainName: mainName,
-    thumbnailName: thumbnailName,
-    detailLength: detailSizeList.length,
-    extraLength: extraSizeList.length,
-  };
-
-  for (let i = 0; i < detailSizeList.length; i++) {
-    data[`detailBytesTransferred_${i}`] = 0;
-    data[`detailTotalBytes_${i}`] = Number(detailSizeList[i]);
-    data[`detailName_${i}`] = detailNameList[i];
-  }
-
-  for (let i = 0; i < extraSizeList.length; i++) {
-    data[`extraBytesTransferred_${i}`] = 0;
-    data[`extraTotalBytes_${i}`] = Number(extraSizeList[i]);
-    data[`extraName_${i}`] = extraNameList[i];
-  }
-  await setDoc(doc(firestore, "products-progress", productName), data);
-}
-
 export async function uploadProductImage(
   file: File,
-  fileName: string,
   usage: string,
-  productName: string,
-  detailIndex = 0
+  id: string,
+  index = 0
 ) {
   const arrayBuffer = await file.arrayBuffer();
-  const imagePath = `${productName}/${usage}/${fileName}`;
+  const imagePath = `product-images/${id}/${usage}/${usage}_${index}`;
   const imageStorageRef = ref(storage, imagePath);
-  const uploadTask = uploadBytesResumable(imageStorageRef, arrayBuffer);
+  const downloadURL = await uploadBytes(imageStorageRef, arrayBuffer)
+    .then(async (snapshot) => {
+      const url = await getDownloadURL(snapshot.ref);
+      return url;
+    })
+    .catch((error) => {
+      console.log("ERROR", error);
+      return "error";
+    });
 
-  switch (usage) {
-    case "main":
-      updateDoc(doc(firestore, "products-progress", productName), {
-        mainStarted: "true",
-      });
-      break;
-    case "thumbnail":
-      updateDoc(doc(firestore, "products-progress", productName), {
-        thumbnailStarted: "true",
-      });
-      break;
-    case "detail":
-      let detailData: any = {};
-      detailData[`detailStarted_${detailIndex}`] = "true";
-      updateDoc(doc(firestore, "products-progress", productName), detailData);
-      break;
-    case "extra":
-      let extraData: any = {};
-      extraData[`extraStarted_${detailIndex}`] = "true";
-      updateDoc(doc(firestore, "products-progress", productName), extraData);
-      break;
-  }
-
-  let progress = 0;
-  let stair = 50000;
-
-  uploadTask.on(
-    "state_changed",
-    (snapshot) => {
-      if (snapshot.bytesTransferred > progress) {
-        progress += stair;
-        switch (usage) {
-          case "main":
-            updateDoc(doc(firestore, "products-progress", productName), {
-              mainBytesTransferred: snapshot.bytesTransferred,
-            });
-            break;
-          case "thumbnail":
-            updateDoc(doc(firestore, "products-progress", productName), {
-              thumbnailBytesTransferred: snapshot.bytesTransferred,
-            });
-            break;
-          case "detail":
-            let detailData: any = {};
-            detailData[`detailBytesTransferred_${detailIndex}`] =
-              snapshot.bytesTransferred;
-            updateDoc(
-              doc(firestore, "products-progress", productName),
-              detailData
-            );
-            break;
-          case "extra":
-            let extraData: any = {};
-            extraData[`extraBytesTransferred_${detailIndex}`] =
-              snapshot.bytesTransferred;
-            updateDoc(
-              doc(firestore, "products-progress", productName),
-              extraData
-            );
-            break;
-        }
-      }
-    },
-    async (error) => {
-      let errorData: any = {};
-      errorData[`${usage}-${detailIndex}-errorData`] = error.message;
-      updateDoc(doc(firestore, "products-progress", productName), errorData);
-      await new Promise((resolve) => setTimeout(resolve, 3000));
-      uploadProductImage(file, fileName, usage, productName, detailIndex);
-    },
-    () => {
-      getDownloadURL(uploadTask.snapshot.ref).then((url) => {
-        switch (usage) {
-          case "main":
-            updateDoc(doc(firestore, "products-progress", productName), {
-              mainBytesTransferred: arrayBuffer.byteLength,
-              mainURL: url,
-            });
-            break;
-          case "thumbnail":
-            updateDoc(doc(firestore, "products-progress", productName), {
-              thumbnailBytesTransferred: arrayBuffer.byteLength,
-              thumbnailURL: url,
-            });
-            break;
-          case "detail":
-            let detailData: any = {};
-            detailData[`detailBytesTransferred_${detailIndex}`] =
-              arrayBuffer.byteLength;
-            detailData[`detailURL_${detailIndex}`] = url;
-            updateDoc(
-              doc(firestore, "products-progress", productName),
-              detailData
-            );
-            break;
-          case "extra":
-            let extraData: any = {};
-            extraData[`extraBytesTransferred_${detailIndex}`] =
-              arrayBuffer.byteLength;
-            extraData[`extraURL_${detailIndex}`] = url;
-            updateDoc(
-              doc(firestore, "products-progress", productName),
-              extraData
-            );
-            break;
-        }
-      });
-    }
-  );
+  return downloadURL;
 }
 
 /**
@@ -2068,31 +1900,84 @@ export async function sendSettlementNoticeEmail({
   };
 }
 
-export async function debug_fixProduct() {
+export async function debug_fixProductStorage() {
   const productsRef = collection(firestore, `products`);
-  const querySnapshot = await getDocs(productsRef);
-  querySnapshot.forEach((item) => {
+  const productsQuery = query(
+    productsRef,
+    where("partnerName", "==", "homethus")
+  );
+  const querySnapshot = await getDocs(productsQuery);
+  const usages = ["main", "thumbnail", "detail", "extra"];
+  querySnapshot.forEach(async (item) => {
     const docId = item.id;
     const data = item.data();
-    if (!data.mainImageURL) {
-      updateDoc(doc(firestore, `products/${docId}`), {
-        detailImageNameList: [],
-        detailImageURLList: [],
-        extraImageNameList: [],
-        extraImageURLList: [],
-        mainImageName: "",
-        mainImageURL: "",
-        thumbnailImageName: "",
-        thumbnailImageURL: "",
+    const id = data.id;
+    const updateDataJson: any = {
+      detailImageURLList: [],
+      extraImageURLList: [],
+    };
+
+    // 폴더 내의 모든 파일과 하위 폴더 목록 가져오기
+    const promises = usages.map(async (usage) => {
+      const oldFolderRef = ref(storage, `${data.productName}/${usage}`);
+      const listResult = await listAll(oldFolderRef);
+      console.log(
+        `${data.productName}/${usage} length`,
+        listResult.items.length
+      );
+
+      // 모든 파일 복사 및 삭제
+      const promises = listResult.items.map(async (itemRef, index) => {
+        console.log("PROMISE");
+        const newFolderRef = ref(
+          storage,
+          `product-images/${id}/${usage}/${usage}_${index}`
+        );
+        const downloadURL = await getDownloadURL(itemRef);
+        console.log(
+          `${data.productName}/${usage} ${index} previous downloadURL`,
+          downloadURL
+        );
+        const response = await fetch(downloadURL);
+        const fileData = await response.blob(); // Get file data as a Blob
+        await uploadBytes(newFolderRef, fileData).then(async (snapshot) => {
+          const url = await getDownloadURL(snapshot.ref);
+          console.log(
+            `product-images/${id}/${usage}/${usage}_${index} new downloadURL`,
+            url
+          );
+          switch (usage) {
+            case "main":
+              updateDataJson["mainImageURL"] = url;
+              break;
+            case "thumbnail":
+              updateDataJson["thumbnailImageURL"] = url;
+              break;
+            case "detail":
+              updateDataJson["detailImageURLList"].push(url);
+              break;
+            case "detail":
+              updateDataJson["extraImageURLList"].push(url);
+              break;
+          }
+        });
+        return deleteObject(itemRef);
       });
-    }
+
+      await Promise.all(promises);
+
+      // 모든 삭제 작업이 완료될 때까지 기다림
+      console.log(`All files in folder '${id} ${usage}' have been rename.`);
+    });
+    await Promise.all(promises);
+    console.log("update", updateDataJson);
+    await updateDoc(doc(firestore, "products", docId), updateDataJson);
   });
 }
 
 export async function debug_fixPartnerProfileTaxStandard() {
   const accountsRef = collection(firestore, "accounts");
-  const partnerQuery = query(accountsRef, where("isAdmin", "==", false));
-  const querySnap = await getDocs(partnerQuery);
+  const querySnap = await getDocs(accountsRef);
   querySnap.docs.forEach(async (item) => {
     const data = item.data();
     if (!data.businessTaxStandard) {
