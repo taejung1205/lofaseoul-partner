@@ -1553,7 +1553,13 @@ export async function getAllProducts() {
  *  에러가 있을 경우 string
  * 정상적일 경우 null
  */
-export async function deleteProduct({ productName }: { productName: string }) {
+export async function deleteProduct({
+  productName,
+  isDeletingStorage = true,
+}: {
+  productName: string;
+  isDeletingStorage?: boolean;
+}) {
   try {
     const docRef = doc(firestore, "products", productName);
     const docSnap = await getDoc(docRef);
@@ -1562,25 +1568,27 @@ export async function deleteProduct({ productName }: { productName: string }) {
       const id = data.id;
       const usages = ["main", "thumbnail", "detail", "extra"];
 
-      try {
-        // 폴더 내의 모든 파일과 하위 폴더 목록 가져오기
-        usages.forEach(async (usage) => {
-          const folderRef = ref(storage, `product-images/${id}/${usage}`);
-          const listResult = await listAll(folderRef);
+      if (isDeletingStorage) {
+        try {
+          // 폴더 내의 모든 파일과 하위 폴더 목록 가져오기
+          usages.forEach(async (usage) => {
+            const folderRef = ref(storage, `product-images/${id}/${usage}`);
+            const listResult = await listAll(folderRef);
 
-          // 모든 파일 삭제
-          const deletePromises = listResult.items.map((itemRef) => {
-            return deleteObject(itemRef);
+            // 모든 파일 삭제
+            const deletePromises = listResult.items.map((itemRef) => {
+              return deleteObject(itemRef);
+            });
+
+            // 모든 삭제 작업이 완료될 때까지 기다림
+            await Promise.all(deletePromises);
+            console.log(
+              `All files in folder '${id} ${usage}' have been deleted.`
+            );
           });
-
-          // 모든 삭제 작업이 완료될 때까지 기다림
-          await Promise.all(deletePromises);
-          console.log(
-            `All files in folder '${id} ${usage}' have been deleted.`
-          );
-        });
-      } catch (error) {
-        console.error("Error deleting files in folder:", error);
+        } catch (error) {
+          console.error("Error deleting files in folder:", error);
+        }
       }
 
       await deleteDoc(doc(firestore, "products", productName));
@@ -1773,7 +1781,7 @@ export async function uploadProductImage(
   index = 0
 ) {
   const arrayBuffer = await file.arrayBuffer();
-  const imagePath = `product-images/${id}/${usage}/${usage}_${index}`;
+  const imagePath = `product-images/${id}/${usage}/${usage}_${index}.jpg`;
   const imageStorageRef = ref(storage, imagePath);
   const downloadURL = await uploadBytes(imageStorageRef, arrayBuffer)
     .then(async (snapshot) => {
