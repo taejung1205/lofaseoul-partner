@@ -1,8 +1,6 @@
-import { json } from "@remix-run/node";
 import { Resend } from "resend";
 
 const resend = new Resend(process.env.RESEND_KEY);
-
 
 export async function sendResendEmail({
   to,
@@ -14,7 +12,7 @@ export async function sendResendEmail({
   html: string;
 }) {
   const result = await resend.emails.send({
-    from: "tabacpress<kyj@tabacpress.xyz>",
+    from: "tabacpress<syj@tabacpress.xyz>",
     to: to,
     subject: subject,
     html: html,
