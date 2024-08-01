@@ -325,7 +325,7 @@ export const action: ActionFunction = async ({ request }) => {
       if (actionType == "update" || actionType == "tempsave-update") {
         const prevProductName = body.get("prevProductName")?.toString();
         if (prevProductName !== undefined || prevProductName == "") {
-          const result = await deleteProduct({ productName: prevProductName });
+          const result = await deleteProduct({ productName: prevProductName, isDeletingStorage: false });
           if (result !== null) {
             return json({
               message: `상품 수정 중 삭제 과정에서 문제가 발생했습니다.${"\n"}${result}`,
@@ -880,11 +880,14 @@ export default function PartnerProductManage() {
     );
     const detailFileList = Array(8).fill(undefined);
     const extraFileList = Array(8).fill(undefined);
+    const detailURLList = Array(8).fill(undefined);
+    const extraURLList = Array(8).fill(undefined);
     for (let i = 0; i < product.detailImageURLList.length; i++) {
       detailFileList[i] = await downloadFile(
         product.detailImageURLList[i],
         product.detailImageNameList[i]
       );
+      detailURLList[i] = product.detailImageURLList[i];
     }
 
     for (let i = 0; i < product.extraImageURLList.length; i++) {
@@ -892,11 +895,16 @@ export default function PartnerProductManage() {
         product.extraImageURLList[i],
         product.extraImageNameList[i]
       );
+      extraURLList[i] = product.extraImageURLList[i];
     }
     setMainImageFile(mainFile);
+    setMainImageURL(product.mainImageURL);
     setThumbnailImageFile(thumbnailFile);
+    setThumbnailImageUrl(product.thumbnailImageURL);
     setDetailImageFileList(detailFileList);
+    setDetailImageURLList(detailURLList);
     setExtraImageFileList(extraFileList);
+    setExtraImageURLList(extraURLList);
     setMemo(product.memo);
     setRefundExplanation(replaceBr(product.refundExplanation));
     setServiceExplanation(replaceBr(product.serviceExplanation));
@@ -1585,7 +1593,6 @@ export default function PartnerProductManage() {
                               1250
                             );
                             editDetailImage(index, croppedFile);
-                            console.log("DETIAL");
                             submitUploadImage(croppedFile, "detail", index);
                           }
                           setIsLoading(false);
