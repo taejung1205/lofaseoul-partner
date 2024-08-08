@@ -1963,7 +1963,7 @@ export async function debug_fixProductStorage() {
             case "detail":
               updateDataJson["detailImageURLList"].push(url);
               break;
-            case "detail":
+            case "extra":
               updateDataJson["extraImageURLList"].push(url);
               break;
           }

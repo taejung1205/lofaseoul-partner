@@ -8,6 +8,7 @@ interface Props extends React.HTMLAttributes<HTMLDivElement> {
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   screenHeight: number;
+  isSelected: boolean;
 }
 
 export function SidebarBox({ isMobile, children, ...props }: Props) {
@@ -17,7 +18,7 @@ export function SidebarBox({ isMobile, children, ...props }: Props) {
     height: "100%",
     backgroundColor: "black",
     overflow: "hidden",
-    paddingTop: isMobile ? "0px" : "35px",
+    paddingTop: isMobile ? "0px" : "20px",
     display: "flex",
     flexFlow: "column",
     position: isMobile ? "fixed" : "relative",
@@ -31,17 +32,19 @@ export function SidebarBox({ isMobile, children, ...props }: Props) {
   );
 }
 
-export function NormalSidebarButton({
+export function SidebarButton({
   screenHeight,
   children,
+  isSelected,
   ...props
 }: ButtonProps) {
   const buttonStyles: React.CSSProperties = {
     backgroundColor: "transparent",
     border: "none",
-    color: "#ffffff80",
-    marginBottom: screenHeight < 700 ? "25px" : "40px",
-    fontSize: screenHeight < 700 ? "20px" : "23px",
+    color: isSelected ? "white" : "#ffffff80",
+    marginTop: screenHeight < 700 ? "7px" : "12px",
+    marginBottom: screenHeight < 700 ? "7px" : "12px",
+    fontSize: screenHeight < 700 ? "16px" : "20px",
     fontWeight: 700,
     lineHeight: 1,
     textAlign: "left",
@@ -56,17 +59,20 @@ export function NormalSidebarButton({
   );
 }
 
-export function SelectedSidebarButton({
+export function SubcategoryButton({
   screenHeight,
   children,
+  isSelected,
   ...props
 }: ButtonProps) {
   const buttonStyles: React.CSSProperties = {
     backgroundColor: "transparent",
     border: "none",
-    color: "white",
-    marginBottom: screenHeight < 700 ? "25px" : "40px",
-    fontSize: screenHeight < 700 ? "20px" : "23px",
+    color: isSelected ? "white" : "#ffffff80",
+    marginBottom: screenHeight < 700 ? "6px" : "8px",
+    marginTop: screenHeight < 700 ? "6px" : "8px",
+    marginLeft: "30px",
+    fontSize: screenHeight < 700 ? "12px" : "16px",
     fontWeight: 700,
     lineHeight: 1,
     textAlign: "left",
@@ -80,7 +86,6 @@ export function SelectedSidebarButton({
     </button>
   );
 }
-
 type AdminPathname =
   | null
   | "alert"
@@ -92,7 +97,13 @@ type AdminPathname =
   | "settlement-manage"
   | "settlement-share"
   | "shipped-list"
-  | "product-manage";
+  | "product-manage"
+  | "order-edit-exchange-refund"
+  | "order-edit-sale"
+  | "revenue-file-upload"
+  | "revenue-calculate"
+  | "revenue-chart"
+  | "revenue-db";
 
 type PartnerPathname =
   | null
@@ -115,33 +126,88 @@ export function AdminSidebar({
   const location = useLocation();
   const [currentPage, setCurrentPage] = useState<AdminPathname>(null);
   const viewportSize = useViewportSize();
+  const [isOrderEditOpen, setIsOrderEditOpen] = useState<boolean>(false);
+  const [isRevenueStatOpen, setIsRevenueStatOpen] = useState<boolean>(false);
 
-  function SidebarButton({
+  function MenuButton({
     name,
     pathname,
   }: {
     name: string;
     pathname: AdminPathname;
   }) {
-    if (currentPage === pathname) {
-      return (
-        <SelectedSidebarButton screenHeight={viewportSize.height}>
-          {name}
-        </SelectedSidebarButton>
-      );
-    } else {
-      return (
-        <Link
-          to={`/admin/${pathname}`}
-          style={{ display: "flex", textDecoration: "none" }}
+    const isSelected = pathname == currentPage;
+    return (
+      <Link
+        to={`/admin/${pathname}`}
+        style={{
+          display: "flex",
+          textDecoration: "none",
+          pointerEvents: isSelected ? "none" : "inherit",
+        }}
+      >
+        <SidebarButton
+          screenHeight={viewportSize.height}
+          isSelected={isSelected}
         >
-          <NormalSidebarButton screenHeight={viewportSize.height}>
-            {name}
-          </NormalSidebarButton>
-        </Link>
-      );
-    }
+          {name}
+        </SidebarButton>
+      </Link>
+    );
   }
+
+  function SubcategoryMenuButton({
+    name,
+    pathname,
+  }: {
+    name: string;
+    pathname: AdminPathname;
+  }) {
+    const isSelected = pathname == currentPage;
+    return (
+      <Link
+        to={`/admin/${pathname}`}
+        style={{
+          display: "flex",
+          textDecoration: "none",
+          pointerEvents: isSelected ? "none" : "inherit",
+        }}
+      >
+        <SubcategoryButton
+          screenHeight={viewportSize.height}
+          isSelected={isSelected}
+        >
+          {name}
+        </SubcategoryButton>
+      </Link>
+    );
+  }
+
+  function Category({
+    name,
+    isCategoryOpen,
+    onClick,
+    children,
+  }: {
+    name: string;
+    isCategoryOpen: boolean;
+    onClick: () => void;
+    children: React.ReactNode;
+  }) {
+    return (
+      <>
+        <SidebarButton
+          screenHeight={viewportSize.height}
+          isSelected={false}
+          onClick={onClick}
+        >
+          {name}
+        </SidebarButton>
+        {isCategoryOpen ? children : <></>}
+      </>
+    );
+  }
+
   useEffect(() => {
     switch (location.pathname) {
       case "/admin/dashboard":
@@ -184,6 +250,30 @@ export function AdminSidebar({
       case "/admin/product-manage":
         setCurrentPage("product-manage");
         break;
+
+      case "/admin/order-edit-exchange-refund":
+        setCurrentPage("order-edit-exchange-refund");
+        break;
+
+      case "/admin/order-edit-sale":
+        setCurrentPage("order-edit-sale");
+        break;
+
+      case "/admin/revenue-calculate":
+        setCurrentPage("revenue-calculate");
+        break;
+
+      case "/admin/revenue-chart":
+        setCurrentPage("revenue-chart");
+        break;
+
+      case "/admin/revenue-db":
+        setCurrentPage("revenue-db");
+        break;
+
+      case "/admin/revenue-file-upload":
+        setCurrentPage("revenue-file-upload");
+        break;
     }
   }, [location.pathname]);
   return (
@@ -199,16 +289,62 @@ export function AdminSidebar({
       ) : (
         <></>
       )}
-      <SidebarButton name="대쉬보드" pathname="dashboard" />
-      <SidebarButton name="계약 업체 목록" pathname="partner-list" />
-      <SidebarButton name="주문서 공유" pathname="order-share" />
-      <SidebarButton name="주문서 조회" pathname="order-list" />
-      <SidebarButton name="온라인배송완료내역" pathname="shipped-list" />
-      <SidebarButton name="출고 지연주문건" pathname="delayed-order" />
-      <SidebarButton name="정산내역 공유" pathname="settlement-share" />
-      <SidebarButton name="정산내역 관리" pathname="settlement-manage" />
-      <SidebarButton name="상품등록 관리 (WIP)" pathname="product-manage" />
-      <SidebarButton name="발신함 / 수신함" pathname="alert" />
+      <MenuButton name="대쉬보드" pathname="dashboard" />
+      <MenuButton name="계약 업체 목록" pathname="partner-list" />
+      <MenuButton name="주문서 공유" pathname="order-share" />
+      <MenuButton name="주문서 조회" pathname="order-list" />
+      <MenuButton name="온라인배송완료내역" pathname="shipped-list" />
+      <MenuButton name="출고 지연주문건" pathname="delayed-order" />
+      <MenuButton name="정산내역 공유" pathname="settlement-share" />
+      <MenuButton name="정산내역 관리" pathname="settlement-manage" />
+      <MenuButton name="상품등록 관리" pathname="product-manage" />
+      <MenuButton name="발신함 / 수신함" pathname="alert" />
+      <Category
+        name="• 주문서 수정"
+        onClick={() => {
+          setIsOrderEditOpen(!isOrderEditOpen);
+        }}
+        isCategoryOpen={
+          currentPage == "order-edit-exchange-refund" ||
+          currentPage == "order-edit-sale"
+            ? true
+            : isOrderEditOpen
+        }
+      >
+        <SubcategoryMenuButton
+          name="교환/환불내역 관리"
+          pathname="order-edit-exchange-refund"
+        />
+        <SubcategoryMenuButton
+          name="할인내역 관리"
+          pathname="order-edit-sale"
+        />
+      </Category>
+      <Category
+        name="• 수익통계"
+        onClick={() => {
+          setIsRevenueStatOpen(!isRevenueStatOpen);
+        }}
+        isCategoryOpen={
+          currentPage == "revenue-file-upload" ||
+          currentPage == "revenue-calculate" ||
+          currentPage == "revenue-chart" ||
+          currentPage == "revenue-db"
+            ? true
+            : isRevenueStatOpen
+        }
+      >
+        <SubcategoryMenuButton
+          name="통계용 파일 업로드"
+          pathname="revenue-file-upload"
+        />
+        <SubcategoryMenuButton
+          name="수익금 계산"
+          pathname="revenue-calculate"
+        />
+        <SubcategoryMenuButton name="통계차트조회" pathname="revenue-chart" />
+        <SubcategoryMenuButton name="정산통계 DB" pathname="revenue-db" />
+      </Category>
     </SidebarBox>
   );
 }
@@ -224,32 +360,33 @@ export function PartnerSidebar({
   const [currentPage, setCurrentPage] = useState<PartnerPathname>(null);
   const viewportSize = useViewportSize();
 
-  function SidebarButton({
+  function MenuButton({
     name,
     pathname,
   }: {
     name: string;
     pathname: PartnerPathname;
   }) {
-    if (currentPage === pathname) {
-      return (
-        <SelectedSidebarButton screenHeight={viewportSize.height}>
-          {name}
-        </SelectedSidebarButton>
-      );
-    } else {
-      return (
-        <Link
-          to={`/partner/${pathname}`}
-          style={{ display: "flex", textDecoration: "none" }}
+    const isSelected = pathname == currentPage;
+    return (
+      <Link
+        to={`/admin/${pathname}`}
+        style={{
+          display: "flex",
+          textDecoration: "none",
+          pointerEvents: isSelected ? "none" : "inherit",
+        }}
+      >
+        <SidebarButton
+          screenHeight={viewportSize.height}
+          isSelected={isSelected}
         >
-          <NormalSidebarButton screenHeight={viewportSize.height}>
-            {name}
-          </NormalSidebarButton>
-        </Link>
-      );
-    }
+          {name}
+        </SidebarButton>
+      </Link>
+    );
   }
+
   useEffect(() => {
     switch (location.pathname) {
       case "/partner/dashboard":
@@ -297,14 +434,14 @@ export function PartnerSidebar({
       ) : (
         <></>
       )}
-      <SidebarButton name="대쉬보드" pathname="dashboard" />
-      <SidebarButton name="내 계약 정보" pathname="my-info" />
-      <SidebarButton name="운송장 공유" pathname="waybill-share" />
-      <SidebarButton name="온라인배송완료내역" pathname="shipped-list" />
-      <SidebarButton name="출고 지연주문건" pathname="delayed-order" />
-      <SidebarButton name="정산내역" pathname="settlement-list" />
-      <SidebarButton name="상품 관리 (WIP)" pathname="product-manage" />
-      <SidebarButton name="발신함 / 수신함" pathname="alert" />
+      <MenuButton name="대쉬보드" pathname="dashboard" />
+      <MenuButton name="내 계약 정보" pathname="my-info" />
+      <MenuButton name="운송장 공유" pathname="waybill-share" />
+      <MenuButton name="온라인배송완료내역" pathname="shipped-list" />
+      <MenuButton name="출고 지연주문건" pathname="delayed-order" />
+      <MenuButton name="정산내역" pathname="settlement-list" />
+      <MenuButton name="상품 관리" pathname="product-manage" />
+      <MenuButton name="발신함 / 수신함" pathname="alert" />
     </SidebarBox>
   );
 }
