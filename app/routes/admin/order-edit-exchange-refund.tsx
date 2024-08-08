@@ -6,9 +6,12 @@ import {
 } from "~/components/file_upload";
 import { PageLayout } from "~/components/page_layout";
 import * as xlsx from "xlsx";
+import { LoadingOverlay } from "@mantine/core";
+import { useNavigation } from "@remix-run/react";
 
 export default function Page() {
   const [fileName, setFileName] = useState<string>("");
+  const navigation = useNavigation();
 
   const readExcel = (e: any) => {
     e.preventDefault();
@@ -32,6 +35,7 @@ export default function Page() {
 
   return (
     <>
+      <LoadingOverlay visible={navigation.state == "loading"} overlayBlur={2} />
       <PageLayout>
         <div style={{ display: "flex" }} className="fileBox">
           <FileNameBox>{fileName}</FileNameBox>
