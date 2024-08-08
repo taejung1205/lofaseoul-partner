@@ -92,7 +92,8 @@ type AdminPathname =
   | "settlement-manage"
   | "settlement-share"
   | "shipped-list"
-  | "product-manage";
+  | "product-manage"
+  | "seller-manage";
 
 type PartnerPathname =
   | null
@@ -183,6 +184,10 @@ export function AdminSidebar({
 
       case "/admin/product-manage":
         setCurrentPage("product-manage");
+        break;
+      
+      case "/admin/seller-manage":
+        setCurrentPage("seller-manage");
         break;
     }
   }, [location.pathname]);
