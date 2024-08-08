@@ -10,7 +10,6 @@ import { LoadingOverlay } from "@mantine/core";
 import { useNavigation } from "@remix-run/react";
 
 type OrderDiscountEditItem = {
-
   discountStartDate: string; //할인 시작인
   discountEndDate: string; //할인 종료일
   partnerName: string; //공급처 (aka 파트너명)
@@ -20,7 +19,7 @@ type OrderDiscountEditItem = {
   platformDiscountRate: number; //플랫폼부담할인율
   lofaAdjustmentFee: number; //로파 조정수수료율
   platformAdjustmentFee: number; //플랫폼 조정수수료율
-} 
+};
 
 export default function Page() {
   const [fileName, setFileName] = useState<string>("");
@@ -60,6 +59,7 @@ export default function Page() {
             id="uploadFile"
             accept=".xlsx,.xls"
           />
+          준비중입니다.
         </div>
       </PageLayout>
     </>

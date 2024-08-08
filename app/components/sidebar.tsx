@@ -295,6 +295,7 @@ export function AdminSidebar({
       )}
       <MenuButton name="대쉬보드" pathname="dashboard" />
       <MenuButton name="계약 업체 목록" pathname="partner-list" />
+      <MenuButton name="판매처 수수료 관리" pathname="seller-manage" />
       <MenuButton name="주문서 공유" pathname="order-share" />
       <MenuButton name="주문서 조회" pathname="order-list" />
       <MenuButton name="온라인배송완료내역" pathname="shipped-list" />

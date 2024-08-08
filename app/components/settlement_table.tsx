@@ -2,7 +2,7 @@ import { Checkbox } from "@mantine/core";
 import React, { useMemo } from "react";
 import { useEffect, useState } from "react";
 import { PartnerProfile } from "./partner_profile";
-import { PossibleSellers } from "./seller";
+import { LofaSellers, PossibleSellers } from "./seller";
 import { useViewportSize } from "@mantine/hooks";
 import { isMobile } from "~/utils/mobile";
 import { isValidDateString } from "~/utils/date";
@@ -256,7 +256,7 @@ export function setSettlementFee(
   } else {
     item.shippingFee = 0;
   }
-  if (item.seller == "로파공홈" || item.seller == "용산쇼룸") {
+  if (LofaSellers.includes(item.seller)) {
     item.fee = partnerProfile.lofaFee;
   } else {
     item.fee = partnerProfile.otherFee;

@@ -9,6 +9,8 @@ export const PossibleSellers = [
   "카카오",
 ];
 
+export const LofaSellers = ["로파공홈", "용산쇼룸"];
+
 export function SellerSelect({
   seller,
   setSeller,

@@ -100,6 +100,39 @@ export async function isAdmin(email: string) {
 }
 
 /**
+ * 판매자의 정보들을 불러옵니다
+ * @param param0
+ * @returns
+ *  Map(key: (partner name), value: SellerProfile)
+ */
+export async function getAllSellerProfiles() {
+  const accountsRef = collection(firestore, "seller");
+  const querySnap = await getDocs(accountsRef);
+  const map = new Map<string, any>();
+  querySnap.docs.forEach((doc) => {
+    map.set(doc.id, doc.data());
+  });
+  return map;
+}
+
+/**
+ * 판매처 정보를  수정합니다.
+ * @param name: string
+ * @param fee: number
+ * @returns
+ * 에러가 있을 경우 string
+ * 정상적일 경우 null
+ */
+export async function editSellerProfile(name: string, fee: number){
+  const result = await updateDoc(doc(firestore, "seller", name), {
+    fee: fee
+  }).catch((error) => {
+    return error.message;
+  });
+
+  return result;
+}
+/**
  * 파트너의 정보들을 불러옵니다
  * @param param0
  * @returns

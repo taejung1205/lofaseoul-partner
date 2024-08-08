@@ -19,7 +19,7 @@ type OrderEditItem = {
   cancelDate: string; //취소일
   orderer: string; //주문자
   shippingFee: string;
-} 
+};
 
 export default function Page() {
   const [fileName, setFileName] = useState<string>("");
@@ -59,6 +59,7 @@ export default function Page() {
             id="uploadFile"
             accept=".xlsx,.xls"
           />
+          준비중입니다
         </div>
       </PageLayout>
     </>
