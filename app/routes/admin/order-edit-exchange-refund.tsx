@@ -9,6 +9,18 @@ import * as xlsx from "xlsx";
 import { LoadingOverlay } from "@mantine/core";
 import { useNavigation } from "@remix-run/react";
 
+type OrderEditItem = {
+  orderStatus: string; //주문상태
+  orderNumber: string; //주문번호
+  partnerName: string; //공급처 (aka 파트너명)
+  productName: string; //상품명
+  seller: string; //판매처
+  managementNumber: string; //관리번호
+  cancelDate: string; //취소일
+  orderer: string; //주문자
+  shippingFee: string;
+} 
+
 export default function Page() {
   const [fileName, setFileName] = useState<string>("");
   const navigation = useNavigation();

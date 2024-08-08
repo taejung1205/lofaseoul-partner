@@ -99,7 +99,7 @@ type AdminPathname =
   | "shipped-list"
   | "product-manage"
   | "order-edit-exchange-refund"
-  | "order-edit-sale"
+  | "order-edit-discount"
   | "revenue-file-upload"
   | "revenue-calculate"
   | "revenue-chart"
@@ -255,8 +255,8 @@ export function AdminSidebar({
         setCurrentPage("order-edit-exchange-refund");
         break;
 
-      case "/admin/order-edit-sale":
-        setCurrentPage("order-edit-sale");
+      case "/admin/order-edit-discount":
+        setCurrentPage("order-edit-discount");
         break;
 
       case "/admin/revenue-calculate":
@@ -306,7 +306,7 @@ export function AdminSidebar({
         }}
         isCategoryOpen={
           currentPage == "order-edit-exchange-refund" ||
-          currentPage == "order-edit-sale"
+          currentPage == "order-edit-discount"
             ? true
             : isOrderEditOpen
         }
@@ -317,7 +317,7 @@ export function AdminSidebar({
         />
         <SubcategoryMenuButton
           name="할인내역 관리"
-          pathname="order-edit-sale"
+          pathname="order-edit-discount"
         />
       </Category>
       <Category

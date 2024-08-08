@@ -9,6 +9,19 @@ import * as xlsx from "xlsx";
 import { LoadingOverlay } from "@mantine/core";
 import { useNavigation } from "@remix-run/react";
 
+type OrderDiscountEditItem = {
+
+  discountStartDate: string; //할인 시작인
+  discountEndDate: string; //할인 종료일
+  partnerName: string; //공급처 (aka 파트너명)
+  productName: string; //상품명
+  partnerDiscountRate: number; //업체부담 할인율
+  lofaDiscountRate: number; //로파부담할인율
+  platformDiscountRate: number; //플랫폼부담할인율
+  lofaAdjustmentFee: number; //로파 조정수수료율
+  platformAdjustmentFee: number; //플랫폼 조정수수료율
+} 
+
 export default function Page() {
   const [fileName, setFileName] = useState<string>("");
   const navigation = useNavigation();
