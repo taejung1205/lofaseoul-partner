@@ -103,7 +103,8 @@ type AdminPathname =
   | "revenue-file-upload"
   | "revenue-calculate"
   | "revenue-chart"
-  | "revenue-db";
+  | "revenue-db"
+  | "seller-manage";
 
 type PartnerPathname =
   | null
@@ -273,6 +274,9 @@ export function AdminSidebar({
 
       case "/admin/revenue-file-upload":
         setCurrentPage("revenue-file-upload");
+
+      case "/admin/seller-manage":
+        setCurrentPage("seller-manage");
         break;
     }
   }, [location.pathname]);
