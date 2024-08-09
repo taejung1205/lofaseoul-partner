@@ -274,6 +274,7 @@ export function AdminSidebar({
 
       case "/admin/revenue-file-upload":
         setCurrentPage("revenue-file-upload");
+        break;
 
       case "/admin/seller-manage":
         setCurrentPage("seller-manage");
