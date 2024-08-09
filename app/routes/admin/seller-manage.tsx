@@ -96,7 +96,7 @@ export default function Page() {
 
   return (
     <>
-      <LoadingOverlay visible={navigation.state == "loading"} overlayBlur={2} />
+      <LoadingOverlay visible={navigation.state == "loading" || navigation.state == "submitting"} overlayBlur={2} />
       <BasicModal
         opened={isNoticeModalOpened}
         onClose={() => setIsNoticeModalOpened(false)}
