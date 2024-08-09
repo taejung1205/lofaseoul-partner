@@ -376,7 +376,7 @@ export function PartnerSidebar({
     const isSelected = pathname == currentPage;
     return (
       <Link
-        to={`/admin/${pathname}`}
+        to={`/partner/${pathname}`}
         style={{
           display: "flex",
           textDecoration: "none",
