@@ -153,7 +153,7 @@ export default function AdminSettlementShare() {
     submit(formData, { method: "post" });
   }
 
-  const readExcel = (e: any) => {
+  const readExcel = (e: React.ChangeEvent<HTMLInputElement>) => {
     e.preventDefault();
     let json: any;
     if (e.target.files) {
@@ -204,6 +204,7 @@ export default function AdminSettlementShare() {
             setIsNoticeModalOpened(true);
             setFileName("");
             setItems([]);
+            e.target.value = '';
             return false;
           }
 
@@ -217,6 +218,7 @@ export default function AdminSettlementShare() {
             setIsNoticeModalOpened(true);
             setFileName("");
             setItems([]);
+            e.target.value = '';
             return false;
           }
 
@@ -228,6 +230,7 @@ export default function AdminSettlementShare() {
             setIsNoticeModalOpened(true);
             setFileName("");
             setItems([]);
+            e.target.value = '';
             return false;
           }
 
@@ -239,6 +242,7 @@ export default function AdminSettlementShare() {
       };
       reader.readAsArrayBuffer(e.target.files[0]);
       setFileName(e.target.files[0].name);
+      e.target.value = '';
     }
   };
 

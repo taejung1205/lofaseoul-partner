@@ -25,7 +25,7 @@ export default function Page() {
   const [fileName, setFileName] = useState<string>("");
   const navigation = useNavigation();
 
-  const readExcel = (e: any) => {
+  const readExcel = (e: React.ChangeEvent<HTMLInputElement>) => {
     e.preventDefault();
     let json: any;
     if (e.target.files) {
@@ -42,6 +42,7 @@ export default function Page() {
       };
       reader.readAsArrayBuffer(e.target.files[0]);
       setFileName(e.target.files[0].name);
+      e.target.value = '';
     }
   };
 
