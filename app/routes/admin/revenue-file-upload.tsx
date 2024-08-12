@@ -8,7 +8,7 @@ import { PageLayout } from "~/components/page_layout";
 import * as xlsx from "xlsx";
 import { LoadingOverlay, Space } from "@mantine/core";
 import { useLoaderData, useNavigation } from "@remix-run/react";
-import { BlackButton, CommonButton } from "~/components/button";
+import { CommonButton } from "~/components/button";
 import {
   checkRevenueDataItem,
   RevenueDataItem,
@@ -17,6 +17,7 @@ import { BasicModal, ModalButton } from "~/components/modal";
 import { PartnerProfile } from "~/components/partner_profile";
 import { json, LoaderFunction } from "@remix-run/node";
 import { getAllPartnerProfiles } from "~/services/firebase.server";
+import { adjustSellerName } from "~/components/seller";
 
 export const loader: LoaderFunction = async ({ request }) => {
   const partnersMap = await getAllPartnerProfiles();
@@ -42,9 +43,7 @@ export default function Page() {
     return map;
   }, [loaderData]);
 
-  // useEffect(() => {
-  //   console.log(items);
-  // }, [items]);
+  useEffect(() => {}, [items]);
 
   const readExcel = (e: React.ChangeEvent<HTMLInputElement>) => {
     e.preventDefault();
@@ -54,7 +53,7 @@ export default function Page() {
       reader.onload = (e: any) => {
         const array: RevenueDataItem[] = [];
         const data = e.target.result;
-        const workbook = xlsx.read(data, { type: "array", cellDates: true});
+        const workbook = xlsx.read(data, { type: "array", cellDates: true });
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
         json = xlsx.utils.sheet_to_json(worksheet);
@@ -78,11 +77,13 @@ export default function Page() {
           const result = checkRevenueDataItem(item);
           if (!result.isValid) {
             console.log(item);
-            setNoticeModalStr(`유효하지 않은 엑셀 파일입니다. ${i+2}행에 ${result.message} `);
+            setNoticeModalStr(
+              `유효하지 않은 엑셀 파일입니다. ${i + 2}행에 ${result.message} `
+            );
             setIsNoticeModalOpened(true);
             setFileName("");
             setItems([]);
-            e.target.value = '';
+            e.target.value = "";
             return false;
           }
 
@@ -99,6 +100,20 @@ export default function Page() {
           //   return false;
           // }
 
+          const isSellerNameValid = adjustSellerName(item);
+
+          if (!isSellerNameValid) {
+            console.log(item);
+            setNoticeModalStr(
+              `${i + 2}행의 판매처가 유효하지 않습니다. (${item.seller}) `
+            );
+            setIsNoticeModalOpened(true);
+            setFileName("");
+            setItems([]);
+            e.target.value = "";
+            return false;
+          }
+
           array.push(item);
         }
         console.log(array.length);
@@ -106,7 +121,7 @@ export default function Page() {
       };
       reader.readAsArrayBuffer(e.target.files[0]);
       setFileName(e.target.files[0].name);
-      e.target.value = '';
+      e.target.value = "";
     }
   };
 

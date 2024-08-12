@@ -28,7 +28,7 @@ import {
   uploadBytes,
 } from "firebase/storage";
 import { PartnerProfile } from "~/components/partner_profile";
-import { dateToDayStr, dayStrToDate, getTimezoneDate } from "~/components/date";
+import { dateToDayStr, dayStrToDate, getTimezoneDate } from "~/utils/date";
 import { OrderItem } from "~/components/order";
 import {
   createAuthAccount,

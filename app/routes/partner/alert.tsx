@@ -9,16 +9,13 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import { LoaderFunction } from "react-router-dom";
 import { CommonButton } from "~/components/button";
-import {
-  dateToKoreanMonth,
-  koreanMonthToDate,
-  MonthSelectPopover,
-} from "~/components/date";
+import { MonthSelectPopover } from "~/components/date";
 import { BasicModal, ModalButton } from "~/components/modal";
 import { NoticeItem, PartnerNotice } from "~/components/notice";
 import { PageLayout } from "~/components/page_layout";
 import { getSharedNotices, replyNotice } from "~/services/firebase.server";
 import { requireUser } from "~/services/session.server";
+import { dateToKoreanMonth, koreanMonthToDate } from "~/utils/date";
 
 function EmptyNoticeBox({
   children,

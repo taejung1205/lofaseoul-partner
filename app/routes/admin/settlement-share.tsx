@@ -9,8 +9,6 @@ import {
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as xlsx from "xlsx";
 import {
-  dateToKoreanMonth,
-  getTimezoneDate,
   MonthSelectPopover,
 } from "~/components/date";
 import {
@@ -21,10 +19,10 @@ import {
 import { BasicModal, ModalButton } from "~/components/modal";
 import { PageLayout } from "~/components/page_layout";
 import { PartnerProfile } from "~/components/partner_profile";
+import { adjustSellerName } from "~/components/seller";
 import {
   isSettlementItemValid,
   setSettlementPartnerName,
-  adjustSellerName,
   setSettlementFee,
   SettlementTableMemo,
 } from "~/components/settlement_table";
@@ -34,6 +32,7 @@ import {
   getAllPartnerProfiles,
   getSettlementMonthes,
 } from "~/services/firebase.server";
+import { dateToKoreanMonth, getTimezoneDate } from "~/utils/date";
 
 function ShareButton({
   children,
