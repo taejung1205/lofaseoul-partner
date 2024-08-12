@@ -12,6 +12,7 @@ import { CommonButton } from "~/components/button";
 import {
   checkRevenueDataItem,
   RevenueDataItem,
+  RevenueDataTableMemo,
 } from "~/components/revenue_data";
 import { BasicModal, ModalButton } from "~/components/modal";
 import { PartnerProfile } from "~/components/partner_profile";
@@ -28,9 +29,11 @@ export const loader: LoaderFunction = async ({ request }) => {
 export default function Page() {
   const [fileName, setFileName] = useState<string>("");
   const [items, setItems] = useState<RevenueDataItem[]>([]);
+  const [itemsChecked, setItemsChecked] = useState<boolean[]>([]);
   const [noticeModalStr, setNoticeModalStr] = useState<string>("");
   const [isNoticeModalOpened, setIsNoticeModalOpened] =
     useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const navigation = useNavigation();
   const loaderData = useLoaderData();
@@ -43,11 +46,27 @@ export default function Page() {
     return map;
   }, [loaderData]);
 
-  useEffect(() => {}, [items]);
+  useEffect(() => {
+    const newArr = Array(items.length).fill(true);
+    setItemsChecked(newArr);
+  }, [items]);
+
+  useEffect(() => {
+    setIsLoading(false);
+  }, [itemsChecked])
+
+  function onItemCheck(index: number, isChecked: boolean) {
+    itemsChecked[index] = isChecked;
+  }
+
+  function onCheckAll(isChecked: boolean) {
+    setItemsChecked(Array(items.length).fill(isChecked));
+  }
 
   const readExcel = (e: React.ChangeEvent<HTMLInputElement>) => {
     e.preventDefault();
     let json: any;
+    setIsLoading(true);
     if (e.target.files) {
       const reader = new FileReader();
       reader.onload = (e: any) => {
@@ -66,7 +85,7 @@ export default function Page() {
             seller: element.판매처?.toString(),
             partnerName: element.공급처?.toString(),
             productName: element.상품명?.toString(),
-            option: element.옵션명?.toString() ?? "",
+            optionName: element.옵션명?.toString() ?? "",
             price: Number(element.판매가),
             amount: Number(element.주문수량),
             orderStatus: element.상태?.toString(),
@@ -127,7 +146,7 @@ export default function Page() {
 
   return (
     <>
-      <LoadingOverlay visible={navigation.state == "loading"} overlayBlur={2} />
+      <LoadingOverlay visible={navigation.state == "loading" || isLoading} overlayBlur={2} />
       <BasicModal
         opened={isNoticeModalOpened}
         onClose={() => setIsNoticeModalOpened(false)}
@@ -162,6 +181,14 @@ export default function Page() {
           <Space w={20} />
           <CommonButton width={200}>할인 적용 미리보기</CommonButton>
         </div>
+        <Space h={20} />
+        <RevenueDataTableMemo
+          items={items}
+          itemsChecked={itemsChecked}
+          onItemCheck={onItemCheck}
+          onCheckAll={onCheckAll}
+          defaultAllCheck={true}
+        />
       </PageLayout>
     </>
   );

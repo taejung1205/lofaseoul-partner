@@ -1,5 +1,7 @@
 import { Checkbox } from "@mantine/core";
+import React from "react";
 import { useEffect, useState } from "react";
+import { dateToDayStr } from "~/utils/date";
 
 //통계용 파일 업로드에서 올릴 때 사용하는 양식입니다.
 export type RevenueDataItem = {
@@ -7,7 +9,7 @@ export type RevenueDataItem = {
   seller: string; //판매처 (플랫폼)
   partnerName: string; //공급처 (파트너명)
   productName: string; //상품명
-  option: string; //옵션명
+  optionName: string; //옵션명
   price: number; //판매가
   amount: number; //수량
   orderStatus: string; //주문상태
@@ -15,19 +17,18 @@ export type RevenueDataItem = {
   isDiscounted: boolean;
 };
 
-interface Props extends  React.HTMLAttributes<HTMLDivElement> {
+interface Props extends React.HTMLAttributes<HTMLDivElement> {
   styleOverrides?: React.CSSProperties;
 }
 
-
 function OrderBox({ children, styleOverrides, ...props }: Props) {
   const orderBoxStyles: React.CSSProperties = {
-    width: 'inherit',
-    height: '60%',
-    minHeight: '60%',
-    position: 'relative',
-    overflow: 'scroll',
-    ...styleOverrides
+    width: "inherit",
+    height: "60%",
+    minHeight: "60%",
+    position: "relative",
+    overflow: "scroll",
+    ...styleOverrides,
   };
 
   return (
@@ -37,9 +38,9 @@ function OrderBox({ children, styleOverrides, ...props }: Props) {
   );
 }
 
-function OrderItemsBox({ children, styleOverrides,  ...props }: Props) {
+function OrderItemsBox({ children, styleOverrides, ...props }: Props) {
   const orderItemsBoxStyles: React.CSSProperties = {
-    maxHeight: '85%',
+    maxHeight: "85%",
   };
 
   return (
@@ -51,11 +52,11 @@ function OrderItemsBox({ children, styleOverrides,  ...props }: Props) {
 
 function OrderItemBox({ children, styleOverrides, ...props }: Props) {
   const orderItemBoxStyles: React.CSSProperties = {
-    width: 'fit-content',
-    display: 'flex',
-    alignItems: 'center',
-    padding: '10px 6px',
-    ...styleOverrides
+    width: "fit-content",
+    display: "flex",
+    alignItems: "center",
+    padding: "10px 6px",
+    ...styleOverrides,
   };
 
   return (
@@ -67,12 +68,12 @@ function OrderItemBox({ children, styleOverrides, ...props }: Props) {
 
 function OrderHeader({ children, styleOverrides, ...props }: Props) {
   const orderHeaderStyles: React.CSSProperties = {
-    backgroundColor: '#ebebeb',
-    width: 'fit-content',
-    display: 'flex',
-    alignItems: 'center',
-    padding: '10px 6px',
-    ...styleOverrides
+    backgroundColor: "#ebebeb",
+    width: "fit-content",
+    display: "flex",
+    alignItems: "center",
+    padding: "10px 6px",
+    ...styleOverrides,
   };
 
   return (
@@ -84,15 +85,15 @@ function OrderHeader({ children, styleOverrides, ...props }: Props) {
 
 function TextBox({ children, styleOverrides, ...props }: Props) {
   const textBoxStyles: React.CSSProperties = {
-    marginLeft: '10px',
+    marginLeft: "10px",
     fontWeight: 700,
-    fontSize: '16px',
-    lineHeight: '20px',
-    textAlign: 'center',
-    textOverflow: 'ellipsis',
-    whiteSpace: 'nowrap',
-    overflow: 'hidden',
-    ...styleOverrides
+    fontSize: "16px",
+    lineHeight: "20px",
+    textAlign: "center",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    ...styleOverrides,
   };
 
   return (
@@ -170,13 +171,13 @@ function RevenueDataItem({
   checkboxRequired?: boolean;
 }) {
   const [isChecked, setIsChecked] = useState<boolean>(check);
-  
+
   useEffect(() => {
     setIsChecked(check);
   }, [check]);
 
   return (
-    <OrderItemBox key={`SettlementItem-${index}`}>
+    <OrderItemBox key={`RevenueDataItem-${index}`}>
       {checkboxRequired ? (
         <Checkbox
           color={"gray"}
@@ -192,90 +193,151 @@ function RevenueDataItem({
       )}
 
       <TextBox styleOverrides={{ minWidth: "90px", width: "90px" }}>
-        {item.orderDate}
+        {dateToDayStr(item.orderDate)}
       </TextBox>
       <TextBox styleOverrides={{ minWidth: "90px", width: "90px" }}>
         {item.seller}
       </TextBox>
-      <TextBox styleOverrides={{ minWidth: "160px", fontSize: "12px", width: "160px" }}>
-        {item.orderNumber}
+      <TextBox
+        styleOverrides={{ minWidth: "160px", fontSize: "12px", width: "160px" }}
+      >
+        {item.partnerName}
       </TextBox>
-      {isWaybill ? (
-        <>
-          <TextBox
-            styleOverrides={{ minWidth: "160px", fontSize: "16px", width: "160px" }}
-          >
-            {item.shippingCompany}
-          </TextBox>
-          <TextBox
-            styleOverrides={{ minWidth: "160px", fontSize: "12px", width: "160px" }}
-          >
-            {item.waybillNumber}
-          </TextBox>
-        </>
-      ) : (
-        <></>
-      )}
-      {isWaybillEdit ? (
-        <>
-          <ShippingCompanySelect
-            shippingCompany={shippingCompany}
-            setShippingCompany={(val: string) => {
-              setShippingCompany(val);
-              onItemShippingCompanySelect(index, val);
-            }}
-          />
-          <input
-            style={{
-              minWidth: "160px",
-              width: "160px",
-              marginLeft: "10px",
-              fontSize: "12px",
-              height: "40px",
-            }}
-            value={waybillNumber}
-            onChange={(e) => {
-              setWaybillNumber(e.target.value);
-              onItemWaybillNumberEdit(index, e.target.value);
-            }}
-          />
-        </>
-      ) : (
-        <></>
-      )}
-      <TextBox styleOverrides={{ minWidth: "450px", fontSize: "12px", width: "450px" }}>
+      <TextBox
+        styleOverrides={{ minWidth: "450px", fontSize: "12px", width: "450px" }}
+      >
         {item.productName}
       </TextBox>
-      <TextBox styleOverrides={{ minWidth: "250px", fontSize: "12px", width: "250px" }}>
+      <TextBox
+        styleOverrides={{ minWidth: "250px", fontSize: "12px", width: "250px" }}
+      >
         {item.optionName}
       </TextBox>
-      <TextBox styleOverrides={{ minWidth: "30px", width: "30px" }}>
+      <TextBox styleOverrides={{ minWidth: "90px", width: "90px" }}>
+        {item.price}
+      </TextBox>
+      <TextBox styleOverrides={{ minWidth: "90px", width: "90px" }}>
         {item.amount}
       </TextBox>
-      <TextBox styleOverrides={{ minWidth: "60px", width: "60px" }}>
-        {item.zipCode}
-      </TextBox>
-      <TextBox styleOverrides={{ minWidth: "400px", fontSize: "12px", width: "400px" }}>
-        {item.address}
-      </TextBox>
-      <TextBox styleOverrides={{ minWidth: "160px", width: "160px" }}>
-        {item.phone}
-      </TextBox>
-      <TextBox styleOverrides={{ minWidth: "160px", width: "160px" }}>
-        {item.ordererPhone}
-      </TextBox>
       <TextBox styleOverrides={{ minWidth: "90px", width: "90px" }}>
-        {item.orderer}
+        {item.orderStatus}
       </TextBox>
-      <TextBox styleOverrides={{ minWidth: "90px", width: "90px" }}>
-        {item.receiver}
-      </TextBox>
-      <TextBox styleOverrides={{ minWidth: "90px", width: "90px" }}>
-        {item.customsCode}
-      </TextBox>
-      <TextBox styleOverrides={{ minWidth: "250px", fontSize: "12px", width: "250px" }}>
-        {item.deliveryRequest}
+      <TextBox styleOverrides={{ minWidth: "180px", width: "180px" }}>
+        {item.cs}
       </TextBox>
     </OrderItemBox>
   );
 }
+
+export function RevenueDataTable({
+  items,
+  itemsChecked,
+  onItemCheck,
+  onCheckAll,
+  defaultAllCheck = true,
+  checkboxRequired = true,
+}: {
+  items: RevenueDataItem[];
+  itemsChecked: boolean[];
+  onItemCheck: (index: number, isChecked: boolean) => void;
+  onCheckAll: (isChecked: boolean) => void;
+  defaultAllCheck: boolean;
+  checkboxRequired?: boolean;
+}) {
+  const [allChecked, setAllChecked] = useState<boolean>(false);
+
+  useEffect(() => {
+    setAllChecked(defaultAllCheck);
+  }, [items]);
+
+  return (
+    <>
+      <OrderBox>
+        <OrderHeader>
+          {checkboxRequired ? (
+            <Checkbox
+              color={"gray"}
+              size={"sm"}
+              checked={allChecked}
+              onChange={(event) => {
+                const val = event.currentTarget.checked;
+                setAllChecked(val);
+                onCheckAll(val);
+              }}
+            />
+          ) : (
+            <></>
+          )}
+
+          <TextBox styleOverrides={{ minWidth: "90px", width: "90px" }}>
+            주문일
+          </TextBox>
+          <TextBox styleOverrides={{ minWidth: "90px", width: "90px" }}>
+            판매처
+          </TextBox>
+          <TextBox
+            styleOverrides={{
+              minWidth: "160px",
+              fontSize: "12px",
+              width: "160px",
+            }}
+          >
+            공급처
+          </TextBox>
+          <TextBox
+            styleOverrides={{
+              minWidth: "450px",
+              fontSize: "12px",
+              width: "450px",
+            }}
+          >
+            상품명
+          </TextBox>
+          <TextBox
+            styleOverrides={{
+              minWidth: "250px",
+              fontSize: "12px",
+              width: "250px",
+            }}
+          >
+            옵션명
+          </TextBox>
+          <TextBox styleOverrides={{ minWidth: "90px", width: "90px" }}>
+            판매가
+          </TextBox>
+          <TextBox styleOverrides={{ minWidth: "90px", width: "90px" }}>
+            주문수량
+          </TextBox>
+          <TextBox styleOverrides={{ minWidth: "90px", width: "90px" }}>
+            상태
+          </TextBox>
+          <TextBox styleOverrides={{ minWidth: "180px", width: "180px" }}>
+            CS
+          </TextBox>
+          <div style={{ width: "16px" }} />
+        </OrderHeader>
+        <OrderItemsBox>
+          {items.map((item, index) => {
+            return (
+              <RevenueDataItem
+                key={`RevenueDataItem-${index}`}
+                index={index}
+                item={item}
+                check={itemsChecked[index] ?? false}
+                onItemCheck={onItemCheck}
+                checkboxRequired={checkboxRequired}
+              />
+            );
+          })}
+        </OrderItemsBox>
+      </OrderBox>
+    </>
+  );
+}
+
+export const RevenueDataTableMemo = React.memo(
+  RevenueDataTable,
+  (prev, next) => {
+    return prev.items == next.items && prev.itemsChecked == next.itemsChecked;
+  }
+);
