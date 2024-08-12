@@ -256,7 +256,7 @@ export default function PartnerWaybillShare() {
     return waybillList;
   }
 
-  const readExcel = (e: any) => {
+  const readExcel = (e:  React.ChangeEvent<HTMLInputElement>) => {
     e.preventDefault();
     let json: any;
     if (e.target.files) {
@@ -302,6 +302,7 @@ export default function PartnerWaybillShare() {
             setIsNoticeModalOpened(true);
             setFileName("");
             setItems([]);
+            e.target.value = '';
             return false;
           }
 
@@ -317,6 +318,7 @@ export default function PartnerWaybillShare() {
             setIsNoticeModalOpened(true);
             setFileName("");
             setItems([]);
+            e.target.value = '';
             return false;
           }
 
@@ -328,6 +330,7 @@ export default function PartnerWaybillShare() {
             setIsNoticeModalOpened(true);
             setFileName("");
             setItems([]);
+            e.target.value = '';
             return false;
           }
 
@@ -348,6 +351,7 @@ export default function PartnerWaybillShare() {
       };
       reader.readAsArrayBuffer(e.target.files[0]);
       setFileName(e.target.files[0].name);
+      e.target.value = '';
     }
   };
 
