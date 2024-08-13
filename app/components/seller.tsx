@@ -1,7 +1,7 @@
 import { Select } from "@mantine/core";
 import { SettlementItem } from "./settlement_table";
 import { OrderItem } from "./order";
-import { RevenueDataItem } from "./revenue_data";
+import { RevenueData } from "./revenue_data";
 
 export const PossibleSellers = [
   "29cm",
@@ -21,7 +21,7 @@ export const LofaSellers = ["로파공홈", "용산쇼룸"];
  * @returns
  *  유효할 경우 true, 아닐 경우 false
  */
-export function adjustSellerName(item: OrderItem | SettlementItem | RevenueDataItem) {
+export function adjustSellerName(item: OrderItem | SettlementItem | RevenueData) {
   if (PossibleSellers.includes(item.seller)) {
     return true;
   } else if (item.seller === "카페24") {
@@ -69,6 +69,7 @@ export function SellerSelect({
           borderRadius: 0,
           border: "3px solid black !important",
           height: "40px",
+          width: "200px"
         },
         item: {
           "&[data-selected]": {

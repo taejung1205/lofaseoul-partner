@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   FileNameBox,
   FileUpload,
@@ -7,17 +7,25 @@ import {
 import { PageLayout } from "~/components/page_layout";
 import * as xlsx from "xlsx";
 import { LoadingOverlay, Space } from "@mantine/core";
-import { useLoaderData, useNavigation } from "@remix-run/react";
-import { CommonButton } from "~/components/button";
+import {
+  useActionData,
+  useLoaderData,
+  useNavigation,
+  useSubmit,
+} from "@remix-run/react";
+import { BlackButton, CommonButton } from "~/components/button";
 import {
   checkRevenueDataItem,
-  RevenueDataItem,
+  RevenueData,
   RevenueDataTableMemo,
 } from "~/components/revenue_data";
 import { BasicModal, ModalButton } from "~/components/modal";
 import { PartnerProfile } from "~/components/partner_profile";
-import { json, LoaderFunction } from "@remix-run/node";
-import { getAllPartnerProfiles } from "~/services/firebase.server";
+import { ActionFunction, json, LoaderFunction } from "@remix-run/node";
+import {
+  addRevenueData,
+  getAllPartnerProfiles,
+} from "~/services/firebase.server";
 import { adjustSellerName } from "~/components/seller";
 
 export const loader: LoaderFunction = async ({ request }) => {
@@ -26,17 +34,45 @@ export const loader: LoaderFunction = async ({ request }) => {
   return json({ partners: partnersArr });
 };
 
+export const action: ActionFunction = async ({ request }) => {
+  const body = await request.formData();
+  const actionType = body.get("action")?.toString();
+  if (actionType === "upload") {
+    const data = body.get("data")?.toString();
+    if (data !== undefined) {
+      const result = await addRevenueData({
+        data: data,
+      });
+      if (result === true) {
+        return json({
+          status: "ok",
+          message: `수익통계 자료가 등록되었습니다. 잠시 후 DB에 반영될 예정입니다.`,
+        });
+      } else {
+        console.log("error", result);
+      }
+    }
+  }
+  return null;
+};
+
 export default function Page() {
   const [fileName, setFileName] = useState<string>("");
-  const [items, setItems] = useState<RevenueDataItem[]>([]);
+  const [items, setItems] = useState<RevenueData[]>([]);
   const [itemsChecked, setItemsChecked] = useState<boolean[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+
   const [noticeModalStr, setNoticeModalStr] = useState<string>("");
   const [isNoticeModalOpened, setIsNoticeModalOpened] =
     useState<boolean>(false);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isUploadModalOpened, setIsUploadModalOpened] =
+    useState<boolean>(false);
 
   const navigation = useNavigation();
   const loaderData = useLoaderData();
+  const actionData = useActionData();
+  const submit = useSubmit();
+  const formRef = useRef<HTMLFormElement>(null);
 
   const partnerProfiles = useMemo(() => {
     let map = new Map();
@@ -53,7 +89,15 @@ export default function Page() {
 
   useEffect(() => {
     setIsLoading(false);
-  }, [itemsChecked])
+  }, [itemsChecked]);
+
+  useEffect(() => {
+    if (actionData !== undefined && actionData !== null) {
+      setNoticeModalStr(actionData.message);
+      setIsNoticeModalOpened(true);
+      setIsLoading(false);
+    }
+  }, [actionData]);
 
   function onItemCheck(index: number, isChecked: boolean) {
     itemsChecked[index] = isChecked;
@@ -63,6 +107,16 @@ export default function Page() {
     setItemsChecked(Array(items.length).fill(isChecked));
   }
 
+  async function submitAddRevenueData(dataList: RevenueData[]) {
+    console.log("submit add revenue data, length:", dataList.length);
+    const data = JSON.stringify(dataList);
+    console.log(data, "data");
+    const formData = new FormData(formRef.current ?? undefined);
+    formData.set("data", data);
+    formData.set("action", "upload");
+    submit(formData, { method: "post" });
+  }
+
   const readExcel = (e: React.ChangeEvent<HTMLInputElement>) => {
     e.preventDefault();
     let json: any;
@@ -70,7 +124,7 @@ export default function Page() {
     if (e.target.files) {
       const reader = new FileReader();
       reader.onload = (e: any) => {
-        const array: RevenueDataItem[] = [];
+        const array: RevenueData[] = [];
         const data = e.target.result;
         const workbook = xlsx.read(data, { type: "array", cellDates: true });
         const sheetName = workbook.SheetNames[0];
@@ -80,7 +134,7 @@ export default function Page() {
 
         for (let i = 0; i < json.length; i++) {
           let element = json[i];
-          let item: RevenueDataItem = {
+          let item: RevenueData = {
             orderDate: element.주문일,
             seller: element.판매처?.toString(),
             partnerName: element.공급처?.toString(),
@@ -146,7 +200,12 @@ export default function Page() {
 
   return (
     <>
-      <LoadingOverlay visible={navigation.state == "loading" || isLoading} overlayBlur={2} />
+      <LoadingOverlay
+        visible={navigation.state == "loading" || isLoading}
+        overlayBlur={2}
+      />
+
+      {/* 안내메세지모달 */}
       <BasicModal
         opened={isNoticeModalOpened}
         onClose={() => setIsNoticeModalOpened(false)}
@@ -163,6 +222,49 @@ export default function Page() {
           <div style={{ display: "flex", justifyContent: "center" }}>
             <ModalButton onClick={() => setIsNoticeModalOpened(false)}>
               확인
+            </ModalButton>
+          </div>
+        </div>
+      </BasicModal>
+
+      {/*업로드 모달*/}
+      <BasicModal
+        opened={isUploadModalOpened}
+        onClose={() => setIsUploadModalOpened}
+      >
+        <div
+          style={{
+            justifyContent: "center",
+            textAlign: "center",
+            fontWeight: "700",
+          }}
+        >
+          선택한 항목들을 수익통계에 반영하시겠습니까?
+          <div style={{ height: "20px" }} />
+          <div style={{ display: "flex", justifyContent: "center" }}>
+            <ModalButton onClick={() => setIsUploadModalOpened(false)}>
+              취소
+            </ModalButton>
+            <ModalButton
+              onClick={() => {
+                setIsLoading(true);
+                setIsUploadModalOpened(false);
+                let revenuedataList = [];
+                for (let i = 0; i < items.length; i++) {
+                  if (itemsChecked[i]) {
+                    revenuedataList.push(items[i]);
+                  }
+                }
+                setIsLoading(false);
+                if (revenuedataList.length > 0) {
+                  submitAddRevenueData(revenuedataList);
+                } else {
+                  setNoticeModalStr("선택된 항목이 없습니다.");
+                  setIsNoticeModalOpened(true);
+                }
+              }}
+            >
+              공유
             </ModalButton>
           </div>
         </div>
@@ -189,6 +291,10 @@ export default function Page() {
           onCheckAll={onCheckAll}
           defaultAllCheck={true}
         />
+        <Space h={20} />
+        <BlackButton onClick={() => setIsUploadModalOpened(true)}>
+          업로드
+        </BlackButton>
       </PageLayout>
     </>
   );

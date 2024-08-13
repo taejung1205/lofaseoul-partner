@@ -2029,3 +2029,32 @@ export async function debug_fixPartnerProfileTaxStandard() {
     }
   });
 }
+
+/**
+ * 수익통계자료를 업로드합니다.
+ * 추가 후 정산합계 기록도 수정합니다.
+ * @param settlements: JSON string of settlement items list
+ * @returns
+ *
+ */
+export async function addRevenueData({
+  data
+}: {
+  data: string;
+}) {
+  try {
+    const time = new Date().getTime();
+    await setDoc(doc(firestore, `revenue-data-add/data`), {
+      json: data,
+      updateTime: time,
+    });
+
+    return true;
+  } catch (error: any) {
+    sendAligoMessage({
+      text: `[로파파트너] ${error.message ?? error}`,
+      receiver: "01023540973",
+    });
+    return error.message ?? error;
+  }
+}

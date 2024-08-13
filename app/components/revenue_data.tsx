@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { dateToDayStr } from "~/utils/date";
 
 //통계용 파일 업로드에서 올릴 때 사용하는 양식입니다.
-export type RevenueDataItem = {
+export type RevenueData = {
   orderDate: Date; //구매일자
   seller: string; //판매처 (플랫폼)
   partnerName: string; //공급처 (파트너명)
@@ -109,7 +109,7 @@ function TextBox({ children, styleOverrides, ...props }: Props) {
  * @returns
  *  유효할 경우 true, 아닐 경우 문제가 있는 곳의 항목명
  */
-export function checkRevenueDataItem(item: RevenueDataItem) {
+export function checkRevenueDataItem(item: RevenueData) {
   // Check if orderDate is defined and a non-empty string
   if (!(item.orderDate instanceof Date) || isNaN(item.orderDate.getTime())) {
     return {
@@ -164,7 +164,7 @@ function RevenueDataItem({
   onItemCheck,
   checkboxRequired = true,
 }: {
-  item: RevenueDataItem;
+  item: RevenueData;
   index: number;
   check: boolean;
   onItemCheck: (index: number, isChecked: boolean) => void;
@@ -237,7 +237,7 @@ export function RevenueDataTable({
   defaultAllCheck = true,
   checkboxRequired = true,
 }: {
-  items: RevenueDataItem[];
+  items: RevenueData[];
   itemsChecked: boolean[];
   onItemCheck: (index: number, isChecked: boolean) => void;
   onCheckAll: (isChecked: boolean) => void;
