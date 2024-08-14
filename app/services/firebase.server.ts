@@ -2058,3 +2058,28 @@ export async function addRevenueData({
     return error.message ?? error;
   }
 }
+
+
+/**
+ * 조건을 만족하는 수익통계 데이터를 불러옵니다
+ * @param partnerName: 파트너명, monthStr: 월
+ * @returns
+ *  Array of RevenueData
+ */
+export async function getRevenueData({
+  
+}: {
+  
+}) {
+  const revenueDataRef = collection(firestore, `revenue-db`);
+  const revenueDataQuery = query(
+    revenueDataRef,
+    // where("partnerName", "==", partnerName)
+  );
+  const querySnap = await getDocs(revenueDataQuery);
+  return querySnap.docs.map((doc) => {
+    const data = doc.data();
+    data.orderDate = data.orderDate.toDate();
+    return {data: data, id: doc.id};
+  });
+}
