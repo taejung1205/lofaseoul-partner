@@ -42,9 +42,6 @@ import { Product } from "~/components/product";
 import { SettlementSumItem } from "~/components/settlement_sum";
 import { sendResendEmail } from "./resend.server";
 
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
-
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
@@ -123,9 +120,9 @@ export async function getAllSellerProfiles() {
  * 에러가 있을 경우 string
  * 정상적일 경우 null
  */
-export async function editSellerProfile(name: string, fee: number){
+export async function editSellerProfile(name: string, fee: number) {
   const result = await updateDoc(doc(firestore, "seller", name), {
-    fee: fee
+    fee: fee,
   }).catch((error) => {
     return error.message;
   });
@@ -2032,16 +2029,11 @@ export async function debug_fixPartnerProfileTaxStandard() {
 
 /**
  * 수익통계자료를 업로드합니다.
- * 추가 후 정산합계 기록도 수정합니다.
  * @param settlements: JSON string of settlement items list
  * @returns
  *
  */
-export async function addRevenueData({
-  data
-}: {
-  data: string;
-}) {
+export async function addRevenueData({ data }: { data: string }) {
   try {
     const time = new Date().getTime();
     await setDoc(doc(firestore, `revenue-data-add/data`), {
@@ -2059,7 +2051,6 @@ export async function addRevenueData({
   }
 }
 
-
 /**
  * 조건을 만족하는 수익통계 데이터를 불러옵니다
  * @param partnerName: 파트너명, monthStr: 월
@@ -2067,19 +2058,66 @@ export async function addRevenueData({
  *  Array of RevenueData
  */
 export async function getRevenueData({
-  
+  startDate,
+  endDate,
+  partnerName,
+  productName,
+  seller,
 }: {
-  
+  startDate: Date;
+  endDate: Date;
+  partnerName: string;
+  productName: string;
+  seller: string;
 }) {
   const revenueDataRef = collection(firestore, `revenue-db`);
-  const revenueDataQuery = query(
+  let revenueDataQuery = query(
     revenueDataRef,
-    // where("partnerName", "==", partnerName)
+    where("orderDate", ">=",  Timestamp.fromDate(startDate)),
+    where("orderDate", "<=",  Timestamp.fromDate(endDate))
   );
+
+  if (partnerName.length > 0) {
+    revenueDataQuery = query(
+      revenueDataQuery,
+      where("partnerName", "==", partnerName)
+    );
+  }
+
+  if (seller !== "all") {
+    revenueDataQuery = query(revenueDataQuery, where("seller", "==", seller));
+  }
+
   const querySnap = await getDocs(revenueDataQuery);
-  return querySnap.docs.map((doc) => {
+  const searchResult: { data: DocumentData; id: string }[] = [];
+  querySnap.docs.forEach((doc) => {
     const data = doc.data();
-    data.orderDate = data.orderDate.toDate();
-    return {data: data, id: doc.id};
+    if (data.productName.includes(productName)) {
+      data.orderDate = data.orderDate.toDate();
+      searchResult.push({ data: data, id: doc.id });
+    }
   });
+  return searchResult;
+}
+
+/**
+ * 수익통계자료를 삭제합니다.
+ * @param JSON string of {data: RevenueData, id: string}[]
+ *
+ */
+export async function deleteRevenueData({ data }: { data: string }) {
+  try {
+    const time = new Date().getTime();
+    await setDoc(doc(firestore, `revenue-data-delete/data`), {
+      json: data,
+      updateTime: time,
+    });
+    return true;
+  } catch (error: any) {
+    sendAligoMessage({
+      text: `[로파파트너] ${error.message ?? error}`,
+      receiver: "01023540973",
+    });
+    return error.message ?? error;
+  }
 }

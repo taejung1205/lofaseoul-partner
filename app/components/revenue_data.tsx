@@ -261,8 +261,8 @@ export function RevenueDataTable({
               checked={allChecked}
               onChange={(event) => {
                 const val = event.currentTarget.checked;
-                setAllChecked(val);
                 onCheckAll(val);
+                setAllChecked(val);
               }}
             />
           ) : (

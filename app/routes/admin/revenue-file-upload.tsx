@@ -162,16 +162,16 @@ export default function Page() {
 
           const partnerProfile = partnerProfiles.get(item.partnerName);
 
-          // if (partnerProfile === undefined) {
-          //   console.log(item);
-          //   setNoticeModalStr(
-          //     `유효하지 않은 엑셀 파일입니다.\n해당 공급처가 계약업체목록에 있는지 확인해주세요. (${item.partnerName})`
-          //   );
-          //   setIsNoticeModalOpened(true);
-          //   setFileName("");
-          //   setItems([]);
-          //   return false;
-          // }
+          if (partnerProfile === undefined) {
+            console.log(item);
+            setNoticeModalStr(
+              `유효하지 않은 엑셀 파일입니다. ${i+2}행의 공급처가 계약업체목록에 있는지 확인해주세요. (${item.partnerName})`
+            );
+            setIsNoticeModalOpened(true);
+            setFileName("");
+            setItems([]);
+            return false;
+          }
 
           const isSellerNameValid = adjustSellerName(item);
 
@@ -230,7 +230,7 @@ export default function Page() {
       {/*업로드 모달*/}
       <BasicModal
         opened={isUploadModalOpened}
-        onClose={() => setIsUploadModalOpened}
+        onClose={() => setIsUploadModalOpened(false)}
       >
         <div
           style={{
@@ -281,7 +281,15 @@ export default function Page() {
             accept=".xlsx,.xls"
           />
           <Space w={20} />
-          <CommonButton width={200}>할인 적용 미리보기</CommonButton>
+          <CommonButton
+            width={200}
+            onClick={() => {
+              setNoticeModalStr("미구현입니다.");
+              setIsNoticeModalOpened(true);
+            }}
+          >
+            할인 적용 미리보기
+          </CommonButton>
         </div>
         <Space h={20} />
         <RevenueDataTableMemo
