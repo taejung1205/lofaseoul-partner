@@ -76,6 +76,7 @@ export const loader: LoaderFunction = async ({ request }) => {
       endDate: endDateStr,
       partnerName: partnerName,
       productName: productName,
+      seller: seller,
       orderStatus: orderStatus,
       cs: cs,
       filterDiscount: filterDiscount,
@@ -154,7 +155,7 @@ export default function Page() {
   }, [loaderData]);
 
   const searchedSeller = useMemo(() => {
-    if (loaderData && loaderData.productName) {
+    if (loaderData && loaderData.seller) {
       return loaderData.seller;
     } else {
       return "all";
