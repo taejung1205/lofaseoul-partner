@@ -41,6 +41,7 @@ import { NoticeItem } from "~/components/notice";
 import { Product } from "~/components/product";
 import { SettlementSumItem } from "~/components/settlement_sum";
 import { sendResendEmail } from "./resend.server";
+import { PossibleCS, PossibleOrderStatus } from "~/components/revenue_data";
 
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
@@ -2063,18 +2064,136 @@ export async function getRevenueData({
   partnerName,
   productName,
   seller,
+  orderStatus,
+  cs,
+  filterDiscount,
 }: {
   startDate: Date;
   endDate: Date;
   partnerName: string;
   productName: string;
   seller: string;
+  orderStatus: string;
+  cs: string;
+  filterDiscount: string;
 }) {
+
+  let orderStatusQueryArray: string[];
+  switch (orderStatus) {
+    case "전체":
+      orderStatusQueryArray = PossibleOrderStatus;
+      break;
+    case "접수+송장":
+      orderStatusQueryArray = ["접수", "송장"];
+      break;
+    case "접수+배송":
+      orderStatusQueryArray = ["접수", "배송"];
+      break;
+    case "송장+배송":
+      orderStatusQueryArray = ["송장", "배송"];
+      break;
+    default:
+      orderStatusQueryArray = [orderStatus];
+      break;
+  }
+
+  let csQueryArray: string[];
+
+  switch (cs) {
+    case "전체":
+      csQueryArray = PossibleCS;
+      break;
+    case "정상":
+      csQueryArray = ["정상"];
+      break;
+    case "정상+교환":
+      csQueryArray = [
+        "정상",
+        "배송전 부분 교환",
+        "배송전 전체 교환",
+        "배송후 부분 교환",
+        "배송후 전체 교환",
+      ];
+      break;
+    case "취소(배송전+배송후)":
+      csQueryArray = [
+        "배송전 부분 취소",
+        "배송전 전체 취소",
+        "배송후 부분 취소",
+        "배송후 전체 취소",
+      ];
+      break;
+    case "교환(배송전+배송후)":
+      csQueryArray = [
+        "배송전 부분 교환",
+        "배송전 전체 교환",
+        "배송후 부분 교환",
+        "배송후 전체 교환",
+        "맞교환",
+        "배송후교환C",
+      ];
+      break;
+    case "배송전 취소":
+      csQueryArray = ["배송전 부분 취소", "배송전 전체 취소"];
+      break;
+    case "배송후 취소":
+      csQueryArray = ["배송후 부분 취소", "배송후 전체 취소"];
+      break;
+    case "배송전 교환":
+      csQueryArray = ["배송전 부분 교환", "배송전 전체 교환"];
+      break;
+    case "배송후 교환":
+      csQueryArray = ["배송후 부분 교환", "배송후 전체 교환", "배송후교환C"];
+      break;
+    case "보류":
+    case "맞교환":
+    case "배송후교환C":
+      csQueryArray = [cs];
+      break;
+    case "부분취소":
+      csQueryArray = ["배송전 부분 취소", "배송후 부분 취소"];
+      break;
+    case "부분취소 제외":
+      csQueryArray = [
+        "정상",
+        "배송전 부분 교환",
+        "배송전 전체 취소",
+        "배송전 전체 교환",
+        "배송후 부분 교환",
+        "배송후 전체 취소",
+        "배송후 전체 교환",
+        "보류",
+        "맞교환",
+        "배송후교환C",
+      ];
+      break;
+    default:
+      csQueryArray = [cs];
+      break;
+  }
+
+  let filterDiscountQueryArray: boolean[] = [];
+  switch(filterDiscount){
+    case "전체":
+      filterDiscountQueryArray = [true, false];
+      break;
+    case "할인 있음":
+      filterDiscountQueryArray = [true];
+      break;
+    case "할인 없음":
+      filterDiscountQueryArray = [false];
+      break;
+  }
+  
+  //OR Query 한도때문에 query array의 길이의 곱이 30을 넘을 수 없음
   const revenueDataRef = collection(firestore, `revenue-db`);
   let revenueDataQuery = query(
     revenueDataRef,
-    where("orderDate", ">=",  Timestamp.fromDate(startDate)),
-    where("orderDate", "<=",  Timestamp.fromDate(endDate))
+    where("orderDate", ">=", Timestamp.fromDate(startDate)),
+    where("orderDate", "<=", Timestamp.fromDate(endDate)),
+    where("orderStatus", "in", orderStatusQueryArray), // Max 3
+    //where("cs", "in", csQueryArray), //Max 12, 사용 불가, 불러온 후 직접 필터해서 확인
+    where("isDiscounted", "in", filterDiscountQueryArray) //Max 2
   );
 
   if (partnerName.length > 0) {
@@ -2092,7 +2211,7 @@ export async function getRevenueData({
   const searchResult: { data: DocumentData; id: string }[] = [];
   querySnap.docs.forEach((doc) => {
     const data = doc.data();
-    if (data.productName.includes(productName)) {
+    if (data.productName.includes(productName) && csQueryArray.includes(data.cs)) {
       data.orderDate = data.orderDate.toDate();
       searchResult.push({ data: data, id: doc.id });
     }

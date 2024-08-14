@@ -1,4 +1,4 @@
-import { LoadingOverlay, Space } from "@mantine/core";
+import { LoadingOverlay, Select, Space } from "@mantine/core";
 import {
   Link,
   useActionData,
@@ -51,6 +51,9 @@ export const loader: LoaderFunction = async ({ request }) => {
     const partnerName = url.searchParams.get("partner-name");
     const productName = url.searchParams.get("product-name");
     const seller = url.searchParams.get("seller");
+    const orderStatus = url.searchParams.get("order-status");
+    const cs = url.searchParams.get("cs");
+    const filterDiscount = url.searchParams.get("filter-discount");
 
     const startDate = new Date(`${startDateStr}T00:00:00Z`);
     const endDate = new Date(`${endDateStr}T23:59:59Z`);
@@ -61,6 +64,9 @@ export const loader: LoaderFunction = async ({ request }) => {
       partnerName: partnerName ?? "",
       productName: productName ?? "",
       seller: seller ?? "all",
+      orderStatus: orderStatus ?? "전체",
+      cs: cs ?? "전체",
+      filterDiscount: filterDiscount ?? "전체",
     });
     return json({
       status: "ok",
@@ -69,11 +75,15 @@ export const loader: LoaderFunction = async ({ request }) => {
       startDate: startDateStr,
       endDate: endDateStr,
       partnerName: partnerName,
+      productName: productName,
+      orderStatus: orderStatus,
+      cs: cs,
+      filterDiscount: filterDiscount,
     });
   } else {
     return json({
       status: "ok",
-      message: ""
+      message: "",
     });
   }
 };
@@ -135,15 +145,59 @@ export default function Page() {
     }
   }, [loaderData]);
 
+  const searchedProductName = useMemo(() => {
+    if (loaderData && loaderData.productName) {
+      return loaderData.productName;
+    } else {
+      return "";
+    }
+  }, [loaderData]);
+
+  const searchedSeller = useMemo(() => {
+    if (loaderData && loaderData.productName) {
+      return loaderData.seller;
+    } else {
+      return "all";
+    }
+  }, [loaderData]);
+
+  const searchedOrderStatus = useMemo(() => {
+    if (loaderData && loaderData.orderStatus) {
+      return loaderData.orderStatus;
+    } else {
+      return "전체";
+    }
+  }, [loaderData]);
+
+  const searchedCs = useMemo(() => {
+    if (loaderData && loaderData.cs) {
+      return loaderData.cs;
+    } else {
+      return "전체";
+    }
+  }, [loaderData]);
+
+  const searchedFilterDiscount = useMemo(() => {
+    if (loaderData && loaderData.filterDiscount) {
+      return loaderData.filterDiscount;
+    } else {
+      return "전체";
+    }
+  }, [loaderData]);
+
   //검색조건
   const [startDate, setStartDate] = useState<Date>(); //주문일 시작
   const [endDate, setEndDate] = useState<Date>(); //주문일 종료
-  const [seller, setSeller] = useState<string>("all"); // 판매처
+  const [seller, setSeller] = useState<string>(searchedSeller); // 판매처
   const [partnerName, setPartnerName] = useState<string>(searchedPartnerName); // 공급처
-  const [productName, setProductName] = useState<string>(""); //상품명
-  const [cs, setCs] = useState<string>(""); //CS
-  const [orderStatus, setOrderStatus] = useState<string>(""); //상태
-  const [filterDiscount, setFilterDiscount] = useState<string>(""); //할인여부
+  const [productName, setProductName] = useState<string>(searchedProductName); //상품명
+  const [cs, setCs] = useState<string | null>(searchedCs); //CS
+  const [orderStatus, setOrderStatus] = useState<string | null>(
+    searchedOrderStatus
+  ); //상태
+  const [filterDiscount, setFilterDiscount] = useState<string | null>(
+    searchedFilterDiscount
+  ); //할인여부
 
   const [itemsChecked, setItemsChecked] = useState<boolean[]>([]); //체크된 정산내역 index 배열
   const [isLoading, setIsLoading] = useState<boolean>(false); //로딩 과정에서 로딩오버레이 표시
@@ -358,39 +412,99 @@ export default function Page() {
         <div style={{ display: "flex", alignItems: "center", height: "40px" }}>
           <div>상태</div>
           <Space w={10} />
-          <EditInputBox
-            type="text"
-            name="orderStatus"
+          <Select
             value={orderStatus}
-            onChange={(e) => setOrderStatus(e.target.value)}
-            width={"150px"}
-            required
+            onChange={setOrderStatus}
+            data={[
+              "전체",
+              "발주",
+              "접수",
+              "송장",
+              "배송",
+              "접수+송장",
+              "접수+배송",
+              "송장+배송",
+            ]}
+            styles={{
+              input: {
+                fontSize: "20px",
+                fontWeight: "bold",
+                borderRadius: 0,
+                border: "3px solid black !important",
+                height: "40px",
+                width: "170px",
+              },
+              item: {
+                "&[data-selected]": {
+                  backgroundColor: "grey",
+                },
+              },
+            }}
           />
         </div>
         <Space w={30} />
         <div style={{ display: "flex", alignItems: "center", height: "40px" }}>
           <div>CS</div>
           <Space w={10} />
-          <EditInputBox
-            type="text"
-            name="cs"
+          <Select
             value={cs}
-            onChange={(e) => setCs(e.target.value)}
-            width={"150px"}
-            required
+            onChange={setCs}
+            data={[
+              "전체",
+              "정상",
+              "정상+교환",
+              "취소(배송전+배송후)",
+              "교환(배송전+배송후)",
+              "배송전 취소",
+              "배송후 취소",
+              "배송전 교환",
+              "배송후 교환",
+              "보류",
+              "맞교환",
+              "배송후교환C",
+              "부분취소",
+              "부분취소 제외",
+            ]}
+            styles={{
+              input: {
+                fontSize: "20px",
+                fontWeight: "bold",
+                borderRadius: 0,
+                border: "3px solid black !important",
+                height: "40px",
+                width: "250px",
+              },
+              item: {
+                "&[data-selected]": {
+                  backgroundColor: "grey",
+                },
+              },
+            }}
           />
         </div>
         <Space w={30} />
         <div style={{ display: "flex", alignItems: "center", height: "40px" }}>
           <div>할인여부</div>
           <Space w={10} />
-          <EditInputBox
-            type="text"
-            name="filterDiscount"
+          <Select
             value={filterDiscount}
-            onChange={(e) => setFilterDiscount(e.target.value)}
-            width={"150px"}
-            required
+            onChange={setFilterDiscount}
+            data={["전체", "할인 있음", "할인 없음"]}
+            styles={{
+              input: {
+                fontSize: "20px",
+                fontWeight: "bold",
+                borderRadius: 0,
+                border: "3px solid black !important",
+                height: "40px",
+                width: "150px",
+              },
+              item: {
+                "&[data-selected]": {
+                  backgroundColor: "grey",
+                },
+              },
+            }}
           />
         </div>
         <Space w={30} />
@@ -400,7 +514,13 @@ export default function Page() {
               startDate ? dateToDayStr(startDate) : ""
             }&end-date=${
               endDate ? dateToDayStr(endDate) : ""
-            }&seller=${seller}&partner-name=${partnerName}&product-name=${productName}`}
+            }&seller=${seller}&partner-name=${partnerName}&product-name=${encodeURIComponent(
+              productName
+            )}&order-status=${encodeURIComponent(
+              orderStatus ?? "전체"
+            )}&cs=${encodeURIComponent(
+              cs ?? "전체"
+            )}&filterDiscount=${encodeURIComponent(filterDiscount ?? "전체")}`}
           >
             <BlackButton>검색</BlackButton>
           </Link>

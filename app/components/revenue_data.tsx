@@ -17,6 +17,23 @@ export type RevenueData = {
   isDiscounted: boolean;
 };
 
+export const PossibleOrderStatus = ["발주", "접수", "송장", "배송"];
+
+export const PossibleCS = [
+  "정상",
+  "배송전 부분 교환",
+  "배송전 부분 취소",
+  "배송전 전체 취소",
+  "배송전 전체 교환",
+  "배송후 부분 교환",
+  "배송후 부분 취소",
+  "배송후 전체 취소",
+  "배송후 전체 교환",
+  "보류",
+  "맞교환",
+  "배송후교환C",
+];
+
 interface Props extends React.HTMLAttributes<HTMLDivElement> {
   styleOverrides?: React.CSSProperties;
 }
@@ -105,6 +122,7 @@ function TextBox({ children, styleOverrides, ...props }: Props) {
 
 /**
  * 엑셀에서 읽어온 해당 수익통계 자료 아이템이 유효한 지를 확인합니다.
+ * 상태와 CS의 경우 가능한 항목으로 적혔는지 확인합니다.
  * @param item : RevenueDataItem
  * @returns
  *  유효할 경우 true, 아닐 경우 문제가 있는 곳의 항목명
@@ -148,9 +166,23 @@ export function checkRevenueDataItem(item: RevenueData) {
     return { isValid: false, message: "상태가 누락된 항목이 존재합니다." };
   }
 
+  if (!PossibleOrderStatus.includes(item.orderStatus)) {
+    return {
+      isValid: false,
+      message: `상태가 유효하지 않은 항목이 존재합니다. (${item.orderStatus})`,
+    };
+  }
+
   // Check if cs is defined and a non-empty string
   if (item.cs == undefined || item.cs.trim() === "") {
     return { isValid: false, message: "CS가 누락된 항목이 존재합니다." };
+  }
+
+  if (!PossibleCS.includes(item.cs)) {
+    return {
+      isValid: false,
+      message: `CS가 유효하지 않은 항목이 존재합니다. (${item.cs})`,
+    };
   }
 
   // If all checks passed, the item is valid

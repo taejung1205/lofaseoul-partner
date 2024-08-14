@@ -8,11 +8,12 @@ export const PossibleSellers = [
   "EQL",
   "로파공홈",
   "용산쇼룸",
+  "예약거래",
   "오늘의집",
   "카카오",
 ];
 
-export const LofaSellers = ["로파공홈", "용산쇼룸"];
+export const LofaSellers = ["로파공홈", "용산쇼룸", "예약거래"];
 
 /**
  * 판매처 유사명을 수정합니다
@@ -21,7 +22,9 @@ export const LofaSellers = ["로파공홈", "용산쇼룸"];
  * @returns
  *  유효할 경우 true, 아닐 경우 false
  */
-export function adjustSellerName(item: OrderItem | SettlementItem | RevenueData) {
+export function adjustSellerName(
+  item: OrderItem | SettlementItem | RevenueData
+) {
   if (PossibleSellers.includes(item.seller)) {
     return true;
   } else if (item.seller === "카페24") {
@@ -32,9 +35,6 @@ export function adjustSellerName(item: OrderItem | SettlementItem | RevenueData)
     return true;
   } else if (item.seller === "eql") {
     item.seller = "EQL";
-    return true;
-  } else if (item.seller === "예약거래") {
-    item.seller = "용산쇼룸";
     return true;
   } else {
     return false;
@@ -69,7 +69,7 @@ export function SellerSelect({
           borderRadius: 0,
           border: "3px solid black !important",
           height: "40px",
-          width: "200px"
+          width: "200px",
         },
         item: {
           "&[data-selected]": {
