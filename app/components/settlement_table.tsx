@@ -201,30 +201,6 @@ export function isSettlementItemValid(item: SettlementItem) {
 }
 
 /**
- * 판매처 유사명을 수정합니다
- * 만약 판매처가 '카페24'일 경우 '로파공홈'으로 수정합니다.
- * @param item : SettlementItem (must be valid)
- * @returns
- *  유효할 경우 true, 아닐 경우 false
- */
-export function adjustSellerName(item: SettlementItem) {
-  if (PossibleSellers.includes(item.seller)) {
-    return true;
-  } else if (item.seller === "카페24") {
-    item.seller = "로파공홈";
-    return true;
-  } else if (item.seller === "29CM") {
-    item.seller = "29cm";
-    return true;
-  } else if (item.seller === "eql") {
-    item.seller = "EQL";
-    return true;
-  } else {
-    return false;
-  }
-}
-
-/**
  * 상품명을 바탕으로 파트너명을 도출해 해당 정산아이템 정보에 넣습니다.
  * @param item : SettlementItem (must be valid)
  * @return
@@ -534,3 +510,5 @@ export function SettlementTable({
 export const SettlementTableMemo = React.memo(SettlementTable, (prev, next) => {
   return prev.items == next.items && prev.itemsChecked == next.itemsChecked;
 });
+
+

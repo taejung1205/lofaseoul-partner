@@ -1,15 +1,45 @@
 import { Select } from "@mantine/core";
+import { SettlementItem } from "./settlement_table";
+import { OrderItem } from "./order";
+import { RevenueData } from "./revenue_data";
 
 export const PossibleSellers = [
   "29cm",
   "EQL",
   "로파공홈",
   "용산쇼룸",
+  "예약거래",
   "오늘의집",
   "카카오",
 ];
 
-export const LofaSellers = ["로파공홈", "용산쇼룸"];
+export const LofaSellers = ["로파공홈", "용산쇼룸", "예약거래"];
+
+/**
+ * 판매처 유사명을 수정합니다
+ * 만약 판매처가 '카페24'일 경우 '로파공홈'으로 수정합니다.
+ * @param item : SettlementItem (must be valid)
+ * @returns
+ *  유효할 경우 true, 아닐 경우 false
+ */
+export function adjustSellerName(
+  item: OrderItem | SettlementItem | RevenueData
+) {
+  if (PossibleSellers.includes(item.seller)) {
+    return true;
+  } else if (item.seller === "카페24") {
+    item.seller = "로파공홈";
+    return true;
+  } else if (item.seller === "29CM") {
+    item.seller = "29cm";
+    return true;
+  } else if (item.seller === "eql") {
+    item.seller = "EQL";
+    return true;
+  } else {
+    return false;
+  }
+}
 
 export function SellerSelect({
   seller,
@@ -39,6 +69,7 @@ export function SellerSelect({
           borderRadius: 0,
           border: "3px solid black !important",
           height: "40px",
+          width: "200px",
         },
         item: {
           "&[data-selected]": {

@@ -10,11 +10,7 @@ import {
 import { useEffect, useMemo, useRef, useState } from "react";
 import { LoaderFunction } from "react-router-dom";
 import { CommonButton } from "~/components/button";
-import {
-  dateToKoreanMonth,
-  koreanMonthToDate,
-  MonthSelectPopover,
-} from "~/components/date";
+import { MonthSelectPopover } from "~/components/date";
 import { BasicModal, ModalButton } from "~/components/modal";
 import { AdminNotice, NoticeItem, TopicSelect } from "~/components/notice";
 import { PageLayout } from "~/components/page_layout";
@@ -27,6 +23,7 @@ import {
   replyNotice,
   shareNotice,
 } from "~/services/firebase.server";
+import { dateToKoreanMonth, koreanMonthToDate } from "~/utils/date";
 
 interface EmptyNoticeBoxProps extends React.HTMLProps<HTMLDivElement> {}
 

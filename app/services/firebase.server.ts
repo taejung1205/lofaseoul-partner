@@ -28,7 +28,7 @@ import {
   uploadBytes,
 } from "firebase/storage";
 import { PartnerProfile } from "~/components/partner_profile";
-import { dateToDayStr, dayStrToDate, getTimezoneDate } from "~/components/date";
+import { dateToDayStr, dayStrToDate, getTimezoneDate } from "~/utils/date";
 import { OrderItem } from "~/components/order";
 import {
   createAuthAccount,
@@ -41,9 +41,7 @@ import { NoticeItem } from "~/components/notice";
 import { Product } from "~/components/product";
 import { SettlementSumItem } from "~/components/settlement_sum";
 import { sendResendEmail } from "./resend.server";
-
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
+import { PossibleCS, PossibleOrderStatus } from "~/components/revenue_data";
 
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
@@ -123,9 +121,9 @@ export async function getAllSellerProfiles() {
  * 에러가 있을 경우 string
  * 정상적일 경우 null
  */
-export async function editSellerProfile(name: string, fee: number){
+export async function editSellerProfile(name: string, fee: number) {
   const result = await updateDoc(doc(firestore, "seller", name), {
-    fee: fee
+    fee: fee,
   }).catch((error) => {
     return error.message;
   });
@@ -2028,4 +2026,217 @@ export async function debug_fixPartnerProfileTaxStandard() {
       });
     }
   });
+}
+
+/**
+ * 수익통계자료를 업로드합니다.
+ * @param settlements: JSON string of settlement items list
+ * @returns
+ *
+ */
+export async function addRevenueData({ data }: { data: string }) {
+  try {
+    const time = new Date().getTime();
+    await setDoc(doc(firestore, `revenue-data-add/data`), {
+      json: data,
+      updateTime: time,
+    });
+
+    return true;
+  } catch (error: any) {
+    sendAligoMessage({
+      text: `[로파파트너] ${error.message ?? error}`,
+      receiver: "01023540973",
+    });
+    return error.message ?? error;
+  }
+}
+
+/**
+ * 조건을 만족하는 수익통계 데이터를 불러옵니다
+ * @param partnerName: 파트너명, monthStr: 월
+ * @returns
+ *  Array of RevenueData
+ */
+export async function getRevenueData({
+  startDate,
+  endDate,
+  partnerName,
+  productName,
+  seller,
+  orderStatus,
+  cs,
+  filterDiscount,
+}: {
+  startDate: Date;
+  endDate: Date;
+  partnerName: string;
+  productName: string;
+  seller: string;
+  orderStatus: string;
+  cs: string;
+  filterDiscount: string;
+}) {
+
+  let orderStatusQueryArray: string[];
+  switch (orderStatus) {
+    case "전체":
+      orderStatusQueryArray = PossibleOrderStatus;
+      break;
+    case "접수+송장":
+      orderStatusQueryArray = ["접수", "송장"];
+      break;
+    case "접수+배송":
+      orderStatusQueryArray = ["접수", "배송"];
+      break;
+    case "송장+배송":
+      orderStatusQueryArray = ["송장", "배송"];
+      break;
+    default:
+      orderStatusQueryArray = [orderStatus];
+      break;
+  }
+
+  let csQueryArray: string[];
+
+  switch (cs) {
+    case "전체":
+      csQueryArray = PossibleCS;
+      break;
+    case "정상":
+      csQueryArray = ["정상"];
+      break;
+    case "정상+교환":
+      csQueryArray = [
+        "정상",
+        "배송전 부분 교환",
+        "배송전 전체 교환",
+        "배송후 부분 교환",
+        "배송후 전체 교환",
+      ];
+      break;
+    case "취소(배송전+배송후)":
+      csQueryArray = [
+        "배송전 부분 취소",
+        "배송전 전체 취소",
+        "배송후 부분 취소",
+        "배송후 전체 취소",
+      ];
+      break;
+    case "교환(배송전+배송후)":
+      csQueryArray = [
+        "배송전 부분 교환",
+        "배송전 전체 교환",
+        "배송후 부분 교환",
+        "배송후 전체 교환",
+        "맞교환",
+        "배송후교환C",
+      ];
+      break;
+    case "배송전 취소":
+      csQueryArray = ["배송전 부분 취소", "배송전 전체 취소"];
+      break;
+    case "배송후 취소":
+      csQueryArray = ["배송후 부분 취소", "배송후 전체 취소"];
+      break;
+    case "배송전 교환":
+      csQueryArray = ["배송전 부분 교환", "배송전 전체 교환"];
+      break;
+    case "배송후 교환":
+      csQueryArray = ["배송후 부분 교환", "배송후 전체 교환", "배송후교환C"];
+      break;
+    case "보류":
+    case "맞교환":
+    case "배송후교환C":
+      csQueryArray = [cs];
+      break;
+    case "부분취소":
+      csQueryArray = ["배송전 부분 취소", "배송후 부분 취소"];
+      break;
+    case "부분취소 제외":
+      csQueryArray = [
+        "정상",
+        "배송전 부분 교환",
+        "배송전 전체 취소",
+        "배송전 전체 교환",
+        "배송후 부분 교환",
+        "배송후 전체 취소",
+        "배송후 전체 교환",
+        "보류",
+        "맞교환",
+        "배송후교환C",
+      ];
+      break;
+    default:
+      csQueryArray = [cs];
+      break;
+  }
+
+  let filterDiscountQueryArray: boolean[] = [];
+  switch(filterDiscount){
+    case "전체":
+      filterDiscountQueryArray = [true, false];
+      break;
+    case "할인 있음":
+      filterDiscountQueryArray = [true];
+      break;
+    case "할인 없음":
+      filterDiscountQueryArray = [false];
+      break;
+  }
+  
+  //OR Query 한도때문에 query array의 길이의 곱이 30을 넘을 수 없음
+  const revenueDataRef = collection(firestore, `revenue-db`);
+  let revenueDataQuery = query(
+    revenueDataRef,
+    where("orderDate", ">=", Timestamp.fromDate(startDate)),
+    where("orderDate", "<=", Timestamp.fromDate(endDate)),
+    where("orderStatus", "in", orderStatusQueryArray), // Max 3
+    //where("cs", "in", csQueryArray), //Max 12, 사용 불가, 불러온 후 직접 필터해서 확인
+    where("isDiscounted", "in", filterDiscountQueryArray) //Max 2
+  );
+
+  if (partnerName.length > 0) {
+    revenueDataQuery = query(
+      revenueDataQuery,
+      where("partnerName", "==", partnerName)
+    );
+  }
+
+  if (seller !== "all") {
+    revenueDataQuery = query(revenueDataQuery, where("seller", "==", seller));
+  }
+
+  const querySnap = await getDocs(revenueDataQuery);
+  const searchResult: { data: DocumentData; id: string }[] = [];
+  querySnap.docs.forEach((doc) => {
+    const data = doc.data();
+    if (data.productName.includes(productName) && csQueryArray.includes(data.cs)) {
+      data.orderDate = data.orderDate.toDate();
+      searchResult.push({ data: data, id: doc.id });
+    }
+  });
+  return searchResult;
+}
+
+/**
+ * 수익통계자료를 삭제합니다.
+ * @param JSON string of {data: RevenueData, id: string}[]
+ *
+ */
+export async function deleteRevenueData({ data }: { data: string }) {
+  try {
+    const time = new Date().getTime();
+    await setDoc(doc(firestore, `revenue-data-delete/data`), {
+      json: data,
+      updateTime: time,
+    });
+    return true;
+  } catch (error: any) {
+    sendAligoMessage({
+      text: `[로파파트너] ${error.message ?? error}`,
+      receiver: "01023540973",
+    });
+    return error.message ?? error;
+  }
 }

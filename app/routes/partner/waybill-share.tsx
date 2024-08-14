@@ -9,12 +9,7 @@ import {
   useNavigation,
   useSubmit,
 } from "@remix-run/react";
-import {
-  dateToDayStr,
-  DaySelectPopover,
-  dayStrToDate,
-  getTimezoneDate,
-} from "~/components/date";
+import { DaySelectPopover } from "~/components/date";
 import {
   BlackBottomButton,
   CommonButton,
@@ -31,7 +26,6 @@ import {
   OrderItem,
   OrderTable,
   setOrderPartnerName,
-  adjustSellerName,
 } from "~/components/order";
 import { getPartnerOrders, addWaybills } from "~/services/firebase.server";
 import writeXlsxFile from "write-excel-file";
@@ -42,6 +36,8 @@ import { requireUser } from "~/services/session.server";
 import { LoadingOverlay, Space } from "@mantine/core";
 import { useViewportSize } from "@mantine/hooks";
 import { isMobile } from "~/utils/mobile";
+import { adjustSellerName } from "~/components/seller";
+import { dateToDayStr, dayStrToDate, getTimezoneDate } from "~/utils/date";
 
 function FileNameBox({
   isMobile,
@@ -256,7 +252,7 @@ export default function PartnerWaybillShare() {
     return waybillList;
   }
 
-  const readExcel = (e:  React.ChangeEvent<HTMLInputElement>) => {
+  const readExcel = (e: React.ChangeEvent<HTMLInputElement>) => {
     e.preventDefault();
     let json: any;
     if (e.target.files) {
@@ -302,7 +298,7 @@ export default function PartnerWaybillShare() {
             setIsNoticeModalOpened(true);
             setFileName("");
             setItems([]);
-            e.target.value = '';
+            e.target.value = "";
             return false;
           }
 
@@ -318,7 +314,7 @@ export default function PartnerWaybillShare() {
             setIsNoticeModalOpened(true);
             setFileName("");
             setItems([]);
-            e.target.value = '';
+            e.target.value = "";
             return false;
           }
 
@@ -330,7 +326,7 @@ export default function PartnerWaybillShare() {
             setIsNoticeModalOpened(true);
             setFileName("");
             setItems([]);
-            e.target.value = '';
+            e.target.value = "";
             return false;
           }
 
@@ -351,7 +347,7 @@ export default function PartnerWaybillShare() {
       };
       reader.readAsArrayBuffer(e.target.files[0]);
       setFileName(e.target.files[0].name);
-      e.target.value = '';
+      e.target.value = "";
     }
   };
 

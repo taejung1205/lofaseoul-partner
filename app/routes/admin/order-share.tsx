@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { dateToDayStr } from "~/components/date";
+import { dateToDayStr } from "~/utils/date";
 
 import dayPickerStyles from "react-day-picker/dist/style.css";
 import { ActionFunction, json, LoaderFunction } from "@remix-run/node";
@@ -9,7 +9,6 @@ import {
   OrderItem,
   OrderTableMemo,
   setOrderPartnerName,
-  adjustSellerName,
 } from "~/components/order";
 import * as xlsx from "xlsx";
 import {
@@ -26,7 +25,12 @@ import {
 import { PartnerProfile } from "~/components/partner_profile";
 import { BasicModal, ModalButton } from "~/components/modal";
 import { LoadingOverlay } from "@mantine/core";
-import { FileNameBox, FileUpload, FileUploadButton } from "~/components/file_upload";
+import {
+  FileNameBox,
+  FileUpload,
+  FileUploadButton,
+} from "~/components/file_upload";
+import { adjustSellerName } from "~/components/seller";
 
 function ShareButton({
   children,
@@ -187,7 +191,7 @@ export default function AdminOrderShare() {
             setIsNoticeModalOpened(true);
             setFileName("");
             setItems([]);
-            e.target.value = '';
+            e.target.value = "";
             return false;
           }
 
@@ -203,7 +207,7 @@ export default function AdminOrderShare() {
             setIsNoticeModalOpened(true);
             setFileName("");
             setItems([]);
-            e.target.value = '';
+            e.target.value = "";
             return false;
           }
 
@@ -217,7 +221,7 @@ export default function AdminOrderShare() {
             setIsNoticeModalOpened(true);
             setFileName("");
             setItems([]);
-            e.target.value = '';
+            e.target.value = "";
             return false;
           }
 
@@ -227,7 +231,7 @@ export default function AdminOrderShare() {
       };
       reader.readAsArrayBuffer(e.target.files[0]);
       setFileName(e.target.files[0].name);
-      e.target.value = '';
+      e.target.value = "";
     }
   };
 

@@ -1,8 +1,7 @@
 import { Checkbox } from "@mantine/core";
 import React from "react";
 import { useEffect, useState } from "react";
-import { dayStrToDate } from "./date";
-import { PossibleSellers } from "./seller";
+import { dayStrToDate } from "~/utils/date";
 import { ShippingCompanySelect } from "./shipping_company";
 
 export type OrderItem = {
@@ -27,19 +26,18 @@ export type OrderItem = {
   waybillSharedDate: string; //운송장이 마지막으로 공유된 날짜 XXXX-XX-XX
 };
 
-interface Props extends  React.HTMLAttributes<HTMLDivElement> {
+interface Props extends React.HTMLAttributes<HTMLDivElement> {
   styleOverrides?: React.CSSProperties;
 }
 
-
 function OrderBox({ children, styleOverrides, ...props }: Props) {
   const orderBoxStyles: React.CSSProperties = {
-    width: 'inherit',
-    height: '60%',
-    minHeight: '60%',
-    position: 'relative',
-    overflow: 'scroll',
-    ...styleOverrides
+    width: "inherit",
+    height: "60%",
+    minHeight: "60%",
+    position: "relative",
+    overflow: "scroll",
+    ...styleOverrides,
   };
 
   return (
@@ -49,9 +47,9 @@ function OrderBox({ children, styleOverrides, ...props }: Props) {
   );
 }
 
-function OrderItemsBox({ children, styleOverrides,  ...props }: Props) {
+function OrderItemsBox({ children, styleOverrides, ...props }: Props) {
   const orderItemsBoxStyles: React.CSSProperties = {
-    maxHeight: '85%',
+    maxHeight: "85%",
   };
 
   return (
@@ -63,11 +61,11 @@ function OrderItemsBox({ children, styleOverrides,  ...props }: Props) {
 
 function OrderItemBox({ children, styleOverrides, ...props }: Props) {
   const orderItemBoxStyles: React.CSSProperties = {
-    width: 'fit-content',
-    display: 'flex',
-    alignItems: 'center',
-    padding: '10px 6px',
-    ...styleOverrides
+    width: "fit-content",
+    display: "flex",
+    alignItems: "center",
+    padding: "10px 6px",
+    ...styleOverrides,
   };
 
   return (
@@ -79,12 +77,12 @@ function OrderItemBox({ children, styleOverrides, ...props }: Props) {
 
 function OrderHeader({ children, styleOverrides, ...props }: Props) {
   const orderHeaderStyles: React.CSSProperties = {
-    backgroundColor: '#ebebeb',
-    width: 'fit-content',
-    display: 'flex',
-    alignItems: 'center',
-    padding: '10px 6px',
-    ...styleOverrides
+    backgroundColor: "#ebebeb",
+    width: "fit-content",
+    display: "flex",
+    alignItems: "center",
+    padding: "10px 6px",
+    ...styleOverrides,
   };
 
   return (
@@ -96,15 +94,15 @@ function OrderHeader({ children, styleOverrides, ...props }: Props) {
 
 function TextBox({ children, styleOverrides, ...props }: Props) {
   const textBoxStyles: React.CSSProperties = {
-    marginLeft: '10px',
+    marginLeft: "10px",
     fontWeight: 700,
-    fontSize: '16px',
-    lineHeight: '20px',
-    textAlign: 'center',
-    textOverflow: 'ellipsis',
-    whiteSpace: 'nowrap',
-    overflow: 'hidden',
-    ...styleOverrides
+    fontSize: "16px",
+    lineHeight: "20px",
+    textAlign: "center",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    ...styleOverrides,
   };
 
   return (
@@ -147,30 +145,6 @@ export function isOrderItemValid(item: OrderItem) {
     return false;
   } else {
     return true;
-  }
-}
-
-/**
- * 판매처 유사명을 수정합니다
- * 만약 판매처가 '카페24'일 경우 '로파공홈'으로 수정합니다.
- * @param item : SettlementItem (must be valid)
- * @returns
- *  유효할 경우 true, 아닐 경우 false
- */
-export function adjustSellerName(item: OrderItem) {
-  if (PossibleSellers.includes(item.seller)) {
-    return true;
-  } else if (item.seller === "카페24") {
-    item.seller = "로파공홈";
-    return true;
-  } else if (item.seller === "29CM") {
-    item.seller = "29cm";
-    return true;
-  } else if (item.seller === "eql") {
-    item.seller = "EQL";
-    return true;
-  } else {
-    return false;
   }
 }
 
@@ -254,11 +228,17 @@ function OrderItem({
       {isDelayedOrder ? (
         <>
           <TextBox
-            styleOverrides={{ minWidth: "160px", fontSize: "16px", width: "160px" }}
+            styleOverrides={{
+              minWidth: "160px",
+              fontSize: "16px",
+              width: "160px",
+            }}
           >
             {item.orderSharedDate}
           </TextBox>
-          <TextBox styleOverrides={{ minWidth: "80px", width: "80px", color: "red" }}>
+          <TextBox
+            styleOverrides={{ minWidth: "80px", width: "80px", color: "red" }}
+          >
             {`+${Math.floor(
               (new Date().getTime() -
                 dayStrToDate(item.orderSharedDate).getTime()) /
@@ -275,18 +255,28 @@ function OrderItem({
       <TextBox styleOverrides={{ minWidth: "90px", width: "90px" }}>
         {item.seller}
       </TextBox>
-      <TextBox styleOverrides={{ minWidth: "160px", fontSize: "12px", width: "160px" }}>
+      <TextBox
+        styleOverrides={{ minWidth: "160px", fontSize: "12px", width: "160px" }}
+      >
         {item.orderNumber}
       </TextBox>
       {isWaybill ? (
         <>
           <TextBox
-            styleOverrides={{ minWidth: "160px", fontSize: "16px", width: "160px" }}
+            styleOverrides={{
+              minWidth: "160px",
+              fontSize: "16px",
+              width: "160px",
+            }}
           >
             {item.shippingCompany}
           </TextBox>
           <TextBox
-            styleOverrides={{ minWidth: "160px", fontSize: "12px", width: "160px" }}
+            styleOverrides={{
+              minWidth: "160px",
+              fontSize: "12px",
+              width: "160px",
+            }}
           >
             {item.waybillNumber}
           </TextBox>
@@ -321,10 +311,14 @@ function OrderItem({
       ) : (
         <></>
       )}
-      <TextBox styleOverrides={{ minWidth: "450px", fontSize: "12px", width: "450px" }}>
+      <TextBox
+        styleOverrides={{ minWidth: "450px", fontSize: "12px", width: "450px" }}
+      >
         {item.productName}
       </TextBox>
-      <TextBox styleOverrides={{ minWidth: "250px", fontSize: "12px", width: "250px" }}>
+      <TextBox
+        styleOverrides={{ minWidth: "250px", fontSize: "12px", width: "250px" }}
+      >
         {item.optionName}
       </TextBox>
       <TextBox styleOverrides={{ minWidth: "30px", width: "30px" }}>
@@ -333,7 +327,9 @@ function OrderItem({
       <TextBox styleOverrides={{ minWidth: "60px", width: "60px" }}>
         {item.zipCode}
       </TextBox>
-      <TextBox styleOverrides={{ minWidth: "400px", fontSize: "12px", width: "400px" }}>
+      <TextBox
+        styleOverrides={{ minWidth: "400px", fontSize: "12px", width: "400px" }}
+      >
         {item.address}
       </TextBox>
       <TextBox styleOverrides={{ minWidth: "160px", width: "160px" }}>
@@ -351,7 +347,9 @@ function OrderItem({
       <TextBox styleOverrides={{ minWidth: "90px", width: "90px" }}>
         {item.customsCode}
       </TextBox>
-      <TextBox styleOverrides={{ minWidth: "250px", fontSize: "12px", width: "250px" }}>
+      <TextBox
+        styleOverrides={{ minWidth: "250px", fontSize: "12px", width: "250px" }}
+      >
         {item.deliveryRequest}
       </TextBox>
     </OrderItemBox>
@@ -413,7 +411,9 @@ export function OrderTable({
 
           {isDelayedOrder ? (
             <>
-              <TextBox styleOverrides={{ minWidth: "160px" }}>주문공유 날짜</TextBox>
+              <TextBox styleOverrides={{ minWidth: "160px" }}>
+                주문공유 날짜
+              </TextBox>
               <TextBox styleOverrides={{ minWidth: "80px" }}>지연일</TextBox>
             </>
           ) : (
@@ -438,7 +438,9 @@ export function OrderTable({
           <TextBox styleOverrides={{ minWidth: "60px" }}>우편번호</TextBox>
           <TextBox styleOverrides={{ minWidth: "400px" }}>주소</TextBox>
           <TextBox styleOverrides={{ minWidth: "160px" }}>연락처</TextBox>
-          <TextBox styleOverrides={{ minWidth: "160px" }}>주문자 전화번호</TextBox>
+          <TextBox styleOverrides={{ minWidth: "160px" }}>
+            주문자 전화번호
+          </TextBox>
           <TextBox styleOverrides={{ minWidth: "90px" }}>주문자명</TextBox>
           <TextBox styleOverrides={{ minWidth: "90px" }}>수취인</TextBox>
           <TextBox styleOverrides={{ minWidth: "90px" }}>통관부호</TextBox>
