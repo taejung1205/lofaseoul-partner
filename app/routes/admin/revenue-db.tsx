@@ -202,6 +202,13 @@ export default function Page() {
 
   const [itemsChecked, setItemsChecked] = useState<boolean[]>([]); //체크된 정산내역 index 배열
   const [isLoading, setIsLoading] = useState<boolean>(false); //로딩 과정에서 로딩오버레이 표시
+  const [isSearchClicked, setIsSearchClicked] = useState<boolean>(false); //action 결과 불러올 때 loaderData 안내 또 열리지 않도록 구분
+
+  //현재 보고 있는 항목 페이지 번호
+  //사용자에게 보이는 값은 여기서 +1
+  const [pageIndex, setPageIndex] = useState<number>(0);
+
+
 
   //볼 항목 선택
   //TODO
@@ -247,11 +254,12 @@ export default function Page() {
 
   //안내메세지
   useEffect(() => {
-    if (loaderData.message.length > 0) {
+    if (isSearchClicked && loaderData.message.length > 0) {
+      setIsSearchClicked(false);
       setNoticeModalStr(loaderData.message);
       setIsNoticeModalOpened(true);
     }
-  }, [loaderData.message]);
+  }, [loaderData]);
 
   useEffect(() => {
     if (actionData && actionData.message) {
@@ -262,9 +270,18 @@ export default function Page() {
 
   //처음 불러올 때 체크 초기화
   useEffect(() => {
-    const newArr = Array(revenueDataItems.length).fill(false);
-    setItemsChecked(newArr);
+    setPageIndex(0);
+    resetCheck(0);
   }, [revenueDataItems]);
+
+  useEffect(() => {
+    resetCheck(pageIndex);
+  }, [pageIndex])
+
+  function resetCheck(pageIndex: number){
+    const newArr = Array(Math.min(revenueDataItems.slice(pageIndex * 100, (pageIndex + 1) * 100).length, 100)).fill(false);
+    setItemsChecked(newArr);
+  }
 
   function onItemCheck(index: number, isChecked: boolean) {
     itemsChecked[index] = isChecked;
@@ -272,7 +289,9 @@ export default function Page() {
 
   function onCheckAll(isChecked: boolean) {
     setIsLoading(true);
-    setItemsChecked(Array(revenueDataItems.length).fill(isChecked));
+    for(let i = 0; i < itemsChecked.length; i++){
+      itemsChecked[i] = isChecked;
+    }
     setIsLoading(false);
   }
 
@@ -336,9 +355,9 @@ export default function Page() {
                 setIsLoading(true);
                 setIsDeleteModalOpened(false);
                 let deletingList = [];
-                for (let i = 0; i < revenueDataItems.length; i++) {
+                for (let i = 0; i < itemsChecked.length; i++) {
                   if (itemsChecked[i]) {
-                    deletingList.push(revenueDataItems[i].id);
+                    deletingList.push(revenueDataItems[i + pageIndex * 100].id);
                   }
                 }
                 setIsLoading(false);
@@ -522,6 +541,7 @@ export default function Page() {
             )}&cs=${encodeURIComponent(
               cs ?? "전체"
             )}&filterDiscount=${encodeURIComponent(filterDiscount ?? "전체")}`}
+            onClick={() => setIsSearchClicked(true)}
           >
             <BlackButton>검색</BlackButton>
           </Link>
@@ -531,7 +551,7 @@ export default function Page() {
       {/* TODO: 볼 항목 선택 */}
       {revenueDataItems ? (
         <RevenueDataTableMemo
-          items={revenueData}
+          items={revenueData.slice(pageIndex * 100, (pageIndex + 1) * 100)}
           itemsChecked={itemsChecked}
           onItemCheck={onItemCheck}
           onCheckAll={onCheckAll}
@@ -540,10 +560,58 @@ export default function Page() {
       ) : (
         <></>
       )}
+      {revenueDataItems ? (
+        <PageIndex
+        pageCount={Math.ceil(revenueDataItems.length / 100)}
+        currentIndex={pageIndex}
+        onIndexClick={(index: number) => {
+          setPageIndex(index);
+          resetCheck(index);
+        }}
+      />
+      ) : (
+        <></>
+      )}
+
+
       <Space h={20} />
       <BlackButton onClick={() => setIsDeleteModalOpened(true)}>
         선택 항목 삭제
       </BlackButton>
     </PageLayout>
+  );
+}
+
+function PageIndex({
+  pageCount,
+  currentIndex,
+  onIndexClick,
+}: {
+  pageCount: number;
+  currentIndex: number;
+  onIndexClick: (index: number) => void;
+}) {
+  let arr = [];
+  for (let i = 0; i < pageCount; i++) {
+    arr.push(i);
+  }
+  return (
+    <div style={{ display: "flex", width: "100%", justifyContent: "center" }}>
+      {arr.map((item, index) => (
+        <div
+          key={`PageIndex-${index}`}
+          style={{
+            fontWeight: item == currentIndex ? 700 : 400,
+            margin: 5,
+            cursor: "pointer",
+          }}
+          onClick={() => {
+            onIndexClick(item);
+          }}
+        >
+          {item + 1}
+        </div>
+      ))}
+    </div>
   );
 }
