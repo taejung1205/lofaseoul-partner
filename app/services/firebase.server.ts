@@ -2279,9 +2279,10 @@ export async function getRevenueStats({
     const commonFeeRate = isLofa
       ? partnerProfile.lofaFee
       : partnerProfile.otherFee; //정상수수료율
-    const platformFeeRate = sellerProfiles.get(data.seller)
-      ? sellerProfiles.get(data.seller).fee
-      : 0;
+    const platformFeeRate =
+      sellerProfiles.get(data.seller) != undefined
+        ? sellerProfiles.get(data.seller).fee
+        : 0;
 
     if (!searchResult.has(data.partnerName)) {
       let partnerStat: PartnerRevenueStat = {

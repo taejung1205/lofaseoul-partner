@@ -11,6 +11,7 @@ import {
 } from "~/components/revenue_stat";
 import { getRevenueStats } from "~/services/firebase.server";
 import { dateToDayStr, dayStrToDate, getTimezoneDate } from "~/utils/date";
+import writeXlsxFile from "write-excel-file";
 import dayPickerStyles from "react-day-picker/dist/style.css";
 
 export function links() {
@@ -101,6 +102,19 @@ export default function Page() {
     }
   }, []);
 
+  async function writeExcel(items: PartnerRevenueStat[]) {
+    await writeXlsxFile(items, {
+      schema,
+      headerStyle: {
+        fontWeight: "bold",
+        align: "center",
+      },
+      fileName: `수익금 계산.xlsx`,
+      fontFamily: "맑은 고딕",
+      fontSize: 10,
+    });
+  }
+
   return (
     <PageLayout>
       <LoadingOverlay
@@ -135,7 +149,7 @@ export default function Page() {
           <CommonButton
             width={180}
             onClick={async () => {
-              // await writeExcel(statItems);
+              await writeExcel(statItems);
             }}
           >
             엑셀 다운로드
@@ -154,3 +168,88 @@ export default function Page() {
     </PageLayout>
   );
 }
+
+const schema = [
+  {
+    column: "기간",
+    type: String,
+    value: (stat: PartnerRevenueStat) =>
+      `${stat.startDateStr} ~ ${stat.endDateStr}`,
+    width: 30,
+    wrap: true,
+  },
+  {
+    column: "공급처",
+    type: String,
+    value: (stat: PartnerRevenueStat) => stat.partnerName,
+    width: 20,
+    wrap: true,
+  },
+  {
+    column: "로파판매액",
+    type: Number,
+    value: (stat: PartnerRevenueStat) => stat.lofaSalesAmount,
+    width: 20,
+    wrap: true,
+  },
+  {
+    column: "외부판매액",
+    type: Number,
+    value: (stat: PartnerRevenueStat) => stat.otherSalesAmount,
+    width: 20,
+    wrap: true,
+  },
+  {
+    column: "총판매액",
+    type: Number,
+    value: (stat: PartnerRevenueStat) => stat.totalSalesAmount,
+    width: 20,
+    wrap: true,
+  },
+  {
+    column: "업체정산금",
+    type: Number,
+    value: (stat: PartnerRevenueStat) => stat.partnerSettlement,
+    width: 20,
+  },
+  {
+    column: "플랫폼수수료",
+    type: Number,
+    value: (stat: PartnerRevenueStat) => stat.platformFee,
+    width: 20,
+  },
+  {
+    column: "로파할인부담금",
+    type: Number,
+    value: (stat: PartnerRevenueStat) => stat.lofaDiscountLevy,
+    width: 20,
+  },
+  {
+    column: "수익금",
+    type: Number,
+    value: (stat: PartnerRevenueStat) => stat.proceeds,
+    width: 20,
+    wrap: true,
+  },
+  {
+    column: "세후 순수익",
+    type: Number,
+    value: (stat: PartnerRevenueStat) => stat.netProfitAfterTax,
+    width: 20,
+    wrap: true,
+  },
+  {
+    column: "수익률",
+    type: Number,
+    value: (stat: PartnerRevenueStat) => stat.returnRate,
+    width: 20,
+    wrap: true,
+  },
+  {
+    column: "상품분류",
+    type: String,
+    value: (stat: PartnerRevenueStat) => stat.productCategory.join(" / "),
+    width: 60,
+    wrap: true,
+  },
+];

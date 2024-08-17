@@ -28,8 +28,8 @@ interface Props extends React.HTMLAttributes<HTMLDivElement> {
 function Box({ children, styleOverrides, ...props }: Props) {
   const orderBoxStyles: React.CSSProperties = {
     width: "inherit",
-    height: "60%",
-    minHeight: "60%",
+    height: "80%",
+    minHeight: "80%",
     position: "relative",
     overflow: "scroll",
     ...styleOverrides,
@@ -113,12 +113,14 @@ function PartnerRevenueStatItem({
   check,
   onItemCheck,
   checkboxRequired = true,
+  isSum = false,
 }: {
   item: PartnerRevenueStat;
   index: number;
   check: boolean;
   onItemCheck: (index: number, isChecked: boolean) => void;
   checkboxRequired?: boolean;
+  isSum?: boolean;
 }) {
   const [isChecked, setIsChecked] = useState<boolean>(check);
 
@@ -131,7 +133,12 @@ function PartnerRevenueStatItem({
   }, [check]);
 
   return (
-    <ItemBox key={`PartnerRevenueStatItem-${index}`}>
+    <ItemBox
+      key={`PartnerRevenueStatItem-${index}`}
+      styleOverrides={{
+        borderTop: isSum ? "1px solid black" : "none",
+      }}
+    >
       {checkboxRequired ? (
         <Checkbox
           color={"gray"}
@@ -147,7 +154,7 @@ function PartnerRevenueStatItem({
       )}
 
       <TextBox styleOverrides={{ minWidth: "240px", width: "240px" }}>
-        {`${item.startDateStr} ~ ${item.endDateStr}`}
+        {isSum ? "합계" : `${item.startDateStr} ~ ${item.endDateStr}`}
       </TextBox>
       <TextBox styleOverrides={{ minWidth: "180px", width: "180px" }}>
         {item.partnerName}
@@ -205,6 +212,42 @@ export function PartnerRevenueStatTable({
 
   useEffect(() => {
     setAllChecked(defaultAllCheck);
+  }, [items]);
+
+  const sumItem: PartnerRevenueStat = useMemo(() => {
+    const sum: PartnerRevenueStat = {
+      startDateStr: "",
+      endDateStr: "",
+      partnerName: "",
+      lofaSalesAmount: 0,
+      otherSalesAmount: 0,
+      totalSalesAmount: 0,
+      partnerSettlement: 0,
+      platformFee: 0,
+      lofaDiscountLevy: 0,
+      proceeds: 0,
+      netProfitAfterTax: 0,
+      returnRate: 0,
+      productCategory: [],
+    };
+
+    items.forEach((stat) => {
+      sum.lofaSalesAmount += stat.lofaSalesAmount;
+      sum.otherSalesAmount += stat.otherSalesAmount;
+      sum.totalSalesAmount += stat.totalSalesAmount;
+      sum.partnerSettlement += stat.partnerSettlement;
+      sum.platformFee += stat.platformFee;
+      sum.lofaDiscountLevy += stat.lofaDiscountLevy;
+      sum.proceeds += stat.proceeds;
+      sum.netProfitAfterTax += stat.netProfitAfterTax;
+    });
+
+    sum.returnRate =
+      sum.totalSalesAmount != 0
+        ? (sum.netProfitAfterTax / sum.totalSalesAmount) * 100
+        : 0;
+
+    return sum;
   }, [items]);
 
   return (
@@ -267,7 +310,6 @@ export function PartnerRevenueStatTable({
           <TextBox styleOverrides={{ minWidth: "270px", width: "270px" }}>
             상품분류
           </TextBox>
-          <div style={{ width: "16px" }} />
         </Header>
         <ItemsBox>
           {items.map((item, index) => {
@@ -282,6 +324,15 @@ export function PartnerRevenueStatTable({
               />
             );
           })}
+          <PartnerRevenueStatItem
+            key={`PartnerRevenueStatItemSum`}
+            index={-1}
+            item={sumItem}
+            check={false}
+            onItemCheck={onItemCheck}
+            checkboxRequired={checkboxRequired}
+            isSum={true}
+          />
         </ItemsBox>
       </Box>
     </>
