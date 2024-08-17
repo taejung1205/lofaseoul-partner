@@ -41,7 +41,14 @@ import { NoticeItem } from "~/components/notice";
 import { Product } from "~/components/product";
 import { SettlementSumItem } from "~/components/settlement_sum";
 import { sendResendEmail } from "./resend.server";
-import { PossibleCS, PossibleOrderStatus } from "~/components/revenue_data";
+import {
+  PossibleCS,
+  PossibleOrderStatus,
+  RevenueData,
+} from "~/components/revenue_data";
+import { PartnerRevenueStat } from "~/components/revenue_stat";
+import { LofaSellers } from "~/components/seller";
+import { SellerProfile } from "~/routes/admin/seller-manage";
 
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
@@ -2077,7 +2084,6 @@ export async function getRevenueData({
   cs: string;
   filterDiscount: string;
 }) {
-
   let orderStatusQueryArray: string[];
   switch (orderStatus) {
     case "전체":
@@ -2173,7 +2179,7 @@ export async function getRevenueData({
   }
 
   let filterDiscountQueryArray: boolean[] = [];
-  switch(filterDiscount){
+  switch (filterDiscount) {
     case "전체":
       filterDiscountQueryArray = [true, false];
       break;
@@ -2184,7 +2190,7 @@ export async function getRevenueData({
       filterDiscountQueryArray = [false];
       break;
   }
-  
+
   //OR Query 한도때문에 query array의 길이의 곱이 30을 넘을 수 없음
   const revenueDataRef = collection(firestore, `revenue-db`);
   let revenueDataQuery = query(
@@ -2211,7 +2217,10 @@ export async function getRevenueData({
   const searchResult: { data: DocumentData; id: string }[] = [];
   querySnap.docs.forEach((doc) => {
     const data = doc.data();
-    if (data.productName.includes(productName) && csQueryArray.includes(data.cs)) {
+    if (
+      data.productName.includes(productName) &&
+      csQueryArray.includes(data.cs)
+    ) {
       data.orderDate = data.orderDate.toDate();
       searchResult.push({ data: data, id: doc.id });
     }
@@ -2239,4 +2248,126 @@ export async function deleteRevenueData({ data }: { data: string }) {
     });
     return error.message ?? error;
   }
+}
+
+export async function getRevenueStats({
+  startDate,
+  endDate,
+}: {
+  startDate: Date;
+  endDate: Date;
+}) {
+  const sellerProfiles = await getAllSellerProfiles();
+  const partnerProfiles = await getAllPartnerProfiles();
+  const revenueDataRef = collection(firestore, `revenue-db`);
+  let revenueDataQuery = query(
+    revenueDataRef,
+    where("orderDate", ">=", Timestamp.fromDate(startDate)),
+    where("orderDate", "<=", Timestamp.fromDate(endDate))
+  );
+
+  const querySnap = await getDocs(revenueDataQuery);
+  const searchResult = new Map<string, PartnerRevenueStat>();
+
+  querySnap.docs.forEach((doc) => {
+    const data = doc.data() as RevenueData;
+    const isLofa = LofaSellers.includes(data.seller);
+    const isCsOK = data.cs == "정상";
+    const partnerProfile: PartnerProfile = partnerProfiles.get(
+      data.partnerName
+    );
+    const commonFeeRate = isLofa
+      ? partnerProfile.lofaFee
+      : partnerProfile.otherFee; //정상수수료율
+    const platformFeeRate =
+      sellerProfiles.get(data.seller) != undefined
+        ? sellerProfiles.get(data.seller).fee
+        : 0;
+
+    if (!searchResult.has(data.partnerName)) {
+      let partnerStat: PartnerRevenueStat = {
+        startDateStr: dateToDayStr(startDate, false),
+        endDateStr: dateToDayStr(endDate, false),
+        partnerName: data.partnerName,
+        lofaSalesAmount: 0,
+        otherSalesAmount: 0,
+        totalSalesAmount: 0,
+        partnerSettlement: 0,
+        platformFee: 0,
+        lofaDiscountLevy: 0,
+        proceeds: 0,
+        netProfitAfterTax: 0,
+        returnRate: 0,
+        productCategory: [], //TODO: add product category
+      };
+
+      searchResult.set(data.partnerName, partnerStat);
+    }
+
+    let lofaSalesAmount;
+    let otherSalesAmount;
+    let totalSalesAmount;
+    let partnerSettlement;
+    let platformFee;
+    let lofaDiscountLevy;
+    let proceeds;
+    let netProfitAfterTax;
+
+    if (!data.isDiscounted) {
+      lofaSalesAmount = isCsOK && isLofa ? data.price * data.amount : 0;
+      otherSalesAmount = isCsOK && !isLofa ? data.price * data.amount : 0;
+      totalSalesAmount = lofaSalesAmount + otherSalesAmount;
+      partnerSettlement = (totalSalesAmount * (100 - commonFeeRate)) / 100;
+      const platformSettlement = isLofa
+        ? totalSalesAmount
+        : (totalSalesAmount * (100 - platformFeeRate)) / 100; //플랫폼정산금
+      platformFee = totalSalesAmount - platformSettlement;
+      lofaDiscountLevy = 0;
+      proceeds = totalSalesAmount - partnerSettlement - platformFee;
+      switch (partnerProfile.businessTaxStandard) {
+        case "일반":
+          netProfitAfterTax = proceeds * 0.9;
+          break;
+        case "간이":
+        case "비사업자":
+          netProfitAfterTax = platformSettlement * 0.9;
+          break;
+        case "면세":
+        default:
+          netProfitAfterTax = proceeds;
+          break;
+      }
+      if (!isCsOK) {
+        netProfitAfterTax = 0;
+      }
+    } else {
+      //TODO
+      lofaSalesAmount = 0;
+      otherSalesAmount = 0;
+      totalSalesAmount = 0;
+      partnerSettlement = 0;
+      platformFee = 0;
+      lofaDiscountLevy = 0;
+      proceeds = 0;
+      netProfitAfterTax = 0;
+    }
+
+    const stat = searchResult.get(data.partnerName) as PartnerRevenueStat;
+    stat.lofaSalesAmount += lofaSalesAmount;
+    stat.otherSalesAmount += otherSalesAmount;
+    stat.totalSalesAmount += totalSalesAmount;
+    stat.partnerSettlement += partnerSettlement;
+    stat.platformFee += platformFee;
+    stat.lofaDiscountLevy += lofaDiscountLevy;
+    stat.proceeds += proceeds;
+    stat.netProfitAfterTax += netProfitAfterTax;
+  });
+
+  searchResult.forEach((stat: PartnerRevenueStat) => {
+    if (stat.totalSalesAmount != 0) {
+      stat.returnRate = (stat.netProfitAfterTax / stat.totalSalesAmount) * 100;
+    }
+  });
+
+  return Array.from(searchResult.values());
 }

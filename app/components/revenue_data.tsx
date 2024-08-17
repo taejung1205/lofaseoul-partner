@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { dateToDayStr } from "~/utils/date";
 
 //통계용 파일 업로드에서 올릴 때 사용하는 양식입니다.
+//한 데이터는 한 거래를 나타냅니다.
 export type RevenueData = {
   orderDate: Date; //구매일자
   seller: string; //판매처 (플랫폼)
@@ -38,7 +39,7 @@ interface Props extends React.HTMLAttributes<HTMLDivElement> {
   styleOverrides?: React.CSSProperties;
 }
 
-function OrderBox({ children, styleOverrides, ...props }: Props) {
+function Box({ children, styleOverrides, ...props }: Props) {
   const orderBoxStyles: React.CSSProperties = {
     width: "inherit",
     height: "60%",
@@ -55,7 +56,7 @@ function OrderBox({ children, styleOverrides, ...props }: Props) {
   );
 }
 
-function OrderItemsBox({ children, styleOverrides, ...props }: Props) {
+function ItemsBox({ children, styleOverrides, ...props }: Props) {
   const orderItemsBoxStyles: React.CSSProperties = {
     maxHeight: "85%",
   };
@@ -67,7 +68,7 @@ function OrderItemsBox({ children, styleOverrides, ...props }: Props) {
   );
 }
 
-function OrderItemBox({ children, styleOverrides, ...props }: Props) {
+function ItemBox({ children, styleOverrides, ...props }: Props) {
   const orderItemBoxStyles: React.CSSProperties = {
     width: "fit-content",
     display: "flex",
@@ -83,7 +84,7 @@ function OrderItemBox({ children, styleOverrides, ...props }: Props) {
   );
 }
 
-function OrderHeader({ children, styleOverrides, ...props }: Props) {
+function Header({ children, styleOverrides, ...props }: Props) {
   const orderHeaderStyles: React.CSSProperties = {
     backgroundColor: "#ebebeb",
     width: "fit-content",
@@ -209,7 +210,7 @@ function RevenueDataItem({
   }, [check]);
 
   return (
-    <OrderItemBox key={`RevenueDataItem-${index}`}>
+    <ItemBox key={`RevenueDataItem-${index}`}>
       {checkboxRequired ? (
         <Checkbox
           color={"gray"}
@@ -257,7 +258,7 @@ function RevenueDataItem({
       <TextBox styleOverrides={{ minWidth: "180px", width: "180px" }}>
         {item.cs}
       </TextBox>
-    </OrderItemBox>
+    </ItemBox>
   );
 }
 
@@ -284,8 +285,8 @@ export function RevenueDataTable({
 
   return (
     <>
-      <OrderBox>
-        <OrderHeader>
+      <Box>
+        <Header>
           {checkboxRequired ? (
             <Checkbox
               color={"gray"}
@@ -347,8 +348,8 @@ export function RevenueDataTable({
             CS
           </TextBox>
           <div style={{ width: "16px" }} />
-        </OrderHeader>
-        <OrderItemsBox>
+        </Header>
+        <ItemsBox>
           {items.map((item, index) => {
             return (
               <RevenueDataItem
@@ -361,8 +362,8 @@ export function RevenueDataTable({
               />
             );
           })}
-        </OrderItemsBox>
-      </OrderBox>
+        </ItemsBox>
+      </Box>
     </>
   );
 }
