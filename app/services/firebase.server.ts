@@ -2330,7 +2330,7 @@ export async function getRevenueStats({
           break;
         case "간이":
         case "비사업자":
-          netProfitAfterTax = platformSettlement * 0.9;
+          netProfitAfterTax = platformSettlement * 0.9 - partnerSettlement;
           break;
         case "면세":
         default:
