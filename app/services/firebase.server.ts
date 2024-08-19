@@ -217,6 +217,7 @@ export async function addPartnerProfile({
     bankAccount: partnerProfile.bankAccount,
     businessName: partnerProfile.businessName,
     businessTaxStandard: partnerProfile.businessTaxStandard,
+    providerName: partnerProfile.providerName,
     isAdmin: false,
   }).catch((error) => {
     return error.message;

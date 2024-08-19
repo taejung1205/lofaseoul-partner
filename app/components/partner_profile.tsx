@@ -18,6 +18,7 @@ export type PartnerProfile = {
   bankAccount: string;
   businessName: string;
   businessTaxStandard: "일반" | "간이" | "비사업자" | "면세";
+  providerName: string; //공급처명
 };
 
 export const PossibleTaxStandard = ["일반", "간이", "비사업자", "면세"];
@@ -130,6 +131,9 @@ export function PartnerProfile({
   );
   const [businessTaxStandardEdit, setBusinessTaxStandardEdit] = useState(
     partnerProfile.businessTaxStandard
+  );
+  const [providerNameEdit, setProviderNameEdit] = useState(
+    partnerProfile.providerName ?? partnerProfile.name
   );
 
   const viewportSize = useViewportSize();
@@ -290,6 +294,12 @@ export function PartnerProfile({
               </div>
               <div style={{ padding: "13px" }}>
                 {partnerProfile.businessTaxStandard}
+              </div>
+            </ProfileGridItem>
+            <ProfileGridItem isMobile={isMobileMemo}>
+              <div style={{ padding: "13px", width: "180px" }}>공급처명</div>
+              <div style={{ padding: "13px" }}>
+                {partnerProfile.providerName ?? partnerProfile.name}
               </div>
             </ProfileGridItem>
           </ProfileGridContainer>
@@ -478,12 +488,15 @@ export function PartnerProfile({
                   },
                 }}
               />
-              {/* <InputBox
+            </ProfileGridItem>
+            <ProfileGridItem isMobile={isMobileMemo}>
+              <div style={{ padding: "13px", width: "180px" }}>공급처명</div>
+              <InputBox
                 type="text"
-                name="businessTaxStandard"
-                value={businessTaxStandardEdit}
-                onChange={(e) => setBusinessTaxStandardEdit(e.target.value)}
-              /> */}
+                name="providerName"
+                value={providerNameEdit}
+                onChange={(e) => setProviderNameEdit(e.target.value)}
+              />
             </ProfileGridItem>
           </ProfileGridContainer>
         </Form>
