@@ -1,6 +1,7 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
 import {
+  and,
   arrayUnion,
   collection,
   deleteDoc,
@@ -48,7 +49,6 @@ import {
 } from "~/components/revenue_data";
 import { PartnerRevenueStat } from "~/components/revenue_stat";
 import { LofaSellers } from "~/components/seller";
-import { SellerProfile } from "~/routes/admin/seller-manage";
 
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
@@ -2370,4 +2370,90 @@ export async function getRevenueStats({
   });
 
   return Array.from(searchResult.values());
+}
+
+/**
+ * 할인내역 자료 업로드합니다.
+ * @param settlements: JSON string of discount data items list
+ * @returns
+ *
+ */
+export async function addDiscountData({ data }: { data: string }) {
+  try {
+    const time = new Date().getTime();
+    await setDoc(doc(firestore, `discount-data-add/data`), {
+      json: data,
+      updateTime: time,
+    });
+    return true;
+  } catch (error: any) {
+    sendAligoMessage({
+      text: `[로파파트너] ${error.message ?? error}`,
+      receiver: "01023540973",
+    });
+    return error.message ?? error;
+  }
+}
+
+/**
+ * 할인내역을 삭제합니다.
+ * @param JSON string of {data: DiscountData, id: string}[]
+ *
+ */
+export async function deleteDiscountData({ data }: { data: string }) {
+  try {
+    const time = new Date().getTime();
+    await setDoc(doc(firestore, `discount-data-delete/data`), {
+      json: data,
+      updateTime: time,
+    });
+    return true;
+  } catch (error: any) {
+    sendAligoMessage({
+      text: `[로파파트너] ${error.message ?? error}`,
+      receiver: "01023540973",
+    });
+    return error.message ?? error;
+  }
+}
+
+export async function getDiscountData({
+  startDate,
+  endDate,
+  partnerName,
+  productName,
+}: {
+  startDate: Date;
+  endDate: Date;
+  partnerName: string;
+  productName: string;
+}) {
+  //OR Query 한도때문에 query array의 길이의 곱이 30을 넘을 수 없음
+  const discountDataRef = collection(firestore, `discount-db`);
+  let discountDataQuery = query(
+    discountDataRef,
+    and(
+      where("startDate", ">=", Timestamp.fromDate(startDate)),
+      where("endDate", "<=", Timestamp.fromDate(endDate))
+    )
+  );
+
+  if (partnerName.length > 0) {
+    discountDataQuery = query(
+      discountDataQuery,
+      where("partnerName", "==", partnerName)
+    );
+  }
+
+  const querySnap = await getDocs(discountDataQuery);
+  const searchResult: { data: DocumentData; id: string }[] = [];
+  querySnap.docs.forEach((doc) => {
+    const data = doc.data();
+    if (data.productName.includes(productName)) {
+      data.startDate = data.startDate.toDate();
+      data.endDate = data.endDate.toDate();
+      searchResult.push({ data: data, id: doc.id });
+    }
+  });
+  return searchResult;
 }
