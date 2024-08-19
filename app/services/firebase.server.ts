@@ -226,37 +226,37 @@ export async function addPartnerProfile({
   return result;
 }
 
-/**
- * 여러 파트너를 한 번에 추가합니다.
- * @param partnerProfiles: PartnerProfile[]
- * @returns
- *
- */
-export async function addPartnerProfiles({
-  partnerProfiles,
-}: {
-  partnerProfiles: PartnerProfile[];
-}) {
-  const batch = writeBatch(firestore);
-  partnerProfiles.forEach(async (item, index) => {
-    const docName = item.name;
-    let docRef = doc(firestore, "accounts", docName);
-    batch.set(docRef, {
-      name: item.name,
-      id: item.id,
-      password: item.password,
-      email: item.email,
-      phone: item.phone,
-      lofaFee: item.lofaFee,
-      otherFee: item.otherFee,
-      shippingFee: item.shippingFee,
-      isAdmin: false,
-    });
+// /**
+//  * 여러 파트너를 한 번에 추가합니다.
+//  * @param partnerProfiles: PartnerProfile[]
+//  * @returns
+//  *
+//  */
+// export async function addPartnerProfiles({
+//   partnerProfiles,
+// }: {
+//   partnerProfiles: PartnerProfile[];
+// }) {
+//   const batch = writeBatch(firestore);
+//   partnerProfiles.forEach(async (item, index) => {
+//     const docName = item.name;
+//     let docRef = doc(firestore, "accounts", docName);
+//     batch.set(docRef, {
+//       name: item.name,
+//       id: item.id,
+//       password: item.password,
+//       email: item.email,
+//       phone: item.phone,
+//       lofaFee: item.lofaFee,
+//       otherFee: item.otherFee,
+//       shippingFee: item.shippingFee,
+//       isAdmin: false,
+//     });
 
-    await createAuthAccount(item.id, item.password, item.name);
-  });
-  await batch.commit();
-}
+//     await createAuthAccount(item.id, item.password, item.name);
+//   });
+//   await batch.commit();
+// }
 
 /**
  * 파트너 정보를 삭제합니다.

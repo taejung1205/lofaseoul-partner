@@ -225,6 +225,13 @@ const schema = [
     wrap: true,
   },
   {
+    column: "공급처명",
+    type: String,
+    value: (profile: PartnerProfile) => profile.providerName ?? profile.name,
+    width: 30,
+    wrap: true,
+  },
+  {
     column: "아이디",
     type: String,
     value: (profile: PartnerProfile) => profile.id,
