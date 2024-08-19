@@ -57,6 +57,7 @@ export const action: ActionFunction = async ({ request }) => {
     const businessTaxStandard: BusinessTaxStandard = body
       .get("businessTaxStandard")
       ?.toString() as BusinessTaxStandard;
+    const providerName = body.get("providerName")?.toString();
 
     if (
       typeof name == "undefined" ||
@@ -81,6 +82,7 @@ export const action: ActionFunction = async ({ request }) => {
         bankAccount: bankAccount ?? "",
         businessName: businessName ?? "",
         businessTaxStandard: businessTaxStandard ?? "일반",
+        providerName: providerName ?? name,
       };
       const addPartnerResult = await addPartnerProfile({
         partnerProfile,
@@ -171,6 +173,7 @@ export default function AdminPartnerList() {
             bankAccount: "",
             businessName: "",
             businessTaxStandard: "일반",
+            providerName: "",
           }}
           isNew={true}
           isEdit={true}
@@ -197,6 +200,7 @@ export default function AdminPartnerList() {
               bankAccount: doc.bankAccount,
               businessName: doc.businessName,
               businessTaxStandard: doc.businessTaxStandard,
+              providerName: doc.providerName,
             }}
             isEdit={currentEdit == index}
             onEditClick={() => {
@@ -217,6 +221,13 @@ const schema = [
     column: "파트너명",
     type: String,
     value: (profile: PartnerProfile) => profile.name,
+    width: 30,
+    wrap: true,
+  },
+  {
+    column: "공급처명",
+    type: String,
+    value: (profile: PartnerProfile) => profile.providerName ?? profile.name,
     width: 30,
     wrap: true,
   },
