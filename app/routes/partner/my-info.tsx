@@ -50,6 +50,7 @@ export default function AdminPartnerList() {
             bankAccount: loaderData.bankAccount,
             businessName: loaderData.businessName,
             businessTaxStandard: loaderData.businessTaxStandard,
+            providerName: loaderData.providerName,
           }}
           isNew={false}
           isEdit={false}

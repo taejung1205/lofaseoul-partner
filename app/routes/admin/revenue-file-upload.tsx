@@ -77,7 +77,7 @@ export default function Page() {
   const partnerProfiles = useMemo(() => {
     let map = new Map();
     loaderData.partners.forEach((partner: PartnerProfile) => {
-      map.set(partner.name, partner);
+      map.set(partner.providerName, partner);
     });
     return map;
   }, [loaderData]);
@@ -165,7 +165,11 @@ export default function Page() {
           if (partnerProfile === undefined) {
             console.log(item);
             setNoticeModalStr(
-              `유효하지 않은 엑셀 파일입니다. ${i+2}행의 공급처가 계약업체목록에 있는지 확인해주세요. (${item.partnerName})`
+              `유효하지 않은 엑셀 파일입니다. ${
+                i + 2
+              }행의 공급처가 계약업체목록에 있는지 확인해주세요. (${
+                item.partnerName
+              })`
             );
             setIsNoticeModalOpened(true);
             setFileName("");

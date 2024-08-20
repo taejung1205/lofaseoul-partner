@@ -8,9 +8,7 @@ import {
 } from "@remix-run/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as xlsx from "xlsx";
-import {
-  MonthSelectPopover,
-} from "~/components/date";
+import { MonthSelectPopover } from "~/components/date";
 import {
   FileNameBox,
   FileUpload,
@@ -22,7 +20,6 @@ import { PartnerProfile } from "~/components/partner_profile";
 import { adjustSellerName } from "~/components/seller";
 import {
   isSettlementItemValid,
-  setSettlementPartnerName,
   setSettlementFee,
   SettlementTableMemo,
 } from "~/components/settlement_table";
@@ -106,7 +103,7 @@ export default function AdminSettlementShare() {
   const partnerProfiles = useMemo(() => {
     let map = new Map();
     loaderData.partners.forEach((partner: PartnerProfile) => {
-      map.set(partner.name, partner);
+      map.set(partner.providerName, partner);
     });
     return map;
   }, [loaderData]);
@@ -160,7 +157,7 @@ export default function AdminSettlementShare() {
       reader.onload = (e: any) => {
         const array: SettlementItem[] = [];
         const data = e.target.result;
-        const workbook = xlsx.read(data, { type: "array" });
+        const workbook = xlsx.read(data, { type: "array", cellDates: true });
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
         json = xlsx.utils.sheet_to_json(worksheet);
@@ -168,7 +165,9 @@ export default function AdminSettlementShare() {
         for (let i = 0; i < json.length; i++) {
           let element = json[i];
           let item: SettlementItem = {
-            orderDate: element.주문일?.toString(),
+            orderDate: element.주문일,
+            partnerName: "",
+            providerName: element.공급처?.toString(),
             seller: element.판매처?.toString(),
             orderNumber: element.주문번호?.toString(),
             productName: element.상품명?.toString(),
@@ -177,7 +176,6 @@ export default function AdminSettlementShare() {
             amount: element.수량,
             orderer: element.주문자?.toString(),
             receiver: element.수령자?.toString(),
-            partnerName: "",
             fee: -1,
             shippingFee: -1,
             orderTag: element.주문태그?.toString() ?? "",
@@ -203,45 +201,48 @@ export default function AdminSettlementShare() {
             setIsNoticeModalOpened(true);
             setFileName("");
             setItems([]);
-            e.target.value = '';
+            e.target.value = "";
             return false;
           }
 
           adjustSellerName(item);
 
-          let nameResult = setSettlementPartnerName(item);
-          if (!nameResult || item.partnerName.length == 0) {
+          // let nameResult = setSettlementPartnerName(item);
+          // if (!nameResult || item.partnerName.length == 0) {
+          //   setNoticeModalStr(
+          //     "유효하지 않은 엑셀 파일입니다.\n상품명에 파트너 이름이 들어있는지 확인해주세요."
+          //   );
+          //   setIsNoticeModalOpened(true);
+          //   setFileName("");
+          //   setItems([]);
+          //   e.target.value = '';
+          //   return false;
+          // }
+
+          const partnerProfile = partnerProfiles.get(item.providerName);
+          if (partnerProfile === undefined) {
             setNoticeModalStr(
-              "유효하지 않은 엑셀 파일입니다.\n상품명에 파트너 이름이 들어있는지 확인해주세요."
+              `유효하지 않은 엑셀 파일입니다. '${item.partnerName}'가 계약업체목록에 있는지 확인해주세요. (공급처명 기준) `
             );
             setIsNoticeModalOpened(true);
             setFileName("");
             setItems([]);
-            e.target.value = '';
+            e.target.value = "";
             return false;
           }
 
-          const partnerProfile = partnerProfiles.get(item.partnerName);
-          if (partnerProfile === undefined) {
-            setNoticeModalStr(
-              `유효하지 않은 엑셀 파일입니다.\n상품명의 파트너가 계약업체목록에 있는지 확인해주세요. (${item.partnerName})`
-            );
-            setIsNoticeModalOpened(true);
-            setFileName("");
-            setItems([]);
-            e.target.value = '';
-            return false;
-          }
+          item.partnerName = partnerProfile.name;
 
           setSettlementFee(item, partnerProfile);
 
           array.push(item);
         }
+        console.log(array);
         setItems(array);
       };
       reader.readAsArrayBuffer(e.target.files[0]);
       setFileName(e.target.files[0].name);
-      e.target.value = '';
+      e.target.value = "";
     }
   };
 

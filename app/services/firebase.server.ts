@@ -407,10 +407,7 @@ export async function getSettlements({
     const data = doc.data();
     if (data.orderDate) {
       const date = data.orderDate.toDate();
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, "0"); // 월은 0부터 시작하므로 +1
-      const day = String(date.getDate()).padStart(2, "0");
-      data.orderDate = `${year}-${month}-${day}`;
+      data.orderDate = date;
     }
     return data;
   });
@@ -2029,6 +2026,21 @@ export async function debug_fixPartnerProfileTaxStandard() {
     if (!data.businessTaxStandard) {
       await updateDoc(doc(firestore, "accounts", data.name), {
         businessTaxStandard: "일반",
+      }).catch((error) => {
+        return error.message;
+      });
+    }
+  });
+}
+
+export async function debug_fixPartnerProviderNameStandard() {
+  const accountsRef = collection(firestore, "accounts");
+  const querySnap = await getDocs(accountsRef);
+  querySnap.docs.forEach(async (item) => {
+    const data = item.data();
+    if (!data.providerName) {
+      await updateDoc(doc(firestore, "accounts", data.name), {
+        providerName: data.name,
       }).catch((error) => {
         return error.message;
       });

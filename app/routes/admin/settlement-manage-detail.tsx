@@ -7,10 +7,12 @@ import {
   useSubmit,
 } from "@remix-run/react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { MonthSelectPopover } from "~/components/date";
 import {
-  MonthSelectPopover,
-} from "~/components/date";
-import { adjustSellerName, PossibleSellers, SellerSelect } from "~/components/seller";
+  adjustSellerName,
+  PossibleSellers,
+  SellerSelect,
+} from "~/components/seller";
 import {
   isSettlementItemValid,
   setSettlementPartnerName,
@@ -35,7 +37,15 @@ import { PageLayout } from "~/components/page_layout";
 import { CommonButton } from "~/components/button";
 import { LoadingOverlay, Space } from "@mantine/core";
 import writeXlsxFile from "write-excel-file";
-import { dateToKoreanMonth, dateToNumeralMonth, getTimezoneDate, koreanMonthToDate, numeralMonthToKorean } from "~/utils/date";
+import {
+  dateToDayStr,
+  dateToKoreanMonth,
+  dateToNumeralMonth,
+  dayStrToDate,
+  getTimezoneDate,
+  koreanMonthToDate,
+  numeralMonthToKorean,
+} from "~/utils/date";
 
 interface EmptySettlementBoxProps extends React.HTMLProps<HTMLDivElement> {}
 
@@ -334,7 +344,10 @@ export default function AdminSettlementShare() {
     if (loaderData.error !== undefined) {
       return null;
     } else {
-      return loaderData.settlements;
+      return loaderData.settlements.map((val: any) => {
+        val.orderDate = new Date(val.orderDate);
+        return val;
+      });
     }
   }, [loaderData]);
 
@@ -430,6 +443,7 @@ export default function AdminSettlementShare() {
   }, [selectedDate]);
 
   useEffect(() => {
+    console.log(loaderData);
     if (
       loaderData.partnerName !== undefined &&
       loaderData.partnerName !== "undefined"
@@ -499,7 +513,9 @@ export default function AdminSettlementShare() {
       setOrderTagEdit(settlement.orderTag);
       setOrdererEdit(settlement.orderer);
       setReceiverEdit(settlement.receiver);
-      setOrderDateEdit(settlement.orderDate ?? "");
+      setOrderDateEdit(
+        settlement.orderDate ? dateToDayStr(settlement.orderDate) : ""
+      );
     } else {
       setSellerEdit("");
       setOrderNumberEdit("");
@@ -520,7 +536,7 @@ export default function AdminSettlementShare() {
   // 정상적일 경우 해당 SettlementItem을 return합니다.
   function checkEdit() {
     const newSettlement: SettlementItem = {
-      orderDate: orderDateEdit,
+      orderDate: dayStrToDate(orderDateEdit),
       seller: sellerEdit,
       orderNumber: orderNumberEdit,
       productName: productNameEdit,
