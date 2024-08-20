@@ -27,18 +27,6 @@ import { BasicModal, ModalButton } from "~/components/modal";
 import { PartnerProfile } from "~/components/partner_profile";
 import { BlackButton } from "~/components/button";
 
-type OrderDiscountEditItem = {
-  discountStartDate: string; //할인 시작인
-  discountEndDate: string; //할인 종료일
-  partnerName: string; //공급처 (aka 파트너명)
-  productName: string; //상품명
-  partnerDiscountRate: number; //업체부담 할인율
-  lofaDiscountRate: number; //로파부담할인율
-  platformDiscountRate: number; //플랫폼부담할인율
-  lofaAdjustmentFee: number; //로파 조정수수료율
-  platformAdjustmentFee: number; //플랫폼 조정수수료율
-};
-
 export const loader: LoaderFunction = async ({ request }) => {
   const partnersMap = await getAllPartnerProfiles();
   const partnersArr = Array.from(partnersMap.values());
@@ -166,6 +154,10 @@ export default function Page() {
             e.target.value = "";
             return false;
           }
+
+          //xlsx Date 인식 시간 오차 해결을 위한 보정
+          item.startDate = new Date(item.startDate!.getTime() + 5 * 60000);
+          item.endDate = new Date(item.endDate!.getTime() + 5 * 60000);
 
           const partnerProfile = partnerProfiles.get(item.partnerName);
 
