@@ -130,7 +130,6 @@ export default function Page() {
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
         json = xlsx.utils.sheet_to_json(worksheet);
-        console.log("json length", json.length);
 
         for (let i = 0; i < json.length; i++) {
           let element = json[i];
@@ -159,6 +158,9 @@ export default function Page() {
             e.target.value = "";
             return false;
           }
+
+          //xlsx Date 인식 시간 오차 해결을 위한 보정
+          item.orderDate = new Date(item.orderDate!.getTime() + 5 * 60000);
 
           const partnerProfile = partnerProfiles.get(item.partnerName);
 
@@ -193,7 +195,6 @@ export default function Page() {
 
           array.push(item);
         }
-        console.log(array.length);
         setItems(array);
       };
       reader.readAsArrayBuffer(e.target.files[0]);

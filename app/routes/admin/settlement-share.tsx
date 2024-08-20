@@ -205,6 +205,9 @@ export default function AdminSettlementShare() {
             return false;
           }
 
+          //xlsx Date 인식 시간 오차 해결을 위한 보정
+          item.orderDate = new Date(item.orderDate!.getTime() + 5 * 60000);
+
           adjustSellerName(item);
 
           // let nameResult = setSettlementPartnerName(item);
@@ -237,7 +240,6 @@ export default function AdminSettlementShare() {
 
           array.push(item);
         }
-        console.log(array);
         setItems(array);
       };
       reader.readAsArrayBuffer(e.target.files[0]);
