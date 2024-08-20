@@ -46,6 +46,7 @@ import {
   koreanMonthToDate,
   numeralMonthToKorean,
 } from "~/utils/date";
+import { PartnerProfile } from "~/components/partner_profile";
 
 interface EmptySettlementBoxProps extends React.HTMLProps<HTMLDivElement> {}
 
@@ -258,7 +259,7 @@ export const loader: LoaderFunction = async ({ request }) => {
   const month = url.searchParams.get("month");
   const partnerName = url.searchParams.get("partner");
   const partnersMap = await getAllPartnerProfiles();
-  const partnersArr = Array.from(partnersMap.keys());
+  const partnersArr = Array.from(partnersMap.values());
   if (month !== null && partnerName !== null) {
     const monthStr = numeralMonthToKorean(month);
     const checkPartner = await getPartnerProfile({ name: partnerName });
@@ -279,7 +280,7 @@ export const loader: LoaderFunction = async ({ request }) => {
       sums: sums,
       partnerName: partnerName,
       monthStr: monthStr,
-      partnerNamesList: partnersArr,
+      partners: partnersArr,
     });
   } else if (month !== null) {
     return json({ error: "partner null" });
@@ -313,6 +314,7 @@ export default function AdminSettlementShare() {
   const [ordererEdit, setOrdererEdit] = useState<string>("");
   const [receiverEdit, setReceiverEdit] = useState<string>("");
   const [orderDateEdit, setOrderDateEdit] = useState<string>("");
+  const [providerNameEdit, setProviderNameEdit] = useState<string>("");
 
   // 모달 열림 여부
   const [isDeleteShippingFeeModalOpened, setIsDeleteShippingFeeModalOpened] =
@@ -402,6 +404,22 @@ export default function AdminSettlementShare() {
       return getAllSellerSettlementSum(sums);
     }
   }, [sums]);
+
+  const partnerProfilesFromName = useMemo(() => {
+    let map = new Map();
+    loaderData.partners.forEach((partner: PartnerProfile) => {
+      map.set(partner.name, partner);
+    });
+    return map;
+  }, [loaderData]);
+
+  const partnerProfilesFromProviderName = useMemo(() => {
+    let map = new Map();
+    loaderData.partners.forEach((partner: PartnerProfile) => {
+      map.set(partner.providerName, partner);
+    });
+    return map;
+  }, [loaderData]);
 
   useEffect(() => {
     if (monthStr !== null) {
@@ -500,6 +518,8 @@ export default function AdminSettlementShare() {
   //수정 시작시 기본 입력값을 선택한 정산건으로 맞춥니다.
   //파라미터로 null이 들어오면 정산건을 추가하는 요청으로 해석, 수수료 제외 전부 0 또는 공백으로 맞춥니다.
   function updateEditItems(settlement: SettlementItem | null) {
+    console.log(partnerProfilesFromName.get(loaderData.partnerName));
+    console.log("settlement", settlement?.providerName);
     if (settlement !== null) {
       setSellerEdit(settlement.seller);
       setOrderNumberEdit(settlement.orderNumber);
@@ -516,6 +536,10 @@ export default function AdminSettlementShare() {
       setOrderDateEdit(
         settlement.orderDate ? dateToDayStr(settlement.orderDate) : ""
       );
+      setProviderNameEdit(
+        settlement.providerName ??
+          partnerProfilesFromName.get(loaderData.partnerName).providerName
+      );
     } else {
       setSellerEdit("");
       setOrderNumberEdit("");
@@ -528,13 +552,14 @@ export default function AdminSettlementShare() {
       setSaleEdit(0);
       setOrderTagEdit("");
       setOrderDateEdit("");
+      setProviderNameEdit(partnerName);
     }
   }
 
   //수정 입력창에 입력된 정산건 내역을 검증합니다.
   // 잘못됐을 경우 null을 return해 submit이 일어나지 않게 만듭니다.
   // 정상적일 경우 해당 SettlementItem을 return합니다.
-  function checkEdit() {
+  function edittedSettlementItem() {
     const newSettlement: SettlementItem = {
       orderDate: dayStrToDate(orderDateEdit),
       seller: sellerEdit,
@@ -550,6 +575,7 @@ export default function AdminSettlementShare() {
       partnerName: "",
       orderTag: orderTagEdit,
       sale: saleEdit,
+      providerName: providerNameEdit,
     };
 
     const checkValid = isSettlementItemValid(newSettlement);
@@ -560,23 +586,26 @@ export default function AdminSettlementShare() {
 
     adjustSellerName(newSettlement);
 
-    const nameResult = setSettlementPartnerName(newSettlement);
-    if (!nameResult || newSettlement.partnerName.length == 0) {
+    // const nameResult = setSettlementPartnerName(newSettlement);
+    // if (!nameResult || newSettlement.partnerName.length == 0) {
+    //   setEditErrorStr(
+    //     "잘못된 정산내역입니다. 상품명에 파트너 이름이 들어있는지 확인해주세요."
+    //   );
+    //   return null;
+    // }
+
+    const isProviderNameValid =
+      partnerProfilesFromProviderName.get(providerNameEdit);
+
+    if (!isProviderNameValid) {
       setEditErrorStr(
-        "잘못된 정산내역입니다. 상품명에 파트너 이름이 들어있는지 확인해주세요."
+        `잘못된 정산내역입니다.\n해당 공급처명이 계약업체목록에 있는지 확인해주세요. (${providerNameEdit})`
       );
       return null;
     }
 
-    const isPartnerValid = loaderData.partnerNamesList.includes(
-      newSettlement.partnerName
-    );
-    if (!isPartnerValid) {
-      setEditErrorStr(
-        `잘못된 정산내역입니다.\n상품명의 파트너가 계약 업체 목록에 있는지 확인해주세요. (${newSettlement.partnerName})`
-      );
-      return null;
-    }
+    newSettlement.partnerName =
+      partnerProfilesFromProviderName.get(providerNameEdit).name;
 
     return newSettlement;
   }
@@ -882,6 +911,21 @@ export default function AdminSettlementShare() {
               required
             />
           </div>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+            }}
+          >
+            <div style={{ width: "100px" }}>공급처명</div>
+            <EditInputBox
+              type="text"
+              name="providerName"
+              value={providerNameEdit}
+              onChange={(e) => setProviderNameEdit(e.target.value)}
+              required
+            />
+          </div>
           <div style={{ height: "20px" }} />
           {editErrorStr}
           {editErrorStr.length > 0 ? <div style={{ height: "20px" }} /> : <></>}
@@ -892,7 +936,7 @@ export default function AdminSettlementShare() {
             <ModalButton
               type={"submit"}
               onClick={async () => {
-                const checkResult = checkEdit();
+                const checkResult = edittedSettlementItem();
                 if (checkResult !== null) {
                   if (isEdit) {
                     submitEditSettlement(selectedItems[0], checkResult);

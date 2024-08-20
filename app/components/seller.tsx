@@ -60,6 +60,7 @@ export function SellerSelect({
         { value: "용산쇼룸", label: "용산쇼룸" },
         { value: "오늘의집", label: "오늘의집" },
         { value: "카카오", label: "카카오" },
+        { value: "예약거래", label: "예약거래" },
         { value: "etc", label: "기타" },
       ]}
       styles={{
