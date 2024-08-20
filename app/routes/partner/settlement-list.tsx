@@ -12,9 +12,7 @@ import {
   useSubmit,
 } from "@remix-run/react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import {
-  MonthSelectPopover
-} from "~/components/date";
+import { MonthSelectPopover } from "~/components/date";
 import { PossibleSellers, SellerSelect } from "~/components/seller";
 import {
   SettlementItem,
@@ -34,7 +32,12 @@ import { LoadingOverlay, Space } from "@mantine/core";
 import writeXlsxFile from "write-excel-file";
 import { useViewportSize } from "@mantine/hooks";
 import { isMobile } from "~/utils/mobile";
-import { dateToKoreanMonth, dateToNumeralMonth, getTimezoneDate, numeralMonthToKorean } from "~/utils/date";
+import {
+  dateToKoreanMonth,
+  dateToNumeralMonth,
+  getTimezoneDate,
+  numeralMonthToKorean,
+} from "~/utils/date";
 
 interface Props extends React.HTMLAttributes<HTMLDivElement> {
   styleOverrides?: React.CSSProperties;
@@ -154,10 +157,13 @@ export default function AdminSettlementShare() {
   );
 
   const settlements: SettlementItem[] | null = useMemo(() => {
-    if (loaderData == null) {
+    if (!loaderData) {
       return null;
     } else {
-      return loaderData.settlements;
+      return loaderData.settlements.map((val: any) => {
+        val.orderDate = new Date(val.orderDate);
+        return val;
+      });
     }
   }, [loaderData]);
 

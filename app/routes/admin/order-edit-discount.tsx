@@ -88,7 +88,7 @@ export default function Page() {
   const partnerProfiles = useMemo(() => {
     let map = new Map();
     loaderData.partners.forEach((partner: PartnerProfile) => {
-      map.set(partner.name, partner);
+      map.set(partner.providerName, partner);
     });
     return map;
   }, [loaderData]);

@@ -2,13 +2,14 @@ import { Checkbox } from "@mantine/core";
 import React, { useMemo } from "react";
 import { useEffect, useState } from "react";
 import { PartnerProfile } from "./partner_profile";
-import { LofaSellers, PossibleSellers } from "./seller";
+import { LofaSellers } from "./seller";
 import { useViewportSize } from "@mantine/hooks";
 import { isMobile } from "~/utils/mobile";
-import { isValidDateString } from "~/utils/date";
+import { dateToDayStr } from "~/utils/date";
 
 export type SettlementItem = {
-  orderDate?: string;
+  orderDate?: Date;
+  providerName?: string;
   seller: string;
   orderNumber: string;
   productName: string;
@@ -170,12 +171,12 @@ export function MarqueeOnHoverTextBox({
  *  유효할 경우 "ok", 아닐 경우 어디가 문제인지 나타내는 string
  */
 export function isSettlementItemValid(item: SettlementItem) {
-  if (item.orderDate == undefined || item.orderDate == "") {
+  if (!(item.orderDate instanceof Date) || isNaN(item.orderDate.getTime())) {
     return "주문일이 누락되었습니다.";
   }
 
-  if (!isValidDateString(item.orderDate)) {
-    return "주문일 형식이 올바르지 않습니다. (YYYY-MM-DD)";
+  if (item.providerName == undefined || item.providerName == "") {
+    return "공급처가 누락되었습니다.";
   }
 
   if (item.seller == undefined || item.seller == "") {
@@ -276,14 +277,17 @@ function SettlementItem({
     setIsChecked(check);
   }, [check]);
   const [isChecked, setIsChecked] = useState<boolean>(check);
-  let saleString = "";
-  if (item.sale == undefined) {
-    saleString = "0";
-  } else if (item.sale > 0 && item.sale <= 1) {
-    saleString = item.sale * 100 + "%";
-  } else {
-    saleString = item.sale + "";
-  }
+
+  const saleString = useMemo(() => {
+    if (!item.sale) {
+      return "0";
+    } else if (item.sale > 0 && item.sale <= 1) {
+      return item.sale * 100 + "%";
+    } else {
+      return item.sale + "";
+    }
+  }, [item]);
+
   return (
     <SettlementItemBox isMobile={isMobileMemo} key={`SettlementItem-${index}`}>
       <Checkbox
@@ -299,7 +303,7 @@ function SettlementItem({
         isMobile={isMobileMemo}
         styleOverrides={{ width: "90px", minWidth: "90px" }}
       >
-        {item.orderDate ?? ""}
+        {item.orderDate ? dateToDayStr(item.orderDate) : ""}
       </TextBox>
       <TextBox
         isMobile={isMobileMemo}
@@ -396,6 +400,7 @@ export function SettlementTable({
   }, [viewportSize]);
 
   useEffect(() => {
+    console.log(items);
     setAllChecked(defaultAllCheck);
   }, [items]);
 
@@ -510,5 +515,3 @@ export function SettlementTable({
 export const SettlementTableMemo = React.memo(SettlementTable, (prev, next) => {
   return prev.items == next.items && prev.itemsChecked == next.itemsChecked;
 });
-
-
