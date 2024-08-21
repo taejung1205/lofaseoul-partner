@@ -24,8 +24,8 @@ export type SettlementItem = {
   orderTag: string;
   isDiscounted: boolean;
   discountedPrice?: number; //할인판매가
-  partnerDiscountLevy?: number //업체부담할인금
-  lofaAdjustmentFee?: number //로파조정수수료
+  partnerDiscountLevy?: number; //업체부담할인금
+  lofaAdjustmentFee?: number; //로파조정수수료
 };
 
 interface Props extends React.HTMLAttributes<HTMLDivElement> {
@@ -44,7 +44,6 @@ interface MarqueeOnHoverProps extends React.HTMLAttributes<HTMLDivElement> {
 
 export function SettlementBox({ isMobile, children, ...props }: Props) {
   const boxStyles: React.CSSProperties = {
-    width: "inherit",
     height: "60%",
     minHeight: "60%",
     position: "relative",
@@ -313,7 +312,8 @@ function SettlementItem({
       <MarqueeOnHoverTextBox
         isMobile={isMobileMemo}
         containerStyleOverrides={{
-          width: isMobileMemo ? "300px" : "calc(50% - 348px)",
+          width: "320px",
+          minWidth: "320px",
         }}
         onMouseEnter={() => setIsNameHovered(true)}
         onMouseLeave={() => setIsNameHovered(false)}
@@ -324,7 +324,8 @@ function SettlementItem({
       <MarqueeOnHoverTextBox
         isMobile={isMobileMemo}
         containerStyleOverrides={{
-          width: isMobileMemo ? "300px" : "calc(50% - 438px)",
+          width: "320px",
+          minWidth: "320px",
         }}
         onMouseEnter={() => setIsOptionHovered(true)}
         onMouseLeave={() => setIsOptionHovered(false)}
@@ -336,19 +337,7 @@ function SettlementItem({
         isMobile={isMobileMemo}
         styleOverrides={{ width: "60px", minWidth: "60px" }}
       >
-        {item.price}
-      </TextBox>
-      <TextBox
-        isMobile={isMobileMemo}
-        styleOverrides={{ width: "60px", minWidth: "60px" }}
-      >
-        {item.isDiscounted ? "O" : "X"}
-      </TextBox>
-      <TextBox
-        isMobile={isMobileMemo}
-        styleOverrides={{ width: "90px", minWidth: "90px" }}
-      >
-        {item.shippingFee == 0 ? "X" : "O"}
+        {item.isDiscounted ? item.discountedPrice : item.price}
       </TextBox>
       <TextBox
         isMobile={isMobileMemo}
@@ -356,6 +345,25 @@ function SettlementItem({
       >
         {item.amount}
       </TextBox>
+      <TextBox
+        isMobile={isMobileMemo}
+        styleOverrides={{ width: "30px", minWidth: "30px" }}
+      >
+        {item.isDiscounted ? "O" : "X"}
+      </TextBox>
+      <TextBox
+        isMobile={isMobileMemo}
+        styleOverrides={{ width: "60px", minWidth: "60px" }}
+      >
+        {item.lofaAdjustmentFee ?? ""}
+      </TextBox>
+      <TextBox
+        isMobile={isMobileMemo}
+        styleOverrides={{ width: "30px", minWidth: "30px" }}
+      >
+        {item.shippingFee == 0 ? "X" : "O"}
+      </TextBox>
+
       <TextBox
         isMobile={isMobileMemo}
         styleOverrides={{ width: "60px", minWidth: "60px" }}
@@ -431,7 +439,8 @@ export function SettlementTable({
         <MarqueeOnHoverTextBox
           isMobile={isMobileMemo}
           containerStyleOverrides={{
-            width: isMobileMemo ? "300px" : "calc(50% - 348px)",
+            width: "320px",
+            minWidth: "320px",
           }}
           isHovered={false}
           onMouseEnter={() => {}}
@@ -442,7 +451,8 @@ export function SettlementTable({
         <MarqueeOnHoverTextBox
           isMobile={isMobileMemo}
           containerStyleOverrides={{
-            width: isMobileMemo ? "300px" : "calc(50% - 438px)",
+            width: "320px",
+            minWidth: "320px",
           }}
           isHovered={false}
           onMouseEnter={() => {}}
@@ -458,21 +468,33 @@ export function SettlementTable({
         </TextBox>
         <TextBox
           isMobile={isMobileMemo}
-          styleOverrides={{ width: "60px", minWidth: "60px" }}
+          styleOverrides={{ width: "30px", minWidth: "30px" }}
         >
-          할인적용
-        </TextBox>
-        <TextBox
-          isMobile={isMobileMemo}
-          styleOverrides={{ width: "90px", minWidth: "90px" }}
-        >
-          배송비 정산
+          수량
         </TextBox>
         <TextBox
           isMobile={isMobileMemo}
           styleOverrides={{ width: "30px", minWidth: "30px" }}
         >
-          수량
+          할인
+        </TextBox>
+        <TextBox
+          isMobile={isMobileMemo}
+          styleOverrides={{ width: "60px", minWidth: "60px" }}
+        >
+          조정수수료
+        </TextBox>
+        <TextBox
+          isMobile={isMobileMemo}
+          styleOverrides={{
+            width: "30px",
+            minWidth: "30px",
+            whiteSpace: "pre-line",
+            lineHeight: 1.2,
+          }}
+        >
+          {`배송비
+          정산`}
         </TextBox>
         <TextBox
           isMobile={isMobileMemo}
