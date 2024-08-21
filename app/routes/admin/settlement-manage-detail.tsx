@@ -529,7 +529,6 @@ export default function AdminSettlementShare() {
       setAmountEdit(settlement.amount);
       setFeeEdit(settlement.fee);
       setShippingFeeEdit(settlement.shippingFee);
-      setSaleEdit(settlement.sale);
       setOrderTagEdit(settlement.orderTag);
       setOrdererEdit(settlement.orderer);
       setReceiverEdit(settlement.receiver);
@@ -574,8 +573,8 @@ export default function AdminSettlementShare() {
       shippingFee: shippingFeeEdit,
       partnerName: "",
       orderTag: orderTagEdit,
-      sale: saleEdit,
       providerName: providerNameEdit,
+      isDiscounted: false
     };
 
     const checkValid = isSettlementItemValid(newSettlement);
@@ -1175,9 +1174,9 @@ const schema = [
     width: 10,
   },
   {
-    column: "세일반영",
-    type: Number,
-    value: (item: SettlementItem) => item.sale,
+    column: "할인적용",
+    type: String ,
+    value: (item: SettlementItem) => item.isDiscounted ? "O" : "X",
     width: 10,
   },
   {

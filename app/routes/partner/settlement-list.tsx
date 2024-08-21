@@ -530,9 +530,9 @@ const schema = [
     width: 10,
   },
   {
-    column: "세일반영",
+    column: "할인 적용",
     type: Number,
-    value: (item: SettlementItem) => item.sale,
+    value: (item: SettlementItem) => item.isDiscounted ? "O" : "X",
     width: 10,
   },
   {

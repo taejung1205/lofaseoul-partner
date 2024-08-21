@@ -14,7 +14,7 @@ export type SettlementItem = {
   orderNumber: string;
   productName: string;
   optionName: string;
-  price: number;
+  price: number; //정상판매가
   amount: number;
   orderer: string;
   receiver: string;
@@ -22,7 +22,10 @@ export type SettlementItem = {
   fee: number;
   shippingFee: number;
   orderTag: string;
-  sale: number;
+  isDiscounted: boolean;
+  discountedPrice?: number; //할인판매가
+  partnerDiscountLevy?: number //업체부담할인금
+  lofaAdjustmentFee?: number //로파조정수수료
 };
 
 interface Props extends React.HTMLAttributes<HTMLDivElement> {
@@ -278,16 +281,6 @@ function SettlementItem({
   }, [check]);
   const [isChecked, setIsChecked] = useState<boolean>(check);
 
-  const saleString = useMemo(() => {
-    if (!item.sale) {
-      return "0";
-    } else if (item.sale > 0 && item.sale <= 1) {
-      return item.sale * 100 + "%";
-    } else {
-      return item.sale + "";
-    }
-  }, [item]);
-
   return (
     <SettlementItemBox isMobile={isMobileMemo} key={`SettlementItem-${index}`}>
       <Checkbox
@@ -349,7 +342,7 @@ function SettlementItem({
         isMobile={isMobileMemo}
         styleOverrides={{ width: "60px", minWidth: "60px" }}
       >
-        {saleString}
+        {item.isDiscounted ? "O" : "X"}
       </TextBox>
       <TextBox
         isMobile={isMobileMemo}
@@ -467,7 +460,7 @@ export function SettlementTable({
           isMobile={isMobileMemo}
           styleOverrides={{ width: "60px", minWidth: "60px" }}
         >
-          세일적용
+          할인적용
         </TextBox>
         <TextBox
           isMobile={isMobileMemo}
