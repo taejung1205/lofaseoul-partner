@@ -69,7 +69,7 @@ interface PartnerNameInputBoxProps
 
 const PartnerNameInputBox: React.FC<PartnerNameInputBoxProps> = (props) => {
   const styles: React.CSSProperties = {
-    width: "140px",
+    width: "200px",
     height: "40px",
     border: "3px solid black",
     padding: "6px",
@@ -529,7 +529,6 @@ export default function AdminSettlementShare() {
       setAmountEdit(settlement.amount);
       setFeeEdit(settlement.fee);
       setShippingFeeEdit(settlement.shippingFee);
-      setSaleEdit(settlement.sale);
       setOrderTagEdit(settlement.orderTag);
       setOrdererEdit(settlement.orderer);
       setReceiverEdit(settlement.receiver);
@@ -574,8 +573,8 @@ export default function AdminSettlementShare() {
       shippingFee: shippingFeeEdit,
       partnerName: "",
       orderTag: orderTagEdit,
-      sale: saleEdit,
       providerName: providerNameEdit,
+      isDiscounted: false,
     };
 
     const checkValid = isSettlementItemValid(newSettlement);
@@ -1150,7 +1149,7 @@ const schema = [
     column: "판매단가",
     type: Number,
     value: (item: SettlementItem) => {
-      return Number(item.price);
+      return Number(item.isDiscounted ? item.discountedPrice : item.price);
     },
     width: 15,
   },
@@ -1160,6 +1159,18 @@ const schema = [
     value: (item: SettlementItem) => {
       return Number(item.amount);
     },
+    width: 10,
+  },
+  {
+    column: "할인적용",
+    type: String,
+    value: (item: SettlementItem) => (item.isDiscounted ? "O" : "X"),
+    width: 10,
+  },
+  {
+    column: "조정수수료",
+    type: Number,
+    value: (item: SettlementItem) => Number(item.lofaAdjustmentFee ?? "0"),
     width: 10,
   },
   {
@@ -1174,12 +1185,7 @@ const schema = [
     value: (item: SettlementItem) => item.receiver,
     width: 10,
   },
-  {
-    column: "세일반영",
-    type: Number,
-    value: (item: SettlementItem) => item.sale,
-    width: 10,
-  },
+
   {
     column: "주문태그",
     type: String,

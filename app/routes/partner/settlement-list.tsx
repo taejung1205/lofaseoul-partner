@@ -505,7 +505,7 @@ const schema = [
     column: "판매단가",
     type: Number,
     value: (item: SettlementItem) => {
-      return Number(item.price);
+      return Number(item.isDiscounted ? item.discountedPrice : item.price);
     },
     width: 15,
   },
@@ -515,6 +515,18 @@ const schema = [
     value: (item: SettlementItem) => {
       return Number(item.amount);
     },
+    width: 10,
+  },
+  {
+    column: "할인적용",
+    type: String,
+    value: (item: SettlementItem) => (item.isDiscounted ? "O" : "X"),
+    width: 10,
+  },
+  {
+    column: "조정수수료",
+    type: Number,
+    value: (item: SettlementItem) => Number(item.lofaAdjustmentFee ?? "0"),
     width: 10,
   },
   {
@@ -529,12 +541,7 @@ const schema = [
     value: (item: SettlementItem) => item.receiver,
     width: 10,
   },
-  {
-    column: "세일반영",
-    type: Number,
-    value: (item: SettlementItem) => item.sale,
-    width: 10,
-  },
+
   {
     column: "주문태그",
     type: String,

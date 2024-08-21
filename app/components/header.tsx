@@ -41,7 +41,6 @@ export function MobileHeaderBox({
     justifyContent: "space-between",
     fontSize: "16px",
     fontWeight: 700,
-    lineHeight: "50px",
   };
 
   return (
@@ -104,6 +103,7 @@ export function MobileAdminHeader({
         <div
           style={{
             display: "flex",
+            alignItems: "center",
           }}
         >
           <div
@@ -111,6 +111,7 @@ export function MobileAdminHeader({
               color: "#00000080",
               fontSize: "15px",
               cursor: "pointer",
+              lineHeight: "40px",
             }}
             onClick={onLogoutClick}
           >
@@ -183,12 +184,13 @@ export function MobilePartnerHeader({
             style={{ cursor: "pointer" }}
           />
         </div>
-        <div style={{ display: "flex" }}>
+        <div style={{ display: "flex", alignItems: "center" }}>
           <div
             style={{
               color: "#00000080",
               fontSize: "15px",
               cursor: "pointer",
+              display: "flex",
             }}
             onClick={onLogoutClick}
           >
