@@ -355,7 +355,7 @@ function SettlementItem({
         isMobile={isMobileMemo}
         styleOverrides={{ width: "60px", minWidth: "60px" }}
       >
-        {item.lofaAdjustmentFee ?? ""}
+        {item.isDiscounted ? item.lofaAdjustmentFee : ""}
       </TextBox>
       <TextBox
         isMobile={isMobileMemo}
