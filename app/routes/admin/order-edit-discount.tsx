@@ -112,7 +112,6 @@ export default function Page() {
   async function submitAddDiscountData(dataList: DiscountData[]) {
     console.log("submit add discount data, length:", dataList.length);
     const data = JSON.stringify(dataList);
-    console.log(data, "data");
     const formData = new FormData(formRef.current ?? undefined);
     formData.set("data", data);
     formData.set("action", "upload");
@@ -139,11 +138,11 @@ export default function Page() {
             endDate: element.할인종료일,
             partnerName: element.공급처?.toString(),
             productName: element.상품명?.toString(),
-            partnerDiscountLevy: Number(element.업체부담할인율) ?? 0,
-            lofaDiscountLevy: Number(element.로파부담할인율) ?? 0,
-            platformDiscountLevy: Number(element.플랫폼부담할인율) ?? 0,
-            lofaAdjustmentFee: Number(element.로파조정수수료율) ?? 0,
-            platformAdjustmentFee: Number(element.플랫폼조정수수료율) ?? 0,
+            partnerDiscountLevyRate: Number(element.업체부담할인율) ?? 0,
+            lofaDiscountLevyRate: Number(element.로파부담할인율) ?? 0,
+            platformDiscountLevyRate: Number(element.플랫폼부담할인율) ?? 0,
+            lofaAdjustmentFeeRate: Number(element.로파조정수수료율) ?? 0,
+            platformAdjustmentFeeRate: Number(element.플랫폼조정수수료율) ?? 0,
           };
           const result = checkDiscountData(item);
           if (!result.isValid) {

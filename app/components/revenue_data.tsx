@@ -16,6 +16,11 @@ export type RevenueData = {
   orderStatus: string; //주문상태
   cs: string; // C/S
   isDiscounted: boolean;
+  lofaDiscountLevyRate?: number;
+  partnerDiscountLevyRate?: number;
+  platformDiscountLevyRate?: number;
+  lofaAdjustmentFeeRate?: number;
+  platformAdjustmentFeeRate?: number; 
 };
 
 export const PossibleOrderStatus = ["발주", "접수", "송장", "배송"];

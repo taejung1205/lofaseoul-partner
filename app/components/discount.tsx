@@ -10,11 +10,11 @@ export type DiscountData = {
   endDate: Date; //할인 종료일
   partnerName: string; //공급처 (파트너명)
   productName: string; //상품명
-  partnerDiscountLevy: number; //업체부담할인율
-  lofaDiscountLevy: number; //로파부담할인율
-  platformDiscountLevy: number; //플랫폼부담할인율
-  lofaAdjustmentFee: number; //로파조정수수료율
-  platformAdjustmentFee: number; //플랫폼조정수수료율
+  partnerDiscountLevyRate: number; //업체부담할인율
+  lofaDiscountLevyRate: number; //로파부담할인율
+  platformDiscountLevyRate: number; //플랫폼부담할인율
+  lofaAdjustmentFeeRate: number; //로파조정수수료율
+  platformAdjustmentFeeRate: number; //플랫폼조정수수료율
 };
 
 interface Props extends React.HTMLAttributes<HTMLDivElement> {
@@ -201,19 +201,19 @@ function DiscountDataItem({
         {item.productName}
       </TextBox>
       <TextBox styleOverrides={{ minWidth: "120px", width: "120px" }}>
-        {item.partnerDiscountLevy}
+        {item.partnerDiscountLevyRate}
       </TextBox>
       <TextBox styleOverrides={{ minWidth: "120px", width: "120px" }}>
-        {item.lofaDiscountLevy}
+        {item.lofaDiscountLevyRate}
       </TextBox>
       <TextBox styleOverrides={{ minWidth: "120px", width: "120px" }}>
-        {item.platformDiscountLevy}
+        {item.platformDiscountLevyRate}
       </TextBox>
       <TextBox styleOverrides={{ minWidth: "120px", width: "120px" }}>
-        {item.lofaAdjustmentFee}
+        {item.lofaAdjustmentFeeRate}
       </TextBox>
       <TextBox styleOverrides={{ minWidth: "120px", width: "120px" }}>
-        {item.platformAdjustmentFee}
+        {item.platformAdjustmentFeeRate}
       </TextBox>
     </ItemBox>
   );
