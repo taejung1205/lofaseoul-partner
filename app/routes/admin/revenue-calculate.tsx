@@ -31,8 +31,8 @@ export const loader: LoaderFunction = async ({ request }) => {
       });
     }
 
-    const startDate = new Date(`${startDateStr}T00:00:00Z`);
-    const endDate = new Date(`${endDateStr}T23:59:59Z`);
+    const startDate = new Date(`${startDateStr}T00:00:00.000+09:00`);
+    const endDate = new Date(`${endDateStr}T23:59:59.000+09:00`);
 
     if (startDate > endDate) {
       return json({

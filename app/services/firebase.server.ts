@@ -2365,8 +2365,8 @@ export async function getDiscountData({
   let discountDataQuery = query(
     discountDataRef,
     and(
-      where("startDate", ">=", Timestamp.fromDate(startDate)),
-      where("endDate", "<=", Timestamp.fromDate(endDate))
+      where("startDate", "<=", Timestamp.fromDate(endDate)),
+      where("endDate", ">=", Timestamp.fromDate(startDate))
     )
   );
 
