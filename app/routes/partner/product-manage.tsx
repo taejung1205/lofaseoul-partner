@@ -325,7 +325,10 @@ export const action: ActionFunction = async ({ request }) => {
       if (actionType == "update" || actionType == "tempsave-update") {
         const prevProductName = body.get("prevProductName")?.toString();
         if (prevProductName !== undefined || prevProductName == "") {
-          const result = await deleteProduct({ productName: prevProductName, isDeletingStorage: false });
+          const result = await deleteProduct({
+            productName: prevProductName,
+            isDeletingStorage: false,
+          });
           if (result !== null) {
             return json({
               message: `상품 수정 중 삭제 과정에서 문제가 발생했습니다.${"\n"}${result}`,
@@ -714,6 +717,7 @@ export default function PartnerProductManage() {
     setId(newId);
     console.log("Product ID: ", newId);
     setIsAddProductMenuOpened(true);
+    setIsLoadedProduct(false);
   }
 
   async function submitProductData(isTempSave = false) {
@@ -1162,7 +1166,10 @@ export default function PartnerProductManage() {
             <div style={{ display: "flex" }}>
               <img
                 src="/images/icon_back.png"
-                onClick={() => setIsAddProductMenuOpened(false)}
+                onClick={() => {
+                  setIsAddProductMenuOpened(false);
+                  setIsLoadedProduct(false);
+                }}
                 style={{
                   cursor: "pointer",
                   width: "40px",
