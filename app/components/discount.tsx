@@ -115,7 +115,7 @@ export function checkDiscountData(item: DiscountData) {
   if (!(item.startDate instanceof Date) || isNaN(item.startDate.getTime())) {
     return {
       isValid: false,
-      message: `주문일이 유효하지 않은 항목이 존재합니다. (${item.startDate}) `,
+      message: `시작일이 유효하지 않은 항목이 존재합니다. (${item.startDate}) `,
     };
   }
 
@@ -123,7 +123,15 @@ export function checkDiscountData(item: DiscountData) {
   if (!(item.endDate instanceof Date) || isNaN(item.endDate.getTime())) {
     return {
       isValid: false,
-      message: `주문일이 유효하지 않은 항목이 존재합니다. (${item.endDate}) `,
+      message: `종료일이 유효하지 않은 항목이 존재합니다. (${item.endDate}) `,
+    };
+  }
+
+  // 시작일은 종료일보다 앞이여야 함
+  if (item.startDate > item.endDate) {
+    return {
+      isValid: false,
+      message: `시작일이 종료일보다 앞이여야 합니다.`,
     };
   }
 

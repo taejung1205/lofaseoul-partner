@@ -1,4 +1,4 @@
-import { LoadingOverlay } from "@mantine/core";
+import { LoadingOverlay, Space } from "@mantine/core";
 import { ActionFunction, json, LoaderFunction } from "@remix-run/node";
 import {
   useActionData,
@@ -370,6 +370,8 @@ export default function AdminSettlementShare() {
         ) : (
           <></>
         )}
+        <Space h={20} />
+        <div>{`* 할인은 '주문서 수정 > 할인내역 추가'에서 등록한 할인내역을 바탕으로 정산내역 공유 후 적용됩니다.`}</div>
       </PageLayout>
     </>
   );

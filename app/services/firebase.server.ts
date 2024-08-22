@@ -49,6 +49,7 @@ import {
 } from "~/components/revenue_data";
 import { PartnerRevenueStat } from "~/components/revenue_stat";
 import { LofaSellers } from "~/components/seller";
+import { DiscountData } from "~/components/discount";
 
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
@@ -1943,8 +1944,6 @@ export async function sendSettlementNoticeEmail({
   };
 }
 
-
-
 /**
  * 수익통계자료를 업로드합니다.
  * @param settlements: JSON string of settlement items list
@@ -2291,6 +2290,29 @@ export async function getRevenueStats({
 export async function addDiscountData({ data }: { data: string }) {
   try {
     const time = new Date().getTime();
+
+    //이미 올라와있는 할인내역과 겹치는게 없는지 먼저 확인
+    const discountData: DiscountData[] = JSON.parse(data);
+
+    for (let i = 0; i < discountData.length; i++) {
+      const item = discountData[i];
+      const startDate = new Date(`${item.startDate}`);
+      const endDate = new Date(`${item.endDate}`);
+      const discountDataRef = collection(firestore, `discount-db`);
+      let discountDataQuery = query(
+        discountDataRef,
+        where("productName", "==", item.productName),
+        where("endDate", ">=", Timestamp.fromDate(startDate)),
+        where("startDate", "<=", Timestamp.fromDate(endDate))
+      );
+      const querySnapshot = await getDocs(discountDataQuery);
+      if (!querySnapshot.empty) {
+        return `중복된 할인내역이 있습니다. (${dateToDayStr(
+          startDate
+        )}~${dateToDayStr(endDate)} ${item.productName})`;
+      }
+    }
+
     await setDoc(doc(firestore, `discount-data-add/data`), {
       json: data,
       updateTime: time,
@@ -2301,7 +2323,7 @@ export async function addDiscountData({ data }: { data: string }) {
       text: `[로파파트너] ${error.message ?? error}`,
       receiver: "01023540973",
     });
-    return error.message ?? error;
+    return (error.message as string) ?? (error as string);
   }
 }
 
@@ -2343,8 +2365,8 @@ export async function getDiscountData({
   let discountDataQuery = query(
     discountDataRef,
     and(
-      where("startDate", ">=", Timestamp.fromDate(startDate)),
-      where("endDate", "<=", Timestamp.fromDate(endDate))
+      where("startDate", "<=", Timestamp.fromDate(endDate)),
+      where("endDate", ">=", Timestamp.fromDate(startDate))
     )
   );
 

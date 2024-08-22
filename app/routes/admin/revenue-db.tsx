@@ -55,8 +55,15 @@ export const loader: LoaderFunction = async ({ request }) => {
     const cs = url.searchParams.get("cs");
     const filterDiscount = url.searchParams.get("filter-discount");
 
-    const startDate = new Date(`${startDateStr}T00:00:00Z`);
-    const endDate = new Date(`${endDateStr}T23:59:59Z`);
+    const startDate = new Date(`${startDateStr}T00:00:00.000+09:00`);
+    const endDate = new Date(`${endDateStr}T23:59:59.000+09:00`);
+
+    if (startDate > endDate) {
+      return json({
+        status: "error",
+        message: `시작일은 종료일보다 앞이여야 합니다.`,
+      });
+    }
 
     const searchResult = await getRevenueData({
       startDate: startDate,
@@ -208,8 +215,6 @@ export default function Page() {
   //사용자에게 보이는 값은 여기서 +1
   const [pageIndex, setPageIndex] = useState<number>(0);
 
-
-
   //볼 항목 선택
   //TODO
 
@@ -276,10 +281,15 @@ export default function Page() {
 
   useEffect(() => {
     resetCheck(pageIndex);
-  }, [pageIndex])
+  }, [pageIndex]);
 
-  function resetCheck(pageIndex: number){
-    const newArr = Array(Math.min(revenueDataItems.slice(pageIndex * 100, (pageIndex + 1) * 100).length, 100)).fill(false);
+  function resetCheck(pageIndex: number) {
+    const newArr = Array(
+      Math.min(
+        revenueDataItems.slice(pageIndex * 100, (pageIndex + 1) * 100).length,
+        100
+      )
+    ).fill(false);
     setItemsChecked(newArr);
   }
 
@@ -289,7 +299,7 @@ export default function Page() {
 
   function onCheckAll(isChecked: boolean) {
     setIsLoading(true);
-    for(let i = 0; i < itemsChecked.length; i++){
+    for (let i = 0; i < itemsChecked.length; i++) {
       itemsChecked[i] = isChecked;
     }
     setIsLoading(false);
@@ -562,17 +572,16 @@ export default function Page() {
       )}
       {revenueDataItems ? (
         <PageIndex
-        pageCount={Math.ceil(revenueDataItems.length / 100)}
-        currentIndex={pageIndex}
-        onIndexClick={(index: number) => {
-          setPageIndex(index);
-          resetCheck(index);
-        }}
-      />
+          pageCount={Math.ceil(revenueDataItems.length / 100)}
+          currentIndex={pageIndex}
+          onIndexClick={(index: number) => {
+            setPageIndex(index);
+            resetCheck(index);
+          }}
+        />
       ) : (
         <></>
       )}
-
 
       <Space h={20} />
       <BlackButton onClick={() => setIsDeleteModalOpened(true)}>

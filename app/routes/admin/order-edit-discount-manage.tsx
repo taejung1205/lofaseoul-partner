@@ -53,8 +53,15 @@ export const loader: LoaderFunction = async ({ request }) => {
     const partnerName = url.searchParams.get("partner-name");
     const productName = url.searchParams.get("product-name");
 
-    const startDate = new Date(`${startDateStr}T00:00:00Z`);
-    const endDate = new Date(`${endDateStr}T23:59:59Z`);
+    const startDate = new Date(`${startDateStr}T00:00:00.000+09:00`);
+    const endDate = new Date(`${endDateStr}T23:59:59.000+09:00`);
+
+    if (startDate > endDate) {
+      return json({
+        status: "error",
+        message: `시작일은 종료일보다 앞이여야 합니다.`,
+      });
+    }
 
     const searchResult = await getDiscountData({
       startDate: startDate,
@@ -62,6 +69,7 @@ export const loader: LoaderFunction = async ({ request }) => {
       partnerName: partnerName ?? "",
       productName: productName ?? "",
     });
+
     return json({
       status: "ok",
       data: searchResult,
