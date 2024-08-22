@@ -526,7 +526,8 @@ const schema = [
   {
     column: "조정수수료",
     type: Number,
-    value: (item: SettlementItem) => Number(item.lofaAdjustmentFee ?? "0"),
+    value: (item: SettlementItem) =>
+      Number(item.isDiscounted ? item.lofaAdjustmentFee : "0"),
     width: 10,
   },
   {
