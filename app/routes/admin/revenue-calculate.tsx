@@ -34,6 +34,13 @@ export const loader: LoaderFunction = async ({ request }) => {
     const startDate = new Date(`${startDateStr}T00:00:00Z`);
     const endDate = new Date(`${endDateStr}T23:59:59Z`);
 
+    if (startDate > endDate) {
+      return json({
+        status: "error",
+        message: `시작일은 종료일보다 앞이여야 합니다.`,
+      });
+    }
+
     const searchResult = await getRevenueStats({
       startDate: startDate,
       endDate: endDate,

@@ -48,7 +48,10 @@ export const action: ActionFunction = async ({ request }) => {
           message: `할인내역 자료가 등록되었습니다. 잠시 후 DB에 반영될 예정입니다.`,
         });
       } else {
-        console.log("error", result);
+        return json({
+          status: "error",
+          message: result,
+        });
       }
     }
   }
