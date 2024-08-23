@@ -13,6 +13,7 @@ import { getRevenueStats } from "~/services/firebase.server";
 import { dateToDayStr, dayStrToDate, getTimezoneDate } from "~/utils/date";
 import writeXlsxFile from "write-excel-file";
 import dayPickerStyles from "react-day-picker/dist/style.css";
+import { BasicModal, ModalButton } from "~/components/modal";
 
 export function links() {
   return [{ rel: "stylesheet", href: dayPickerStyles }];
@@ -46,6 +47,13 @@ export const loader: LoaderFunction = async ({ request }) => {
       endDate: endDate,
     });
 
+    if (typeof searchResult == "string") {
+      return json({
+        status: "error",
+        message: searchResult,
+      });
+    }
+
     return json({
       status: "ok",
       data: searchResult,
@@ -68,6 +76,11 @@ export default function Page() {
   //검색조건
   const [startDate, setStartDate] = useState<Date>();
   const [endDate, setEndDate] = useState<Date>();
+
+  //모달
+  const [noticeModalStr, setNoticeModalStr] = useState<string>("");
+  const [isNoticeModalOpened, setIsNoticeModalOpened] =
+    useState<boolean>(false);
 
   //loaderData에서 불러온 검색한 값들
   const searchedStartDate = useMemo(() => {
@@ -109,6 +122,14 @@ export default function Page() {
     }
   }, []);
 
+  //안내메세지
+  useEffect(() => {
+    if (loaderData.message.length > 0) {
+      setNoticeModalStr(loaderData.message);
+      setIsNoticeModalOpened(true);
+    }
+  }, [loaderData]);
+
   async function writeExcel(items: PartnerRevenueStat[]) {
     await writeXlsxFile(items, {
       schema,
@@ -130,6 +151,27 @@ export default function Page() {
         }
         overlayBlur={2}
       />
+      {/* 안내메세지모달 */}
+      <BasicModal
+        opened={isNoticeModalOpened}
+        onClose={() => setIsNoticeModalOpened(false)}
+      >
+        <div
+          style={{
+            justifyContent: "center",
+            textAlign: "center",
+            fontWeight: "700",
+          }}
+        >
+          {noticeModalStr}
+          <div style={{ height: "20px" }} />
+          <div style={{ display: "flex", justifyContent: "center" }}>
+            <ModalButton onClick={() => setIsNoticeModalOpened(false)}>
+              확인
+            </ModalButton>
+          </div>
+        </div>
+      </BasicModal>
       <div style={{ display: "flex", alignItems: "center" }}>
         <img src="/images/icon_calendar.svg" />
         <Space w={10} />

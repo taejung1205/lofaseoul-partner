@@ -140,17 +140,23 @@ export async function editSellerProfile(name: string, fee: number) {
 }
 /**
  * 파트너의 정보들을 불러옵니다
- * @param param0
+ * useProviderName = true일 경우, key값으로 공급처명을 사용합니다.
+ * @param useProviderName: boolean
  * @returns
  *  Map(key: (partner name), value: PartnerProfile)
  */
-export async function getAllPartnerProfiles() {
+export async function getAllPartnerProfiles(useProviderName = false) {
   const accountsRef = collection(firestore, "accounts");
   const partnerQuery = query(accountsRef, where("isAdmin", "==", false));
   const querySnap = await getDocs(partnerQuery);
   const map = new Map<string, any>();
   querySnap.docs.forEach((doc) => {
-    map.set(doc.id, doc.data());
+    const data = doc.data();
+    if (useProviderName) {
+      map.set(data.providerName, data);
+    } else {
+      map.set(data.providerName, data);
+    }
   });
   return map;
 }
@@ -2167,7 +2173,7 @@ export async function getRevenueStats({
   endDate: Date;
 }) {
   const sellerProfiles = await getAllSellerProfiles();
-  const partnerProfiles = await getAllPartnerProfiles();
+  const partnerProfiles = await getAllPartnerProfiles(true);
   const revenueDataRef = collection(firestore, `revenue-db`);
   let revenueDataQuery = query(
     revenueDataRef,
@@ -2178,60 +2184,125 @@ export async function getRevenueStats({
   const querySnap = await getDocs(revenueDataQuery);
   const searchResult = new Map<string, PartnerRevenueStat>();
 
-  querySnap.docs.forEach((doc) => {
-    const data = doc.data() as RevenueData;
-    const isLofa = LofaSellers.includes(data.seller);
-    const isCsOK = data.cs == "정상";
-    const partnerProfile: PartnerProfile = partnerProfiles.get(
-      data.partnerName
-    );
-    const commonFeeRate = isLofa
-      ? partnerProfile.lofaFee
-      : partnerProfile.otherFee; //정상수수료율
-    const platformFeeRate =
-      sellerProfiles.get(data.seller) != undefined
-        ? sellerProfiles.get(data.seller).fee
-        : 0;
+  try {
+    querySnap.docs.forEach((doc) => {
+      const data = doc.data() as RevenueData;
+      const isLofa = LofaSellers.includes(data.seller);
+      const isCsOK = data.cs == "정상";
+      const partnerProfile: PartnerProfile = partnerProfiles.get(
+        data.partnerName
+      );
+      const commonFeeRate = isLofa
+        ? partnerProfile.lofaFee
+        : partnerProfile.otherFee; //정상수수료율
+      const platformFeeRate =
+        sellerProfiles.get(data.seller) != undefined
+          ? sellerProfiles.get(data.seller).fee
+          : 0;
 
-    if (!searchResult.has(data.partnerName)) {
-      let partnerStat: PartnerRevenueStat = {
-        startDateStr: dateToDayStr(startDate, false),
-        endDateStr: dateToDayStr(endDate, false),
-        partnerName: data.partnerName,
-        lofaSalesAmount: 0,
-        otherSalesAmount: 0,
-        totalSalesAmount: 0,
-        partnerSettlement: 0,
-        platformFee: 0,
-        lofaDiscountLevy: 0,
-        proceeds: 0,
-        netProfitAfterTax: 0,
-        returnRate: 0,
-        productCategory: [], //TODO: add product category
-      };
+      if (!searchResult.has(data.partnerName)) {
+        let partnerStat: PartnerRevenueStat = {
+          startDateStr: dateToDayStr(startDate, false),
+          endDateStr: dateToDayStr(endDate, false),
+          partnerName: data.partnerName,
+          lofaSalesAmount: 0,
+          otherSalesAmount: 0,
+          totalSalesAmount: 0,
+          partnerSettlement: 0,
+          platformFee: 0,
+          lofaDiscountLevy: 0,
+          proceeds: 0,
+          netProfitAfterTax: 0,
+          returnRate: 0,
+          productCategory: [], //TODO: add product category
+        };
 
-      searchResult.set(data.partnerName, partnerStat);
-    }
+        searchResult.set(data.partnerName, partnerStat);
+      }
 
-    let lofaSalesAmount;
-    let otherSalesAmount;
-    let totalSalesAmount;
-    let partnerSettlement;
-    let platformFee;
-    let lofaDiscountLevy;
-    let proceeds;
-    let netProfitAfterTax;
+      let lofaSalesAmount;
+      let otherSalesAmount;
+      let totalSalesAmount;
+      let partnerSettlement;
+      let platformFee;
+      let lofaDiscountLevy;
+      let proceeds;
+      let netProfitAfterTax;
 
-    if (!data.isDiscounted) {
-      lofaSalesAmount = isCsOK && isLofa ? data.price * data.amount : 0;
-      otherSalesAmount = isCsOK && !isLofa ? data.price * data.amount : 0;
-      totalSalesAmount = lofaSalesAmount + otherSalesAmount;
-      partnerSettlement = (totalSalesAmount * (100 - commonFeeRate)) / 100;
-      const platformSettlement = isLofa
-        ? totalSalesAmount
-        : (totalSalesAmount * (100 - platformFeeRate)) / 100; //플랫폼정산금
-      platformFee = totalSalesAmount - platformSettlement;
-      lofaDiscountLevy = 0;
+      let platformSettlement;
+
+      if (!data.isDiscounted) {
+        lofaSalesAmount = isCsOK && isLofa ? data.price * data.amount : 0;
+        otherSalesAmount = isCsOK && !isLofa ? data.price * data.amount : 0;
+        totalSalesAmount = lofaSalesAmount + otherSalesAmount;
+        partnerSettlement = (totalSalesAmount * (100 - commonFeeRate)) / 100;
+        platformSettlement = isLofa
+          ? totalSalesAmount
+          : (totalSalesAmount * (100 - platformFeeRate)) / 100; //플랫폼정산금
+        platformFee = totalSalesAmount - platformSettlement;
+        lofaDiscountLevy = 0;
+        if (!isCsOK) {
+          netProfitAfterTax = 0;
+        }
+      } else {
+        //TODO
+        if (
+          data.lofaDiscountLevyRate == undefined ||
+          data.partnerDiscountLevyRate == undefined ||
+          data.platformDiscountLevyRate == undefined ||
+          data.lofaAdjustmentFeeRate == undefined ||
+          data.platformAdjustmentFeeRate == undefined
+        ) {
+          throw Error(
+            `해당 상품의 할인내역을 불러오는 과정에서 문제가 발생했습니다. (${data.productName})`
+          );
+        }
+        const totalDiscountRate =
+          data.lofaDiscountLevyRate +
+          data.partnerDiscountLevyRate +
+          data.platformDiscountLevyRate;
+        lofaSalesAmount =
+          isCsOK && isLofa
+            ? ((data.price * (100 - totalDiscountRate)) / 100.0) * data.amount
+            : 0;
+        otherSalesAmount =
+          isCsOK && !isLofa
+            ? ((data.price * (100 - totalDiscountRate)) / 100.0) * data.amount
+            : 0;
+        totalSalesAmount = lofaSalesAmount + otherSalesAmount;
+        const normalPriceTotalSalesAmount = data.price * data.amount;
+        partnerSettlement =
+          (normalPriceTotalSalesAmount *
+            (100 -
+              commonFeeRate -
+              data.partnerDiscountLevyRate +
+              data.lofaAdjustmentFeeRate)) /
+          100;
+        const platformSettlementStandard: "정상판매가" | "할인판매가" =
+          data.seller == "29cm" || data.seller == "오늘의집"
+            ? "정상판매가"
+            : "할인판매가";
+        platformSettlement = isLofa
+          ? totalSalesAmount
+          : platformSettlementStandard == "정상판매가"
+          ? (normalPriceTotalSalesAmount *
+              (100 -
+                platformFeeRate -
+                data.lofaDiscountLevyRate -
+                data.partnerDiscountLevyRate +
+                data.platformAdjustmentFeeRate)) /
+            100
+          : ((normalPriceTotalSalesAmount *
+              (100 -
+                data.lofaDiscountLevyRate -
+                data.partnerDiscountLevyRate)) /
+              100) *
+            (100 - platformFeeRate + data.platformAdjustmentFeeRate) / 100; //플랫폼정산금
+        platformFee = totalSalesAmount - platformSettlement;
+        lofaDiscountLevy =
+          (normalPriceTotalSalesAmount * data.lofaDiscountLevyRate) / 100;
+      }
+
       proceeds = totalSalesAmount - partnerSettlement - platformFee;
       switch (partnerProfile.businessTaxStandard) {
         case "일반":
@@ -2246,31 +2317,20 @@ export async function getRevenueStats({
           netProfitAfterTax = proceeds;
           break;
       }
-      if (!isCsOK) {
-        netProfitAfterTax = 0;
-      }
-    } else {
-      //TODO
-      lofaSalesAmount = 0;
-      otherSalesAmount = 0;
-      totalSalesAmount = 0;
-      partnerSettlement = 0;
-      platformFee = 0;
-      lofaDiscountLevy = 0;
-      proceeds = 0;
-      netProfitAfterTax = 0;
-    }
 
-    const stat = searchResult.get(data.partnerName) as PartnerRevenueStat;
-    stat.lofaSalesAmount += lofaSalesAmount;
-    stat.otherSalesAmount += otherSalesAmount;
-    stat.totalSalesAmount += totalSalesAmount;
-    stat.partnerSettlement += partnerSettlement;
-    stat.platformFee += platformFee;
-    stat.lofaDiscountLevy += lofaDiscountLevy;
-    stat.proceeds += proceeds;
-    stat.netProfitAfterTax += netProfitAfterTax;
-  });
+      const stat = searchResult.get(data.partnerName) as PartnerRevenueStat;
+      stat.lofaSalesAmount += lofaSalesAmount;
+      stat.otherSalesAmount += otherSalesAmount;
+      stat.totalSalesAmount += totalSalesAmount;
+      stat.partnerSettlement += partnerSettlement;
+      stat.platformFee += platformFee;
+      stat.lofaDiscountLevy += lofaDiscountLevy;
+      stat.proceeds += proceeds;
+      stat.netProfitAfterTax += netProfitAfterTax;
+    });
+  } catch (error: any) {
+    return error.message as string;
+  }
 
   searchResult.forEach((stat: PartnerRevenueStat) => {
     if (stat.totalSalesAmount != 0) {

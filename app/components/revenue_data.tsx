@@ -1,7 +1,10 @@
 import { Checkbox } from "@mantine/core";
-import React from "react";
+import React, { useMemo } from "react";
 import { useEffect, useState } from "react";
 import { dateToDayStr } from "~/utils/date";
+import { PartnerProfile } from "./partner_profile";
+import { LofaSellers } from "./seller";
+import { SellerProfile } from "~/routes/admin/seller-manage";
 
 //통계용 파일 업로드에서 올릴 때 사용하는 양식입니다.
 //한 데이터는 한 거래를 나타냅니다.
@@ -16,6 +19,11 @@ export type RevenueData = {
   orderStatus: string; //주문상태
   cs: string; // C/S
   isDiscounted: boolean;
+  lofaDiscountLevyRate?: number;
+  partnerDiscountLevyRate?: number;
+  platformDiscountLevyRate?: number;
+  lofaAdjustmentFeeRate?: number;
+  platformAdjustmentFeeRate?: number;
 };
 
 export const PossibleOrderStatus = ["발주", "접수", "송장", "배송"];
@@ -105,7 +113,7 @@ function TextBox({ children, styleOverrides, ...props }: Props) {
   const textBoxStyles: React.CSSProperties = {
     marginLeft: "10px",
     fontWeight: 700,
-    fontSize: "16px",
+    fontSize: "10px",
     lineHeight: "20px",
     textAlign: "center",
     textOverflow: "ellipsis",
@@ -190,24 +198,162 @@ export function checkRevenueDataItem(item: RevenueData) {
   return { isValid: true, message: "ok" };
 }
 
+export function getRevenueDataPeriod(items: RevenueData[]): {
+  startDate: Date | undefined;
+  endDate: Date | undefined;
+} {
+  if (items.length > 0) {
+    let startDate = items[0].orderDate;
+    let endDate = items[0].orderDate;
+    for (let i = 1; i < items.length; i++) {
+      const orderDate = items[i].orderDate;
+      if (orderDate < startDate) {
+        startDate = orderDate;
+      }
+      if (orderDate > endDate) {
+        endDate = orderDate;
+      }
+    }
+    return { startDate: startDate, endDate: endDate };
+  } else {
+    return { startDate: undefined, endDate: undefined };
+  }
+}
+
 function RevenueDataItem({
   item,
   index,
   check,
   onItemCheck,
   checkboxRequired = true,
+  isDiscountPreview = false,
+  isDBTable = false,
+  partnerProfile,
+  platformFeeRate,
 }: {
   item: RevenueData;
   index: number;
   check: boolean;
   onItemCheck: (index: number, isChecked: boolean) => void;
   checkboxRequired?: boolean;
+  isDiscountPreview?: boolean;
+  isDBTable?: boolean;
+  partnerProfile?: PartnerProfile;
+  platformFeeRate?: number;
 }) {
   const [isChecked, setIsChecked] = useState<boolean>(check);
 
   useEffect(() => {
     setIsChecked(check);
   }, [check]);
+
+  const isLofa = useMemo(() => {
+    return LofaSellers.includes(item.seller);
+  }, [item]);
+
+  const isCsOK = useMemo(() => {
+    return item.cs == "정상";
+  }, [item]);
+
+  const discountedPrice = useMemo(() => {
+    return item.isDiscounted
+      ? (item.price *
+          (100 -
+            item.lofaDiscountLevyRate! -
+            item.partnerDiscountLevyRate! -
+            item.platformDiscountLevyRate!)) /
+          100
+      : undefined;
+  }, [item]);
+
+  const totalSalesAmount = useMemo(() => {
+    return (discountedPrice ?? item.price) * item.amount;
+  }, [item]);
+
+  const commonFeeRate = useMemo(() => {
+    if (partnerProfile) {
+      return isLofa ? partnerProfile.lofaFee : partnerProfile.otherFee;
+    } else {
+      return 0;
+    }
+  }, [item]);
+
+  const platformSettlementStandard = useMemo(() => {
+    if (item.seller == "29cm" || item.seller == "오늘의집") {
+      return "정상판매가";
+    } else {
+      return "할인판매가";
+    }
+  }, [item]);
+
+  const partnerSettlement = useMemo(() => {
+    return item.isDiscounted
+      ? (item.price *
+          item.amount *
+          (100 -
+            commonFeeRate -
+            item.partnerDiscountLevyRate! +
+            item.lofaAdjustmentFeeRate!)) /
+          100
+      : (item.price * item.amount * (100 - commonFeeRate)) / 100.0;
+  }, [item]);
+
+  const platformSettlement = useMemo(() => {
+    if (platformFeeRate != undefined) {
+      return isLofa
+        ? totalSalesAmount
+        : item.isDiscounted
+        ? platformSettlementStandard == "정상판매가"
+          ? (item.price *
+              item.amount *
+              (100 -
+                platformFeeRate -
+                item.lofaDiscountLevyRate! -
+                item.partnerDiscountLevyRate! +
+                item.platformAdjustmentFeeRate!)) /
+            100
+          : (((item.price *
+              item.amount *
+              (100 -
+                item.lofaDiscountLevyRate! -
+                item.partnerDiscountLevyRate!)) /
+              100) *
+              (100 - platformFeeRate + item.platformAdjustmentFeeRate!)) /
+            100
+        : (item.price * item.amount * (100 - platformFeeRate)) / 100;
+    } else {
+      return 0;
+    }
+  }, [item]);
+
+  const lofaDiscountLevy = useMemo(() => {
+    if (item.isDiscounted) {
+      return (item.price * item.amount * item.lofaDiscountLevyRate!) / 100;
+    } else {
+      return undefined;
+    }
+  }, [item]);
+
+  const proceeds = useMemo(() => {
+    return platformSettlement - partnerSettlement;
+  }, [item]);
+
+  const netProfitAfterTax = useMemo(() => {
+    if (partnerProfile) {
+      switch (partnerProfile.businessTaxStandard) {
+        case "일반":
+          return proceeds * 0.9;
+        case "간이":
+        case "비사업자":
+          return platformSettlement * 0.9 - partnerSettlement;
+        case "면세":
+        default:
+          return proceeds;
+      }
+    } else {
+      return proceeds;
+    }
+  }, [item]);
 
   return (
     <ItemBox key={`RevenueDataItem-${index}`}>
@@ -237,7 +383,7 @@ function RevenueDataItem({
         {item.partnerName}
       </TextBox>
       <TextBox
-        styleOverrides={{ minWidth: "450px", fontSize: "12px", width: "450px" }}
+        styleOverrides={{ minWidth: "320px", fontSize: "12px", width: "320px" }}
       >
         {item.productName}
       </TextBox>
@@ -246,18 +392,96 @@ function RevenueDataItem({
       >
         {item.optionName}
       </TextBox>
-      <TextBox styleOverrides={{ minWidth: "90px", width: "90px" }}>
-        {item.price}
-      </TextBox>
-      <TextBox styleOverrides={{ minWidth: "90px", width: "90px" }}>
+      {isDBTable ? (
+        <TextBox styleOverrides={{ minWidth: "45px", width: "45px" }}>
+          {item.isDiscounted ? "O" : "X"}
+        </TextBox>
+      ) : (
+        <></>
+      )}
+
+      {isDBTable ? (
+        <TextBox styleOverrides={{ minWidth: "60px", width: "60px" }}>
+          {item.price}
+        </TextBox>
+      ) : (
+        <TextBox
+          styleOverrides={{
+            minWidth: "60px",
+            width: "60px",
+            color: isDiscountPreview && item.isDiscounted ? "red" : "inherit",
+          }}
+        >
+          {isDiscountPreview && item.isDiscounted
+            ? discountedPrice
+            : item.price}
+        </TextBox>
+      )}
+      {isDBTable ? (
+        <TextBox styleOverrides={{ minWidth: "60px", width: "60px" }}>
+          {discountedPrice ?? ""}
+        </TextBox>
+      ) : (
+        <></>
+      )}
+      <TextBox styleOverrides={{ minWidth: "60px", width: "60px" }}>
         {item.amount}
       </TextBox>
-      <TextBox styleOverrides={{ minWidth: "90px", width: "90px" }}>
+      {isDBTable ? (
+        <TextBox styleOverrides={{ minWidth: "60px", width: "60px" }}>
+          {totalSalesAmount}
+        </TextBox>
+      ) : (
+        <></>
+      )}
+      <TextBox styleOverrides={{ minWidth: "60px", width: "60px" }}>
         {item.orderStatus}
       </TextBox>
       <TextBox styleOverrides={{ minWidth: "180px", width: "180px" }}>
         {item.cs}
       </TextBox>
+      {isDBTable ? (
+        <TextBox styleOverrides={{ minWidth: "60px", width: "60px" }}>
+          {partnerSettlement}
+        </TextBox>
+      ) : (
+        <></>
+      )}
+      {isDBTable ? (
+        <TextBox styleOverrides={{ minWidth: "60px", width: "60px" }}>
+          {totalSalesAmount - platformSettlement}
+        </TextBox>
+      ) : (
+        <></>
+      )}
+      {isDBTable ? (
+        <TextBox styleOverrides={{ minWidth: "75px", width: "75px" }}>
+          {lofaDiscountLevy ?? ""}
+        </TextBox>
+      ) : (
+        <></>
+      )}
+      {isDBTable ? (
+        <TextBox styleOverrides={{ minWidth: "60px", width: "60px" }}>
+          {platformSettlement - partnerSettlement}
+        </TextBox>
+      ) : (
+        <></>
+      )}
+      {isDBTable ? (
+        <TextBox styleOverrides={{ minWidth: "60px", width: "60px" }}>
+          {netProfitAfterTax}
+        </TextBox>
+      ) : (
+        <></>
+      )}
+      {isDBTable ? (
+        <TextBox styleOverrides={{ minWidth: "60px", width: "60px" }}>
+          {(netProfitAfterTax / totalSalesAmount) * 100}
+        </TextBox>
+      ) : (
+        <></>
+      )}
     </ItemBox>
   );
 }
@@ -269,6 +493,10 @@ export function RevenueDataTable({
   onCheckAll,
   defaultAllCheck = true,
   checkboxRequired = true,
+  isDiscountPreview = false,
+  isDBTable = false,
+  partnerProfiles,
+  sellerProfiles,
 }: {
   items: RevenueData[];
   itemsChecked: boolean[];
@@ -276,6 +504,10 @@ export function RevenueDataTable({
   onCheckAll: (isChecked: boolean) => void;
   defaultAllCheck: boolean;
   checkboxRequired?: boolean;
+  isDiscountPreview?: boolean;
+  isDBTable?: boolean;
+  partnerProfiles?: Map<string, PartnerProfile>;
+  sellerProfiles?: Map<string, SellerProfile>;
 }) {
   const [allChecked, setAllChecked] = useState<boolean>(false);
 
@@ -319,9 +551,9 @@ export function RevenueDataTable({
           </TextBox>
           <TextBox
             styleOverrides={{
-              minWidth: "450px",
+              minWidth: "320px",
               fontSize: "12px",
-              width: "450px",
+              width: "320px",
             }}
           >
             상품명
@@ -335,22 +567,106 @@ export function RevenueDataTable({
           >
             옵션명
           </TextBox>
-          <TextBox styleOverrides={{ minWidth: "90px", width: "90px" }}>
-            판매가
-          </TextBox>
-          <TextBox styleOverrides={{ minWidth: "90px", width: "90px" }}>
+          {isDBTable ? (
+            <TextBox styleOverrides={{ minWidth: "45px", width: "45px" }}>
+              할인적용
+            </TextBox>
+          ) : (
+            <></>
+          )}
+          {isDBTable ? (
+            <TextBox styleOverrides={{ minWidth: "60px", width: "60px" }}>
+              정상판매가
+            </TextBox>
+          ) : (
+            <TextBox styleOverrides={{ minWidth: "60px", width: "60px" }}>
+              판매가
+            </TextBox>
+          )}
+          {isDBTable ? (
+            <TextBox styleOverrides={{ minWidth: "60px", width: "60px" }}>
+              할인판매가
+            </TextBox>
+          ) : (
+            <></>
+          )}
+          <TextBox styleOverrides={{ minWidth: "60px", width: "60px" }}>
             주문수량
           </TextBox>
-          <TextBox styleOverrides={{ minWidth: "90px", width: "90px" }}>
+          {isDBTable ? (
+            <TextBox styleOverrides={{ minWidth: "60px", width: "60px" }}>
+              총판매액
+            </TextBox>
+          ) : (
+            <></>
+          )}
+          <TextBox styleOverrides={{ minWidth: "60px", width: "60px" }}>
             상태
           </TextBox>
           <TextBox styleOverrides={{ minWidth: "180px", width: "180px" }}>
             CS
           </TextBox>
+          {isDBTable ? (
+            <TextBox styleOverrides={{ minWidth: "60px", width: "60px" }}>
+              업체정산금
+            </TextBox>
+          ) : (
+            <></>
+          )}
+          {isDBTable ? (
+            <TextBox styleOverrides={{ minWidth: "60px", width: "60px" }}>
+              플랫폼수수료
+            </TextBox>
+          ) : (
+            <></>
+          )}
+          {isDBTable ? (
+            <TextBox styleOverrides={{ minWidth: "75px", width: "75px" }}>
+              로파할인부담금
+            </TextBox>
+          ) : (
+            <></>
+          )}
+          {isDBTable ? (
+            <TextBox styleOverrides={{ minWidth: "60px", width: "60px" }}>
+              수익금
+            </TextBox>
+          ) : (
+            <></>
+          )}
+          {isDBTable ? (
+            <TextBox styleOverrides={{ minWidth: "60px", width: "60px" }}>
+              세후순수익
+            </TextBox>
+          ) : (
+            <></>
+          )}
+          {isDBTable ? (
+            <TextBox styleOverrides={{ minWidth: "60px", width: "60px" }}>
+              수익률(%)
+            </TextBox>
+          ) : (
+            <></>
+          )}
+
           <div style={{ width: "16px" }} />
         </Header>
         <ItemsBox>
           {items.map((item, index) => {
+            let partnerProfile;
+            let platformFeeRate;
+            if (partnerProfiles) {
+              partnerProfile = partnerProfiles.get(item.partnerName);
+            }
+            if (sellerProfiles) {
+              const sellerProfile = sellerProfiles.get(item.seller);
+              if (sellerProfile) {
+                platformFeeRate = sellerProfile.fee;
+              } else {
+                platformFeeRate = 0;
+              }
+            }
+
             return (
               <RevenueDataItem
                 key={`RevenueDataItem-${index}`}
@@ -359,6 +675,10 @@ export function RevenueDataTable({
                 check={itemsChecked[index] ?? false}
                 onItemCheck={onItemCheck}
                 checkboxRequired={checkboxRequired}
+                isDiscountPreview={isDiscountPreview}
+                isDBTable={isDBTable}
+                partnerProfile={partnerProfile}
+                platformFeeRate={platformFeeRate}
               />
             );
           })}
@@ -371,6 +691,10 @@ export function RevenueDataTable({
 export const RevenueDataTableMemo = React.memo(
   RevenueDataTable,
   (prev, next) => {
-    return prev.items == next.items && prev.itemsChecked == next.itemsChecked;
+    return (
+      prev.items == next.items &&
+      prev.itemsChecked == next.itemsChecked &&
+      prev.isDiscountPreview == next.isDiscountPreview
+    );
   }
 );
