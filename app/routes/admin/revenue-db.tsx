@@ -14,9 +14,16 @@ import { dateToDayStr, dayStrToDate, getTimezoneDate } from "~/utils/date";
 import { SellerSelect } from "~/components/seller";
 import { BlackButton } from "~/components/button";
 import { ActionFunction, json, LoaderFunction } from "@remix-run/node";
-import { deleteRevenueData, getRevenueData } from "~/services/firebase.server";
+import {
+  deleteRevenueData,
+  getAllPartnerProfiles,
+  getAllSellerProfiles,
+  getRevenueData,
+} from "~/services/firebase.server";
 import { BasicModal, ModalButton } from "~/components/modal";
 import { RevenueData, RevenueDataTableMemo } from "~/components/revenue_data";
+import { PartnerProfile } from "~/components/partner_profile";
+import { SellerProfile } from "./seller-manage";
 
 function EditInputBox({
   width,
@@ -75,6 +82,13 @@ export const loader: LoaderFunction = async ({ request }) => {
       cs: cs ?? "전체",
       filterDiscount: filterDiscount ?? "전체",
     });
+
+    const partnersMap = await getAllPartnerProfiles();
+    const partnerProfiles = Array.from(partnersMap.values());
+
+    const sellerMap = await getAllSellerProfiles();
+    const sellerProfiles = Array.from(sellerMap.values());
+
     return json({
       status: "ok",
       data: searchResult,
@@ -87,6 +101,8 @@ export const loader: LoaderFunction = async ({ request }) => {
       orderStatus: orderStatus,
       cs: cs,
       filterDiscount: filterDiscount,
+      partnerProfiles: partnerProfiles,
+      sellerProfiles: sellerProfiles,
     });
   } else {
     return json({
@@ -190,6 +206,30 @@ export default function Page() {
       return loaderData.filterDiscount;
     } else {
       return "전체";
+    }
+  }, [loaderData]);
+
+  const partnerProfiles = useMemo(() => {
+    if (loaderData && loaderData.partnerProfiles) {
+      const map = new Map<string, any>();
+      loaderData.partnerProfiles.forEach((partner: PartnerProfile) => {
+        map.set(partner.providerName, partner);
+      });
+      return map;
+    } else {
+      return undefined;
+    }
+  }, [loaderData]);
+
+  const sellerProfiles = useMemo(() => {
+    if (loaderData && loaderData.sellerProfiles) {
+      const map = new Map<string, any>();
+      loaderData.sellerProfiles.forEach((seller: SellerProfile) => {
+        map.set(seller.name, seller);
+      });
+      return map;
+    } else {
+      return undefined;
     }
   }, [loaderData]);
 
@@ -566,6 +606,9 @@ export default function Page() {
           onItemCheck={onItemCheck}
           onCheckAll={onCheckAll}
           defaultAllCheck={false}
+          isDBTable={true}
+          partnerProfiles={partnerProfiles}
+          sellerProfiles={sellerProfiles}
         />
       ) : (
         <></>

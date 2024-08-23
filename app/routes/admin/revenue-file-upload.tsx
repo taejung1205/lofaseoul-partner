@@ -16,6 +16,7 @@ import {
 import { BlackButton, CommonButton } from "~/components/button";
 import {
   checkRevenueDataItem,
+  getRevenueDataPeriod,
   RevenueData,
   RevenueDataTableMemo,
 } from "~/components/revenue_data";
@@ -25,8 +26,10 @@ import { ActionFunction, json, LoaderFunction } from "@remix-run/node";
 import {
   addRevenueData,
   getAllPartnerProfiles,
+  getDiscountData,
 } from "~/services/firebase.server";
 import { adjustSellerName } from "~/components/seller";
+import { dateToDayStr } from "~/utils/date";
 
 export const loader: LoaderFunction = async ({ request }) => {
   const partnersMap = await getAllPartnerProfiles();
@@ -52,6 +55,27 @@ export const action: ActionFunction = async ({ request }) => {
         console.log("error", result);
       }
     }
+  } else if (actionType == "discount-preview") {
+    const startDateStr = body.get("startDate")?.toString();
+    const endDateStr = body.get("startDate")?.toString();
+    if (startDateStr == null || endDateStr == null) {
+      return json({
+        status: "error",
+        message: `검색 조건에 오류가 발생하였습니다.`,
+      });
+    }
+    const startDate = new Date(`${startDateStr}T00:00:00.000+09:00`);
+    const endDate = new Date(`${endDateStr}T23:59:59.000+09:00`);
+    const searchResult = await getDiscountData({
+      startDate: startDate,
+      endDate: endDate,
+      partnerName: "",
+      productName: "",
+    });
+    return json({
+      status: "ok",
+      discountData: searchResult,
+    });
   }
   return null;
 };
@@ -61,6 +85,7 @@ export default function Page() {
   const [items, setItems] = useState<RevenueData[]>([]);
   const [itemsChecked, setItemsChecked] = useState<boolean[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isDiscountPreview, setIsDiscountPreview] = useState<boolean>(false);
 
   const [noticeModalStr, setNoticeModalStr] = useState<string>("");
   const [isNoticeModalOpened, setIsNoticeModalOpened] =
@@ -82,6 +107,14 @@ export default function Page() {
     return map;
   }, [loaderData]);
 
+  const discountData = useMemo(() => {
+    if (actionData) {
+      return actionData.discountData;
+    } else {
+      return undefined;
+    }
+  }, [actionData]);
+
   useEffect(() => {
     const newArr = Array(items.length).fill(true);
     setItemsChecked(newArr);
@@ -99,6 +132,39 @@ export default function Page() {
     }
   }, [actionData]);
 
+  useEffect(() => {
+    if (discountData) {
+      console.log(discountData.length);
+      let count = 0;
+      for (let i = 0; i < items.length; i++) {
+        const revenueData = items[i];
+        for (let j = 0; j < discountData.length; j++) {
+          const data = discountData[j].data;
+          if (
+            revenueData.productName == data.productName &&
+            revenueData.orderDate >= new Date(data.startDate) &&
+            revenueData.orderDate <= new Date(data.endDate)
+          ) {
+            revenueData.isDiscounted = true;
+            revenueData.lofaDiscountLevyRate = data.lofaDiscountLevyRate;
+            revenueData.partnerDiscountLevyRate = data.partnerDiscountLevyRate;
+            revenueData.platformDiscountLevyRate =
+              data.platformDiscountLevyRate;
+            revenueData.lofaAdjustmentFeeRate = data.lofaAdjustmentFeeRate;
+            revenueData.platformAdjustmentFeeRate =
+              data.platformAdjustmentFeeRate;
+            count++;
+          }
+        }
+      }
+
+      setNoticeModalStr(`${count}건에 대해 할인이 미리 적용되었습니다.`);
+      setIsNoticeModalOpened(true);
+      setIsLoading(false);
+      setIsDiscountPreview(true);
+    }
+  }, [discountData]);
+
   function onItemCheck(index: number, isChecked: boolean) {
     itemsChecked[index] = isChecked;
   }
@@ -107,7 +173,21 @@ export default function Page() {
     setItemsChecked(Array(items.length).fill(isChecked));
   }
 
+  function onDiscountPreviewClicked() {
+    setIsLoading(true);
+    const period = getRevenueDataPeriod(items);
+    console.log(period);
+    if (period.startDate && period.endDate) {
+      submitDiscountPreview(period.startDate, period.endDate);
+    } else {
+      setNoticeModalStr("통계 파일을 올린 후 사용 가능합니다.");
+      setIsNoticeModalOpened(true);
+      setIsLoading(false);
+    }
+  }
+
   async function submitAddRevenueData(dataList: RevenueData[]) {
+    setIsDiscountPreview(false);
     console.log("submit add revenue data, length:", dataList.length);
     const data = JSON.stringify(dataList);
     console.log(data, "data");
@@ -117,8 +197,17 @@ export default function Page() {
     submit(formData, { method: "post" });
   }
 
+  async function submitDiscountPreview(startDate: Date, endDate: Date) {
+    const formData = new FormData(formRef.current ?? undefined);
+    formData.set("action", "discount-preview");
+    formData.set("startDate", dateToDayStr(startDate));
+    formData.set("endDate", dateToDayStr(endDate));
+    submit(formData, { method: "post" });
+  }
+
   const readExcel = (e: React.ChangeEvent<HTMLInputElement>) => {
     e.preventDefault();
+    setIsDiscountPreview(false);
     let json: any;
     setIsLoading(true);
     if (e.target.files) {
@@ -289,8 +378,7 @@ export default function Page() {
           <CommonButton
             width={200}
             onClick={() => {
-              setNoticeModalStr("미구현입니다.");
-              setIsNoticeModalOpened(true);
+              onDiscountPreviewClicked();
             }}
           >
             할인 적용 미리보기
@@ -303,6 +391,7 @@ export default function Page() {
           onItemCheck={onItemCheck}
           onCheckAll={onCheckAll}
           defaultAllCheck={true}
+          isDiscountPreview={isDiscountPreview}
         />
         <Space h={20} />
         <BlackButton onClick={() => setIsUploadModalOpened(true)}>
