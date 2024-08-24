@@ -422,17 +422,27 @@ export async function getSettlements({
   const settlementsRef = collection(firestore, `settlements/${monthStr}/items`);
   const settlementsQuery = query(
     settlementsRef,
-    where("partnerName", "==", partnerName)
+    where("partnerName", "==", partnerName),
   );
   const querySnap = await getDocs(settlementsQuery);
-  return querySnap.docs.map((doc) => {
+
+  const resultArray = querySnap.docs.map((doc) => {
     const data = doc.data();
     if (data.orderDate) {
       const date = data.orderDate.toDate();
       data.orderDate = date;
     }
     return data;
+  }).sort((a, b) => {
+    // orderDate가 없는 항목은 맨 앞으로 이동
+    if (!a.orderDate) return -1;
+    if (!b.orderDate) return 1;
+  
+    // orderDate가 있는 항목은 날짜 순으로 정렬
+    return a.orderDate - b.orderDate;
   });
+
+  return resultArray;
 }
 
 /**

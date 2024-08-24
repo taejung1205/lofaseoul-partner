@@ -26,6 +26,7 @@ export type SettlementItem = {
   discountedPrice?: number; //할인판매가
   partnerDiscountLevy?: number; //업체부담할인금
   lofaAdjustmentFee?: number; //로파조정수수료
+  isDiscountManuallyFixed?: boolean; //할인이 수동으로 수정되었는지 여부, 이게 true이면 할인이 자동으로 적용되지 않음
 };
 
 interface Props extends React.HTMLAttributes<HTMLDivElement> {
@@ -199,6 +200,18 @@ export function isSettlementItemValid(item: SettlementItem) {
 
   if (item.amount == undefined) {
     return "수량이 누락되었습니다.";
+  }
+
+  if(item.isDiscounted || item.isDiscountManuallyFixed){
+    if(item.discountedPrice == undefined){
+      return "할인판매가가 누락되었습니다."
+    }
+    if(item.partnerDiscountLevy == undefined){
+      return "업체부담할인금이 누락되었습니다."
+    }
+    if(item.lofaAdjustmentFee == undefined){
+      return "로파조정수수료가 누락되었습니다."
+    }
   }
   return "ok";
 }

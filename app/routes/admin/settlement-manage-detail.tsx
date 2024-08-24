@@ -35,7 +35,7 @@ import {
 import { BasicModal, ModalButton } from "~/components/modal";
 import { PageLayout } from "~/components/page_layout";
 import { CommonButton } from "~/components/button";
-import { LoadingOverlay, Space } from "@mantine/core";
+import { Checkbox, LoadingOverlay, Space } from "@mantine/core";
 import writeXlsxFile from "write-excel-file";
 import {
   dateToDayStr,
@@ -308,13 +308,19 @@ export default function AdminSettlementShare() {
   const [amountEdit, setAmountEdit] = useState<number>(0);
   const [feeEdit, setFeeEdit] = useState<number>(0);
   const [shippingFeeEdit, setShippingFeeEdit] = useState<number>(0);
-  const [saleEdit, setSaleEdit] = useState<number>(0);
   const [orderTagEdit, setOrderTagEdit] = useState<string>("");
   const [optionNameEdit, setOptionNameEdit] = useState<string>("");
   const [ordererEdit, setOrdererEdit] = useState<string>("");
   const [receiverEdit, setReceiverEdit] = useState<string>("");
   const [orderDateEdit, setOrderDateEdit] = useState<string>("");
   const [providerNameEdit, setProviderNameEdit] = useState<string>("");
+
+  const [isManuallyFixingDiscount, setIsManuallyFixingDiscount] =
+    useState<boolean>(false);
+  const [discountedPriceEdit, setDiscountedPriceEdit] = useState<number>(0);
+  const [partnerDiscountLevyEdit, setPartnerDiscountLevyEdit] =
+    useState<number>(0);
+  const [lofaAdjustmentFeeEdit, setLofaAdjustmentFeeEdit] = useState<number>(0);
 
   // 모달 열림 여부
   const [isDeleteShippingFeeModalOpened, setIsDeleteShippingFeeModalOpened] =
@@ -347,7 +353,9 @@ export default function AdminSettlementShare() {
       return null;
     } else {
       return loaderData.settlements.map((val: any) => {
-        val.orderDate = new Date(val.orderDate);
+        if (val.orderDate) {
+          val.orderDate = new Date(val.orderDate);
+        }
         return val;
       });
     }
@@ -407,19 +415,40 @@ export default function AdminSettlementShare() {
 
   const partnerProfilesFromName = useMemo(() => {
     let map = new Map();
-    loaderData.partners.forEach((partner: PartnerProfile) => {
-      map.set(partner.name, partner);
-    });
-    return map;
+    if (loaderData.partners) {
+      loaderData.partners.forEach((partner: PartnerProfile) => {
+        map.set(partner.name, partner);
+      });
+      return map;
+    } else {
+      return undefined;
+    }
   }, [loaderData]);
 
   const partnerProfilesFromProviderName = useMemo(() => {
     let map = new Map();
-    loaderData.partners.forEach((partner: PartnerProfile) => {
-      map.set(partner.providerName, partner);
-    });
-    return map;
+    if (loaderData.partners) {
+      loaderData.partners.forEach((partner: PartnerProfile) => {
+        map.set(partner.providerName, partner);
+      });
+      return map;
+    } else {
+      return undefined;
+    }
   }, [loaderData]);
+
+  const isDiscounted = useMemo(() => {
+    return (
+      priceEdit != discountedPriceEdit ||
+      partnerDiscountLevyEdit != 0 ||
+      lofaAdjustmentFeeEdit != 0
+    );
+  }, [
+    priceEdit,
+    discountedPriceEdit,
+    partnerDiscountLevyEdit,
+    lofaAdjustmentFeeEdit,
+  ]);
 
   useEffect(() => {
     if (monthStr !== null) {
@@ -518,7 +547,11 @@ export default function AdminSettlementShare() {
   //수정 시작시 기본 입력값을 선택한 정산건으로 맞춥니다.
   //파라미터로 null이 들어오면 정산건을 추가하는 요청으로 해석, 수수료 제외 전부 0 또는 공백으로 맞춥니다.
   function updateEditItems(settlement: SettlementItem | null) {
-    console.log(partnerProfilesFromName.get(loaderData.partnerName));
+    console.log(
+      partnerProfilesFromName
+        ? partnerProfilesFromName.get(loaderData.partnerName)
+        : "no partner"
+    );
     console.log("settlement", settlement?.providerName);
     if (settlement !== null) {
       setSellerEdit(settlement.seller);
@@ -536,9 +569,14 @@ export default function AdminSettlementShare() {
         settlement.orderDate ? dateToDayStr(settlement.orderDate) : ""
       );
       setProviderNameEdit(
-        settlement.providerName ??
-          partnerProfilesFromName.get(loaderData.partnerName).providerName
+        settlement.providerName ?? partnerProfilesFromName
+          ? partnerProfilesFromName!.get(loaderData.partnerName).providerName
+          : ""
       );
+      setIsManuallyFixingDiscount(settlement.isDiscountManuallyFixed ?? false);
+      setDiscountedPriceEdit(settlement.discountedPrice ?? settlement.price);
+      setPartnerDiscountLevyEdit(settlement.partnerDiscountLevy ?? 0);
+      setLofaAdjustmentFeeEdit(settlement.lofaAdjustmentFee ?? 0);
     } else {
       setSellerEdit("");
       setOrderNumberEdit("");
@@ -548,17 +586,20 @@ export default function AdminSettlementShare() {
       setAmountEdit(0);
       setOrdererEdit("");
       setReceiverEdit("");
-      setSaleEdit(0);
       setOrderTagEdit("");
       setOrderDateEdit("");
       setProviderNameEdit(partnerName);
+      setIsManuallyFixingDiscount(false);
+      setDiscountedPriceEdit(0);
+      setPartnerDiscountLevyEdit(0);
+      setLofaAdjustmentFeeEdit(0);
     }
   }
 
   //수정 입력창에 입력된 정산건 내역을 검증합니다.
   // 잘못됐을 경우 null을 return해 submit이 일어나지 않게 만듭니다.
   // 정상적일 경우 해당 SettlementItem을 return합니다.
-  function edittedSettlementItem() {
+  function checkEdittedSettlementItem() {
     const newSettlement: SettlementItem = {
       orderDate: dayStrToDate(orderDateEdit),
       seller: sellerEdit,
@@ -574,8 +615,15 @@ export default function AdminSettlementShare() {
       partnerName: "",
       orderTag: orderTagEdit,
       providerName: providerNameEdit,
-      isDiscounted: false,
+      isDiscounted: isDiscounted,
     };
+
+    if (isManuallyFixingDiscount || isDiscounted) {
+      newSettlement.isDiscountManuallyFixed = true;
+      newSettlement.discountedPrice = discountedPriceEdit;
+      newSettlement.partnerDiscountLevy = partnerDiscountLevyEdit;
+      newSettlement.lofaAdjustmentFee = lofaAdjustmentFeeEdit;
+    }
 
     const checkValid = isSettlementItemValid(newSettlement);
     if (checkValid !== "ok") {
@@ -593,8 +641,9 @@ export default function AdminSettlementShare() {
     //   return null;
     // }
 
-    const isProviderNameValid =
-      partnerProfilesFromProviderName.get(providerNameEdit);
+    const isProviderNameValid = partnerProfilesFromProviderName
+      ? partnerProfilesFromProviderName.get(providerNameEdit)
+      : "";
 
     if (!isProviderNameValid) {
       setEditErrorStr(
@@ -603,8 +652,9 @@ export default function AdminSettlementShare() {
       return null;
     }
 
-    newSettlement.partnerName =
-      partnerProfilesFromProviderName.get(providerNameEdit).name;
+    newSettlement.partnerName = partnerProfilesFromProviderName
+      ? partnerProfilesFromProviderName.get(providerNameEdit).name
+      : "";
 
     return newSettlement;
   }
@@ -652,27 +702,6 @@ export default function AdminSettlementShare() {
   return (
     <>
       <LoadingOverlay visible={navigation.state == "loading"} overlayBlur={2} />
-      {/* 안내용 모달 */}
-      <BasicModal
-        opened={isNoticeModalOpened}
-        onClose={() => setIsNoticeModalOpened(false)}
-      >
-        <div
-          style={{
-            justifyContent: "center",
-            textAlign: "center",
-            fontWeight: "700",
-          }}
-        >
-          {noticeModalStr}
-          <div style={{ height: "20px" }} />
-          <div style={{ display: "flex", justifyContent: "center" }}>
-            <ModalButton onClick={() => setIsNoticeModalOpened(false)}>
-              확인
-            </ModalButton>
-          </div>
-        </div>
-      </BasicModal>
 
       {/* 정산내역 삭제 모달 */}
       <BasicModal
@@ -752,6 +781,9 @@ export default function AdminSettlementShare() {
             fontSize: "20px",
           }}
         >
+          <div style={{ fontSize: "16px", lineHeight: "30px" }}>
+            {"* 수익통계는 정산내역 수정을 반영하지 않음을 유의해주세요."}
+          </div>
           <div
             style={{
               display: "flex",
@@ -824,12 +856,17 @@ export default function AdminSettlementShare() {
               alignItems: "center",
             }}
           >
-            <div style={{ width: "100px" }}>판매단가</div>
+            <div style={{ width: "100px" }}>정상판매가</div>
             <EditInputBox
               type="number"
               name="price"
               value={priceEdit}
-              onChange={(e) => setPriceEdit(Number(e.target.value))}
+              onChange={(e) => {
+                setPriceEdit(Number(e.target.value));
+                if (!isManuallyFixingDiscount && !isDiscounted) {
+                  setDiscountedPriceEdit(Number(e.target.value));
+                }
+              }}
               required
             />
             <div style={{ width: "100px" }}>수량</div>
@@ -840,6 +877,13 @@ export default function AdminSettlementShare() {
               onChange={(e) => setAmountEdit(Number(e.target.value))}
               required
             />
+          </div>
+          <div
+            style={{ fontSize: "12px", lineHeight: "25px", textAlign: "left" }}
+          >
+            {
+              "* 정산금 계산에 사용되는 '정상판매가'입니다. 할인이 적용된 판매단가 수정을 원하실 경우, 하단의 할인판매가롤 수정해주세요."
+            }
           </div>
           <div
             style={{
@@ -893,12 +937,12 @@ export default function AdminSettlementShare() {
               alignItems: "center",
             }}
           >
-            <div style={{ width: "100px" }}>세일반영</div>
+            <div style={{ width: "100px" }}>공급처명</div>
             <EditInputBox
-              type="number"
-              name="sale"
-              value={saleEdit}
-              onChange={(e) => setSaleEdit(Number(e.target.value))}
+              type="text"
+              name="providerName"
+              value={providerNameEdit}
+              onChange={(e) => setProviderNameEdit(e.target.value)}
               required
             />
             <div style={{ width: "100px" }}>주문태그</div>
@@ -914,16 +958,105 @@ export default function AdminSettlementShare() {
             style={{
               display: "flex",
               alignItems: "center",
+              height: "40px",
             }}
           >
-            <div style={{ width: "100px" }}>공급처명</div>
+            <div style={{ width: "100px" }}>할인여부</div>
+            <div style={{ width: "250px", padding: "4px", textAlign: "left" }}>
+              {isDiscounted ? "O" : "X"}
+            </div>
+            <div style={{ width: "150px" }}>할인 직접 수정</div>
+            <Checkbox
+              size={"sm"}
+              checked={isManuallyFixingDiscount}
+              onChange={(event) => {
+                setIsManuallyFixingDiscount(event.currentTarget.checked);
+                if (event.currentTarget.checked) {
+                  setNoticeModalStr(
+                    "할인내역을 직접 수정할 경우, 기존 할인내역과의 동기화가 삭제됩니다."
+                  );
+                  setIsNoticeModalOpened(true);
+                }
+              }}
+            />
+          </div>
+          <Space h={20} />
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+            }}
+          >
+            <div style={{ width: "100px", fontSize: "13px" }}>
+              업체부담할인금
+            </div>
             <EditInputBox
-              type="text"
-              name="providerName"
-              value={providerNameEdit}
-              onChange={(e) => setProviderNameEdit(e.target.value)}
+              type="number"
+              name="partnerDiscountLevy"
+              value={partnerDiscountLevyEdit}
+              onChange={(e) => {
+                if (isManuallyFixingDiscount) {
+                  setPartnerDiscountLevyEdit(Number(e.target.value));
+                } else {
+                  setNoticeModalStr(
+                    "할인 직접 수정을 체크한 후 수정이 가능합니다."
+                  );
+                  setIsNoticeModalOpened(true);
+                }
+              }}
               required
             />
+            <div style={{ width: "100px", fontSize: "13px" }}>
+              로파조정수수료
+            </div>
+            <EditInputBox
+              type="number"
+              name="lofaAdjustmentFee"
+              value={lofaAdjustmentFeeEdit}
+              onChange={(e) => {
+                if (isManuallyFixingDiscount) {
+                  setLofaAdjustmentFeeEdit(Number(e.target.value));
+                } else {
+                  setNoticeModalStr(
+                    "할인 직접 수정을 체크한 후 수정이 가능합니다."
+                  );
+                  setIsNoticeModalOpened(true);
+                }
+              }}
+              required
+            />
+          </div>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+            }}
+          >
+            <div style={{ width: "100px", fontSize: "13px" }}>
+              할인적용 판매가
+            </div>
+            <EditInputBox
+              type="number"
+              name="discountedPrice"
+              value={discountedPriceEdit}
+              onChange={(e) => {
+                if (isManuallyFixingDiscount) {
+                  setDiscountedPriceEdit(Number(e.target.value));
+                } else {
+                  setNoticeModalStr(
+                    "할인 직접 수정을 체크한 후 수정이 가능합니다."
+                  );
+                  setIsNoticeModalOpened(true);
+                }
+              }}
+              required
+            />
+            <div style={{ width: "100px" }}>정산금액</div>
+            <div>
+              {(priceEdit * Math.abs(amountEdit) * (100 - feeEdit)) / 100.0 -
+                partnerDiscountLevyEdit +
+                lofaAdjustmentFeeEdit}
+            </div>
           </div>
           <div style={{ height: "20px" }} />
           {editErrorStr}
@@ -935,7 +1068,7 @@ export default function AdminSettlementShare() {
             <ModalButton
               type={"submit"}
               onClick={async () => {
-                const checkResult = edittedSettlementItem();
+                const checkResult = checkEdittedSettlementItem();
                 if (checkResult !== null) {
                   if (isEdit) {
                     submitEditSettlement(selectedItems[0], checkResult);
@@ -947,6 +1080,28 @@ export default function AdminSettlementShare() {
               }}
             >
               {isEdit ? "수정" : "추가"}
+            </ModalButton>
+          </div>
+        </div>
+      </BasicModal>
+
+      {/* 안내용 모달 */}
+      <BasicModal
+        opened={isNoticeModalOpened}
+        onClose={() => setIsNoticeModalOpened(false)}
+      >
+        <div
+          style={{
+            justifyContent: "center",
+            textAlign: "center",
+            fontWeight: "700",
+          }}
+        >
+          {noticeModalStr}
+          <div style={{ height: "20px" }} />
+          <div style={{ display: "flex", justifyContent: "center" }}>
+            <ModalButton onClick={() => setIsNoticeModalOpened(false)}>
+              확인
             </ModalButton>
           </div>
         </div>
