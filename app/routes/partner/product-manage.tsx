@@ -1177,8 +1177,14 @@ export default function PartnerProductManage() {
                 }}
               />
               <Space w={15} />
-              <div style={{ fontSize: "24px", lineHeight: "35px" }}>
-                상품 추가
+              <div
+                style={{
+                  fontSize: "24px",
+                  lineHeight: "35px",
+                  color: isLoadedProduct ? "blue" : "black",
+                }}
+              >
+                {isLoadedProduct ? `상품 수정` : `상품 추가`}
               </div>
             </div>
             <div style={{ display: "flex" }}>
