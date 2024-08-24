@@ -863,7 +863,7 @@ export default function AdminSettlementShare() {
               value={priceEdit}
               onChange={(e) => {
                 setPriceEdit(Number(e.target.value));
-                if (!isManuallyFixingDiscount) {
+                if (!isManuallyFixingDiscount && !isDiscounted) {
                   setDiscountedPriceEdit(Number(e.target.value));
                 }
               }}
