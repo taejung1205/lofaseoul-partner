@@ -50,6 +50,7 @@ import {
 import { PartnerRevenueStat } from "~/components/revenue_stat";
 import { LofaSellers } from "~/components/seller";
 import { DiscountData } from "~/components/discount";
+import { getIdFromTime } from "~/components/date";
 
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
@@ -211,7 +212,7 @@ export async function addPartnerProfile({
     }
   }
 
-  const result = await setDoc(doc(firestore, "accounts", partnerProfile.name), {
+  const data = {
     name: partnerProfile.name,
     id: partnerProfile.id,
     password: partnerProfile.password,
@@ -226,9 +227,16 @@ export async function addPartnerProfile({
     businessTaxStandard: partnerProfile.businessTaxStandard,
     providerName: partnerProfile.providerName,
     isAdmin: false,
-  }).catch((error) => {
+  };
+
+  const result = await setDoc(
+    doc(firestore, "accounts", partnerProfile.name),
+    data
+  ).catch((error) => {
     return error.message;
   });
+
+  addLog("addPartnerProfile", data);
 
   return result;
 }
@@ -278,11 +286,14 @@ export async function deletePartnerProfile({ name }: { name: string }) {
     console.log(authResult);
     return authResult;
   }
+
   const firestoreResult = await deleteDoc(
     doc(firestore, "accounts", name)
   ).catch((error) => {
     return error.message;
   });
+
+  addLog("deletePartnerProfile", { docName: name });
   return firestoreResult;
 }
 
@@ -302,11 +313,12 @@ export async function addSettlements({
 }) {
   try {
     const time = new Date().getTime();
-    await setDoc(doc(firestore, `settlements-data-add/${monthStr}`), {
+    const data = {
       json: settlements,
       updateTime: time,
-    });
-
+    };
+    await setDoc(doc(firestore, `settlements-data-add/${monthStr}`), data);
+    addLog("addSettlements", data);
     return true;
   } catch (error: any) {
     sendAligoMessage({
@@ -332,11 +344,12 @@ export async function deleteSettlements({
 }) {
   try {
     const time = new Date().getTime();
-    await setDoc(doc(firestore, `settlements-data-delete/${monthStr}`), {
+    const data = {
       json: settlements,
       updateTime: time,
-    });
-
+    };
+    await setDoc(doc(firestore, `settlements-data-delete/${monthStr}`), data);
+    addLog("addSettlements", data);
     return true;
   } catch (error: any) {
     sendAligoMessage({
@@ -362,13 +375,15 @@ export async function deleteSettlementsShippingFee({
 }) {
   try {
     const time = new Date().getTime();
+    const data = {
+      json: settlements,
+      updateTime: time,
+    };
     await setDoc(
       doc(firestore, `settlements-data-delete-shipping-fee/${monthStr}`),
-      {
-        json: settlements,
-        updateTime: time,
-      }
+      data
     );
+    addLog("addSettlementsShippingFee", data);
 
     return true;
   } catch (error: any) {
@@ -590,6 +605,8 @@ export async function addOrders({
       }
     }
 
+    addLog("addOrders", { dayStr: dayStr, orders: orders.toString() });
+
     return true;
   } catch (error: any) {
     await sendAligoMessage({
@@ -711,6 +728,7 @@ export async function deleteOrders({
         }
       }
     }
+    addLog("deleteOrders", { dayStr: dayStr, orders: orders.toString() });
     return true;
   } catch (error: any) {
     await sendAligoMessage({
@@ -831,7 +849,7 @@ export async function addWaybills({
     await setDoc(doc(firestore, `waybills/${nextDayStr}`), {
       isShared: true,
     });
-
+    addLog("addWaybills", { dayStr: dayStr, orders: orders.toString() });
     return true;
   } catch (error: any) {
     await sendAligoMessage({
@@ -1003,7 +1021,7 @@ export async function editWaybills({
     await setDoc(doc(firestore, `waybills/${nextDayStr}`), {
       isShared: true,
     });
-
+    addLog("editWaybills", { dayStr: dayStr, waybills: waybills.toString() });
     return true;
   } catch (error: any) {
     await sendAligoMessage({
@@ -1147,7 +1165,7 @@ export async function shareDelayedWaybills({
     await setDoc(doc(firestore, `waybills/${nextDayStr}`), {
       isShared: true,
     });
-
+    addLog("shareDelayedWaybills", { waybills: waybills.toString() });
     return true;
   } catch (error: any) {
     await sendAligoMessage({
@@ -1271,14 +1289,18 @@ export async function addNotice({
 }) {
   try {
     const docName = `${new Date().getTime()}`;
-    await setDoc(doc(firestore, `notices/${monthStr}/items/${docName}`), {
+    const data = {
       partnerName: partnerName,
       topic: topic,
       detail: detail,
       isShared: false,
-    });
+    };
+    await setDoc(doc(firestore, `notices/${monthStr}/items/${docName}`), data);
 
     await setDoc(doc(firestore, `notices/${monthStr}`), { isShared: "true" });
+
+    addLog("addNotice", data);
+
     return true;
   } catch (error: any) {
     return error.message ?? error;
@@ -1306,12 +1328,14 @@ export async function editNotice({
   id: string;
 }) {
   try {
-    await setDoc(doc(firestore, `notices/${monthStr}/items/${id}`), {
+    const data = {
       partnerName: partnerName,
       topic: topic,
       detail: detail,
       isShared: false,
-    });
+    };
+    await setDoc(doc(firestore, `notices/${monthStr}/items/${id}`), data);
+    addLog("editNotice", { id: id, ...data });
     return true;
   } catch (error: any) {
     await sendAligoMessage({
@@ -1342,10 +1366,11 @@ export async function shareNotice({
 }) {
   try {
     const timestamp = Timestamp.fromDate(new Date());
-    await updateDoc(doc(firestore, `notices/${monthStr}/items/${id}`), {
+    const data = {
       isShared: true,
       sharedDate: timestamp,
-    });
+    };
+    await updateDoc(doc(firestore, `notices/${monthStr}/items/${id}`), data);
 
     const profile = await getPartnerProfile({ name: partnerName });
     const phone = profile?.phone ?? "";
@@ -1358,7 +1383,7 @@ export async function shareNotice({
         throw Error(`ALIGO 오류: ${response.message}`);
       }
     }
-
+    await addLog("shareNotice", { id: id, ...data });
     return true;
   } catch (error: any) {
     await sendAligoMessage({
@@ -1474,6 +1499,7 @@ export async function deleteNotice({
         return error.message;
       }
     );
+    addLog("deleteNotice", { monthStr: monthStr, id: id });
     return true;
   } catch (error: any) {
     await sendAligoMessage({
@@ -1510,9 +1536,13 @@ export async function replyNotice({
     ).padStart(2, "0")}`;
     const replyStr = `${isAdmin ? "(어드민)" : "(파트너)"}[${timeStr}]
     ${reply}`;
-    await updateDoc(doc(firestore, `notices/${monthStr}/items/${id}`), {
+
+    const data = {
       replies: arrayUnion(replyStr),
-    });
+    };
+    await updateDoc(doc(firestore, `notices/${monthStr}/items/${id}`), data);
+
+    addLog("replyNotice", { monthStr: monthStr, id: id, ...data });
 
     return true;
   } catch (error: any) {
@@ -1537,6 +1567,8 @@ export async function addProduct({ product }: { product: Product }) {
   if (docSnap.exists()) {
     return "이미 해당 이름의 상품이 등록되어 있습니다.";
   }
+
+  addLog("addProduct", product);
 
   setDoc(doc(firestore, "products", product.productName), product);
 
@@ -1635,6 +1667,10 @@ export async function deleteProduct({
       }
 
       await deleteDoc(doc(firestore, "products", productName));
+      addLog("deleteProduct", {
+        productName: productName,
+        isDeletingStorage: isDeletingStorage,
+      });
     }
   } catch (error: any) {
     return error.message ?? error;
@@ -1686,6 +1722,7 @@ export async function deleteProducts({
         }
 
         await deleteDoc(doc(firestore, "products", data.productName));
+        addLog("deleteProducts", { productNameList: productNameList });
       }
     }
   } catch (error: any) {
@@ -1711,11 +1748,13 @@ export async function acceptProducts({
     for (let i = 0; i < productNameList.length; i++) {
       const docRef = doc(firestore, "products", productNameList[i]);
       const docSnap = await getDoc(docRef);
+      const data = {
+        status: "승인완료",
+      };
       if (docSnap.exists()) {
-        updateDoc(doc(firestore, "products", productNameList[i]), {
-          status: "승인완료",
-        });
+        updateDoc(doc(firestore, "products", productNameList[i]), data);
       }
+      addLog("acceptProducts", { productName: productNameList[i], ...data });
     }
   } catch (error: any) {
     return error.message ?? error;
@@ -1740,11 +1779,13 @@ export async function declineProducts({
     for (let i = 0; i < productNameList.length; i++) {
       const docRef = doc(firestore, "products", productNameList[i]);
       const docSnap = await getDoc(docRef);
+      const data = {
+        status: "승인거부",
+      };
       if (docSnap.exists()) {
-        updateDoc(doc(firestore, "products", productNameList[i]), {
-          status: "승인거부",
-        });
+        updateDoc(doc(firestore, "products", productNameList[i]), data);
       }
+      addLog("deleteProducts", { productName: productNameList[i], ...data });
     }
   } catch (error: any) {
     return error.message ?? error;
@@ -1760,24 +1801,24 @@ export async function declineProducts({
  * @returns boolean
  */
 
-export async function isProductUploaded({
-  productName,
-}: {
-  productName: string;
-}) {
-  try {
-    const docRef = doc(firestore, "products", productName);
-    const docSnap = await getDoc(docRef);
-    if (docSnap.exists()) {
-      await deleteDoc(doc(firestore, "products-progress", productName));
-      return true;
-    } else {
-      return false;
-    }
-  } catch (error: any) {
-    return false;
-  }
-}
+// export async function isProductUploaded({
+//   productName,
+// }: {
+//   productName: string;
+// }) {
+//   try {
+//     const docRef = doc(firestore, "products", productName);
+//     const docSnap = await getDoc(docRef);
+//     if (docSnap.exists()) {
+//       await deleteDoc(doc(firestore, "products-progress", productName));
+//       return true;
+//     } else {
+//       return false;
+//     }
+//   } catch (error: any) {
+//     return false;
+//   }
+// }
 
 /**
  * 이미지 업로드 진행 상태를 받아옵니다.
@@ -1836,6 +1877,13 @@ export async function uploadProductImage(
       return "error";
     });
 
+  addLog("uploadProductImage", {
+    file: file.name,
+    usage: usage,
+    id: id,
+    index: index,
+  });
+
   return downloadURL;
 }
 
@@ -1844,54 +1892,54 @@ export async function uploadProductImage(
  * @returns boolean
  */
 
-export async function isProductImageUploadFinished({
-  productName,
-}: {
-  productName: string;
-}) {
-  try {
-    const docRef = doc(firestore, "products-progress", productName);
-    const docSnap = await getDoc(docRef);
-    if (docSnap.exists()) {
-      const data = docSnap.data();
-      const detailURLList = [];
-      const detailNameList = [];
-      const extraURLList = [];
-      const extraNameList = [];
-      if (!data.mainURL) return false;
-      if (!data.thumbnailURL) return false;
-      for (let i = 0; i < data.detailLength; i++) {
-        if (!data[`detailURL_${i}`]) return false;
-        detailURLList.push(data[`detailURL_${i}`]);
-        detailNameList.push(data[`detailName_${i}`]);
-      }
-      for (let i = 0; i < data.extraLength; i++) {
-        if (!data[`extraURL_${i}`]) return false;
-        extraURLList.push(data[`extraURL_${i}`]);
-        extraNameList.push(data[`extraName_${i}`]);
-      }
+// export async function isProductImageUploadFinished({
+//   productName,
+// }: {
+//   productName: string;
+// }) {
+//   try {
+//     const docRef = doc(firestore, "products-progress", productName);
+//     const docSnap = await getDoc(docRef);
+//     if (docSnap.exists()) {
+//       const data = docSnap.data();
+//       const detailURLList = [];
+//       const detailNameList = [];
+//       const extraURLList = [];
+//       const extraNameList = [];
+//       if (!data.mainURL) return false;
+//       if (!data.thumbnailURL) return false;
+//       for (let i = 0; i < data.detailLength; i++) {
+//         if (!data[`detailURL_${i}`]) return false;
+//         detailURLList.push(data[`detailURL_${i}`]);
+//         detailNameList.push(data[`detailName_${i}`]);
+//       }
+//       for (let i = 0; i < data.extraLength; i++) {
+//         if (!data[`extraURL_${i}`]) return false;
+//         extraURLList.push(data[`extraURL_${i}`]);
+//         extraNameList.push(data[`extraName_${i}`]);
+//       }
 
-      await updateDoc(doc(firestore, "products", productName), {
-        mainImageURL: data.mainURL,
-        mainImageName: data.mainName,
-        thumbnailImageURL: data.thumbnailURL,
-        thumbnailImageName: data.thumbnailName,
-        detailImageURLList: detailURLList,
-        detailImageNameList: detailNameList,
-        extraImageURLList: extraURLList,
-        extraImageNameList: extraNameList,
-      });
+//       await updateDoc(doc(firestore, "products", productName), {
+//         mainImageURL: data.mainURL,
+//         mainImageName: data.mainName,
+//         thumbnailImageURL: data.thumbnailURL,
+//         thumbnailImageName: data.thumbnailName,
+//         detailImageURLList: detailURLList,
+//         detailImageNameList: detailNameList,
+//         extraImageURLList: extraURLList,
+//         extraImageNameList: extraNameList,
+//       });
 
-      await deleteDoc(doc(firestore, "products-progress", productName));
+//       await deleteDoc(doc(firestore, "products-progress", productName));
 
-      return true;
-    } else {
-      return false;
-    }
-  } catch (error: any) {
-    return false;
-  }
-}
+//       return true;
+//     } else {
+//       return false;
+//     }
+//   } catch (error: any) {
+//     return false;
+//   }
+// }
 
 export async function sendSettlementNoticeEmail({
   partnerList,
@@ -1944,6 +1992,7 @@ export async function sendSettlementNoticeEmail({
       };
     }
   }
+  addLog("sendSettlementNoticeEmail", { partnerList: partnerList });
   return {
     status: "ok",
     message: `파트너 ${successCount}곳에 메일이 전송되었습니다. (메일이 누락된 경우 제외 처리)`,
@@ -1960,6 +2009,11 @@ export async function addRevenueData({ data }: { data: string }) {
   try {
     const time = new Date().getTime();
     await setDoc(doc(firestore, `revenue-data-add/data`), {
+      json: data,
+      updateTime: time,
+    });
+
+    addLog("addRevenueData", {
       json: data,
       updateTime: time,
     });
@@ -2151,7 +2205,13 @@ export async function getRevenueData({
 export async function deleteRevenueData({ data }: { data: string }) {
   try {
     const time = new Date().getTime();
+
     await setDoc(doc(firestore, `revenue-data-delete/data`), {
+      json: data,
+      updateTime: time,
+    });
+
+    addLog("deleteRevenueData", {
       json: data,
       updateTime: time,
     });
@@ -2292,12 +2352,13 @@ export async function getRevenueStats({
                 data.partnerDiscountLevyRate +
                 data.platformAdjustmentFeeRate)) /
             100
-          : ((normalPriceTotalSalesAmount *
+          : (((normalPriceTotalSalesAmount *
               (100 -
                 data.lofaDiscountLevyRate -
                 data.partnerDiscountLevyRate)) /
               100) *
-            (100 - platformFeeRate + data.platformAdjustmentFeeRate) / 100; //플랫폼정산금
+              (100 - platformFeeRate + data.platformAdjustmentFeeRate)) /
+            100; //플랫폼정산금
         platformFee = totalSalesAmount - platformSettlement;
         lofaDiscountLevy =
           (normalPriceTotalSalesAmount * data.lofaDiscountLevyRate) / 100;
@@ -2377,6 +2438,10 @@ export async function addDiscountData({ data }: { data: string }) {
       json: data,
       updateTime: time,
     });
+    addLog("addDiscountData", {
+      json: data,
+      updateTime: time,
+    });
     return true;
   } catch (error: any) {
     sendAligoMessage({
@@ -2396,6 +2461,10 @@ export async function deleteDiscountData({ data }: { data: string }) {
   try {
     const time = new Date().getTime();
     await setDoc(doc(firestore, `discount-data-delete/data`), {
+      json: data,
+      updateTime: time,
+    });
+    addLog("deleteDiscountData", {
       json: data,
       updateTime: time,
     });
@@ -2448,4 +2517,14 @@ export async function getDiscountData({
     }
   });
   return searchResult;
+}
+
+export async function addLog(functionName: string, data: DocumentData) {
+  const timestamp = Timestamp.fromDate(new Date());
+  const id = getIdFromTime();
+  await setDoc(doc(firestore, `log`, id), {
+    logTime: timestamp,
+    functionName: functionName,
+    ...data,
+  });
 }
