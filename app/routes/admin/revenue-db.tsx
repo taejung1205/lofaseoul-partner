@@ -1,4 +1,4 @@
-import { LoadingOverlay, Select, Space } from "@mantine/core";
+import { Checkbox, LoadingOverlay, Select, Space } from "@mantine/core";
 import {
   Link,
   useActionData,
@@ -256,7 +256,36 @@ export default function Page() {
   const [pageIndex, setPageIndex] = useState<number>(0);
 
   //볼 항목 선택
-  //TODO
+  const [isShowingOrderDate, setIsShowingOrderDate] = useState<boolean>(true);
+  const [isShowingSeller, setIsShowingSeller] = useState<boolean>(true);
+  const [isShowingPartnerName, setIsShowingPartnerName] =
+    useState<boolean>(true);
+  const [isShowingProductName, setIsShowingProductName] =
+    useState<boolean>(true);
+  const [isShowingOption, setIsShowingOption] = useState<boolean>(true);
+  const [isShowingIsDiscounted, setIsShowingIsDiscounted] =
+    useState<boolean>(true);
+  const [isShowingPrice, setIsShowingPrice] = useState<boolean>(true);
+  const [isShowingDiscountedPrice, setIsShowingDiscountedPrice] =
+    useState<boolean>(true);
+  const [isShowingAmount, setIsShowingAmount] = useState<boolean>(true);
+  const [isShowingTotalSalesAmount, setIsShowingTotalSalesAmount] =
+    useState<boolean>(true);
+  const [isShowingOrderStatus, setIsShowingOrderStatus] =
+    useState<boolean>(true);
+  const [isShowingCs, setIsShowingCs] = useState<boolean>(true);
+  const [isShowingPartnerSettlement, setIsShowingPartnerSettlement] =
+    useState<boolean>(true);
+  const [isShowingPlatformFee, setIsShowingPlatformFee] =
+    useState<boolean>(true);
+  const [isShowingLofaDiscountLevy, setIsShowingLofaDiscountLevy] =
+    useState<boolean>(true);
+  const [isShowingProceeds, setIsShowingProceeds] = useState<boolean>(true);
+  const [isShowingNetProfitAfterTax, setIsShowingNetProfitAfterTax] =
+    useState<boolean>(true);
+  const [isShowingReturnRate, setIsShowingReturnRate] = useState<boolean>(true);
+
+  const [isShowingShowing, setIsShowingShowing] = useState<boolean>(false);
 
   //모달
   const [noticeModalStr, setNoticeModalStr] = useState<string>("");
@@ -598,7 +627,231 @@ export default function Page() {
         </div>
       </div>
       <Space h={20} />
-      {/* TODO: 볼 항목 선택 */}
+      <div style={{ fontSize: "16px", display: "flex", alignItems: "center" }}>
+        <div>확인할 항목 선택</div>
+        <Space w={10} />
+        <Checkbox
+          color={"gray"}
+          size={"sm"}
+          checked={isShowingShowing}
+          onChange={(event) => {
+            setIsShowingShowing(event.currentTarget.checked);
+          }}
+        />
+      </div>
+
+      {isShowingShowing ? (
+        <div style={{ fontSize: "10px", alignItems: "center" }}>
+          <Space h={15} />
+          <div style={{ display: "flex", alignItems: "center" }}>
+            <div>주문일</div>
+            <Space w={10} />
+            <Checkbox
+              color={"gray"}
+              size={"xs"}
+              checked={isShowingOrderDate}
+              onChange={(event) => {
+                setIsShowingOrderDate(event.currentTarget.checked);
+              }}
+            />
+            <Space w={20} />
+            <div>판매처</div>
+            <Space w={10} />
+            <Checkbox
+              color={"gray"}
+              size={"xs"}
+              checked={isShowingSeller}
+              onChange={(event) => {
+                setIsShowingSeller(event.currentTarget.checked);
+              }}
+            />
+            <Space w={20} />
+            <div>공급처</div>
+            <Space w={10} />
+            <Checkbox
+              color={"gray"}
+              size={"xs"}
+              checked={isShowingPartnerName}
+              onChange={(event) => {
+                setIsShowingPartnerName(event.currentTarget.checked);
+              }}
+            />
+            <Space w={20} />
+            <div>상품명</div>
+            <Space w={10} />
+            <Checkbox
+              color={"gray"}
+              size={"xs"}
+              checked={isShowingProductName}
+              onChange={(event) => {
+                setIsShowingProductName(event.currentTarget.checked);
+              }}
+            />
+            <Space w={20} />
+            <div>옵션명</div>
+            <Space w={10} />
+            <Checkbox
+              color={"gray"}
+              size={"xs"}
+              checked={isShowingOption}
+              onChange={(event) => {
+                setIsShowingOption(event.currentTarget.checked);
+              }}
+            />
+            <Space w={20} />
+            <div>할인적용</div>
+            <Space w={10} />
+            <Checkbox
+              color={"gray"}
+              size={"xs"}
+              checked={isShowingIsDiscounted}
+              onChange={(event) => {
+                setIsShowingIsDiscounted(event.currentTarget.checked);
+              }}
+            />
+            <Space w={20} />
+            <div>정상판매가</div>
+            <Space w={10} />
+            <Checkbox
+              color={"gray"}
+              size={"xs"}
+              checked={isShowingPrice}
+              onChange={(event) => {
+                setIsShowingPrice(event.currentTarget.checked);
+              }}
+            />
+            <Space w={20} />
+            <div>할인판매가</div>
+            <Space w={10} />
+            <Checkbox
+              color={"gray"}
+              size={"xs"}
+              checked={isShowingDiscountedPrice}
+              onChange={(event) => {
+                setIsShowingDiscountedPrice(event.currentTarget.checked);
+              }}
+            />
+            <Space w={20} />
+            <div>주문수량</div>
+            <Space w={10} />
+            <Checkbox
+              color={"gray"}
+              size={"xs"}
+              checked={isShowingAmount}
+              onChange={(event) => {
+                setIsShowingAmount(event.currentTarget.checked);
+              }}
+            />
+          </div>
+
+          <Space h={10} />
+
+          <div style={{ display: "flex", alignItems: "center" }}>
+            <div>총판매액</div>
+            <Space w={10} />
+            <Checkbox
+              color={"gray"}
+              size={"xs"}
+              checked={isShowingTotalSalesAmount}
+              onChange={(event) => {
+                setIsShowingTotalSalesAmount(event.currentTarget.checked);
+              }}
+            />
+            <Space w={20} />
+            <div>상태</div>
+            <Space w={10} />
+            <Checkbox
+              color={"gray"}
+              size={"xs"}
+              checked={isShowingOrderStatus}
+              onChange={(event) => {
+                setIsShowingOrderStatus(event.currentTarget.checked);
+              }}
+            />
+            <Space w={20} />
+            <div>CS</div>
+            <Space w={10} />
+            <Checkbox
+              color={"gray"}
+              size={"xs"}
+              checked={isShowingCs}
+              onChange={(event) => {
+                setIsShowingCs(event.currentTarget.checked);
+              }}
+            />
+            <Space w={20} />
+            <div>업체정산금</div>
+            <Space w={10} />
+            <Checkbox
+              color={"gray"}
+              size={"xs"}
+              checked={isShowingPartnerSettlement}
+              onChange={(event) => {
+                setIsShowingPartnerSettlement(event.currentTarget.checked);
+              }}
+            />
+            <Space w={20} />
+            <div>플랫폼수수료</div>
+            <Space w={10} />
+            <Checkbox
+              color={"gray"}
+              size={"xs"}
+              checked={isShowingPlatformFee}
+              onChange={(event) => {
+                setIsShowingPlatformFee(event.currentTarget.checked);
+              }}
+            />
+            <Space w={20} />
+            <div>로파할인부담금</div>
+            <Space w={10} />
+            <Checkbox
+              color={"gray"}
+              size={"xs"}
+              checked={isShowingLofaDiscountLevy}
+              onChange={(event) => {
+                setIsShowingLofaDiscountLevy(event.currentTarget.checked);
+              }}
+            />
+            <Space w={20} />
+            <div>수익금</div>
+            <Space w={10} />
+            <Checkbox
+              color={"gray"}
+              size={"xs"}
+              checked={isShowingProceeds}
+              onChange={(event) => {
+                setIsShowingProceeds(event.currentTarget.checked);
+              }}
+            />
+            <Space w={20} />
+            <div>세후순수익</div>
+            <Space w={10} />
+            <Checkbox
+              color={"gray"}
+              size={"xs"}
+              checked={isShowingNetProfitAfterTax}
+              onChange={(event) => {
+                setIsShowingNetProfitAfterTax(event.currentTarget.checked);
+              }}
+            />
+            <Space w={20} />
+            <div>수익률(%)</div>
+            <Space w={10} />
+            <Checkbox
+              color={"gray"}
+              size={"xs"}
+              checked={isShowingReturnRate}
+              onChange={(event) => {
+                setIsShowingReturnRate(event.currentTarget.checked);
+              }}
+            />
+          </div>
+        </div>
+      ) : (
+        <></>
+      )}
+
+      <Space h={20} />
       {revenueDataItems ? (
         <RevenueDataTableMemo
           items={revenueData.slice(pageIndex * 100, (pageIndex + 1) * 100)}
@@ -609,6 +862,26 @@ export default function Page() {
           isDBTable={true}
           partnerProfiles={partnerProfiles}
           sellerProfiles={sellerProfiles}
+          showingItems={{
+            showingOrderDate: isShowingOrderDate,
+            showingSeller: isShowingSeller,
+            showingPartnerName: isShowingPartnerName,
+            showingProductName: isShowingProductName,
+            showingOption: isShowingOption,
+            showingIsDiscounted: isShowingIsDiscounted,
+            showingPrice: isShowingPrice,
+            showingDiscountedPrice: isShowingDiscountedPrice,
+            showingAmount: isShowingAmount,
+            showingTotalSalesAmount: isShowingTotalSalesAmount,
+            showingOrderStatus: isShowingOrderStatus,
+            showingCs: isShowingCs,
+            showingPartnerSettlement: isShowingPartnerSettlement,
+            showingPlatformFee: isShowingPlatformFee,
+            showingLofaDiscountLevy: isShowingLofaDiscountLevy,
+            showingProceeds: isShowingProceeds,
+            showingNetProfitAfterTax: isShowingNetProfitAfterTax,
+            showingReturnRate: isShowingReturnRate,
+          }}
         />
       ) : (
         <></>
@@ -626,7 +899,7 @@ export default function Page() {
         <></>
       )}
 
-      <Space h={20} />
+      <Space h={10} />
       <BlackButton onClick={() => setIsDeleteModalOpened(true)}>
         선택 항목 삭제
       </BlackButton>

@@ -134,7 +134,6 @@ export default function Page() {
 
   useEffect(() => {
     if (discountData) {
-      console.log(discountData.length);
       let count = 0;
       for (let i = 0; i < items.length; i++) {
         const revenueData = items[i];
@@ -176,7 +175,6 @@ export default function Page() {
   function onDiscountPreviewClicked() {
     setIsLoading(true);
     const period = getRevenueDataPeriod(items);
-    console.log(period);
     if (period.startDate && period.endDate) {
       submitDiscountPreview(period.startDate, period.endDate);
     } else {
