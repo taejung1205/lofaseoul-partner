@@ -26,6 +26,28 @@ export type RevenueData = {
   platformAdjustmentFeeRate?: number;
 };
 
+//정산통계 DB에서 보여주는 항목 선택지용
+export type RevenueDBShowingItems = {
+  showingOrderDate: boolean;
+  showingSeller: boolean;
+  showingPartnerName: boolean;
+  showingProductName: boolean;
+  showingOption: boolean;
+  showingIsDiscounted: boolean;
+  showingPrice: boolean;
+  showingDiscountedPrice: boolean;
+  showingAmount: boolean;
+  showingTotalSalesAmount: boolean;
+  showingOrderStatus: boolean;
+  showingCs: boolean;
+  showingPartnerSettlement: boolean;
+  showingPlatformFee: boolean;
+  showingLofaDiscountLevy: boolean;
+  showingProceeds: boolean;
+  showingNetProfitAfterTax: boolean;
+  showingReturnRate: boolean;
+};
+
 export const PossibleOrderStatus = ["발주", "접수", "송장", "배송"];
 
 export const PossibleCS = [
@@ -49,7 +71,7 @@ interface Props extends React.HTMLAttributes<HTMLDivElement> {
 
 function Box({ children, styleOverrides, ...props }: Props) {
   const orderBoxStyles: React.CSSProperties = {
-    width: "inherit",
+    maxWidth: "100%",
     height: "60%",
     minHeight: "60%",
     position: "relative",
@@ -230,6 +252,7 @@ function RevenueDataItem({
   isDBTable = false,
   partnerProfile,
   platformFeeRate,
+  showingItems,
 }: {
   item: RevenueData;
   index: number;
@@ -240,6 +263,7 @@ function RevenueDataItem({
   isDBTable?: boolean;
   partnerProfile?: PartnerProfile;
   platformFeeRate?: number;
+  showingItems: RevenueDBShowingItems;
 }) {
   const [isChecked, setIsChecked] = useState<boolean>(check);
 
@@ -264,7 +288,7 @@ function RevenueDataItem({
             item.platformDiscountLevyRate!)) /
           100
       : undefined;
-  }, [item]);
+  }, [item.isDiscounted]);
 
   const totalSalesAmount = useMemo(() => {
     return (discountedPrice ?? item.price) * item.amount;
@@ -371,28 +395,47 @@ function RevenueDataItem({
         <></>
       )}
 
-      <TextBox styleOverrides={{ minWidth: "90px", width: "90px" }}>
-        {dateToDayStr(item.orderDate)}
-      </TextBox>
-      <TextBox styleOverrides={{ minWidth: "90px", width: "90px" }}>
-        {item.seller}
-      </TextBox>
-      <TextBox
-        styleOverrides={{ minWidth: "160px", fontSize: "12px", width: "160px" }}
-      >
-        {item.partnerName}
-      </TextBox>
-      <TextBox
-        styleOverrides={{ minWidth: "320px", fontSize: "12px", width: "320px" }}
-      >
-        {item.productName}
-      </TextBox>
-      <TextBox
-        styleOverrides={{ minWidth: "250px", fontSize: "12px", width: "250px" }}
-      >
-        {item.optionName}
-      </TextBox>
-      {isDBTable ? (
+      {showingItems.showingOrderDate ? (
+        <TextBox styleOverrides={{ minWidth: "90px", width: "90px" }}>
+          {dateToDayStr(item.orderDate)}
+        </TextBox>
+      ) : (
+        <></>
+      )}
+
+      {showingItems.showingSeller ? (
+        <TextBox styleOverrides={{ minWidth: "90px", width: "90px" }}>
+          {item.seller}
+        </TextBox>
+      ) : (
+        <></>
+      )}
+
+      {showingItems.showingPartnerName ? (
+        <TextBox styleOverrides={{ minWidth: "160px", width: "160px" }}>
+          {item.partnerName}
+        </TextBox>
+      ) : (
+        <></>
+      )}
+
+      {showingItems.showingProductName ? (
+        <TextBox styleOverrides={{ minWidth: "320px", width: "320px" }}>
+          {item.productName}
+        </TextBox>
+      ) : (
+        <></>
+      )}
+
+      {showingItems.showingOption ? (
+        <TextBox styleOverrides={{ minWidth: "250px", width: "250px" }}>
+          {item.optionName}
+        </TextBox>
+      ) : (
+        <></>
+      )}
+
+      {isDBTable && showingItems.showingIsDiscounted ? (
         <TextBox styleOverrides={{ minWidth: "45px", width: "45px" }}>
           {item.isDiscounted ? "O" : "X"}
         </TextBox>
@@ -401,9 +444,13 @@ function RevenueDataItem({
       )}
 
       {isDBTable ? (
-        <TextBox styleOverrides={{ minWidth: "60px", width: "60px" }}>
-          {item.price}
-        </TextBox>
+        showingItems.showingPrice ? (
+          <TextBox styleOverrides={{ minWidth: "60px", width: "60px" }}>
+            {item.price}
+          </TextBox>
+        ) : (
+          <></>
+        )
       ) : (
         <TextBox
           styleOverrides={{
@@ -417,65 +464,88 @@ function RevenueDataItem({
             : item.price}
         </TextBox>
       )}
-      {isDBTable ? (
+
+      {isDBTable && showingItems.showingDiscountedPrice ? (
         <TextBox styleOverrides={{ minWidth: "60px", width: "60px" }}>
           {discountedPrice ?? ""}
         </TextBox>
       ) : (
         <></>
       )}
-      <TextBox styleOverrides={{ minWidth: "60px", width: "60px" }}>
-        {item.amount}
-      </TextBox>
-      {isDBTable ? (
+
+      {showingItems.showingAmount ? (
+        <TextBox styleOverrides={{ minWidth: "60px", width: "60px" }}>
+          {item.amount}
+        </TextBox>
+      ) : (
+        <></>
+      )}
+
+      {isDBTable && showingItems.showingTotalSalesAmount ? (
         <TextBox styleOverrides={{ minWidth: "60px", width: "60px" }}>
           {totalSalesAmount}
         </TextBox>
       ) : (
         <></>
       )}
-      <TextBox styleOverrides={{ minWidth: "60px", width: "60px" }}>
-        {item.orderStatus}
-      </TextBox>
-      <TextBox styleOverrides={{ minWidth: "180px", width: "180px" }}>
-        {item.cs}
-      </TextBox>
-      {isDBTable ? (
+
+      {showingItems.showingOrderStatus ? (
+        <TextBox styleOverrides={{ minWidth: "60px", width: "60px" }}>
+          {item.orderStatus}
+        </TextBox>
+      ) : (
+        <></>
+      )}
+
+      {showingItems.showingCs ? (
+        <TextBox styleOverrides={{ minWidth: "180px", width: "180px" }}>
+          {item.cs}
+        </TextBox>
+      ) : (
+        <></>
+      )}
+
+      {isDBTable && showingItems.showingPartnerSettlement ? (
         <TextBox styleOverrides={{ minWidth: "60px", width: "60px" }}>
           {partnerSettlement}
         </TextBox>
       ) : (
         <></>
       )}
-      {isDBTable ? (
+
+      {isDBTable && showingItems.showingPlatformFee ? (
         <TextBox styleOverrides={{ minWidth: "60px", width: "60px" }}>
           {totalSalesAmount - platformSettlement}
         </TextBox>
       ) : (
         <></>
       )}
-      {isDBTable ? (
+
+      {isDBTable && showingItems.showingLofaDiscountLevy ? (
         <TextBox styleOverrides={{ minWidth: "75px", width: "75px" }}>
           {lofaDiscountLevy ?? ""}
         </TextBox>
       ) : (
         <></>
       )}
-      {isDBTable ? (
+
+      {isDBTable && showingItems.showingProceeds ? (
         <TextBox styleOverrides={{ minWidth: "60px", width: "60px" }}>
           {platformSettlement - partnerSettlement}
         </TextBox>
       ) : (
         <></>
       )}
-      {isDBTable ? (
+
+      {isDBTable && showingItems.showingNetProfitAfterTax ? (
         <TextBox styleOverrides={{ minWidth: "60px", width: "60px" }}>
           {netProfitAfterTax}
         </TextBox>
       ) : (
         <></>
       )}
-      {isDBTable ? (
+
+      {isDBTable && showingItems.showingReturnRate ? (
         <TextBox styleOverrides={{ minWidth: "60px", width: "60px" }}>
           {(netProfitAfterTax / totalSalesAmount) * 100}
         </TextBox>
@@ -497,6 +567,7 @@ export function RevenueDataTable({
   isDBTable = false,
   partnerProfiles,
   sellerProfiles,
+  showingItems,
 }: {
   items: RevenueData[];
   itemsChecked: boolean[];
@@ -508,12 +579,40 @@ export function RevenueDataTable({
   isDBTable?: boolean;
   partnerProfiles?: Map<string, PartnerProfile>;
   sellerProfiles?: Map<string, SellerProfile>;
+  showingItems?: RevenueDBShowingItems;
 }) {
   const [allChecked, setAllChecked] = useState<boolean>(false);
 
   useEffect(() => {
     setAllChecked(defaultAllCheck);
   }, [items]);
+
+  const showingItemsMemo = useMemo(() => {
+    if (showingItems) {
+      return showingItems;
+    } else {
+      return {
+        showingOrderDate: true,
+        showingSeller: true,
+        showingPartnerName: true,
+        showingProductName: true,
+        showingOption: true,
+        showingIsDiscounted: true,
+        showingPrice: true,
+        showingDiscountedPrice: true,
+        showingAmount: true,
+        showingTotalSalesAmount: true,
+        showingOrderStatus: true,
+        showingCs: true,
+        showingPartnerSettlement: true,
+        showingPlatformFee: true,
+        showingLofaDiscountLevy: true,
+        showingProceeds: true,
+        showingNetProfitAfterTax: true,
+        showingReturnRate: true,
+      };
+    }
+  }, [showingItems]);
 
   return (
     <>
@@ -534,114 +633,164 @@ export function RevenueDataTable({
             <></>
           )}
 
-          <TextBox styleOverrides={{ minWidth: "90px", width: "90px" }}>
-            주문일
-          </TextBox>
-          <TextBox styleOverrides={{ minWidth: "90px", width: "90px" }}>
-            판매처
-          </TextBox>
-          <TextBox
-            styleOverrides={{
-              minWidth: "160px",
-              fontSize: "12px",
-              width: "160px",
-            }}
-          >
-            공급처
-          </TextBox>
-          <TextBox
-            styleOverrides={{
-              minWidth: "320px",
-              fontSize: "12px",
-              width: "320px",
-            }}
-          >
-            상품명
-          </TextBox>
-          <TextBox
-            styleOverrides={{
-              minWidth: "250px",
-              fontSize: "12px",
-              width: "250px",
-            }}
-          >
-            옵션명
-          </TextBox>
-          {isDBTable ? (
+          {showingItemsMemo.showingOrderDate ? (
+            <TextBox styleOverrides={{ minWidth: "90px", width: "90px" }}>
+              주문일
+            </TextBox>
+          ) : (
+            <></>
+          )}
+
+          {showingItemsMemo.showingSeller ? (
+            <TextBox styleOverrides={{ minWidth: "90px", width: "90px" }}>
+              판매처
+            </TextBox>
+          ) : (
+            <></>
+          )}
+
+          {showingItemsMemo.showingPartnerName ? (
+            <TextBox
+              styleOverrides={{
+                minWidth: "160px",
+                width: "160px",
+              }}
+            >
+              공급처
+            </TextBox>
+          ) : (
+            <></>
+          )}
+
+          {showingItemsMemo.showingProductName ? (
+            <TextBox
+              styleOverrides={{
+                minWidth: "320px",
+                width: "320px",
+              }}
+            >
+              상품명
+            </TextBox>
+          ) : (
+            <></>
+          )}
+
+          {showingItemsMemo.showingOption ? (
+            <TextBox
+              styleOverrides={{
+                minWidth: "250px",
+                width: "250px",
+              }}
+            >
+              옵션명
+            </TextBox>
+          ) : (
+            <></>
+          )}
+
+          {showingItemsMemo.showingIsDiscounted && isDBTable ? (
             <TextBox styleOverrides={{ minWidth: "45px", width: "45px" }}>
               할인적용
             </TextBox>
           ) : (
             <></>
           )}
-          {isDBTable ? (
-            <TextBox styleOverrides={{ minWidth: "60px", width: "60px" }}>
-              정상판매가
-            </TextBox>
+
+          {showingItemsMemo.showingPrice ? (
+            isDBTable ? (
+              <TextBox styleOverrides={{ minWidth: "60px", width: "60px" }}>
+                정상판매가
+              </TextBox>
+            ) : (
+              <TextBox styleOverrides={{ minWidth: "60px", width: "60px" }}>
+                판매가
+              </TextBox>
+            )
           ) : (
-            <TextBox styleOverrides={{ minWidth: "60px", width: "60px" }}>
-              판매가
-            </TextBox>
+            <></>
           )}
-          {isDBTable ? (
+
+          {showingItemsMemo.showingDiscountedPrice && isDBTable ? (
             <TextBox styleOverrides={{ minWidth: "60px", width: "60px" }}>
               할인판매가
             </TextBox>
           ) : (
             <></>
           )}
-          <TextBox styleOverrides={{ minWidth: "60px", width: "60px" }}>
-            주문수량
-          </TextBox>
-          {isDBTable ? (
+
+          {showingItemsMemo.showingAmount ? (
+            <TextBox styleOverrides={{ minWidth: "60px", width: "60px" }}>
+              주문수량
+            </TextBox>
+          ) : (
+            <></>
+          )}
+
+          {showingItemsMemo.showingTotalSalesAmount && isDBTable ? (
             <TextBox styleOverrides={{ minWidth: "60px", width: "60px" }}>
               총판매액
             </TextBox>
           ) : (
             <></>
           )}
-          <TextBox styleOverrides={{ minWidth: "60px", width: "60px" }}>
-            상태
-          </TextBox>
-          <TextBox styleOverrides={{ minWidth: "180px", width: "180px" }}>
-            CS
-          </TextBox>
-          {isDBTable ? (
+
+          {showingItemsMemo.showingOrderStatus ? (
+            <TextBox styleOverrides={{ minWidth: "60px", width: "60px" }}>
+              상태
+            </TextBox>
+          ) : (
+            <></>
+          )}
+
+          {showingItemsMemo.showingCs ? (
+            <TextBox styleOverrides={{ minWidth: "180px", width: "180px" }}>
+              CS
+            </TextBox>
+          ) : (
+            <></>
+          )}
+
+          {showingItemsMemo.showingPartnerSettlement && isDBTable ? (
             <TextBox styleOverrides={{ minWidth: "60px", width: "60px" }}>
               업체정산금
             </TextBox>
           ) : (
             <></>
           )}
-          {isDBTable ? (
+
+          {showingItemsMemo.showingPlatformFee && isDBTable ? (
             <TextBox styleOverrides={{ minWidth: "60px", width: "60px" }}>
               플랫폼수수료
             </TextBox>
           ) : (
             <></>
           )}
-          {isDBTable ? (
+
+          {showingItemsMemo.showingLofaDiscountLevy && isDBTable ? (
             <TextBox styleOverrides={{ minWidth: "75px", width: "75px" }}>
               로파할인부담금
             </TextBox>
           ) : (
             <></>
           )}
-          {isDBTable ? (
+
+          {showingItemsMemo.showingProceeds && isDBTable ? (
             <TextBox styleOverrides={{ minWidth: "60px", width: "60px" }}>
               수익금
             </TextBox>
           ) : (
             <></>
           )}
-          {isDBTable ? (
+
+          {showingItemsMemo.showingNetProfitAfterTax && isDBTable ? (
             <TextBox styleOverrides={{ minWidth: "60px", width: "60px" }}>
               세후순수익
             </TextBox>
           ) : (
             <></>
           )}
-          {isDBTable ? (
+
+          {showingItemsMemo.showingReturnRate && isDBTable ? (
             <TextBox styleOverrides={{ minWidth: "60px", width: "60px" }}>
               수익률(%)
             </TextBox>
@@ -679,6 +828,7 @@ export function RevenueDataTable({
                 isDBTable={isDBTable}
                 partnerProfile={partnerProfile}
                 platformFeeRate={platformFeeRate}
+                showingItems={showingItemsMemo}
               />
             );
           })}
