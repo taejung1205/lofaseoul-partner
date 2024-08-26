@@ -11,9 +11,19 @@ export const PossibleSellers = [
   "예약거래",
   "오늘의집",
   "카카오",
+  "무신사",
 ];
 
 export const LofaSellers = ["로파공홈", "용산쇼룸", "예약거래"];
+
+export const NormalPriceStandardSellers = [
+  "29cm",
+  "오늘의집",
+  "무신사",
+  "로파공홈",
+  "용산쇼룸",
+  "예약거래",
+];
 
 /**
  * 판매처 유사명을 수정합니다

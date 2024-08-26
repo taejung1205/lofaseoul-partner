@@ -48,7 +48,7 @@ import {
   RevenueData,
 } from "~/components/revenue_data";
 import { PartnerRevenueStat } from "~/components/revenue_stat";
-import { LofaSellers } from "~/components/seller";
+import { LofaSellers, NormalPriceStandardSellers } from "~/components/seller";
 import { DiscountData } from "~/components/discount";
 import { getIdFromTime } from "~/components/date";
 
@@ -422,25 +422,27 @@ export async function getSettlements({
   const settlementsRef = collection(firestore, `settlements/${monthStr}/items`);
   const settlementsQuery = query(
     settlementsRef,
-    where("partnerName", "==", partnerName),
+    where("partnerName", "==", partnerName)
   );
   const querySnap = await getDocs(settlementsQuery);
 
-  const resultArray = querySnap.docs.map((doc) => {
-    const data = doc.data();
-    if (data.orderDate) {
-      const date = data.orderDate.toDate();
-      data.orderDate = date;
-    }
-    return data;
-  }).sort((a, b) => {
-    // orderDate가 없는 항목은 맨 앞으로 이동
-    if (!a.orderDate) return -1;
-    if (!b.orderDate) return 1;
-  
-    // orderDate가 있는 항목은 날짜 순으로 정렬
-    return a.orderDate - b.orderDate;
-  });
+  const resultArray = querySnap.docs
+    .map((doc) => {
+      const data = doc.data();
+      if (data.orderDate) {
+        const date = data.orderDate.toDate();
+        data.orderDate = date;
+      }
+      return data;
+    })
+    .sort((a, b) => {
+      // orderDate가 없는 항목은 맨 앞으로 이동
+      if (!a.orderDate) return -1;
+      if (!b.orderDate) return 1;
+
+      // orderDate가 있는 항목은 날짜 순으로 정렬
+      return a.orderDate - b.orderDate;
+    });
 
   return resultArray;
 }
@@ -2349,7 +2351,7 @@ export async function getRevenueStats({
               data.lofaAdjustmentFeeRate)) /
           100;
         const platformSettlementStandard: "정상판매가" | "할인판매가" =
-          data.seller == "29cm" || data.seller == "오늘의집"
+          NormalPriceStandardSellers.includes(data.seller)
             ? "정상판매가"
             : "할인판매가";
         platformSettlement = isLofa
