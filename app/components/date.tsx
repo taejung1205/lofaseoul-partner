@@ -1,4 +1,5 @@
 import { Popover } from "@mantine/core";
+import { endOfWeek, startOfWeek } from "date-fns";
 import { forwardRef } from "react";
 import { DayPicker } from "react-day-picker";
 
@@ -82,6 +83,50 @@ export function DaySelectPopover({
   );
 }
 
+export function WeekSelectPopover({
+  selectedDate,
+  setSelectedDate,
+}: {
+  selectedDate: Date | undefined;
+  setSelectedDate: (date: Date | undefined) => void;
+}) {
+  return (
+    <Popover>
+      <Popover.Target>
+        <WeekTargetBox>
+          {selectedDate !== undefined
+            ? `${dateToDayStr(startOfWeek(selectedDate))} ~ ${dateToDayStr(
+                endOfWeek(selectedDate)
+              )}`
+            : ""}
+        </WeekTargetBox>
+      </Popover.Target>
+      <Popover.Dropdown>
+        <DayPicker
+          selected={
+            selectedDate
+              ? { from: startOfWeek(selectedDate), to: endOfWeek(selectedDate) }
+              : undefined
+          }
+          onDayClick={(day) => {
+            setSelectedDate(startOfWeek(day));
+          }}
+          styles={{
+            day: {
+              fontSize: "16px",
+            },
+          }}
+          modifiersStyles={{
+            selected: {
+              backgroundColor: "grey",
+            },
+          }}
+        />
+      </Popover.Dropdown>
+    </Popover>
+  );
+}
+
 const DateTargetBox = forwardRef((props: any, ref: React.ForwardedRef<any>) => (
   <div
     ref={ref}
@@ -89,6 +134,29 @@ const DateTargetBox = forwardRef((props: any, ref: React.ForwardedRef<any>) => (
       border: "3px solid #000000",
       width: "140px",
       minWidth: "140px",
+      fontSize: "20px",
+      lineHeight: "20px",
+      padding: "6px",
+      height: "40px",
+      textAlign: "center",
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+      cursor: "pointer",
+    }}
+    {...props}
+  >
+    {props.children}
+  </div>
+));
+
+const WeekTargetBox = forwardRef((props: any, ref: React.ForwardedRef<any>) => (
+  <div
+    ref={ref}
+    style={{
+      border: "3px solid #000000",
+      width: "280px",
+      minWidth: "280px",
       fontSize: "20px",
       lineHeight: "20px",
       padding: "6px",
