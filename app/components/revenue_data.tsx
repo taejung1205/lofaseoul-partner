@@ -3,7 +3,7 @@ import React, { useMemo } from "react";
 import { useEffect, useState } from "react";
 import { dateToDayStr } from "~/utils/date";
 import { PartnerProfile } from "./partner_profile";
-import { LofaSellers } from "./seller";
+import { LofaSellers, NormalPriceStandardSellers } from "./seller";
 import { SellerProfile } from "~/routes/admin/seller-manage";
 
 //통계용 파일 업로드에서 올릴 때 사용하는 양식입니다.
@@ -303,7 +303,7 @@ function RevenueDataItem({
   }, [item]);
 
   const platformSettlementStandard = useMemo(() => {
-    if (item.seller == "29cm" || item.seller == "오늘의집") {
+    if (NormalPriceStandardSellers.includes(item.seller)) {
       return "정상판매가";
     } else {
       return "할인판매가";

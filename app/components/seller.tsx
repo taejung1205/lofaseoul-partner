@@ -11,9 +11,19 @@ export const PossibleSellers = [
   "예약거래",
   "오늘의집",
   "카카오",
+  "무신사",
 ];
 
 export const LofaSellers = ["로파공홈", "용산쇼룸", "예약거래"];
+
+export const NormalPriceStandardSellers = [
+  "29cm",
+  "오늘의집",
+  "무신사",
+  "로파공홈",
+  "용산쇼룸",
+  "예약거래",
+];
 
 /**
  * 판매처 유사명을 수정합니다
@@ -60,6 +70,7 @@ export function SellerSelect({
         { value: "용산쇼룸", label: "용산쇼룸" },
         { value: "오늘의집", label: "오늘의집" },
         { value: "카카오", label: "카카오" },
+        { value: "무신사", label: "무신사" },
         { value: "예약거래", label: "예약거래" },
         { value: "etc", label: "기타" },
       ]}
