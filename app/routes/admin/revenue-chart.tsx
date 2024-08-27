@@ -1,7 +1,7 @@
 import { PageLayout } from "~/components/page_layout";
 import dayPickerStyles from "react-day-picker/dist/style.css";
 import { Link, useLoaderData, useNavigation } from "@remix-run/react";
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { Checkbox, LoadingOverlay, Space } from "@mantine/core";
 import { BasicModal, ModalButton } from "~/components/modal";
 import { MonthSelectPopover, WeekSelectPopover } from "~/components/date";
@@ -19,6 +19,9 @@ import { CommonButton } from "~/components/button";
 import { SellerSelect } from "~/components/seller";
 import { endOfMonth, endOfWeek, startOfMonth } from "date-fns";
 import { getRevenueData } from "~/services/firebase.server";
+import React from "react";
+import { RevenueData } from "~/components/revenue_data";
+import { StackedBarChartData } from "~/components/chart";
 
 export function links() {
   return [{ rel: "stylesheet", href: dayPickerStyles }];
@@ -152,6 +155,22 @@ export default function Page() {
     }
   }, [loaderData]);
 
+  const searchedData: StackedBarChartData[] = useMemo(() => {
+    if (!loaderData || !loaderData.data) {
+      return null;
+    } else {
+      return loaderData.data.map((val: any) => {
+        const data = val.data;
+        return {
+          name: data.orderDate,
+          a: 100,
+          b: 200,
+          c: 300,
+        };
+      });
+    }
+  }, [loaderData]);
+
   const [selectedDate, setSelectedDate] = useState<Date>();
   const [periodType, setPeriodType] = useState<"month" | "week">(
     searchedPeriodType ?? "month"
@@ -184,8 +203,11 @@ export default function Page() {
   }, [selectedDate]);
 
   //loaderData에서 불러온 수익통계내역 전체
+  //TODO: remove
   const test = useMemo(() => {
-    console.log("loaderData.data", loaderData.data);
+    if (loaderData) {
+      console.log("loaderData.data", loaderData.data);
+    }
   }, [loaderData]);
 
   //날짜 수신
@@ -342,6 +364,12 @@ export default function Page() {
           <div>(WIP)</div>
         </div>
       </div>
+
+      <div>
+        <Suspense fallback={<div>Loading... </div>}>
+          <MyStackedBarChart data={searchedData ?? []} />
+        </Suspense>
+      </div>
     </PageLayout>
   );
 }
@@ -359,3 +387,9 @@ function EditInputBox({
   };
   return <input style={inputStyles} {...props} />;
 }
+
+const MyStackedBarChart = React.lazy(() =>
+  import("~/components/chart").then((module) => ({
+    default: module.MyStackedBarChart,
+  }))
+);
