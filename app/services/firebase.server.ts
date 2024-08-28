@@ -2065,6 +2065,7 @@ export async function getRevenueData({
   cs: string;
   filterDiscount: string;
 }) {
+  console.log(startDate, endDate);
   let orderStatusQueryArray: string[];
   switch (orderStatus) {
     case "전체":

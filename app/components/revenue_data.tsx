@@ -242,6 +242,65 @@ export function getRevenueDataPeriod(items: RevenueData[]): {
   }
 }
 
+//매출
+export function getSalesAmount(item: RevenueData) {
+  const salesPrice = item.isDiscounted
+    ? (item.price *
+        (100 -
+          item.lofaDiscountLevyRate! -
+          item.partnerDiscountLevyRate! -
+          item.platformDiscountLevyRate!)) /
+      100
+    : item.price;
+
+  return salesPrice * item.amount;
+}
+
+export function getProceeds(
+  item: RevenueData,
+  commonFeeRate: number,
+  platformFeeRate: number
+) {
+  const isLofa = LofaSellers.includes(item.seller);
+  const platformSettlementStandard = NormalPriceStandardSellers.includes(
+    item.seller
+  )
+    ? "정상판매가"
+    : "할인판매가";
+
+  const platformSettlement = isLofa
+    ? getSalesAmount(item)
+    : item.isDiscounted
+    ? platformSettlementStandard == "정상판매가"
+      ? (item.price *
+          item.amount *
+          (100 -
+            platformFeeRate -
+            item.lofaDiscountLevyRate! -
+            item.partnerDiscountLevyRate! +
+            item.platformAdjustmentFeeRate!)) /
+        100
+      : (((item.price *
+          item.amount *
+          (100 - item.lofaDiscountLevyRate! - item.partnerDiscountLevyRate!)) /
+          100) *
+          (100 - platformFeeRate + item.platformAdjustmentFeeRate!)) /
+        100
+    : (item.price * item.amount * (100 - platformFeeRate)) / 100;
+
+  const partnerSettlement = item.isDiscounted
+    ? (item.price *
+        item.amount *
+        (100 -
+          commonFeeRate -
+          item.partnerDiscountLevyRate! +
+          item.lofaAdjustmentFeeRate!)) /
+      100
+    : (item.price * item.amount * (100 - commonFeeRate)) / 100.0;
+
+  return platformSettlement - partnerSettlement;
+}
+
 function RevenueDataItem({
   item,
   index,
