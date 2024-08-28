@@ -103,8 +103,8 @@ export function MyStackedBarChart({ chartData }: { chartData: BarChartInput }) {
       <YAxis
         tickFormatter={(tick: number | string) => {
           const value = typeof tick === "string" ? parseInt(tick, 10) : tick;
-         
-            return value.toLocaleString(); 
+
+          return value.toLocaleString();
         }}
       />
       <Tooltip
@@ -129,9 +129,25 @@ export function MyStackedBarChart({ chartData }: { chartData: BarChartInput }) {
                 )?.value;
                 return (
                   <>
-                    <div>{`${seller} 매출: ${sales ?? 0}`}</div>
+                    <div style={{ display: "flex", textAlign: "left" }}>
+                      <div style={{ width: "160px" }}>{`${seller} 매출: `}</div>
+                      <div>{`${
+                        sales?.toLocaleString(undefined, {
+                          minimumFractionDigits: 0,
+                          maximumFractionDigits: 0,
+                        }) ?? 0
+                      }`}</div>
+                    </div>
                     <Space h={5} />
-                    <div>{`${seller} 수익: ${proceeds ?? 0}`}</div>
+                    <div style={{ display: "flex", textAlign: "left" }}>
+                      <div style={{ width: "160px" }}>{`${seller} 수익: `}</div>
+                      <div>{`${
+                        proceeds?.toLocaleString(undefined, {
+                          minimumFractionDigits: 0,
+                          maximumFractionDigits: 0,
+                        }) ?? 0
+                      }`}</div>
+                    </div>
                     <Space h={15} />
                   </>
                 );

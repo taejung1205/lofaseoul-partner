@@ -582,7 +582,11 @@ export default function Page() {
               setSeller={(seller: string) => {
                 setSeller(seller);
                 if (!sellerList.includes(seller)) {
-                  addSeller(seller);
+                  if(seller != "all"){
+                    addSeller(seller);
+                  } else {
+                    setSellerList([]);
+                  }
                 }
               }}
             />
