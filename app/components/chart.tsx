@@ -106,6 +106,7 @@ export function MyStackedBarChart({ chartData }: { chartData: BarChartInput }) {
 
           return value.toLocaleString();
         }}
+        fontSize={12}
       />
       <Tooltip
         content={({ payload, label }) => {
@@ -136,7 +137,7 @@ export function MyStackedBarChart({ chartData }: { chartData: BarChartInput }) {
                           minimumFractionDigits: 0,
                           maximumFractionDigits: 0,
                         }) ?? 0
-                      }`}</div>
+                      }원`}</div>
                     </div>
                     <Space h={5} />
                     <div style={{ display: "flex", textAlign: "left" }}>
@@ -146,7 +147,7 @@ export function MyStackedBarChart({ chartData }: { chartData: BarChartInput }) {
                           minimumFractionDigits: 0,
                           maximumFractionDigits: 0,
                         }) ?? 0
-                      }`}</div>
+                      }원`}</div>
                     </div>
                     <Space h={15} />
                   </>
