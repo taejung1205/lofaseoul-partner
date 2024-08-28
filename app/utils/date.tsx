@@ -1,3 +1,11 @@
+import {
+  differenceInWeeks,
+  endOfMonth,
+  getWeek,
+  startOfMonth,
+  startOfWeek,
+} from "date-fns";
+
 //해당 문자열이 YYYY-MM-DD 형식의 날짜를 나타내는 문자인지 확인합니다.
 export function isValidDateString(dateString: string): boolean {
   const regex = /^\d{4}-\d{2}-\d{2}$/;
@@ -110,4 +118,21 @@ export function dayStrToDate(dayStr: string) {
   const month = dayStr.substring(5, 7);
   const day = dayStr.substring(8, 10);
   return new Date(Number(year), Number(month) - 1, Number(day));
+}
+
+export function getWeekOfMonth(date: Date): number {
+  const startOfThisMonth = getWeek(startOfMonth(date));
+  const thisWeek = getWeek(date);
+
+  return thisWeek - startOfThisMonth + 1;
+}
+export function getTotalWeeksInMonth(date: Date): number {
+  const startOfThisMonth = startOfMonth(date);
+  const endOfThisMonth = endOfMonth(date);
+
+  // 월의 첫 번째 주와 마지막 주 사이의 차이를 계산
+  const firstWeek = getWeek(startOfThisMonth);
+  const lastWeek = getWeek(endOfThisMonth);
+
+  return differenceInWeeks(endOfThisMonth, startOfWeek(startOfThisMonth)) + 1;
 }
