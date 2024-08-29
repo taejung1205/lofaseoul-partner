@@ -9,6 +9,9 @@ import {
   Tooltip,
   Legend,
   LabelList,
+  LineChart,
+  Line,
+  LegendProps,
 } from "recharts";
 
 export const PossibleSellers = [
@@ -22,7 +25,7 @@ export const PossibleSellers = [
   "무신사",
 ];
 
-export type BarChartData = {
+export type BarGraphData = {
   name: string; // 날짜
   "29cm_sales"?: number;
   "29cm_proceeds"?: number;
@@ -42,9 +45,20 @@ export type BarChartData = {
   무신사_proceeds: number;
 };
 
-export type BarChartInput = {
+export type BarGraphInput = {
   sellers: string[]; // 사용할 판매처들
-  data: BarChartData[];
+  data: BarGraphData[];
+};
+
+export type LineGraphData = {
+  name: string; //날짜 XXXX-XX-XX
+  productName: string;
+  value: number;
+};
+
+export type LineGraphInput = {
+  unit?: string;
+  data: LineGraphData[];
 };
 
 // 판매처별 색상 설정
@@ -62,11 +76,11 @@ const COLORS: Record<string, string> = {
 
 // const MyComponent = React.lazy(() => import("./MyComponent"));
 
-export function MyStackedBarChart({ chartData }: { chartData: BarChartInput }) {
+export function StackedBarGraph({ graphInput }: { graphInput: BarGraphInput }) {
   // Create a legend for each store
 
   const legendItems = Object.keys(COLORS)
-    .filter((seller) => chartData.sellers.includes(seller))
+    .filter((seller) => graphInput.sellers.includes(seller))
     .map((seller) => ({
       value: seller,
       color: COLORS[seller],
@@ -74,10 +88,9 @@ export function MyStackedBarChart({ chartData }: { chartData: BarChartInput }) {
 
   return (
     <BarChart
-      id="test"
       width={1000}
       height={500}
-      data={chartData.data}
+      data={graphInput.data}
       margin={{
         top: 5,
         right: 30,
@@ -94,7 +107,7 @@ export function MyStackedBarChart({ chartData }: { chartData: BarChartInput }) {
             y={y + 40} // y 좌표를 조정하여 레이블을 아래로 이동
             textAnchor="middle"
             fill="#666"
-            fontSize={20}
+            fontSize={16}
           >
             {payload.value}
           </text>
@@ -119,7 +132,7 @@ export function MyStackedBarChart({ chartData }: { chartData: BarChartInput }) {
               }}
             >
               <p>{label}</p>
-              {chartData.sellers.map((seller) => {
+              {graphInput.sellers.map((seller) => {
                 if (!payload || !payload.length) return null;
 
                 const sales = payload.find(
@@ -169,7 +182,7 @@ export function MyStackedBarChart({ chartData }: { chartData: BarChartInput }) {
           color: item.color,
         }))}
       />
-      {chartData.sellers.map((val, index) => {
+      {graphInput.sellers.map((val, index) => {
         return (
           <>
             <Bar
@@ -216,3 +229,153 @@ export function MyStackedBarChart({ chartData }: { chartData: BarChartInput }) {
     </BarChart>
   );
 }
+
+export function LineGraph({ graphInput }: { graphInput: LineGraphInput }) {
+  // Line에 사용될 색상들 (최대 5개)
+  const COLORS = ["#8884d8", "#82ca9d", "#ffc658", "#ff7300", "#0088FE"];
+
+  // 상품별로 데이터를 그룹화
+  const productNames = Array.from(
+    new Set(graphInput.data.map((item) => item.productName))
+  );
+
+  const formattedData = productNames.reduce((acc, productName) => {
+    const productData = graphInput.data.filter(
+      (item) => item.productName === productName
+    );
+
+    productData.forEach(({ name, value }) => {
+      const existingEntry = acc.find((entry) => entry.name === name);
+
+      if (existingEntry) {
+        existingEntry[productName] = value;
+      } else {
+        acc.push({ name, [productName]: value });
+      }
+    });
+
+    return acc;
+  }, [] as Record<string, any>[]);
+
+  return (
+    <LineChart
+      width={1000}
+      height={700}
+      data={formattedData}
+      margin={{
+        top: 5,
+        right: 30,
+        left: 50,
+        bottom: 100,
+      }}
+    >
+      <CartesianGrid strokeDasharray="3 3" />
+      <XAxis
+        dataKey="name"
+        padding={{ left: 50, right: 50 }}
+        tick={({ x, y, payload }) => (
+          <text
+            x={x}
+            y={y + 20} // y 좌표를 조정하여 레이블을 아래로 이동
+            textAnchor="middle"
+            fill="#666"
+            fontSize={16}
+          >
+            {payload.value}
+          </text>
+        )}
+      />
+      <YAxis
+        tickFormatter={(tick: number | string) => {
+          const value = typeof tick === "string" ? parseInt(tick, 10) : tick;
+
+          return value.toLocaleString();
+        }}
+        fontSize={12}
+      />
+      <Tooltip
+        content={({ payload, label }: any) => {
+          if (payload && payload.length) {
+            return (
+              <div
+                style={{
+                  backgroundColor: "#fff",
+                  border: "1px solid #ccc",
+                  padding: "10px",
+                  borderRadius: "4px",
+                }}
+              >
+                <p>{label}</p>
+                {payload.map((entry: any, index: number) => (
+                  <div
+                    style={{
+                      display: "flex",
+                      textAlign: "left",
+                      lineHeight: "30px",
+                    }}
+                  >
+                    <div style={{ width: "600px" }}>{`${entry.name}: `}</div>
+                    <div>{`${
+                      entry.value?.toLocaleString(undefined, {
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 0,
+                      }) ?? 0
+                    }${graphInput.unit ?? "원"}`}</div>
+                  </div>
+                ))}
+              </div>
+            );
+          }
+          return null;
+        }}
+      />
+      <Legend
+        content={<CustomLegend />}
+        verticalAlign="bottom"
+        align="center"
+        wrapperStyle={{ paddingTop: "30px", paddingLeft: "50px" }}
+      />
+      {productNames.map((productName, index) => (
+        <Line
+          key={productName}
+          type="linear"
+          dataKey={productName}
+          stroke={COLORS[index % COLORS.length]}
+          isAnimationActive={false}
+        />
+      ))}
+    </LineChart>
+  );
+}
+
+// CustomLegend Component
+const CustomLegend: React.FC<LegendProps> = (props) => {
+  const { payload } = props;
+
+  return (
+    <div
+      style={{ display: "flex", flexDirection: "column", marginTop: "20px" }}
+    >
+      {payload?.map((entry, index) => (
+        <div
+          key={`item-${index}`}
+          style={{
+            marginBottom: "10px",
+            display: "flex",
+            alignItems: "center",
+          }}
+        >
+          <div
+            style={{
+              width: "12px",
+              height: "12px",
+              backgroundColor: entry.color,
+              marginRight: "10px",
+            }}
+          />
+          <span style={{ fontSize: "14px" }}>{entry.value}</span>
+        </div>
+      ))}
+    </div>
+  );
+};
