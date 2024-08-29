@@ -18,12 +18,8 @@ import {
 } from "~/utils/date";
 import { json, LoaderFunction } from "@remix-run/node";
 import { CommonButton } from "~/components/button";
-import {
-  LofaSellers,
-  PossibleSellers,
-  SellerSelect,
-} from "~/components/seller";
-import { endOfMonth, endOfWeek, getWeek, startOfMonth } from "date-fns";
+import { LofaSellers, SellerSelect } from "~/components/seller";
+import { endOfMonth, endOfWeek, startOfMonth } from "date-fns";
 import {
   getAllPartnerProfiles,
   getAllSellerProfiles,
@@ -35,7 +31,12 @@ import {
   getSalesAmount,
   RevenueData,
 } from "~/components/revenue_data";
-import { BarChartData, BarChartInput } from "~/components/chart";
+import {
+  BarGraphData,
+  BarGraphInput,
+  LineGraphData,
+  LineGraphInput,
+} from "~/components/graph";
 import { PartnerProfile } from "~/components/partner_profile";
 import { CommonSelect } from "~/components/select";
 import { SellerProfile } from "./seller-manage";
@@ -208,6 +209,10 @@ export default function Page() {
 
   const [isLoading, setIsLoading] = useState<boolean>(false); //로딩 과정에서 로딩오버레이 표시
 
+  const [graphType, setChartType] = useState<
+    "전체 매출/수익" | "매출 TOP 5" | "수익 TOP 5" | "구매수량 TOP 5"
+  >("전체 매출/수익"); //막대그래프인지 (아니면 꺾은선그래프)
+
   //Modals
   const [noticeModalStr, setNoticeModalStr] = useState<string>("");
   const [isNoticeModalOpened, setIsNoticeModalOpened] =
@@ -242,19 +247,35 @@ export default function Page() {
     return productNames;
   }, [searchedData]);
 
-  const barChartInputData: BarChartInput | undefined = useMemo(() => {
-    if (!searchedData || !searchedDate || !partnerProfiles || !sellerProfiles) {
+  //판매처, 공급처, 상품명로 필터링
+  const filteredSearchedDataBarGraph = useMemo(() => {
+    if (!searchedData) {
       return undefined;
     }
 
-    const filteredSearchedData = filterSearchedData(
+    return filterSearchedData(
       searchedData,
       sellerList,
       partnerNameList,
       productNameList
     );
+  }, [searchedData, sellerList, partnerNameList, productNameList]);
 
-    const chartData: BarChartData[] = [];
+  //판매처로 필터링
+  const filteredSearchedDataLineGraph = useMemo(() => {
+    if (!searchedData) {
+      return undefined;
+    }
+
+    return filterSearchedData(searchedData, sellerList, [], []);
+  }, [searchedData, sellerList]);
+
+  const barGraphInput: BarGraphInput | undefined = useMemo(() => {
+    if (!searchedDate || !filteredSearchedDataBarGraph) {
+      return undefined;
+    }
+
+    const chartData: BarGraphData[] = [];
     const sellers: string[] = [];
 
     if (searchedPeriodType == "week") {
@@ -280,11 +301,11 @@ export default function Page() {
         curDate.setDate(curDate.getDate() + 1);
       }
 
-      for (const data of filteredSearchedData) {
+      for (const data of filteredSearchedDataBarGraph) {
         const dayStr = dateToDayStr(data.orderDate);
-        const barChartEntry = chartData.find((entry) => entry.name === dayStr);
-        if (barChartEntry) {
-          const result = fillBarChartData(barChartEntry, data);
+        const barGraphEntry = chartData.find((entry) => entry.name === dayStr);
+        if (barGraphEntry) {
+          const result = fillBarGraphData(barGraphEntry, data);
           if (!result) {
             return undefined;
           }
@@ -333,10 +354,10 @@ export default function Page() {
           무신사_proceeds: 0,
         });
       }
-      for (const data of filteredSearchedData) {
+      for (const data of filteredSearchedDataBarGraph) {
         const week = getWeekOfMonth(data.orderDate);
-        const barChartEntry = chartData[week - 1];
-        const result = fillBarChartData(barChartEntry, data);
+        const barGraphEntry = chartData[week - 1];
+        const result = fillBarGraphData(barGraphEntry, data);
         if (!result) {
           return undefined;
         }
@@ -348,7 +369,172 @@ export default function Page() {
     } else {
       return undefined;
     }
-  }, [searchedData, sellerList, productNameList, partnerNameList]);
+  }, [filteredSearchedDataBarGraph, searchedDate]);
+
+  const salesTop5LineGraphInput: LineGraphInput | undefined = useMemo(() => {
+    if (!searchedDate || !filteredSearchedDataLineGraph) {
+      return undefined;
+    }
+
+    // 1. 가장 매출이 높은 5개의 상품 추출
+    const top5Products = getSalesTop5Products(filteredSearchedDataLineGraph);
+
+    // 2. 선택된 5개의 상품 이름을 배열로 저장
+    const top5ProductNames = top5Products.map((product) => product.productName);
+
+    // 3. 일자별 매출 합계를 계산할 Map 생성
+    const lineGraphDataMap = new Map<string, Map<string, number>>();
+
+    // 전체 기간 동안의 날짜 리스트 생성
+    let curDate = new Date(searchedDate);
+    const dateList: string[] = [];
+    for (let i = 0; i < 7; i++) {
+      // 이 부분은 필요에 따라 조정하세요.
+      const dateKey = curDate.toISOString().split("T")[0];
+      dateList.push(dateKey);
+      curDate.setDate(curDate.getDate() + 1);
+    }
+
+    filteredSearchedDataLineGraph.forEach((item) => {
+      if (top5ProductNames.includes(item.productName)) {
+        const dateKey = item.orderDate.toISOString().split("T")[0]; // 날짜를 'YYYY-MM-DD' 형식으로 변환
+        const productMap =
+          lineGraphDataMap.get(dateKey) || new Map<string, number>();
+
+        const currentRevenue = productMap.get(item.productName) || 0;
+        productMap.set(item.productName, currentRevenue + getSalesAmount(item));
+
+        lineGraphDataMap.set(dateKey, productMap);
+      }
+    });
+
+    // 4. Map을 LineGraphData[]로 변환
+    const lineGraphData: LineGraphData[] = [];
+    dateList.forEach((dateKey) => {
+      const productMap =
+        lineGraphDataMap.get(dateKey) || new Map<string, number>();
+      top5ProductNames.forEach((productName) => {
+        const sales = productMap.get(productName) || 0;
+        lineGraphData.push({ name: dateKey, productName, value: sales });
+      });
+    });
+
+    return { data: lineGraphData };
+  }, [filteredSearchedDataLineGraph, searchedDate]);
+
+  const proceedsTop5LineGraphInput: LineGraphInput | undefined = useMemo(() => {
+    if (!searchedDate || !filteredSearchedDataLineGraph) {
+      return undefined;
+    }
+
+    // 1. 가장 매출이 높은 5개의 상품 추출
+    const top5Products = getProceedsTop5Products(filteredSearchedDataLineGraph);
+
+    // 2. 선택된 5개의 상품 이름을 배열로 저장
+    const top5ProductNames = top5Products.map((product) => product.productName);
+
+    // 3. 일자별 매출 합계를 계산할 Map 생성
+    const lineGraphDataMap = new Map<string, Map<string, number>>();
+
+    // 전체 기간 동안의 날짜 리스트 생성
+    let curDate = new Date(searchedDate);
+    const dateList: string[] = [];
+    for (let i = 0; i < 7; i++) {
+      // 이 부분은 필요에 따라 조정하세요.
+      const dateKey = curDate.toISOString().split("T")[0];
+      dateList.push(dateKey);
+      curDate.setDate(curDate.getDate() + 1);
+    }
+
+    filteredSearchedDataLineGraph.forEach((item) => {
+      if (top5ProductNames.includes(item.productName)) {
+        const dateKey = item.orderDate.toISOString().split("T")[0]; // 날짜를 'YYYY-MM-DD' 형식으로 변환
+        const productMap =
+          lineGraphDataMap.get(dateKey) || new Map<string, number>();
+
+        const currentProceeds = productMap.get(item.productName) || 0;
+        productMap.set(
+          item.productName,
+          currentProceeds + getProceedsFromItem(item)
+        );
+
+        lineGraphDataMap.set(dateKey, productMap);
+      }
+    });
+
+    // 4. Map을 LineGraphData[]로 변환
+    const lineGraphData: LineGraphData[] = [];
+    dateList.forEach((dateKey) => {
+      const productMap =
+        lineGraphDataMap.get(dateKey) || new Map<string, number>();
+      top5ProductNames.forEach((productName) => {
+        const proceeds = productMap.get(productName) || 0;
+        lineGraphData.push({ name: dateKey, productName, value: proceeds });
+      });
+    });
+
+    return { data: lineGraphData };
+  }, [filteredSearchedDataLineGraph, searchedDate]);
+
+  //날짜 수신
+  useEffect(() => {
+    if (searchedDate) {
+      setSelectedDate(searchedDate);
+    } else {
+      setSelectedDate(getTimezoneDate(new Date()));
+    }
+  }, []);
+
+  const amountTop5LineGraphInput: LineGraphInput | undefined = useMemo(() => {
+    if (!searchedDate || !filteredSearchedDataLineGraph) {
+      return undefined;
+    }
+
+    // 1. 가장 매출이 높은 5개의 상품 추출
+    const top5Products = getAmountTop5Products(filteredSearchedDataLineGraph);
+
+    // 2. 선택된 5개의 상품 이름을 배열로 저장
+    const top5ProductNames = top5Products.map((product) => product.productName);
+
+    // 3. 일자별 매출 합계를 계산할 Map 생성
+    const lineGraphDataMap = new Map<string, Map<string, number>>();
+
+    // 전체 기간 동안의 날짜 리스트 생성
+    let curDate = new Date(searchedDate);
+    const dateList: string[] = [];
+    for (let i = 0; i < 7; i++) {
+      // 이 부분은 필요에 따라 조정하세요.
+      const dateKey = curDate.toISOString().split("T")[0];
+      dateList.push(dateKey);
+      curDate.setDate(curDate.getDate() + 1);
+    }
+
+    filteredSearchedDataLineGraph.forEach((item) => {
+      if (top5ProductNames.includes(item.productName)) {
+        const dateKey = item.orderDate.toISOString().split("T")[0]; // 날짜를 'YYYY-MM-DD' 형식으로 변환
+        const productMap =
+          lineGraphDataMap.get(dateKey) || new Map<string, number>();
+
+        const currentAmount = productMap.get(item.productName) || 0;
+        productMap.set(item.productName, currentAmount + item.amount);
+
+        lineGraphDataMap.set(dateKey, productMap);
+      }
+    });
+
+    // 4. Map을 LineGraphData[]로 변환
+    const lineGraphData: LineGraphData[] = [];
+    dateList.forEach((dateKey) => {
+      const productMap =
+        lineGraphDataMap.get(dateKey) || new Map<string, number>();
+      top5ProductNames.forEach((productName) => {
+        const amount = productMap.get(productName) || 0;
+        lineGraphData.push({ name: dateKey, productName, value: amount });
+      });
+    });
+
+    return { data: lineGraphData, unit: "개" };
+  }, [filteredSearchedDataLineGraph, searchedDate]);
 
   //날짜 수신
   useEffect(() => {
@@ -429,38 +615,204 @@ export default function Page() {
     });
   }
 
-  function fillBarChartData(barChartData: BarChartData, data: RevenueData) {
-    const salesKey = `${data.seller}_sales` as keyof BarChartData;
+  function fillBarGraphData(barGraphData: BarGraphData, data: RevenueData) {
+    const salesKey = `${data.seller}_sales` as keyof BarGraphData;
     const salesAmount = getSalesAmount(data);
 
-    (barChartData[salesKey] as number) =
-      ((barChartData[salesKey] as number) ?? 0) + salesAmount;
+    (barGraphData[salesKey] as number) =
+      ((barGraphData[salesKey] as number) ?? 0) + salesAmount;
 
-    const proceedsKey = `${data.seller}_proceeds` as keyof BarChartData;
+    const proceedsKey = `${data.seller}_proceeds` as keyof BarGraphData;
 
-    const partnerProfile = partnerProfiles?.get(data.partnerName);
+    const proceeds = getProceedsFromItem(data);
+
+    (barGraphData[proceedsKey] as number) =
+      ((barGraphData[proceedsKey] as number) ?? 0) + proceeds;
+    return true;
+  }
+
+  function getSalesTop5Products(
+    data: RevenueData[]
+  ): { productName: string; totalSales: number }[] {
+    // 1. 상품명(productName)별로 price의 합을 계산하기 위해 Map을 사용
+    const productSalesMap = new Map<string, number>();
+
+    data.forEach((item) => {
+      const exisitingSales = productSalesMap.get(item.productName) || 0;
+      productSalesMap.set(
+        item.productName,
+        exisitingSales + getSalesAmount(item)
+      );
+    });
+
+    // 2. Map을 배열로 변환하고, 총 price 기준으로 내림차순 정렬
+    const sortedProducts = Array.from(productSalesMap.entries())
+      .map(([productName, totalSales]) => ({ productName, totalSales }))
+      .sort((a, b) => b.totalSales - a.totalSales);
+
+    // 3. 상위 5개 상품을 반환
+    return sortedProducts.slice(0, 5);
+  }
+
+  function getProceedsTop5Products(
+    data: RevenueData[]
+  ): { productName: string; totalProceeds: number }[] {
+    // 1. 상품명(productName)별로 price의 합을 계산하기 위해 Map을 사용
+    const productProceedsMap = new Map<string, number>();
+
+    data.forEach((item) => {
+      const existingProceeds = productProceedsMap.get(item.productName) || 0;
+
+      productProceedsMap.set(
+        item.productName,
+        existingProceeds + getProceedsFromItem(item)
+      );
+    });
+
+    // 2. Map을 배열로 변환하고, 총 price 기준으로 내림차순 정렬
+    const sortedProducts = Array.from(productProceedsMap.entries())
+      .map(([productName, totalProceeds]) => ({ productName, totalProceeds }))
+      .sort((a, b) => b.totalProceeds - a.totalProceeds);
+
+    // 3. 상위 5개 상품을 반환
+    return sortedProducts.slice(0, 5);
+  }
+
+  function getAmountTop5Products(
+    data: RevenueData[]
+  ): { productName: string; totalAmount: number }[] {
+    // 1. 상품명(productName)별로 price의 합을 계산하기 위해 Map을 사용
+    const productAmountMap = new Map<string, number>();
+
+    data.forEach((item) => {
+      const existingAmount = productAmountMap.get(item.productName) || 0;
+
+      productAmountMap.set(item.productName, existingAmount + item.amount);
+    });
+
+    // 2. Map을 배열로 변환하고, 총 price 기준으로 내림차순 정렬
+    const sortedProducts = Array.from(productAmountMap.entries())
+      .map(([productName, totalAmount]) => ({ productName, totalAmount }))
+      .sort((a, b) => b.totalAmount - a.totalAmount);
+
+    // 3. 상위 5개 상품을 반환
+    return sortedProducts.slice(0, 5);
+  }
+
+  function getProceedsFromItem(item: RevenueData) {
+    const partnerProfile = partnerProfiles?.get(item.partnerName);
 
     if (!partnerProfile) {
       setNoticeModalStr(
-        `해당 공급처 정보를 불러오는 데에 실패했습니다. ${data.partnerName}`
+        `해당 공급처 정보를 불러오는 데에 실패했습니다. ${item.partnerName}`
       );
       setIsNoticeModalOpened(true);
-      return false;
+      return 0;
     }
 
-    const sellerProfile = sellerProfiles?.get(data.seller);
+    const sellerProfile = sellerProfiles?.get(item.seller);
 
-    const commonFeeRate = LofaSellers.includes(data.seller)
+    const commonFeeRate = LofaSellers.includes(item.seller)
       ? partnerProfile.lofaFee
       : partnerProfile.otherFee;
 
     const platformFeeRate = sellerProfile ? sellerProfile.fee : 0;
 
-    const proceeds = getProceeds(data, commonFeeRate, platformFeeRate);
+    const proceeds = getProceeds(item, commonFeeRate, platformFeeRate);
+    return proceeds;
+  }
 
-    (barChartData[proceedsKey] as number) =
-      ((barChartData[proceedsKey] as number) ?? 0) + proceeds;
-    return true;
+  function GraphComponent({
+    chartType,
+  }: {
+    chartType:
+      | "전체 매출/수익"
+      | "매출 TOP 5"
+      | "수익 TOP 5"
+      | "구매수량 TOP 5";
+  }) {
+    switch (chartType) {
+      case "전체 매출/수익":
+        return barGraphInput ? (
+          barGraphInput.sellers.length > 0 ? (
+            <Suspense
+              fallback={<EmptyChart text={"데이터를 불러오는 중..."} />}
+            >
+              <LazyStackedBarGraph
+                graphInput={barGraphInput ?? { sellers: [], data: [] }}
+              />
+            </Suspense>
+          ) : (
+            <EmptyChart text={"주어진 조건을 만족하는 결과가 없습니다."} />
+          )
+        ) : (
+          <EmptyChart
+            text={
+              "'조회하기' 버튼을 클릭한 후 해당 기간의 데이터 조회가 가능합니다."
+            }
+          />
+        );
+      case "매출 TOP 5":
+        return salesTop5LineGraphInput ? (
+          salesTop5LineGraphInput.data.length > 0 ? (
+            <Suspense
+              fallback={<EmptyChart text={"데이터를 불러오는 중..."} />}
+            >
+              <LazyLineGraph
+                graphInput={salesTop5LineGraphInput ?? { data: [] }}
+              />
+            </Suspense>
+          ) : (
+            <EmptyChart text={"주어진 조건을 만족하는 결과가 없습니다."} />
+          )
+        ) : (
+          <EmptyChart
+            text={
+              "'조회하기' 버튼을 클릭한 후 해당 기간의 데이터 조회가 가능합니다."
+            }
+          />
+        );
+      case "수익 TOP 5":
+        return proceedsTop5LineGraphInput ? (
+          proceedsTop5LineGraphInput.data.length > 0 ? (
+            <Suspense
+              fallback={<EmptyChart text={"데이터를 불러오는 중..."} />}
+            >
+              <LazyLineGraph
+                graphInput={proceedsTop5LineGraphInput ?? { data: [] }}
+              />
+            </Suspense>
+          ) : (
+            <EmptyChart text={"주어진 조건을 만족하는 결과가 없습니다."} />
+          )
+        ) : (
+          <EmptyChart
+            text={
+              "'조회하기' 버튼을 클릭한 후 해당 기간의 데이터 조회가 가능합니다."
+            }
+          />
+        );
+      case "구매수량 TOP 5":
+        return amountTop5LineGraphInput ? (
+          amountTop5LineGraphInput.data.length > 0 ? (
+            <Suspense
+              fallback={<EmptyChart text={"데이터를 불러오는 중..."} />}
+            >
+              <LazyLineGraph
+                graphInput={amountTop5LineGraphInput ?? { data: [] }}
+              />
+            </Suspense>
+          ) : (
+            <EmptyChart text={"주어진 조건을 만족하는 결과가 없습니다."} />
+          )
+        ) : (
+          <EmptyChart
+            text={
+              "'조회하기' 버튼을 클릭한 후 해당 기간의 데이터 조회가 가능합니다."
+            }
+          />
+        );
+    }
   }
 
   return (
@@ -560,18 +912,61 @@ export default function Page() {
       <Space h={40} />
 
       <div style={{ display: "flex" }}>
-        {barChartInputData ? (
-          <Suspense fallback={<EmptyChart text={"데이터를 불러오는 중..."} />}>
-            <MyStackedBarChart
-              chartData={barChartInputData ?? { sellers: [], data: [] }}
-            />
-          </Suspense>
-        ) : (
-          <EmptyChart text={"날짜 입력 후 데이터 조회가 가능합니다."} />
-        )}
+        <GraphComponent chartType={graphType} />
 
         <Space w={20} />
         <div style={{}}>
+          <div
+            style={{ display: "flex", alignItems: "center", height: "40px" }}
+          >
+            <CommonButton
+              styleOverrides={{
+                fontSize: "12px",
+                marginRight: "6px",
+                color: graphType == "전체 매출/수익" ? "white" : "black",
+                backgroundColor:
+                  graphType == "전체 매출/수익" ? "black" : "white",
+              }}
+              onClick={() => setChartType("전체 매출/수익")}
+            >
+              전체 매출/수익
+            </CommonButton>
+            <CommonButton
+              styleOverrides={{
+                fontSize: "12px",
+                marginRight: "6px",
+                color: graphType == "매출 TOP 5" ? "white" : "black",
+                backgroundColor: graphType == "매출 TOP 5" ? "black" : "white",
+              }}
+              onClick={() => setChartType("매출 TOP 5")}
+            >
+              매출 TOP 5
+            </CommonButton>
+            <CommonButton
+              styleOverrides={{
+                fontSize: "12px",
+                marginRight: "6px",
+                color: graphType == "수익 TOP 5" ? "white" : "black",
+                backgroundColor: graphType == "수익 TOP 5" ? "black" : "white",
+              }}
+              onClick={() => setChartType("수익 TOP 5")}
+            >
+              수익 TOP 5
+            </CommonButton>
+            <CommonButton
+              styleOverrides={{
+                fontSize: "12px",
+                marginRight: "6px",
+                color: graphType == "구매수량 TOP 5" ? "white" : "black",
+                backgroundColor:
+                  graphType == "구매수량 TOP 5" ? "black" : "white",
+              }}
+              onClick={() => setChartType("구매수량 TOP 5")}
+            >
+              구매수량 TOP 5
+            </CommonButton>
+          </div>
+          <Space h={20} />
           <div
             style={{ display: "flex", alignItems: "center", height: "40px" }}
           >
@@ -582,7 +977,7 @@ export default function Page() {
               setSeller={(seller: string) => {
                 setSeller(seller);
                 if (!sellerList.includes(seller)) {
-                  if(seller != "all"){
+                  if (seller != "all") {
                     addSeller(seller);
                   } else {
                     setSellerList([]);
@@ -618,108 +1013,129 @@ export default function Page() {
             })}
           </div>
 
-          <Space h={20} />
-          <div
-            style={{ display: "flex", alignItems: "center", height: "40px" }}
-          >
-            <div>공급처</div>
-            <Space w={10} />
-            <CommonSelect
-              selected={partnerName}
-              setSelected={(partnerName: string) => {
-                setPartnerName(partnerName);
-                if (partnerName == "전체") {
-                  setPartnerNameList([]);
-                  return;
-                }
-                if (!partnerNameList.includes(partnerName)) {
-                  addPartnerName(partnerName);
-                }
-              }}
-              items={
-                partnerProfiles
-                  ? ["전체", ...Array.from(partnerProfiles.keys())]
-                  : []
-              }
-              width="400px"
-            />
-          </div>
-          <Space h={10} />
-          <div style={{ display: "flex", flexWrap: "wrap", maxWidth: "400px" }}>
-            {partnerNameList.map((item, index) => {
-              return (
-                <div
-                  key={`PartnerNameListItem-${index}`}
-                  style={{
-                    display: "flex",
-                    justifyContent: "start",
-                    alignItems: "center",
-                    border: "0.5px solid black",
-                    padding: "5px",
-                    margin: "3px",
+          {graphType == "전체 매출/수익" ? (
+            <>
+              <Space h={20} />
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  height: "40px",
+                }}
+              >
+                <div>공급처</div>
+                <Space w={10} />
+                <CommonSelect
+                  selected={partnerName}
+                  setSelected={(partnerName: string) => {
+                    setPartnerName(partnerName);
+                    if (partnerName == "전체") {
+                      setPartnerNameList([]);
+                      return;
+                    }
+                    if (!partnerNameList.includes(partnerName)) {
+                      addPartnerName(partnerName);
+                    }
                   }}
-                >
-                  <div style={{ fontSize: "12px" }}>{item}</div>
-                  <Space w={5} />
-                  <DeleteButton
-                    onClick={() => {
-                      deletePartnerName(index);
-                    }}
-                  />
-                </div>
-              );
-            })}
-          </div>
-          <Space h={20} />
-          <div
-            style={{ display: "flex", alignItems: "center", height: "40px" }}
-          >
-            <div>상품명</div>
-            <Space w={10} />
-            <CommonSelect
-              selected={productName}
-              setSelected={(productName: string) => {
-                setProductName(productName);
-                if (productName == "전체") {
-                  setProductNameList([]);
-                  return;
-                }
-                if (!productNameList.includes(productName)) {
-                  addProductName(productName);
-                }
-              }}
-              items={
-                searchedProductNames ? ["전체", ...searchedProductNames] : []
-              }
-              width="400px"
-            />
-          </div>
-          <Space h={10} />
-          <div style={{ display: "flex", flexWrap: "wrap", maxWidth: "400px" }}>
-            {productNameList.map((item, index) => {
-              return (
-                <div
-                  key={`ProductNameListItem-${index}`}
-                  style={{
-                    display: "flex",
-                    justifyContent: "start",
-                    alignItems: "center",
-                    border: "0.5px solid black",
-                    padding: "5px",
-                    margin: "3px",
+                  items={
+                    partnerProfiles
+                      ? ["전체", ...Array.from(partnerProfiles.keys())]
+                      : []
+                  }
+                  width="400px"
+                />
+              </div>
+              <Space h={10} />
+              <div
+                style={{ display: "flex", flexWrap: "wrap", maxWidth: "400px" }}
+              >
+                {partnerNameList.map((item, index) => {
+                  return (
+                    <div
+                      key={`PartnerNameListItem-${index}`}
+                      style={{
+                        display: "flex",
+                        justifyContent: "start",
+                        alignItems: "center",
+                        border: "0.5px solid black",
+                        padding: "5px",
+                        margin: "3px",
+                      }}
+                    >
+                      <div style={{ fontSize: "12px" }}>{item}</div>
+                      <Space w={5} />
+                      <DeleteButton
+                        onClick={() => {
+                          deletePartnerName(index);
+                        }}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+              <Space h={20} />
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  height: "40px",
+                }}
+              >
+                <div>상품명</div>
+                <Space w={10} />
+                <CommonSelect
+                  selected={productName}
+                  setSelected={(productName: string) => {
+                    setProductName(productName);
+                    if (productName == "전체") {
+                      setProductNameList([]);
+                      return;
+                    }
+                    if (!productNameList.includes(productName)) {
+                      addProductName(productName);
+                    }
                   }}
-                >
-                  <div style={{ fontSize: "12px" }}>{item}</div>
-                  <Space w={5} />
-                  <DeleteButton
-                    onClick={() => {
-                      deleteProductName(index);
-                    }}
-                  />
-                </div>
-              );
-            })}
-          </div>
+                  items={
+                    searchedProductNames
+                      ? ["전체", ...searchedProductNames]
+                      : []
+                  }
+                  width="400px"
+                />
+              </div>
+              <Space h={10} />
+              <div
+                style={{ display: "flex", flexWrap: "wrap", maxWidth: "400px" }}
+              >
+                {productNameList.map((item, index) => {
+                  return (
+                    <div
+                      key={`ProductNameListItem-${index}`}
+                      style={{
+                        display: "flex",
+                        justifyContent: "start",
+                        alignItems: "center",
+                        border: "0.5px solid black",
+                        padding: "5px",
+                        margin: "3px",
+                      }}
+                    >
+                      <div style={{ fontSize: "12px" }}>{item}</div>
+                      <Space w={5} />
+                      <DeleteButton
+                        onClick={() => {
+                          deleteProductName(index);
+                        }}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          ) : (
+            <></>
+          )}
+
           <Space h={20} />
           <div
             style={{ display: "flex", alignItems: "center", height: "40px" }}
@@ -732,24 +1148,6 @@ export default function Page() {
       </div>
     </PageLayout>
   );
-}
-
-interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  styleoverrides?: React.CSSProperties;
-}
-
-function EditInputBox({
-  width,
-  ...props
-}: React.InputHTMLAttributes<HTMLInputElement>) {
-  const inputStyles: React.CSSProperties = {
-    fontSize: "20px",
-    fontWeight: 700,
-    width: width ?? "200px",
-    height: "40px",
-    border: "3px black solid",
-  };
-  return <input style={inputStyles} {...props} />;
 }
 
 function DeleteButton({ onClick }: { onClick: () => void }) {
@@ -779,8 +1177,14 @@ function EmptyChart({ text }: { text: string }) {
   );
 }
 
-const MyStackedBarChart = React.lazy(() =>
-  import("~/components/chart").then((module) => ({
-    default: module.MyStackedBarChart,
+const LazyStackedBarGraph = React.lazy(() =>
+  import("~/components/graph").then((module) => ({
+    default: module.StackedBarGraph,
+  }))
+);
+
+const LazyLineGraph = React.lazy(() =>
+  import("~/components/graph").then((module) => ({
+    default: module.LineGraph,
   }))
 );
