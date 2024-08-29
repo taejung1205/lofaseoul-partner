@@ -385,19 +385,37 @@ export default function Page() {
     // 3. 일자별 매출 합계를 계산할 Map 생성
     const lineGraphDataMap = new Map<string, Map<string, number>>();
 
-    // 전체 기간 동안의 날짜 리스트 생성
     let curDate = new Date(searchedDate);
     const dateList: string[] = [];
-    for (let i = 0; i < 7; i++) {
-      // 이 부분은 필요에 따라 조정하세요.
-      const dateKey = curDate.toISOString().split("T")[0];
-      dateList.push(dateKey);
-      curDate.setDate(curDate.getDate() + 1);
+
+    // 전체 기간 동안의 날짜 리스트 생성
+    if (searchedPeriodType == "week") {
+      for (let i = 0; i < 7; i++) {
+        // 이 부분은 필요에 따라 조정하세요.
+        const dateKey = curDate.toISOString().split("T")[0];
+        dateList.push(dateKey);
+        curDate.setDate(curDate.getDate() + 1);
+      }
+    } else if (searchedPeriodType == "month") {
+      const numberOfWeeks = getTotalWeeksInMonth(searchedDate);
+      for (let i = 0; i < numberOfWeeks; i++) {
+        const dateKey = `${searchedDate.getMonth() + 1}월 ${i + 1}주차`;
+        dateList.push(dateKey);
+      }
+    } else {
+      return undefined;
     }
 
     filteredSearchedDataLineGraph.forEach((item) => {
       if (top5ProductNames.includes(item.productName)) {
-        const dateKey = item.orderDate.toISOString().split("T")[0]; // 날짜를 'YYYY-MM-DD' 형식으로 변환
+        let dateKey = "";
+        if (searchedPeriodType == "week") {
+          dateKey = item.orderDate.toISOString().split("T")[0];
+        } else {
+          const week = getWeekOfMonth(item.orderDate);
+          dateKey = `${searchedDate.getMonth() + 1}월 ${week}주차`;
+        }
+
         const productMap =
           lineGraphDataMap.get(dateKey) || new Map<string, number>();
 
@@ -436,19 +454,36 @@ export default function Page() {
     // 3. 일자별 매출 합계를 계산할 Map 생성
     const lineGraphDataMap = new Map<string, Map<string, number>>();
 
-    // 전체 기간 동안의 날짜 리스트 생성
     let curDate = new Date(searchedDate);
     const dateList: string[] = [];
-    for (let i = 0; i < 7; i++) {
-      // 이 부분은 필요에 따라 조정하세요.
-      const dateKey = curDate.toISOString().split("T")[0];
-      dateList.push(dateKey);
-      curDate.setDate(curDate.getDate() + 1);
+
+    // 전체 기간 동안의 날짜 리스트 생성
+    if (searchedPeriodType == "week") {
+      for (let i = 0; i < 7; i++) {
+        // 이 부분은 필요에 따라 조정하세요.
+        const dateKey = curDate.toISOString().split("T")[0];
+        dateList.push(dateKey);
+        curDate.setDate(curDate.getDate() + 1);
+      }
+    } else if (searchedPeriodType == "month") {
+      const numberOfWeeks = getTotalWeeksInMonth(searchedDate);
+      for (let i = 0; i < numberOfWeeks; i++) {
+        const dateKey = `${searchedDate.getMonth() + 1}월 ${i + 1}주차`;
+        dateList.push(dateKey);
+      }
+    } else {
+      return undefined;
     }
 
     filteredSearchedDataLineGraph.forEach((item) => {
       if (top5ProductNames.includes(item.productName)) {
-        const dateKey = item.orderDate.toISOString().split("T")[0]; // 날짜를 'YYYY-MM-DD' 형식으로 변환
+        let dateKey = "";
+        if (searchedPeriodType == "week") {
+          dateKey = item.orderDate.toISOString().split("T")[0];
+        } else {
+          const week = getWeekOfMonth(item.orderDate);
+          dateKey = `${searchedDate.getMonth() + 1}월 ${week}주차`;
+        }
         const productMap =
           lineGraphDataMap.get(dateKey) || new Map<string, number>();
 
@@ -476,15 +511,6 @@ export default function Page() {
     return { data: lineGraphData };
   }, [filteredSearchedDataLineGraph, searchedDate]);
 
-  //날짜 수신
-  useEffect(() => {
-    if (searchedDate) {
-      setSelectedDate(searchedDate);
-    } else {
-      setSelectedDate(getTimezoneDate(new Date()));
-    }
-  }, []);
-
   const amountTop5LineGraphInput: LineGraphInput | undefined = useMemo(() => {
     if (!searchedDate || !filteredSearchedDataLineGraph) {
       return undefined;
@@ -499,19 +525,36 @@ export default function Page() {
     // 3. 일자별 매출 합계를 계산할 Map 생성
     const lineGraphDataMap = new Map<string, Map<string, number>>();
 
-    // 전체 기간 동안의 날짜 리스트 생성
     let curDate = new Date(searchedDate);
     const dateList: string[] = [];
-    for (let i = 0; i < 7; i++) {
-      // 이 부분은 필요에 따라 조정하세요.
-      const dateKey = curDate.toISOString().split("T")[0];
-      dateList.push(dateKey);
-      curDate.setDate(curDate.getDate() + 1);
+
+    // 전체 기간 동안의 날짜 리스트 생성
+    if (searchedPeriodType == "week") {
+      for (let i = 0; i < 7; i++) {
+        // 이 부분은 필요에 따라 조정하세요.
+        const dateKey = curDate.toISOString().split("T")[0];
+        dateList.push(dateKey);
+        curDate.setDate(curDate.getDate() + 1);
+      }
+    } else if (searchedPeriodType == "month") {
+      const numberOfWeeks = getTotalWeeksInMonth(searchedDate);
+      for (let i = 0; i < numberOfWeeks; i++) {
+        const dateKey = `${searchedDate.getMonth() + 1}월 ${i + 1}주차`;
+        dateList.push(dateKey);
+      }
+    } else {
+      return undefined;
     }
 
     filteredSearchedDataLineGraph.forEach((item) => {
       if (top5ProductNames.includes(item.productName)) {
-        const dateKey = item.orderDate.toISOString().split("T")[0]; // 날짜를 'YYYY-MM-DD' 형식으로 변환
+        let dateKey = "";
+        if (searchedPeriodType == "week") {
+          dateKey = item.orderDate.toISOString().split("T")[0];
+        } else {
+          const week = getWeekOfMonth(item.orderDate);
+          dateKey = `${searchedDate.getMonth() + 1}월 ${week}주차`;
+        }
         const productMap =
           lineGraphDataMap.get(dateKey) || new Map<string, number>();
 
