@@ -19,7 +19,7 @@ import {
 import { json, LoaderFunction } from "@remix-run/node";
 import { CommonButton } from "~/components/button";
 import { LofaSellers, SellerSelect } from "~/components/seller";
-import { endOfMonth, endOfWeek, startOfMonth } from "date-fns";
+import { endOfMonth, startOfMonth } from "date-fns";
 import {
   getAllPartnerProfiles,
   getAllSellerProfiles,
@@ -107,9 +107,9 @@ export const loader: LoaderFunction = async ({ request }) => {
       }
 
       const startDate = new Date(`${startDateStr}T00:00:00.000+09:00`);
-      const endDate = new Date(
-        `${dateToDayStr(endOfWeek(startDate))}T23:59:59.000+09:00`
-      );
+      const endOfWeek = new Date(startDate);
+      endOfWeek.setDate(endOfWeek.getDate() + 6);
+      const endDate = new Date(`${dateToDayStr(endOfWeek)}T23:59:59.000+09:00`);
 
       const searchResult = await getRevenueData({
         startDate: startDate,
@@ -205,7 +205,6 @@ export default function Page() {
     if (allPartnerProfiles) {
       return getAllProductCategories(Array.from(allPartnerProfiles.values()));
     } else {
-      console.log(allPartnerProfiles);
       return undefined;
     }
   }, [allPartnerProfiles]);
@@ -422,7 +421,7 @@ export default function Page() {
     if (searchedPeriodType == "week") {
       for (let i = 0; i < 7; i++) {
         // 이 부분은 필요에 따라 조정하세요.
-        const dateKey = curDate.toISOString().split("T")[0];
+        const dateKey = dateToDayStr(curDate);
         dateList.push(dateKey);
         curDate.setDate(curDate.getDate() + 1);
       }
@@ -440,7 +439,7 @@ export default function Page() {
       if (top5ProductNames.includes(item.productName)) {
         let dateKey = "";
         if (searchedPeriodType == "week") {
-          dateKey = item.orderDate.toISOString().split("T")[0];
+          dateKey = dateToDayStr(item.orderDate);
         } else {
           const week = getWeekOfMonth(item.orderDate);
           dateKey = `${searchedDate.getMonth() + 1}월 ${week}주차`;
@@ -491,7 +490,7 @@ export default function Page() {
     if (searchedPeriodType == "week") {
       for (let i = 0; i < 7; i++) {
         // 이 부분은 필요에 따라 조정하세요.
-        const dateKey = curDate.toISOString().split("T")[0];
+        const dateKey = dateToDayStr(curDate);
         dateList.push(dateKey);
         curDate.setDate(curDate.getDate() + 1);
       }
@@ -509,7 +508,7 @@ export default function Page() {
       if (top5ProductNames.includes(item.productName)) {
         let dateKey = "";
         if (searchedPeriodType == "week") {
-          dateKey = item.orderDate.toISOString().split("T")[0];
+          dateKey = dateToDayStr(item.orderDate);
         } else {
           const week = getWeekOfMonth(item.orderDate);
           dateKey = `${searchedDate.getMonth() + 1}월 ${week}주차`;
@@ -518,11 +517,11 @@ export default function Page() {
           lineGraphDataMap.get(dateKey) || new Map<string, number>();
 
         const currentProceeds = productMap.get(item.productName) || 0;
+
         productMap.set(
           item.productName,
           currentProceeds + getProceedsFromItem(item)
         );
-
         lineGraphDataMap.set(dateKey, productMap);
       }
     });
@@ -562,7 +561,7 @@ export default function Page() {
     if (searchedPeriodType == "week") {
       for (let i = 0; i < 7; i++) {
         // 이 부분은 필요에 따라 조정하세요.
-        const dateKey = curDate.toISOString().split("T")[0];
+        const dateKey = dateToDayStr(curDate);
         dateList.push(dateKey);
         curDate.setDate(curDate.getDate() + 1);
       }
@@ -580,7 +579,7 @@ export default function Page() {
       if (top5ProductNames.includes(item.productName)) {
         let dateKey = "";
         if (searchedPeriodType == "week") {
-          dateKey = item.orderDate.toISOString().split("T")[0];
+          dateKey = dateToDayStr(item.orderDate);
         } else {
           const week = getWeekOfMonth(item.orderDate);
           dateKey = `${searchedDate.getMonth() + 1}월 ${week}주차`;
