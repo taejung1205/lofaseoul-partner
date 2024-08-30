@@ -2038,6 +2038,7 @@ export async function getRevenueData({
   orderStatus,
   cs,
   filterDiscount,
+  productCategory,
 }: {
   startDate: Date;
   endDate: Date;
@@ -2047,6 +2048,7 @@ export async function getRevenueData({
   orderStatus: string;
   cs: string;
   filterDiscount: string;
+  productCategory: string[];
 }) {
   console.log(startDate, endDate);
   let orderStatusQueryArray: string[];
@@ -2178,6 +2180,8 @@ export async function getRevenueData({
     revenueDataQuery = query(revenueDataQuery, where("seller", "==", seller));
   }
 
+  const partnerProfiles = await getAllPartnerProfiles(true);
+
   const querySnap = await getDocs(revenueDataQuery);
   const searchResult: { data: DocumentData; id: string }[] = [];
   querySnap.docs.forEach((doc) => {
@@ -2186,8 +2190,25 @@ export async function getRevenueData({
       data.productName.includes(productName) &&
       csQueryArray.includes(data.cs)
     ) {
-      data.orderDate = data.orderDate.toDate();
-      searchResult.push({ data: data, id: doc.id });
+      //상품분류 검색한게 없으면 따로 검사 안함
+      if (productCategory.length == 0) {
+        console.log("product category length = 0");
+        data.orderDate = data.orderDate.toDate();
+        searchResult.push({ data: data, id: doc.id });
+      } else {
+        //상품분류 검색이 있는데, 데이터의 상품분류 항목이 없으면 포함X
+        const partnerProfile = partnerProfiles.get(data.partnerName);
+        const productCategories = partnerProfile.productCategory;
+        if (productCategories) {
+          for (let i = 0; i < productCategory.length; i++) {
+            if (productCategories.includes(productCategory[i])) {
+              data.orderDate = data.orderDate.toDate();
+              searchResult.push({ data: data, id: doc.id });
+              break;
+            }
+          }
+        }
+      }
     }
   });
   return searchResult;
