@@ -51,6 +51,7 @@ export default function AdminPartnerList() {
             businessName: loaderData.businessName,
             businessTaxStandard: loaderData.businessTaxStandard,
             providerName: loaderData.providerName,
+            productCategory: loaderData.productCategory,
           }}
           isNew={false}
           isEdit={false}

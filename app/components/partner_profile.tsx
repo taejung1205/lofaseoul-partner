@@ -3,7 +3,8 @@ import { useMemo, useState } from "react";
 import { BasicModal, ModalButton } from "./modal";
 import { useViewportSize } from "@mantine/hooks";
 import { isMobile } from "~/utils/mobile";
-import { Select } from "@mantine/core";
+import { Select, Space } from "@mantine/core";
+import { CommonButton } from "./button";
 
 export type PartnerProfile = {
   name: string;
@@ -19,6 +20,8 @@ export type PartnerProfile = {
   businessName: string;
   businessTaxStandard: "일반" | "간이" | "비사업자" | "면세";
   providerName: string; //공급처명
+  productCategory: string[];
+  isAdmin?: boolean;
 };
 
 export const PossibleTaxStandard = ["일반", "간이", "비사업자", "면세"];
@@ -65,10 +68,12 @@ function ProfileGridContainer({
 
 interface ProfileGridItemProps extends React.HTMLAttributes<HTMLDivElement> {
   isMobile: boolean;
+  isDoubleSpan?: boolean;
 }
 
 function ProfileGridItem({
   isMobile,
+  isDoubleSpan,
   children,
   ...props
 }: ProfileGridItemProps) {
@@ -78,12 +83,48 @@ function ProfileGridItem({
     textAlign: "left",
     display: "flex",
     flexDirection: isMobile ? "column" : "row",
+    alignItems: "center",
+    gridColumn: isDoubleSpan ? "span 2" : "",
   };
 
   return (
     <div style={itemStyles} {...props}>
       {children}
     </div>
+  );
+}
+
+function ProductCategoryItem({
+  item,
+  onDeleteClick,
+}: {
+  item: string;
+  onDeleteClick?: () => void;
+}) {
+  const styles: React.CSSProperties = {
+    display: "flex",
+    justifyContent: "start",
+    alignItems: "center",
+    border: "0.5px solid black",
+    padding: "5px",
+    margin: "3px",
+  };
+  return (
+    <div style={styles}>
+      <div style={{ fontSize: "12px" }}>{item}</div>
+      {onDeleteClick ? <Space w={5} /> : <></>}
+      {onDeleteClick ? <DeleteButton onClick={onDeleteClick} /> : <></>}
+    </div>
+  );
+}
+
+function DeleteButton({ onClick }: { onClick: () => void }) {
+  return (
+    <img
+      src="/images/icon_trash.svg"
+      style={{ cursor: "pointer", width: "10px", height: "10px" }}
+      onClick={onClick}
+    />
   );
 }
 
@@ -135,11 +176,25 @@ export function PartnerProfile({
   const [providerNameEdit, setProviderNameEdit] = useState(
     partnerProfile.providerName ?? partnerProfile.name
   );
+  const [productCategoryAddEdit, setProductCategoryAddEdit] = useState("");
+  const [productCategoryEdit, setProductCategoryEdit] = useState(
+    partnerProfile.productCategory ?? []
+  );
 
   const viewportSize = useViewportSize();
   const isMobileMemo: boolean = useMemo(() => {
     return isMobile(viewportSize.width);
   }, [viewportSize]);
+
+  function addProductCategory(newItem: string) {
+    setProductCategoryEdit((prev) => [...prev, newItem]);
+  }
+
+  function deleteProductCategory(index: number) {
+    const first1 = productCategoryEdit.slice(0, index);
+    const last1 = productCategoryEdit.slice(index + 1);
+    setProductCategoryEdit(first1.concat(last1));
+  }
 
   if (!isEdit) {
     return (
@@ -283,7 +338,7 @@ export function PartnerProfile({
               </div>
             </ProfileGridItem>
             <ProfileGridItem isMobile={isMobileMemo}>
-              <div style={{ padding: "13px", width: "180px" }}>사업자명</div>
+              <div style={{ padding: "13px", width: "120px" }}>사업자명</div>
               <div style={{ padding: "13px" }}>
                 {partnerProfile.businessName}
               </div>
@@ -297,10 +352,16 @@ export function PartnerProfile({
               </div>
             </ProfileGridItem>
             <ProfileGridItem isMobile={isMobileMemo}>
-              <div style={{ padding: "13px", width: "180px" }}>공급처명</div>
+              <div style={{ padding: "13px", width: "120px" }}>공급처명</div>
               <div style={{ padding: "13px" }}>
                 {partnerProfile.providerName ?? partnerProfile.name}
               </div>
+            </ProfileGridItem>
+            <ProfileGridItem isMobile={isMobileMemo}>
+              <div style={{ padding: "13px", width: "120px" }}>상품분류</div>
+              {partnerProfile.productCategory?.map((val) => (
+                <ProductCategoryItem item={val} />
+              )) ?? <></>}
             </ProfileGridItem>
           </ProfileGridContainer>
         </PartnerProfileBox>
@@ -311,6 +372,10 @@ export function PartnerProfile({
       <PartnerProfileBox>
         <Form method="post">
           <input type="hidden" value={"add"} name="action" required />
+          {productCategoryEdit.map((val) => (
+            <input type="hidden" value={val} name="productCategory" required />
+          ))}
+
           <div
             style={{
               display: "flex",
@@ -408,6 +473,7 @@ export function PartnerProfile({
                   required
                   style={{ width: "50px" }}
                 />
+                <Space w={10} />
                 <div style={{ fontSize: "15px" }}>타 채널</div>
                 <InputBox
                   type="number"
@@ -497,6 +563,42 @@ export function PartnerProfile({
                 value={providerNameEdit}
                 onChange={(e) => setProviderNameEdit(e.target.value)}
               />
+            </ProfileGridItem>
+            <ProfileGridItem isMobile={isMobileMemo}>
+              <div style={{ padding: "13px", width: "180px" }}>
+                상품분류 추가
+              </div>
+              <InputBox
+                type="text"
+                name="productCategoryAdd"
+                value={productCategoryAddEdit}
+                onChange={(e) => setProductCategoryAddEdit(e.target.value)}
+              />
+              <Space w={10} />
+              <CommonButton
+                type="button"
+                onClick={() => {
+                  if (productCategoryAddEdit.length > 0) {
+                    addProductCategory(productCategoryAddEdit);
+                    setProductCategoryAddEdit("");
+                  }
+                }}
+              >
+                추가
+              </CommonButton>
+            </ProfileGridItem>
+            <ProfileGridItem isMobile={isMobileMemo} isDoubleSpan>
+              <div style={{ padding: "13px", width: "180px" }}>
+                상품분류 목록
+              </div>
+              <Space w={10} />
+              {productCategoryEdit.map((val, index) => (
+                <ProductCategoryItem
+                  item={val}
+                  key={`ProductCategoryItem_${val}_${index}`}
+                  onDeleteClick={() => deleteProductCategory(index)}
+                />
+              ))}
             </ProfileGridItem>
           </ProfileGridContainer>
         </Form>
