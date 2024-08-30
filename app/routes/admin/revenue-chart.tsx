@@ -37,7 +37,11 @@ import {
   LineGraphData,
   LineGraphInput,
 } from "~/components/graph";
-import { PartnerProfile } from "~/components/partner_profile";
+import {
+  getAllProductCategories,
+  PartnerProfile,
+  ProductCategoryItem,
+} from "~/components/partner_profile";
 import { CommonSelect } from "~/components/select";
 import { SellerProfile } from "./seller-manage";
 
@@ -173,7 +177,7 @@ export default function Page() {
     }
   }, [loaderData]);
 
-  const partnerProfiles = useMemo(() => {
+  const allPartnerProfiles = useMemo(() => {
     if (loaderData && loaderData.partnerProfiles) {
       const map = new Map<string, PartnerProfile>();
       loaderData.partnerProfiles.forEach((partner: PartnerProfile) => {
@@ -185,7 +189,7 @@ export default function Page() {
     }
   }, [loaderData]);
 
-  const sellerProfiles = useMemo(() => {
+  const allSellerProfiles = useMemo(() => {
     if (loaderData && loaderData.sellerProfiles) {
       const map = new Map<string, any>();
       loaderData.sellerProfiles.forEach((seller: SellerProfile) => {
@@ -197,6 +201,15 @@ export default function Page() {
     }
   }, [loaderData]);
 
+  const allProductCategories = useMemo(() => {
+    if (allPartnerProfiles) {
+      return getAllProductCategories(Array.from(allPartnerProfiles.values()));
+    } else {
+      console.log(allPartnerProfiles);
+      return undefined;
+    }
+  }, [allPartnerProfiles]);
+
   const [selectedDate, setSelectedDate] = useState<Date>();
   const [periodType, setPeriodType] = useState<"month" | "week">(
     searchedPeriodType ?? "month"
@@ -204,10 +217,12 @@ export default function Page() {
   const [seller, setSeller] = useState<string>("all"); // 판매처
   const [partnerName, setPartnerName] = useState<string>("전체"); // 공급처
   const [productName, setProductName] = useState<string>(""); //상품명
+  const [productCategory, setProductCategory] = useState<string>("전체");
 
   const [sellerList, setSellerList] = useState<string[]>([]);
   const [partnerNameList, setPartnerNameList] = useState<string[]>([]);
   const [productNameList, setProductNameList] = useState<string[]>([]);
+  const [productCategoryList, setProductCategoryList] = useState<string[]>([]);
 
   const [isLoading, setIsLoading] = useState<boolean>(false); //로딩 과정에서 로딩오버레이 표시
 
@@ -249,7 +264,7 @@ export default function Page() {
     return productNames;
   }, [searchedData]);
 
-  //판매처, 공급처, 상품명로 필터링
+  //판매처, 공급처, 상품명, 상품분류로 필터링
   const filteredSearchedDataBarGraph = useMemo(() => {
     if (!searchedData) {
       return undefined;
@@ -259,18 +274,31 @@ export default function Page() {
       searchedData,
       sellerList,
       partnerNameList,
-      productNameList
+      productNameList,
+      productCategoryList
     );
-  }, [searchedData, sellerList, partnerNameList, productNameList]);
+  }, [
+    searchedData,
+    sellerList,
+    partnerNameList,
+    productNameList,
+    productCategoryList,
+  ]);
 
-  //판매처로 필터링
+  //판매처, 상품분류로 필터링
   const filteredSearchedDataLineGraph = useMemo(() => {
     if (!searchedData) {
       return undefined;
     }
 
-    return filterSearchedData(searchedData, sellerList, [], []);
-  }, [searchedData, sellerList]);
+    return filterSearchedData(
+      searchedData,
+      sellerList,
+      [],
+      [],
+      productCategoryList
+    );
+  }, [searchedData, sellerList, productCategoryList]);
 
   const barGraphInput: BarGraphInput | undefined = useMemo(() => {
     if (!searchedDate || !filteredSearchedDataBarGraph) {
@@ -610,6 +638,10 @@ export default function Page() {
     setProductNameList((prev) => [...prev, productName]);
   }
 
+  function addProductCategory(productCategory: string) {
+    setProductCategoryList((prev) => [...prev, productCategory]);
+  }
+
   function deleteSeller(index: number) {
     const first1 = sellerList.slice(0, index);
     const last1 = sellerList.slice(index + 1);
@@ -637,11 +669,21 @@ export default function Page() {
     }
   }
 
+  function deleteProductCategory(index: number) {
+    const first1 = productCategoryList.slice(0, index);
+    const last1 = productCategoryList.slice(index + 1);
+    setProductCategoryList(first1.concat(last1));
+    if (first1.concat(last1).length == 0) {
+      setProductCategory("전체");
+    }
+  }
+
   function filterSearchedData(
     searchedData: RevenueData[],
     sellers: string[],
     partnerNames: string[],
-    productNames: string[]
+    productNames: string[],
+    productCategories: string[]
   ): RevenueData[] {
     return searchedData.filter((data) => {
       const isSellerSatisfied =
@@ -654,8 +696,28 @@ export default function Page() {
         productNames.length > 0
           ? productNames.includes(data.productName)
           : true;
+
+      let isProductCategorySatisfied =
+        productCategories.length > 0 ? false : true;
+
+      if (!isProductCategorySatisfied) {
+        const partnerProfile = allPartnerProfiles?.get(data.partnerName);
+        if (!partnerProfile?.productCategory) {
+          return false;
+        }
+        for (let i = 0; i < productCategories.length; i++) {
+          if (partnerProfile?.productCategory.includes(productCategories[i])) {
+            isProductCategorySatisfied = true;
+            break;
+          }
+        }
+      }
+
       return (
-        isSellerSatisfied && isPartnerNameSatisfied && isProductNameSatisfied
+        isSellerSatisfied &&
+        isPartnerNameSatisfied &&
+        isProductNameSatisfied &&
+        isProductCategorySatisfied
       );
     });
   }
@@ -745,7 +807,7 @@ export default function Page() {
   }
 
   function getProceedsFromItem(item: RevenueData) {
-    const partnerProfile = partnerProfiles?.get(item.partnerName);
+    const partnerProfile = allPartnerProfiles?.get(item.partnerName);
 
     if (!partnerProfile) {
       setNoticeModalStr(
@@ -755,7 +817,7 @@ export default function Page() {
       return 0;
     }
 
-    const sellerProfile = sellerProfiles?.get(item.seller);
+    const sellerProfile = allSellerProfiles?.get(item.seller);
 
     const commonFeeRate = LofaSellers.includes(item.seller)
       ? partnerProfile.lofaFee
@@ -1083,8 +1145,8 @@ export default function Page() {
                     }
                   }}
                   items={
-                    partnerProfiles
-                      ? ["전체", ...Array.from(partnerProfiles.keys())]
+                    allPartnerProfiles
+                      ? ["전체", ...Array.from(allPartnerProfiles.keys())]
                       : []
                   }
                   width="400px"
@@ -1185,10 +1247,33 @@ export default function Page() {
           <div
             style={{ display: "flex", alignItems: "center", height: "40px" }}
           >
-            <div>주문태그</div>
+            <div>상품분류</div>
             <Space w={10} />
-            <div>(WIP)</div>
+            <CommonSelect
+              selected={productCategory}
+              setSelected={(productCategory: string) => {
+                setProductCategory(productCategory);
+                if (productCategory == "전체") {
+                  setProductCategoryList([]);
+                  return;
+                }
+                if (!productCategoryList.includes(productCategory)) {
+                  addProductCategory(productCategory);
+                }
+              }}
+              items={
+                allProductCategories ? ["전체", ...allProductCategories] : []
+              }
+            />
           </div>
+          <Space h={10} />
+          {productCategoryList.map((val, index) => (
+            <ProductCategoryItem
+              item={val}
+              key={`ProductCategoryItem_${val}_${index}`}
+              onDeleteClick={() => deleteProductCategory(index)}
+            />
+          ))}
         </div>
       </div>
     </PageLayout>
