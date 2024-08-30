@@ -27,6 +27,20 @@ export type PartnerProfile = {
 export const PossibleTaxStandard = ["일반", "간이", "비사업자", "면세"];
 export type BusinessTaxStandard = "일반" | "간이" | "비사업자" | "면세";
 
+export function getAllProductCategories(partnerProfiles: PartnerProfile[]) {
+  const categorySet = new Set<string>();
+
+  partnerProfiles.forEach((profile) => {
+    if (profile.productCategory) {
+      profile.productCategory.forEach((category) => {
+        categorySet.add(category);
+      });
+    }
+  });
+
+  return Array.from(categorySet);
+}
+
 function PartnerProfileBox({
   children,
   ...props
@@ -94,7 +108,7 @@ function ProfileGridItem({
   );
 }
 
-function ProductCategoryItem({
+export function ProductCategoryItem({
   item,
   onDeleteClick,
 }: {
@@ -578,7 +592,10 @@ export function PartnerProfile({
               <CommonButton
                 type="button"
                 onClick={() => {
-                  if (productCategoryAddEdit.length > 0) {
+                  if (
+                    productCategoryAddEdit.length > 0 &&
+                    !productCategoryEdit.includes(productCategoryAddEdit)
+                  ) {
                     addProductCategory(productCategoryAddEdit);
                     setProductCategoryAddEdit("");
                   }

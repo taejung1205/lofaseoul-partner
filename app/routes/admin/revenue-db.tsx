@@ -22,8 +22,13 @@ import {
 } from "~/services/firebase.server";
 import { BasicModal, ModalButton } from "~/components/modal";
 import { RevenueData, RevenueDataTableMemo } from "~/components/revenue_data";
-import { PartnerProfile } from "~/components/partner_profile";
+import {
+  getAllProductCategories,
+  PartnerProfile,
+  ProductCategoryItem,
+} from "~/components/partner_profile";
 import { SellerProfile } from "./seller-manage";
+import { CommonSelect } from "~/components/select";
 
 function EditInputBox({
   width,
@@ -46,6 +51,12 @@ export function links() {
 export const loader: LoaderFunction = async ({ request }) => {
   const url = new URL(request.url);
   const isSearched = url.searchParams.get("is-searched");
+  const partnersMap = await getAllPartnerProfiles();
+  const partnerProfiles = Array.from(partnersMap.values());
+
+  const sellerMap = await getAllSellerProfiles();
+  const sellerProfiles = Array.from(sellerMap.values());
+
   if (isSearched !== null) {
     const startDateStr = url.searchParams.get("start-date");
     const endDateStr = url.searchParams.get("end-date");
@@ -53,6 +64,8 @@ export const loader: LoaderFunction = async ({ request }) => {
       return json({
         status: "error",
         message: `검색 조건에 오류가 발생하였습니다.`,
+        partnerProfiles: partnerProfiles,
+        sellerProfiles: sellerProfiles,
       });
     }
     const partnerName = url.searchParams.get("partner-name");
@@ -61,6 +74,7 @@ export const loader: LoaderFunction = async ({ request }) => {
     const orderStatus = url.searchParams.get("order-status");
     const cs = url.searchParams.get("cs");
     const filterDiscount = url.searchParams.get("filter-discount");
+    const productCategories = url.searchParams.getAll("product-category");
 
     const startDate = new Date(`${startDateStr}T00:00:00.000+09:00`);
     const endDate = new Date(`${endDateStr}T23:59:59.000+09:00`);
@@ -69,6 +83,8 @@ export const loader: LoaderFunction = async ({ request }) => {
       return json({
         status: "error",
         message: `시작일은 종료일보다 앞이여야 합니다.`,
+        partnerProfiles: partnerProfiles,
+        sellerProfiles: sellerProfiles,
       });
     }
 
@@ -81,13 +97,8 @@ export const loader: LoaderFunction = async ({ request }) => {
       orderStatus: orderStatus ?? "전체",
       cs: cs ?? "전체",
       filterDiscount: filterDiscount ?? "전체",
+      productCategory: productCategories ?? [],
     });
-
-    const partnersMap = await getAllPartnerProfiles();
-    const partnerProfiles = Array.from(partnersMap.values());
-
-    const sellerMap = await getAllSellerProfiles();
-    const sellerProfiles = Array.from(sellerMap.values());
 
     return json({
       status: "ok",
@@ -101,6 +112,7 @@ export const loader: LoaderFunction = async ({ request }) => {
       orderStatus: orderStatus,
       cs: cs,
       filterDiscount: filterDiscount,
+      productCategory: productCategories,
       partnerProfiles: partnerProfiles,
       sellerProfiles: sellerProfiles,
     });
@@ -108,6 +120,8 @@ export const loader: LoaderFunction = async ({ request }) => {
     return json({
       status: "ok",
       message: "",
+      partnerProfiles: partnerProfiles,
+      sellerProfiles: sellerProfiles,
     });
   }
 };
@@ -209,7 +223,15 @@ export default function Page() {
     }
   }, [loaderData]);
 
-  const partnerProfiles = useMemo(() => {
+  const searchedProductCategory = useMemo(() => {
+    if (loaderData && loaderData.productCategory) {
+      return loaderData.productCategory;
+    } else {
+      return [];
+    }
+  }, [loaderData]);
+
+  const allPartnerProfiles = useMemo(() => {
     if (loaderData && loaderData.partnerProfiles) {
       const map = new Map<string, any>();
       loaderData.partnerProfiles.forEach((partner: PartnerProfile) => {
@@ -221,7 +243,7 @@ export default function Page() {
     }
   }, [loaderData]);
 
-  const sellerProfiles = useMemo(() => {
+  const allSellerProfiles = useMemo(() => {
     if (loaderData && loaderData.sellerProfiles) {
       const map = new Map<string, any>();
       loaderData.sellerProfiles.forEach((seller: SellerProfile) => {
@@ -232,6 +254,15 @@ export default function Page() {
       return undefined;
     }
   }, [loaderData]);
+
+  const allProductCategories = useMemo(() => {
+    if (allPartnerProfiles) {
+      return getAllProductCategories(Array.from(allPartnerProfiles.values()));
+    } else {
+      console.log(allPartnerProfiles);
+      return undefined;
+    }
+  }, [allPartnerProfiles]);
 
   //검색조건
   const [startDate, setStartDate] = useState<Date>(); //주문일 시작
@@ -246,6 +277,10 @@ export default function Page() {
   const [filterDiscount, setFilterDiscount] = useState<string | null>(
     searchedFilterDiscount
   ); //할인여부
+  const [productCategory, setProductCategory] = useState<string>("전체");
+  const [productCategoryList, setProductCategoryList] = useState<string[]>(
+    searchedProductCategory
+  );
 
   const [itemsChecked, setItemsChecked] = useState<boolean[]>([]); //체크된 정산내역 index 배열
   const [isLoading, setIsLoading] = useState<boolean>(false); //로딩 과정에서 로딩오버레이 표시
@@ -372,6 +407,17 @@ export default function Page() {
       itemsChecked[i] = isChecked;
     }
     setIsLoading(false);
+  }
+
+  function addProductCategory(productCategory: string) {
+    console.log(`add ${productCategory}`);
+    setProductCategoryList((prev) => [...prev, productCategory]);
+  }
+
+  function deleteProductCategory(index: number) {
+    const first1 = productCategoryList.slice(0, index);
+    const last1 = productCategoryList.slice(index + 1);
+    setProductCategoryList(first1.concat(last1));
   }
 
   async function submitDeleteRevenueData(idList: string[]) {
@@ -619,11 +665,46 @@ export default function Page() {
               orderStatus ?? "전체"
             )}&cs=${encodeURIComponent(
               cs ?? "전체"
-            )}&filterDiscount=${encodeURIComponent(filterDiscount ?? "전체")}`}
+            )}&filter-discount=${encodeURIComponent(
+              filterDiscount ?? "전체"
+            )}&${productCategoryList
+              .map((item) => `product-category=${encodeURIComponent(item)}`)
+              .join("&")}`}
             onClick={() => setIsSearchClicked(true)}
           >
             <BlackButton>검색</BlackButton>
           </Link>
+        </div>
+      </div>
+      <Space h={20} />
+      <div style={{ display: "flex" }}>
+        <div style={{ display: "flex", alignItems: "center", height: "40px" }}>
+          <div>상품분류</div>
+          <Space w={10} />
+          <CommonSelect
+            selected={productCategory}
+            setSelected={(productCategory: string) => {
+              setProductCategory(productCategory);
+              if (productCategory == "전체") {
+                setProductCategoryList([]);
+                return;
+              }
+              if (!productCategoryList.includes(productCategory)) {
+                addProductCategory(productCategory);
+              }
+            }}
+            items={
+              allProductCategories ? ["전체", ...allProductCategories] : []
+            }
+          />
+          <Space w={10} />
+          {productCategoryList.map((val, index) => (
+            <ProductCategoryItem
+              item={val}
+              key={`ProductCategoryItem_${val}_${index}`}
+              onDeleteClick={() => deleteProductCategory(index)}
+            />
+          ))}
         </div>
       </div>
       <Space h={20} />
@@ -860,8 +941,8 @@ export default function Page() {
           onCheckAll={onCheckAll}
           defaultAllCheck={false}
           isDBTable={true}
-          partnerProfiles={partnerProfiles}
-          sellerProfiles={sellerProfiles}
+          partnerProfiles={allPartnerProfiles}
+          sellerProfiles={allSellerProfiles}
           showingItems={{
             showingOrderDate: isShowingOrderDate,
             showingSeller: isShowingSeller,

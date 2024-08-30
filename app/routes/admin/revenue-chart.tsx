@@ -72,6 +72,7 @@ export const loader: LoaderFunction = async ({ request }) => {
           orderStatus: "전체",
           cs: "전체",
           filterDiscount: "전체",
+          productCategory: [], //TODO
         });
 
         const searchResultData = searchResult.map((val) => val.data);
@@ -115,6 +116,7 @@ export const loader: LoaderFunction = async ({ request }) => {
         orderStatus: "전체",
         cs: "전체",
         filterDiscount: "전체",
+        productCategory: [], //TODO
       });
 
       const searchResultData = searchResult.map((val) => val.data);
