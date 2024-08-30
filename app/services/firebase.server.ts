@@ -241,38 +241,6 @@ export async function addPartnerProfile({
   return result;
 }
 
-// /**
-//  * 여러 파트너를 한 번에 추가합니다.
-//  * @param partnerProfiles: PartnerProfile[]
-//  * @returns
-//  *
-//  */
-// export async function addPartnerProfiles({
-//   partnerProfiles,
-// }: {
-//   partnerProfiles: PartnerProfile[];
-// }) {
-//   const batch = writeBatch(firestore);
-//   partnerProfiles.forEach(async (item, index) => {
-//     const docName = item.name;
-//     let docRef = doc(firestore, "accounts", docName);
-//     batch.set(docRef, {
-//       name: item.name,
-//       id: item.id,
-//       password: item.password,
-//       email: item.email,
-//       phone: item.phone,
-//       lofaFee: item.lofaFee,
-//       otherFee: item.otherFee,
-//       shippingFee: item.shippingFee,
-//       isAdmin: false,
-//     });
-
-//     await createAuthAccount(item.id, item.password, item.name);
-//   });
-//   await batch.commit();
-// }
-
 /**
  * 파트너 정보를 삭제합니다.
  * @param id: string (해당 파트너 아이디)
@@ -1582,7 +1550,12 @@ export async function addProduct({ product }: { product: Product }) {
 
   addLog("addProduct", product);
 
-  setDoc(doc(firestore, "products", product.productName), product);
+  const timestamp = Timestamp.fromDate(new Date());
+
+  setDoc(doc(firestore, "products", product.productName), {
+    ...product,
+    uploadedDate: timestamp,
+  });
 
   return null;
 }
@@ -1603,7 +1576,8 @@ export async function getPartnerProducts({
 
     const productsQuery = query(
       productsRef,
-      where("partnerName", "==", partnerName)
+      where("partnerName", "==", partnerName),
+      orderBy("uploadedDate", "desc")
     );
     const querySnap = await getDocs(productsQuery);
 
@@ -1624,7 +1598,11 @@ export async function getAllProducts() {
   try {
     const productsRef = collection(firestore, `products`);
 
-    const productsQuery = query(productsRef, where("status", "!=", "임시저장"));
+    const productsQuery = query(
+      productsRef,
+      where("status", "!=", "임시저장"),
+      orderBy("uploadedDate", "desc")
+    );
     const querySnap = await getDocs(productsQuery);
 
     return querySnap.docs.map((doc) => doc.data());
@@ -1756,12 +1734,14 @@ export async function acceptProducts({
 }: {
   productNameList: string[];
 }) {
+  const timestamp = Timestamp.fromDate(new Date());
   try {
     for (let i = 0; i < productNameList.length; i++) {
       const docRef = doc(firestore, "products", productNameList[i]);
       const docSnap = await getDoc(docRef);
       const data = {
         status: "승인완료",
+        uploadedDate: timestamp,
       };
       if (docSnap.exists()) {
         updateDoc(doc(firestore, "products", productNameList[i]), data);
@@ -1787,12 +1767,14 @@ export async function declineProducts({
 }: {
   productNameList: string[];
 }) {
+  const timestamp = Timestamp.fromDate(new Date());
   try {
     for (let i = 0; i < productNameList.length; i++) {
       const docRef = doc(firestore, "products", productNameList[i]);
       const docSnap = await getDoc(docRef);
       const data = {
         status: "승인거부",
+        uploadedDate: timestamp,
       };
       if (docSnap.exists()) {
         updateDoc(doc(firestore, "products", productNameList[i]), data);
