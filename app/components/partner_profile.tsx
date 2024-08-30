@@ -583,6 +583,9 @@ export function PartnerProfile({
                     setProductCategoryAddEdit("");
                   }
                 }}
+                styleOverrides={{ fontSize: "14px", borderWidth: "0.8px" }}
+                height={28}
+                width={60}
               >
                 추가
               </CommonButton>
