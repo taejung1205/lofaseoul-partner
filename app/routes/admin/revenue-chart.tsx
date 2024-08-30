@@ -108,10 +108,7 @@ export const loader: LoaderFunction = async ({ request }) => {
 
       const startDate = new Date(`${startDateStr}T00:00:00.000+09:00`);
       const endDate = new Date(
-        `${dateToDayStr(
-          endOfWeek(new Date(startDateStr)),
-          false
-        )}T23:59:59.000+09:00`
+        `${dateToDayStr(endOfWeek(new Date(startDateStr)))}T23:59:59.000+09:00`
       );
 
       const searchResult = await getRevenueData({
@@ -520,7 +517,7 @@ export default function Page() {
           lineGraphDataMap.get(dateKey) || new Map<string, number>();
 
         const currentProceeds = productMap.get(item.productName) || 0;
-       
+
         productMap.set(
           item.productName,
           currentProceeds + getProceedsFromItem(item)
