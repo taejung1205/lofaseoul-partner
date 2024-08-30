@@ -1,8 +1,23 @@
 // Your web app's Firebase configuration
 
 import { initializeApp } from "firebase/app";
-import { collection, doc, getDocs, getFirestore, query, updateDoc, where } from "firebase/firestore";
-import { deleteObject, getDownloadURL, getStorage, listAll, ref, uploadBytes } from "firebase/storage";
+import {
+  collection,
+  doc,
+  getDocs,
+  getFirestore,
+  query,
+  updateDoc,
+  where,
+} from "firebase/firestore";
+import {
+  deleteObject,
+  getDownloadURL,
+  getStorage,
+  listAll,
+  ref,
+  uploadBytes,
+} from "firebase/storage";
 
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
@@ -132,26 +147,60 @@ export async function debug_fixPartnerProviderNameStandard() {
 }
 
 export async function debug_initializeIsDiscountedForSettlements() {
-    try {
-      const year = 24;
-  
-      for (let month = 1; month <= 8; month++) {
-        const monthStr = month.toString().padStart(2, '0'); // '01', '02', ..., '12'
-        const settlementDocRef = collection(firestore, "settlements", `${year}년 ${monthStr}월`, "items");
-  
-        const itemsSnap = await getDocs(settlementDocRef);
-  
-        itemsSnap.docs.forEach(async (item) => {
-          await updateDoc(doc(firestore, "settlements", `${year}년 ${monthStr}월`, "items", item.id), {
+  try {
+    const year = 24;
+
+    for (let month = 1; month <= 8; month++) {
+      const monthStr = month.toString().padStart(2, "0"); // '01', '02', ..., '12'
+      const settlementDocRef = collection(
+        firestore,
+        "settlements",
+        `${year}년 ${monthStr}월`,
+        "items"
+      );
+
+      const itemsSnap = await getDocs(settlementDocRef);
+
+      itemsSnap.docs.forEach(async (item) => {
+        await updateDoc(
+          doc(
+            firestore,
+            "settlements",
+            `${year}년 ${monthStr}월`,
+            "items",
+            item.id
+          ),
+          {
             isDiscounted: false,
-          }).catch((error) => {
-            console.error(`Error updating document ${item.id}: `, error);
-          });
+          }
+        ).catch((error) => {
+          console.error(`Error updating document ${item.id}: `, error);
         });
-      }
-  
-      console.log("All items have been updated successfully.");
-    } catch (error) {
-      console.error("Error initializing isDiscounted fields: ", error);
+      });
     }
+
+    console.log("All items have been updated successfully.");
+  } catch (error) {
+    console.error("Error initializing isDiscounted fields: ", error);
   }
+}
+
+export async function debug_addUploadedDate() {
+  const accountsRef = collection(firestore, "products");
+  const querySnap = await getDocs(accountsRef);
+  querySnap.docs.forEach(async (item) => {
+    const data = item.data();
+    const id = data.id;
+    const year = parseInt(`20${id.substring(0, 2)}`, 10);
+    const month = parseInt(id.substring(2, 4), 10) - 1; // 월은 0부터 시작하므로 -1
+    const day = parseInt(id.substring(4, 6), 10);
+    const date = new Date(year, month, day);
+    if (!data.uploadedDate) {
+      await updateDoc(doc(firestore, "products", item.id), {
+        uploadedDate: date,
+      }).catch((error) => {
+        return error.message;
+      });
+    }
+  });
+}
