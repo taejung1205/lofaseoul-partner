@@ -122,6 +122,7 @@ export function ProductCategoryItem({
     border: "0.5px solid black",
     padding: "5px",
     margin: "3px",
+    width: "fit-content",
   };
   return (
     <div style={styles}>
