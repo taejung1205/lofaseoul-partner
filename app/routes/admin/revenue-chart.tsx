@@ -19,7 +19,7 @@ import {
 import { json, LoaderFunction } from "@remix-run/node";
 import { CommonButton } from "~/components/button";
 import { LofaSellers, SellerSelect } from "~/components/seller";
-import { addDays, endOfMonth, endOfWeek, startOfMonth } from "date-fns";
+import { endOfMonth, startOfMonth } from "date-fns";
 import {
   getAllPartnerProfiles,
   getAllSellerProfiles,
@@ -109,9 +109,7 @@ export const loader: LoaderFunction = async ({ request }) => {
       const startDate = new Date(`${startDateStr}T00:00:00.000+09:00`);
       const endOfWeek = new Date(startDate);
       endOfWeek.setDate(endOfWeek.getDate() + 6);
-      const endDate = new Date(
-        `${dateToDayStr(endOfWeek)}T23:59:59.000+09:00`
-      );
+      const endDate = new Date(`${dateToDayStr(endOfWeek)}T23:59:59.000+09:00`);
 
       const searchResult = await getRevenueData({
         startDate: startDate,
