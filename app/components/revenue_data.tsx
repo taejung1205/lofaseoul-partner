@@ -606,7 +606,9 @@ function RevenueDataItem({
 
       {isDBTable && showingItems.showingReturnRate ? (
         <TextBox styleOverrides={{ minWidth: "60px", width: "60px" }}>
-          {(netProfitAfterTax / totalSalesAmount) * 100}
+          {totalSalesAmount != 0
+            ? ((netProfitAfterTax / totalSalesAmount) * 100).toFixed(2)
+            : 0}
         </TextBox>
       ) : (
         <></>

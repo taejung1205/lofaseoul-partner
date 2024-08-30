@@ -1,6 +1,7 @@
 //수익금계산 페이지에서 사용되는, 한 공급처에서
 
 import { Checkbox } from "@mantine/core";
+import { Link } from "@remix-run/react";
 import React from "react";
 import { useEffect, useMemo, useState } from "react";
 
@@ -189,6 +190,15 @@ function PartnerRevenueStatItem({
       <TextBox styleOverrides={{ minWidth: "270px", width: "360px" }}>
         {productCategoryStr}
       </TextBox>
+      {isSum ? (
+        <div style={{ minWidth: "120px" }} />
+      ) : (
+        <Link
+          to={`/admin/revenue-db?is-searched=true&start-date=${item.startDateStr}&end-date=${item.endDateStr}&seller=all&partner-name=${item.partnerName}&product-name=&order-status=전체&cs=전체&filter-discount=전체`}
+        >
+          <TextBox styleOverrides={{ color: "blue" }}>자세히</TextBox>
+        </Link>
+      )}
     </ItemBox>
   );
 }
@@ -310,6 +320,7 @@ export function PartnerRevenueStatTable({
           <TextBox styleOverrides={{ minWidth: "270px", width: "360px" }}>
             상품분류
           </TextBox>
+          <div style={{ minWidth: "120px" }} />
         </Header>
         <ItemsBox>
           {items.map((item, index) => {

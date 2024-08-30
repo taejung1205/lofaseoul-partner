@@ -2279,8 +2279,8 @@ export async function getRevenueStats({
 
       if (!searchResult.has(data.partnerName)) {
         let partnerStat: PartnerRevenueStat = {
-          startDateStr: dateToDayStr(startDate, false),
-          endDateStr: dateToDayStr(endDate, false),
+          startDateStr: dateToDayStr(startDate),
+          endDateStr: dateToDayStr(endDate),
           partnerName: data.partnerName,
           lofaSalesAmount: 0,
           otherSalesAmount: 0,
@@ -2415,6 +2415,8 @@ export async function getRevenueStats({
   searchResult.forEach((stat: PartnerRevenueStat) => {
     if (stat.totalSalesAmount != 0) {
       stat.returnRate = (stat.netProfitAfterTax / stat.totalSalesAmount) * 100;
+    } else {
+      stat.returnRate = 0;
     }
   });
 
