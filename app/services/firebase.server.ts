@@ -2192,7 +2192,6 @@ export async function getRevenueData({
     ) {
       //상품분류 검색한게 없으면 따로 검사 안함
       if (productCategory.length == 0) {
-        console.log("product category length = 0");
         data.orderDate = data.orderDate.toDate();
         searchResult.push({ data: data, id: doc.id });
       } else {

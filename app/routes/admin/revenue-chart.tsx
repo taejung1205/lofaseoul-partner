@@ -205,7 +205,6 @@ export default function Page() {
     if (allPartnerProfiles) {
       return getAllProductCategories(Array.from(allPartnerProfiles.values()));
     } else {
-      console.log(allPartnerProfiles);
       return undefined;
     }
   }, [allPartnerProfiles]);
@@ -332,7 +331,7 @@ export default function Page() {
       }
 
       for (const data of filteredSearchedDataBarGraph) {
-        const dayStr = dateToDayStr(data.orderDate);
+        const dayStr = dateToDayStr(data.orderDate, false);
         const barGraphEntry = chartData.find((entry) => entry.name === dayStr);
         if (barGraphEntry) {
           const result = fillBarGraphData(barGraphEntry, data);
