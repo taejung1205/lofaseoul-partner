@@ -212,7 +212,7 @@ export async function addPartnerProfile({
     }
   }
 
-  const data = {
+  const data: PartnerProfile = {
     name: partnerProfile.name,
     id: partnerProfile.id,
     password: partnerProfile.password,
@@ -226,6 +226,7 @@ export async function addPartnerProfile({
     businessName: partnerProfile.businessName,
     businessTaxStandard: partnerProfile.businessTaxStandard,
     providerName: partnerProfile.providerName,
+    productCategory: partnerProfile.productCategory,
     isAdmin: false,
   };
 

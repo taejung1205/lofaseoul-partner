@@ -58,6 +58,7 @@ export const action: ActionFunction = async ({ request }) => {
       .get("businessTaxStandard")
       ?.toString() as BusinessTaxStandard;
     const providerName = body.get("providerName")?.toString();
+    const productCategory = body.getAll("productCategory");
 
     if (
       typeof name == "undefined" ||
@@ -83,6 +84,7 @@ export const action: ActionFunction = async ({ request }) => {
         businessName: businessName ?? "",
         businessTaxStandard: businessTaxStandard ?? "일반",
         providerName: providerName ?? name,
+        productCategory: productCategory.map((val) => val.toString()),
       };
       const addPartnerResult = await addPartnerProfile({
         partnerProfile,
@@ -174,6 +176,7 @@ export default function AdminPartnerList() {
             businessName: "",
             businessTaxStandard: "일반",
             providerName: "",
+            productCategory: [],
           }}
           isNew={true}
           isEdit={true}
@@ -201,6 +204,7 @@ export default function AdminPartnerList() {
               businessName: doc.businessName,
               businessTaxStandard: doc.businessTaxStandard,
               providerName: doc.providerName,
+              productCategory: doc.productCategory,
             }}
             isEdit={currentEdit == index}
             onEditClick={() => {
