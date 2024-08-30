@@ -108,7 +108,7 @@ export const loader: LoaderFunction = async ({ request }) => {
 
       const startDate = new Date(`${startDateStr}T00:00:00.000+09:00`);
       const endDate = new Date(
-        `${dateToDayStr(endOfWeek(startDate))}T23:59:59.000+09:00`
+        `${dateToDayStr(endOfWeek(new Date(startDateStr)))}T23:59:59.000+09:00`
       );
 
       const searchResult = await getRevenueData({
@@ -331,7 +331,7 @@ export default function Page() {
       }
 
       for (const data of filteredSearchedDataBarGraph) {
-        const dayStr = dateToDayStr(data.orderDate, false);
+        const dayStr = dateToDayStr(data.orderDate);
         const barGraphEntry = chartData.find((entry) => entry.name === dayStr);
         if (barGraphEntry) {
           const result = fillBarGraphData(barGraphEntry, data);
