@@ -2405,6 +2405,8 @@ export async function getRevenueStats({
       stat.lofaDiscountLevy += lofaDiscountLevy;
       stat.proceeds += proceeds;
       stat.netProfitAfterTax += netProfitAfterTax;
+
+      stat.productCategory = partnerProfile.productCategory ?? [];
     });
   } catch (error: any) {
     return error.message as string;

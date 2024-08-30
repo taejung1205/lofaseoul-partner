@@ -186,7 +186,7 @@ function PartnerRevenueStatItem({
       <TextBox styleOverrides={{ minWidth: "120px", width: "120px" }}>
         {item.returnRate.toFixed(2)}
       </TextBox>
-      <TextBox styleOverrides={{ minWidth: "270px", width: "270px" }}>
+      <TextBox styleOverrides={{ minWidth: "270px", width: "360px" }}>
         {productCategoryStr}
       </TextBox>
     </ItemBox>
@@ -307,7 +307,7 @@ export function PartnerRevenueStatTable({
           <TextBox styleOverrides={{ minWidth: "120px", width: "120px" }}>
             수익률(%)
           </TextBox>
-          <TextBox styleOverrides={{ minWidth: "270px", width: "270px" }}>
+          <TextBox styleOverrides={{ minWidth: "270px", width: "360px" }}>
             상품분류
           </TextBox>
         </Header>
