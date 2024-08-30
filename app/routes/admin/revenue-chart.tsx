@@ -107,8 +107,10 @@ export const loader: LoaderFunction = async ({ request }) => {
       }
 
       const startDate = new Date(`${startDateStr}T00:00:00.000+09:00`);
+      const endOfWeek = new Date(startDate);
+      endOfWeek.setDate(endOfWeek.getDate() + 6);
       const endDate = new Date(
-        `${dateToDayStr(endOfWeek(new Date(startDateStr)))}T23:59:59.000+09:00`
+        `${dateToDayStr(endOfWeek)}T23:59:59.000+09:00`
       );
 
       const searchResult = await getRevenueData({
