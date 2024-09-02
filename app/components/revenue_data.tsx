@@ -244,6 +244,7 @@ export function getRevenueDataPeriod(items: RevenueData[]): {
 
 //매출
 export function getSalesAmount(item: RevenueData) {
+  const isCsOk = item.cs == "정상";
   const salesPrice = item.isDiscounted
     ? (item.price *
         (100 -
@@ -253,7 +254,7 @@ export function getSalesAmount(item: RevenueData) {
       100
     : item.price;
 
-  return salesPrice * item.amount;
+  return isCsOk ? salesPrice * item.amount : 0;
 }
 
 export function getProceeds(
@@ -261,6 +262,10 @@ export function getProceeds(
   commonFeeRate: number,
   platformFeeRate: number
 ) {
+  const isCsOK = item.cs == "정상";
+  if (!isCsOK) {
+    return 0;
+  }
   const isLofa = LofaSellers.includes(item.seller);
   const platformSettlementStandard = NormalPriceStandardSellers.includes(
     item.seller
@@ -286,7 +291,7 @@ export function getProceeds(
           100) *
           (100 - platformFeeRate + item.platformAdjustmentFeeRate!)) /
         100
-    : (item.price * item.amount * (100 - platformFeeRate)) / 100;
+    : (getSalesAmount(item) * (100 - platformFeeRate)) / 100;
 
   const partnerSettlement = item.isDiscounted
     ? (item.price *
@@ -350,7 +355,11 @@ function RevenueDataItem({
   }, [item.isDiscounted]);
 
   const totalSalesAmount = useMemo(() => {
-    return (discountedPrice ?? item.price) * item.amount;
+    return isCsOK ? (discountedPrice ?? item.price) * item.amount : 0;
+  }, [item]);
+
+  const normalPriceTotalSalesAmount = useMemo(() => {
+    return isCsOK ? item.price * item.amount : 0;
   }, [item]);
 
   const commonFeeRate = useMemo(() => {
@@ -371,14 +380,13 @@ function RevenueDataItem({
 
   const partnerSettlement = useMemo(() => {
     return item.isDiscounted
-      ? (item.price *
-          item.amount *
+      ? (normalPriceTotalSalesAmount *
           (100 -
             commonFeeRate -
             item.partnerDiscountLevyRate! +
             item.lofaAdjustmentFeeRate!)) /
           100
-      : (item.price * item.amount * (100 - commonFeeRate)) / 100.0;
+      : (totalSalesAmount * (100 - commonFeeRate)) / 100.0;
   }, [item]);
 
   const platformSettlement = useMemo(() => {
@@ -387,23 +395,21 @@ function RevenueDataItem({
         ? totalSalesAmount
         : item.isDiscounted
         ? platformSettlementStandard == "정상판매가"
-          ? (item.price *
-              item.amount *
+          ? (normalPriceTotalSalesAmount *
               (100 -
                 platformFeeRate -
                 item.lofaDiscountLevyRate! -
                 item.partnerDiscountLevyRate! +
                 item.platformAdjustmentFeeRate!)) /
             100
-          : (((item.price *
-              item.amount *
+          : (((normalPriceTotalSalesAmount *
               (100 -
                 item.lofaDiscountLevyRate! -
                 item.partnerDiscountLevyRate!)) /
               100) *
               (100 - platformFeeRate + item.platformAdjustmentFeeRate!)) /
             100
-        : (item.price * item.amount * (100 - platformFeeRate)) / 100;
+        : (totalSalesAmount * (100 - platformFeeRate)) / 100;
     } else {
       return 0;
     }
@@ -411,7 +417,7 @@ function RevenueDataItem({
 
   const lofaDiscountLevy = useMemo(() => {
     if (item.isDiscounted) {
-      return (item.price * item.amount * item.lofaDiscountLevyRate!) / 100;
+      return (normalPriceTotalSalesAmount * item.lofaDiscountLevyRate!) / 100;
     } else {
       return undefined;
     }
@@ -505,7 +511,7 @@ function RevenueDataItem({
       {isDBTable ? (
         showingItems.showingPrice ? (
           <TextBox styleOverrides={{ minWidth: "60px", width: "60px" }}>
-            {item.price}
+            {item.price.toLocaleString()}
           </TextBox>
         ) : (
           <></>
@@ -518,15 +524,16 @@ function RevenueDataItem({
             color: isDiscountPreview && item.isDiscounted ? "red" : "inherit",
           }}
         >
-          {isDiscountPreview && item.isDiscounted
+          {(isDiscountPreview && item.isDiscounted
             ? discountedPrice
-            : item.price}
+            : item.price
+          )?.toLocaleString()}
         </TextBox>
       )}
 
       {isDBTable && showingItems.showingDiscountedPrice ? (
         <TextBox styleOverrides={{ minWidth: "60px", width: "60px" }}>
-          {discountedPrice ?? ""}
+          {discountedPrice?.toLocaleString() ?? ""}
         </TextBox>
       ) : (
         <></>
@@ -542,7 +549,7 @@ function RevenueDataItem({
 
       {isDBTable && showingItems.showingTotalSalesAmount ? (
         <TextBox styleOverrides={{ minWidth: "60px", width: "60px" }}>
-          {totalSalesAmount}
+          {totalSalesAmount.toLocaleString()}
         </TextBox>
       ) : (
         <></>
@@ -566,7 +573,10 @@ function RevenueDataItem({
 
       {isDBTable && showingItems.showingPartnerSettlement ? (
         <TextBox styleOverrides={{ minWidth: "60px", width: "60px" }}>
-          {partnerSettlement}
+          {partnerSettlement.toLocaleString(undefined, {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0,
+          })}
         </TextBox>
       ) : (
         <></>
@@ -574,7 +584,10 @@ function RevenueDataItem({
 
       {isDBTable && showingItems.showingPlatformFee ? (
         <TextBox styleOverrides={{ minWidth: "60px", width: "60px" }}>
-          {totalSalesAmount - platformSettlement}
+          {(totalSalesAmount - platformSettlement).toLocaleString(undefined, {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0,
+          })}
         </TextBox>
       ) : (
         <></>
@@ -582,7 +595,10 @@ function RevenueDataItem({
 
       {isDBTable && showingItems.showingLofaDiscountLevy ? (
         <TextBox styleOverrides={{ minWidth: "75px", width: "75px" }}>
-          {lofaDiscountLevy ?? ""}
+          {lofaDiscountLevy?.toLocaleString(undefined, {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0,
+          }) ?? ""}
         </TextBox>
       ) : (
         <></>
@@ -590,7 +606,10 @@ function RevenueDataItem({
 
       {isDBTable && showingItems.showingProceeds ? (
         <TextBox styleOverrides={{ minWidth: "60px", width: "60px" }}>
-          {platformSettlement - partnerSettlement}
+          {(platformSettlement - partnerSettlement).toLocaleString(undefined, {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0,
+          })}
         </TextBox>
       ) : (
         <></>
@@ -598,7 +617,10 @@ function RevenueDataItem({
 
       {isDBTable && showingItems.showingNetProfitAfterTax ? (
         <TextBox styleOverrides={{ minWidth: "60px", width: "60px" }}>
-          {netProfitAfterTax}
+          {netProfitAfterTax.toLocaleString(undefined, {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0,
+          })}
         </TextBox>
       ) : (
         <></>
