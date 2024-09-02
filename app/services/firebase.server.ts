@@ -156,7 +156,7 @@ export async function getAllPartnerProfiles(useProviderName = false) {
     if (useProviderName) {
       map.set(data.providerName, data);
     } else {
-      map.set(data.providerName, data);
+      map.set(doc.id, data);
     }
   });
   return map;
