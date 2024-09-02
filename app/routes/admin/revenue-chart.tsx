@@ -260,7 +260,9 @@ export default function Page() {
         productNames.push(data.productName);
       }
     });
-    return productNames;
+    return productNames.sort((a, b) =>
+      a.toLowerCase().localeCompare(b.toLowerCase())
+    );
   }, [searchedData]);
 
   //판매처, 공급처, 상품명, 상품분류로 필터링
@@ -588,7 +590,11 @@ export default function Page() {
           lineGraphDataMap.get(dateKey) || new Map<string, number>();
 
         const currentAmount = productMap.get(item.productName) || 0;
-        productMap.set(item.productName, currentAmount + item.amount);
+
+        const isCsOk = item.cs == "정상";
+        if (isCsOk) {
+          productMap.set(item.productName, currentAmount + item.amount);
+        }
 
         lineGraphDataMap.set(dateKey, productMap);
       }
@@ -787,16 +793,18 @@ export default function Page() {
   function getAmountTop5Products(
     data: RevenueData[]
   ): { productName: string; totalAmount: number }[] {
-    // 1. 상품명(productName)별로 price의 합을 계산하기 위해 Map을 사용
+    // 1. 상품명(productName)별로 개수의 합을 계산하기 위해 Map을 사용
     const productAmountMap = new Map<string, number>();
 
     data.forEach((item) => {
       const existingAmount = productAmountMap.get(item.productName) || 0;
-
-      productAmountMap.set(item.productName, existingAmount + item.amount);
+      const isCsOk = item.cs == "정상";
+      if (isCsOk) {
+        productAmountMap.set(item.productName, existingAmount + item.amount);
+      }
     });
 
-    // 2. Map을 배열로 변환하고, 총 price 기준으로 내림차순 정렬
+    // 2. Map을 배열로 변환하고, 총 개수 기준으로 내림차순 정렬
     const sortedProducts = Array.from(productAmountMap.entries())
       .map(([productName, totalAmount]) => ({ productName, totalAmount }))
       .sort((a, b) => b.totalAmount - a.totalAmount);
