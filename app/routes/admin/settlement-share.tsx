@@ -179,7 +179,7 @@ export default function AdminSettlementShare() {
             fee: -1,
             shippingFee: -1,
             orderTag: element.주문태그?.toString() ?? "",
-            isDiscounted: false
+            isDiscounted: false,
           };
 
           let checkValidResult = isSettlementItemValid(item);
@@ -225,7 +225,9 @@ export default function AdminSettlementShare() {
           const partnerProfile = partnerProfiles.get(item.providerName);
           if (partnerProfile === undefined) {
             setNoticeModalStr(
-              `유효하지 않은 엑셀 파일입니다. '${item.partnerName}'가 계약업체목록에 있는지 확인해주세요. (공급처명 기준) `
+              `유효하지 않은 엑셀 파일입니다. ${i + 2}번째줄의 '${
+                item.providerName
+              }'가 계약업체목록에 있는지 확인해주세요. (공급처명 기준) `
             );
             setIsNoticeModalOpened(true);
             setFileName("");
