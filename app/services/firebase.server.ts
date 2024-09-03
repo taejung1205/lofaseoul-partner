@@ -2265,6 +2265,7 @@ export async function getRevenueStats({
       const data = doc.data() as RevenueData;
       const isLofa = LofaSellers.includes(data.seller);
       const isCsOK = data.cs == "정상";
+      const isOrderStatusDeliver = data.orderStatus == "배송";
       const partnerProfile: PartnerProfile = partnerProfiles.get(
         data.partnerName
       );
@@ -2308,8 +2309,14 @@ export async function getRevenueStats({
       let platformSettlement;
 
       if (!data.isDiscounted) {
-        lofaSalesAmount = isCsOK && isLofa ? data.price * data.amount : 0;
-        otherSalesAmount = isCsOK && !isLofa ? data.price * data.amount : 0;
+        lofaSalesAmount =
+          isCsOK && isLofa && isOrderStatusDeliver
+            ? data.price * data.amount
+            : 0;
+        otherSalesAmount =
+          isCsOK && !isLofa && isOrderStatusDeliver
+            ? data.price * data.amount
+            : 0;
         totalSalesAmount = lofaSalesAmount + otherSalesAmount;
         partnerSettlement = (totalSalesAmount * (100 - commonFeeRate)) / 100;
         platformSettlement = isLofa
@@ -2317,7 +2324,7 @@ export async function getRevenueStats({
           : (totalSalesAmount * (100 - platformFeeRate)) / 100; //플랫폼정산금
         platformFee = totalSalesAmount - platformSettlement;
         lofaDiscountLevy = 0;
-        if (!isCsOK) {
+        if (!isCsOK || !isOrderStatusDeliver) {
           netProfitAfterTax = 0;
         }
       } else {
@@ -2338,11 +2345,11 @@ export async function getRevenueStats({
           data.partnerDiscountLevyRate +
           data.platformDiscountLevyRate;
         lofaSalesAmount =
-          isCsOK && isLofa
+          isCsOK && isLofa && isOrderStatusDeliver
             ? ((data.price * (100 - totalDiscountRate)) / 100.0) * data.amount
             : 0;
         otherSalesAmount =
-          isCsOK && !isLofa
+          isCsOK && !isLofa && isOrderStatusDeliver
             ? ((data.price * (100 - totalDiscountRate)) / 100.0) * data.amount
             : 0;
         totalSalesAmount = lofaSalesAmount + otherSalesAmount;

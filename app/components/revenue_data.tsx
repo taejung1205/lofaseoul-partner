@@ -5,6 +5,7 @@ import { dateToDayStr } from "~/utils/date";
 import { PartnerProfile } from "./partner_profile";
 import { LofaSellers, NormalPriceStandardSellers } from "./seller";
 import { SellerProfile } from "~/routes/admin/seller-manage";
+import { is } from "date-fns/locale";
 
 //통계용 파일 업로드에서 올릴 때 사용하는 양식입니다.
 //한 데이터는 한 거래를 나타냅니다.
@@ -245,6 +246,7 @@ export function getRevenueDataPeriod(items: RevenueData[]): {
 //매출
 export function getSalesAmount(item: RevenueData) {
   const isCsOk = item.cs == "정상";
+  const isOrderStatusDeliver = item.orderStatus == "배송";
   const salesPrice = item.isDiscounted
     ? (item.price *
         (100 -
@@ -254,7 +256,7 @@ export function getSalesAmount(item: RevenueData) {
       100
     : item.price;
 
-  return isCsOk ? salesPrice * item.amount : 0;
+  return isCsOk && isOrderStatusDeliver ? salesPrice * item.amount : 0;
 }
 
 export function getProceeds(
@@ -263,7 +265,8 @@ export function getProceeds(
   platformFeeRate: number
 ) {
   const isCsOK = item.cs == "정상";
-  if (!isCsOK) {
+  const isOrderStatusDeliver = item.orderStatus == "배송";
+  if (!isCsOK || !isOrderStatusDeliver) {
     return 0;
   }
   const isLofa = LofaSellers.includes(item.seller);
@@ -343,6 +346,10 @@ function RevenueDataItem({
     return item.cs == "정상";
   }, [item]);
 
+  const isOrderStatusDeliver = useMemo(() => {
+    return item.orderStatus == "배송";
+  }, [item]);
+
   const discountedPrice = useMemo(() => {
     return item.isDiscounted
       ? (item.price *
@@ -355,11 +362,13 @@ function RevenueDataItem({
   }, [item.isDiscounted]);
 
   const totalSalesAmount = useMemo(() => {
-    return isCsOK ? (discountedPrice ?? item.price) * item.amount : 0;
+    return isCsOK && isOrderStatusDeliver
+      ? (discountedPrice ?? item.price) * item.amount
+      : 0;
   }, [item]);
 
   const normalPriceTotalSalesAmount = useMemo(() => {
-    return isCsOK ? item.price * item.amount : 0;
+    return isCsOK && isOrderStatusDeliver ? item.price * item.amount : 0;
   }, [item]);
 
   const commonFeeRate = useMemo(() => {
