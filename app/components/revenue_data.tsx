@@ -160,12 +160,18 @@ function TextBox({ children, styleOverrides, ...props }: Props) {
  *  유효할 경우 true, 아닐 경우 문제가 있는 곳의 항목명
  */
 export function checkRevenueDataItem(item: RevenueData) {
-  // Check if orderDate is defined and a non-empty string
+  // Check if orderDate is defined and not a NaN Date
   if (!(item.orderDate instanceof Date) || isNaN(item.orderDate.getTime())) {
-    return {
-      isValid: false,
-      message: `주문일이 유효하지 않은 항목이 존재합니다. (${item.orderDate}) `,
-    };
+    //문자열로 들어왔을 가능성 확인
+    const date = new Date(item.orderDate);
+    if (!(date instanceof Date) || isNaN(date.getTime())) {
+      return {
+        isValid: false,
+        message: `주문일이 유효하지 않은 항목이 존재합니다. (${item.orderDate}) `,
+      };
+    } else {
+      item.orderDate = date;
+    }
   }
 
   // Check if seller is defined and a non-empty string
