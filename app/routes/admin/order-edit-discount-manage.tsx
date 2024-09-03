@@ -99,12 +99,12 @@ export const action: ActionFunction = async ({ request }) => {
       if (result === true) {
         return json({
           status: "ok",
-          message: `수익통계 자료 삭제 요청이 등록되었습니다. 잠시 후 DB에 반영될 예정입니다.`,
+          message: `할인내역 자료 삭제 요청이 등록되었습니다. 잠시 후 DB에 반영될 예정입니다.`,
         });
       } else {
         return json({
           status: "error",
-          message: `수익통계 자료 삭제 요청 중 문제가 발생하였습니다. 개발자에게 문의해주세요.`,
+          message: `할인내역 자료 삭제 요청 중 문제가 발생하였습니다. 개발자에게 문의해주세요.`,
         });
       }
     }
