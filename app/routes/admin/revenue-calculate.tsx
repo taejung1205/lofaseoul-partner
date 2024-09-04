@@ -1,5 +1,5 @@
 import { LoadingOverlay, Space } from "@mantine/core";
-import { json, LoaderFunction } from "@remix-run/node";
+import { json, LoaderFunction, redirect } from "@remix-run/node";
 import { Link, useLoaderData, useNavigation } from "@remix-run/react";
 import { useEffect, useMemo, useState } from "react";
 import { CommonButton } from "~/components/button";
@@ -14,12 +14,23 @@ import { dateToDayStr, dayStrToDate, getTimezoneDate } from "~/utils/date";
 import writeXlsxFile from "write-excel-file";
 import dayPickerStyles from "react-day-picker/dist/style.css";
 import { BasicModal, ModalButton } from "~/components/modal";
+import { requireUser } from "~/services/session.server";
 
 export function links() {
   return [{ rel: "stylesheet", href: dayPickerStyles }];
 }
 
 export const loader: LoaderFunction = async ({ request }) => {
+  //스태프는 접근 불가
+  const user = await requireUser(request);
+  if (user == null) {
+    return redirect("/logout");
+  }
+
+  if (user.isStaff) {
+    return redirect("/admin/dashboard");
+  }
+
   const url = new URL(request.url);
   const isSearched = url.searchParams.get("is-searched");
   if (isSearched !== null) {

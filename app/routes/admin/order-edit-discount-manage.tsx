@@ -12,13 +12,19 @@ import dayPickerStyles from "react-day-picker/dist/style.css";
 import { DaySelectPopover } from "~/components/date";
 import { dateToDayStr, dayStrToDate, getTimezoneDate } from "~/utils/date";
 import { BlackButton } from "~/components/button";
-import { ActionFunction, json, LoaderFunction } from "@remix-run/node";
+import {
+  ActionFunction,
+  json,
+  LoaderFunction,
+  redirect,
+} from "@remix-run/node";
 import {
   deleteDiscountData,
   getDiscountData,
 } from "~/services/firebase.server";
 import { BasicModal, ModalButton } from "~/components/modal";
 import { DiscountData, DiscountDataTableMemo } from "~/components/discount";
+import { requireUser } from "~/services/session.server";
 
 function EditInputBox({
   width,
@@ -39,6 +45,16 @@ export function links() {
 }
 
 export const loader: LoaderFunction = async ({ request }) => {
+  //스태프는 접근 불가
+  const user = await requireUser(request);
+  if (user == null) {
+    return redirect("/logout");
+  }
+
+  if (user.isStaff) {
+    return redirect("/admin/dashboard");
+  }
+
   const url = new URL(request.url);
   const isSearched = url.searchParams.get("is-searched");
   if (isSearched !== null) {

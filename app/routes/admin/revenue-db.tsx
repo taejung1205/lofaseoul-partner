@@ -13,7 +13,12 @@ import { DaySelectPopover } from "~/components/date";
 import { dateToDayStr, dayStrToDate, getTimezoneDate } from "~/utils/date";
 import { SellerSelect } from "~/components/seller";
 import { BlackButton } from "~/components/button";
-import { ActionFunction, json, LoaderFunction } from "@remix-run/node";
+import {
+  ActionFunction,
+  json,
+  LoaderFunction,
+  redirect,
+} from "@remix-run/node";
 import {
   deleteRevenueData,
   getAllPartnerProfiles,
@@ -29,6 +34,7 @@ import {
 } from "~/components/partner_profile";
 import { SellerProfile } from "./seller-manage";
 import { CommonSelect } from "~/components/select";
+import { requireUser } from "~/services/session.server";
 
 function EditInputBox({
   width,
@@ -49,6 +55,16 @@ export function links() {
 }
 
 export const loader: LoaderFunction = async ({ request }) => {
+  //스태프는 접근 불가
+  const user = await requireUser(request);
+  if (user == null) {
+    return redirect("/logout");
+  }
+
+  if (user.isStaff) {
+    return redirect("/admin/dashboard");
+  }
+
   const url = new URL(request.url);
   const isSearched = url.searchParams.get("is-searched");
   const partnersMap = await getAllPartnerProfiles();

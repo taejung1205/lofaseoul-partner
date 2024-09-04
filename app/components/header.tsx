@@ -50,7 +50,13 @@ export function MobileHeaderBox({
   );
 }
 
-export function AdminHeader({ onLogoutClick }: { onLogoutClick: () => void }) {
+export function AdminHeader({
+  onLogoutClick,
+  isStaff,
+}: {
+  onLogoutClick: () => void;
+  isStaff: boolean;
+}) {
   return (
     <HeaderBox>
       <div
@@ -66,7 +72,7 @@ export function AdminHeader({ onLogoutClick }: { onLogoutClick: () => void }) {
       <div style={{ width: "10px" }} />
       <img src="/images/icon_person.svg" />
       <div style={{ width: "10px" }} />
-      ADMIN
+      {isStaff ? "STAFF" : "ADMIN"}
     </HeaderBox>
   );
 }
@@ -76,16 +82,22 @@ export function MobileAdminHeader({
   isSidebarOpen,
   onSidebarOpen,
   onSidebarClose,
+  isStaff,
 }: {
   onLogoutClick: () => void;
   isSidebarOpen: boolean;
   onSidebarOpen: () => void;
   onSidebarClose: () => void;
+  isStaff: boolean;
 }) {
   return (
     <>
       {isSidebarOpen ? (
-        <AdminSidebar isMobile onSidebarClose={onSidebarClose} />
+        <AdminSidebar
+          isMobile
+          onSidebarClose={onSidebarClose}
+          isStaff={isStaff}
+        />
       ) : (
         <></>
       )}
@@ -120,7 +132,7 @@ export function MobileAdminHeader({
           <div style={{ width: "10px" }} />
           <img src="/images/icon_person.svg" width={30} height={30} />
           <div style={{ width: "10px" }} />
-          ADMIN
+          {isStaff ? "STAFF" : "ADMIN"}
         </div>
       </MobileHeaderBox>
     </>

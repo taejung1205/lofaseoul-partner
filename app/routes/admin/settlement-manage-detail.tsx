@@ -1,4 +1,9 @@
-import { ActionFunction, json, LoaderFunction } from "@remix-run/node";
+import {
+  ActionFunction,
+  json,
+  LoaderFunction,
+  redirect,
+} from "@remix-run/node";
 import {
   Link,
   useActionData,
@@ -47,6 +52,7 @@ import {
   numeralMonthToKorean,
 } from "~/utils/date";
 import { PartnerProfile } from "~/components/partner_profile";
+import { requireUser } from "~/services/session.server";
 
 interface EmptySettlementBoxProps extends React.HTMLProps<HTMLDivElement> {}
 
@@ -255,6 +261,16 @@ export const action: ActionFunction = async ({ request }) => {
 };
 
 export const loader: LoaderFunction = async ({ request }) => {
+  //스태프는 접근 불가
+  const user = await requireUser(request);
+  if (user == null) {
+    return redirect("/logout");
+  }
+
+  if (user.isStaff) {
+    return redirect("/admin/dashboard");
+  }
+
   const url = new URL(request.url);
   const month = url.searchParams.get("month");
   const partnerName = url.searchParams.get("partner");

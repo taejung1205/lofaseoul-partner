@@ -16,7 +16,7 @@ import {
   koreanMonthToDate,
   numeralMonthToKorean,
 } from "~/utils/date";
-import { json, LoaderFunction } from "@remix-run/node";
+import { json, LoaderFunction, redirect } from "@remix-run/node";
 import { CommonButton } from "~/components/button";
 import { LofaSellers, SellerSelect } from "~/components/seller";
 import { endOfMonth, startOfMonth } from "date-fns";
@@ -44,12 +44,23 @@ import {
 } from "~/components/partner_profile";
 import { CommonSelect } from "~/components/select";
 import { SellerProfile } from "./seller-manage";
+import { requireUser } from "~/services/session.server";
 
 export function links() {
   return [{ rel: "stylesheet", href: dayPickerStyles }];
 }
 
 export const loader: LoaderFunction = async ({ request }) => {
+  //스태프는 접근 불가
+  const user = await requireUser(request);
+  if (user == null) {
+    return redirect("/logout");
+  }
+
+  if (user.isStaff) {
+    return redirect("/admin/dashboard");
+  }
+
   const url = new URL(request.url);
   const periodType = url.searchParams.get("period-type");
 

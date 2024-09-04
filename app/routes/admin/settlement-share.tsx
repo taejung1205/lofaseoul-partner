@@ -1,5 +1,10 @@
 import { LoadingOverlay, Space } from "@mantine/core";
-import { ActionFunction, json, LoaderFunction } from "@remix-run/node";
+import {
+  ActionFunction,
+  json,
+  LoaderFunction,
+  redirect,
+} from "@remix-run/node";
 import {
   useActionData,
   useLoaderData,
@@ -29,6 +34,7 @@ import {
   getAllPartnerProfiles,
   getSettlementMonthes,
 } from "~/services/firebase.server";
+import { requireUser } from "~/services/session.server";
 import { dateToKoreanMonth, getTimezoneDate } from "~/utils/date";
 
 function ShareButton({
@@ -77,6 +83,16 @@ export const action: ActionFunction = async ({ request }) => {
 };
 
 export let loader: LoaderFunction = async ({ request }) => {
+  //스태프는 접근 불가
+  const user = await requireUser(request);
+  if (user == null) {
+    return redirect("/logout");
+  }
+
+  if (user.isStaff) {
+    return redirect("/admin/dashboard");
+  }
+
   const monthes = await getSettlementMonthes();
   const partnersMap = await getAllPartnerProfiles();
   const partnersArr = Array.from(partnersMap.values());

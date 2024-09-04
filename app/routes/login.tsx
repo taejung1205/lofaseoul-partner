@@ -10,7 +10,11 @@ import { HeaderBox, MobileHeaderBox } from "~/components/header";
 import { LoadingOverlay } from "@mantine/core";
 import { useMemo, useRef, useState } from "react";
 import { getSignInToken } from "~/services/auth.client";
-import { getFirebaseConfig, isAdmin } from "~/services/firebase.server";
+import {
+  getFirebaseConfig,
+  isAdmin,
+  isStaff,
+} from "~/services/firebase.server";
 import { createUserSession, User } from "~/services/session.server";
 import { isMobile } from "~/utils/mobile";
 import { useViewportSize } from "@mantine/hooks";
@@ -80,12 +84,14 @@ export const action: ActionFunction = async ({ request, context }) => {
     const email: string = body.get("email")?.toString()!;
 
     const admin = await isAdmin(email);
+    const staff = await isStaff(email);
 
     const user: User = {
       idToken: idToken,
       email: email,
       uid: uid,
       isAdmin: admin,
+      isStaff: staff,
     };
 
     return createUserSession({ user: user, isRedirect: true });
