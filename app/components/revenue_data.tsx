@@ -13,6 +13,7 @@ export type RevenueData = {
   orderDate: Date; //구매일자
   seller: string; //판매처 (플랫폼)
   partnerName: string; //공급처 (파트너명)
+  orderNumber: string; //주문번호
   productName: string; //상품명
   optionName: string; //옵션명
   price: number; //판매가
@@ -32,6 +33,7 @@ export type RevenueDBShowingItems = {
   showingOrderDate: boolean;
   showingSeller: boolean;
   showingPartnerName: boolean;
+  showingOrderNumber: boolean;
   showingProductName: boolean;
   showingOption: boolean;
   showingIsDiscounted: boolean;
@@ -73,8 +75,8 @@ interface Props extends React.HTMLAttributes<HTMLDivElement> {
 function Box({ children, styleOverrides, ...props }: Props) {
   const orderBoxStyles: React.CSSProperties = {
     maxWidth: "100%",
-    height: "60%",
-    minHeight: "60%",
+    height: "55%",
+    minHeight: "55%",
     position: "relative",
     overflow: "scroll",
     ...styleOverrides,
@@ -189,6 +191,11 @@ export function checkRevenueDataItem(item: RevenueData) {
     return { isValid: false, message: "상품명이 누락된 항목이 존재합니다." };
   }
 
+  // Check if orderNumber is defined and a non-empty string
+  if (item.orderNumber == undefined || item.orderNumber.trim() === "") {
+    return { isValid: false, message: "주문번호 누락된 항목이 존재합니다." };
+  }
+
   // Check if price is defined, a number, and positive
   if (item.price == undefined || Number.isNaN(item.price)) {
     return { isValid: false, message: "판매가가 누락된 항목이 존재합니다." };
@@ -249,6 +256,17 @@ export function getRevenueDataPeriod(items: RevenueData[]): {
   }
 }
 
+export function getDiscountedPrice(item: RevenueData) {
+  return item.isDiscounted
+    ? (item.price *
+        (100 -
+          item.lofaDiscountLevyRate! -
+          item.partnerDiscountLevyRate! -
+          item.platformDiscountLevyRate!)) /
+        100
+    : undefined;
+}
+
 //매출
 export function getSalesAmount(item: RevenueData) {
   const isCsOk = item.cs == "정상";
@@ -263,6 +281,49 @@ export function getSalesAmount(item: RevenueData) {
     : item.price;
 
   return isCsOk && isOrderStatusDeliver ? salesPrice * item.amount : 0;
+}
+
+export function getPartnerSettlement(item: RevenueData, commonFeeRate: number) {
+  return item.isDiscounted
+    ? (item.price *
+        item.amount *
+        (100 -
+          commonFeeRate -
+          item.partnerDiscountLevyRate! +
+          item.lofaAdjustmentFeeRate!)) /
+        100
+    : (item.price * item.amount * (100 - commonFeeRate)) / 100.0;
+}
+
+export function getPlatformFee(item: RevenueData, platformFeeRate: number) {
+  const isLofa = LofaSellers.includes(item.seller);
+  const platformSettlementStandard = NormalPriceStandardSellers.includes(
+    item.seller
+  )
+    ? "정상판매가"
+    : "할인판매가";
+
+  const platformSettlement = isLofa
+    ? getSalesAmount(item)
+    : item.isDiscounted
+    ? platformSettlementStandard == "정상판매가"
+      ? (item.price *
+          item.amount *
+          (100 -
+            platformFeeRate -
+            item.lofaDiscountLevyRate! -
+            item.partnerDiscountLevyRate! +
+            item.platformAdjustmentFeeRate!)) /
+        100
+      : (((item.price *
+          item.amount *
+          (100 - item.lofaDiscountLevyRate! - item.partnerDiscountLevyRate!)) /
+          100) *
+          (100 - platformFeeRate + item.platformAdjustmentFeeRate!)) /
+        100
+    : (getSalesAmount(item) * (100 - platformFeeRate)) / 100;
+
+  return getSalesAmount(item) - platformSettlement;
 }
 
 export function getProceeds(
@@ -313,6 +374,27 @@ export function getProceeds(
     : (item.price * item.amount * (100 - commonFeeRate)) / 100.0;
 
   return platformSettlement - partnerSettlement;
+}
+
+export function getNetProfitAfterTax(
+  item: RevenueData,
+  commonFeeRate: number,
+  platformFeeRate: number,
+  businessTaxStandard: string
+) {
+  switch (businessTaxStandard) {
+    case "일반":
+      return getProceeds(item, commonFeeRate, platformFeeRate) * 0.9;
+    case "간이":
+    case "비사업자":
+      return (
+        (getSalesAmount(item) - getPlatformFee(item, platformFeeRate)) * 0.9 -
+        getPartnerSettlement(item, commonFeeRate)
+      );
+    case "면세":
+    default:
+      return getProceeds(item, commonFeeRate, platformFeeRate);
+  }
 }
 
 function RevenueDataItem({
@@ -381,7 +463,7 @@ function RevenueDataItem({
     if (partnerProfile) {
       return isLofa ? partnerProfile.lofaFee : partnerProfile.otherFee;
     } else {
-      return 0;
+      return NaN;
     }
   }, [item]);
 
@@ -494,6 +576,14 @@ function RevenueDataItem({
       {showingItems.showingPartnerName ? (
         <TextBox styleOverrides={{ minWidth: "160px", width: "160px" }}>
           {item.partnerName}
+        </TextBox>
+      ) : (
+        <></>
+      )}
+
+      {showingItems.showingOrderNumber ? (
+        <TextBox styleOverrides={{ minWidth: "160px", width: "160px" }}>
+          {item.orderNumber ?? ""}
         </TextBox>
       ) : (
         <></>
@@ -693,6 +783,7 @@ export function RevenueDataTable({
         showingOrderDate: true,
         showingSeller: true,
         showingPartnerName: true,
+        showingOrderNumber: true,
         showingProductName: true,
         showingOption: true,
         showingIsDiscounted: true,
@@ -755,6 +846,19 @@ export function RevenueDataTable({
               }}
             >
               공급처
+            </TextBox>
+          ) : (
+            <></>
+          )}
+
+          {showingItemsMemo.showingOrderNumber ? (
+            <TextBox
+              styleOverrides={{
+                minWidth: "160px",
+                width: "160px",
+              }}
+            >
+              주문번호
             </TextBox>
           ) : (
             <></>
