@@ -1,11 +1,11 @@
 import { ActionFunction } from "@remix-run/node";
 import { useSubmit } from "@remix-run/react";
 import { useRef } from "react";
-import { debug_addUploadedDate, debug_initializeIsDiscountedForSettlements } from "~/services/firebase-debug.server";
+import { debug_addUploadedDate, debug_deleteAllTestRevenueData, debug_initializeIsDiscountedForSettlements } from "~/services/firebase-debug.server";
 
 export const action: ActionFunction = async ({ request }) => {
   console.log("request submitted");
-  debug_addUploadedDate();
+  debug_deleteAllTestRevenueData();
   return null;
 };
 

@@ -62,7 +62,7 @@ export function DaySelectPopover({
           {selectedDate !== undefined ? dateToDayStr(selectedDate) : ""}
         </DateTargetBox>
       </Popover.Target>
-      <Popover.Dropdown>
+      <Popover.Dropdown style={{ minWidth: "300px" }}>
         <DayPicker
           mode="single"
           selected={selectedDate}
@@ -70,6 +70,15 @@ export function DaySelectPopover({
           styles={{
             day: {
               fontSize: "16px",
+            },
+            caption: {
+              display: "flex",
+              justifyContent: "space-betwen",
+              alignItems: "center",
+              width: "280px",
+            },
+            caption_label: {
+              fontSize: "20px",
             },
           }}
           modifiersStyles={{

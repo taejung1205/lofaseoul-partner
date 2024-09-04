@@ -3,6 +3,7 @@
 import { initializeApp } from "firebase/app";
 import {
   collection,
+  deleteDoc,
   doc,
   getDocs,
   getFirestore,
@@ -203,4 +204,28 @@ export async function debug_addUploadedDate() {
       });
     }
   });
+}
+
+export async function debug_deleteAllTestRevenueData() {
+  const revenueDataRef = collection(firestore, `revenue-db`);
+  let revenueDataQuery = query(
+    revenueDataRef,
+    where("partnerName", "==", "test")
+  );
+  try {
+    // 쿼리로 문서들 가져오기
+    const querySnapshot = await getDocs(revenueDataQuery);
+
+    // 문서들을 반복하면서 삭제
+    const deletePromises = querySnapshot.docs.map((docSnapshot) =>
+      deleteDoc(doc(firestore, `revenue-db/${docSnapshot.id}`))
+    );
+
+    // 모든 삭제 작업이 완료될 때까지 대기
+    await Promise.all(deletePromises);
+
+    console.log("All test revenue data deleted successfully.");
+  } catch (error) {
+    console.error("Error deleting test revenue data:", error);
+  }
 }
