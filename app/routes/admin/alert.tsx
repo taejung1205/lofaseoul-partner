@@ -113,6 +113,7 @@ const LongEditInputBox: React.FC<LongEditInputBoxProps> = (props) => {
 
   return <textarea style={styles} {...props} />;
 };
+
 export const loader: LoaderFunction = async ({ request }) => {
   const url = new URL(request.url);
   const month = url.searchParams.get("month");
@@ -160,6 +161,7 @@ export const action: ActionFunction = async ({ request }) => {
         monthStr: month,
         topic: topic,
         detail: detail,
+        isFromPartner: false,
       });
       if (result == true) {
         return json({ message: `알림 생성이 완료되었습니다.` });
@@ -363,6 +365,7 @@ export default function AdminAlert() {
         </div>
       </BasicModal>
 
+      {/* 메세지 추가 모달 */}
       <BasicModal
         opened={isNewNoticeModalOpened}
         onClose={() => {

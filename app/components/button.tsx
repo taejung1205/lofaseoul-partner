@@ -83,6 +83,7 @@ export function BlackButton({
     padding: "6px",
     margin: "10px",
     cursor: "pointer",
+    ...styleOverrides
   };
 
   return (
