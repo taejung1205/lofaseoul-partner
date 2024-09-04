@@ -11,7 +11,7 @@ import { PageLayout } from "~/components/page_layout";
 import dayPickerStyles from "react-day-picker/dist/style.css";
 import { DaySelectPopover } from "~/components/date";
 import { dateToDayStr, dayStrToDate, getTimezoneDate } from "~/utils/date";
-import { SellerSelect } from "~/components/seller";
+import { LofaSellers, SellerSelect } from "~/components/seller";
 import { BlackButton } from "~/components/button";
 import {
   ActionFunction,
@@ -26,7 +26,16 @@ import {
   getRevenueData,
 } from "~/services/firebase.server";
 import { BasicModal, ModalButton } from "~/components/modal";
-import { RevenueData, RevenueDataTableMemo } from "~/components/revenue_data";
+import {
+  getDiscountedPrice,
+  getNetProfitAfterTax,
+  getPartnerSettlement,
+  getPlatformFee,
+  getProceeds,
+  getSalesAmount,
+  RevenueData,
+  RevenueDataTableMemo,
+} from "~/components/revenue_data";
 import {
   getAllProductCategories,
   PartnerProfile,
@@ -35,6 +44,7 @@ import {
 import { SellerProfile } from "./seller-manage";
 import { CommonSelect } from "~/components/select";
 import { requireUser } from "~/services/session.server";
+import writeXlsxFile from "write-excel-file";
 
 function EditInputBox({
   width,
@@ -438,6 +448,19 @@ export default function Page() {
     setProductCategoryList(first1.concat(last1));
   }
 
+  async function writeExcel() {
+    await writeXlsxFile(revenueData, {
+      schema,
+      headerStyle: {
+        fontWeight: "bold",
+        align: "center",
+      },
+      fileName: `수익통계.xlsx`,
+      fontFamily: "맑은 고딕",
+      fontSize: 10,
+    });
+  }
+
   async function submitDeleteRevenueData(idList: string[]) {
     console.log("delete add revenue data, length:", idList.length);
     const ids = JSON.stringify(idList);
@@ -446,6 +469,239 @@ export default function Page() {
     formData.set("action", "delete");
     submit(formData, { method: "post" });
   }
+
+  const schema = [
+    {
+      column: "주문일",
+      type: String,
+      value: (data: RevenueData) => dateToDayStr(data.orderDate),
+      width: 20,
+      wrap: true,
+    },
+    {
+      column: "판매처",
+      type: String,
+      value: (data: RevenueData) => data.seller,
+      width: 20,
+      wrap: true,
+    },
+    {
+      column: "공급처",
+      type: String,
+      value: (data: RevenueData) => data.partnerName,
+      width: 20,
+      wrap: true,
+    },
+    {
+      column: "주문번호",
+      type: String,
+      value: (data: RevenueData) => data.orderNumber,
+      width: 20,
+      wrap: true,
+    },
+    {
+      column: "상품명",
+      type: String,
+      value: (data: RevenueData) => data.productName,
+      width: 60,
+      wrap: true,
+    },
+    {
+      column: "옵션명",
+      type: String,
+      value: (data: RevenueData) => data.optionName,
+      width: 60,
+      wrap: true,
+    },
+    {
+      column: "할인적용",
+      type: String,
+      value: (data: RevenueData) => (data.isDiscounted ? "O" : "X"),
+      width: 10,
+    },
+    {
+      column: "정상판매가",
+      type: Number,
+      value: (data: RevenueData) => data.price,
+      width: 20,
+    },
+    {
+      column: "할인판매가",
+      type: Number,
+      value: (data: RevenueData) => getDiscountedPrice(data),
+      width: 20,
+    },
+    {
+      column: "주문수량",
+      type: Number,
+      value: (data: RevenueData) => data.amount,
+      width: 10,
+    },
+    {
+      column: "총판매액",
+      type: Number,
+      value: (data: RevenueData) => getSalesAmount(data),
+      width: 20,
+      wrap: true,
+    },
+    {
+      column: "상태",
+      type: String,
+      value: (data: RevenueData) => data.orderStatus,
+      width: 20,
+      wrap: true,
+    },
+    {
+      column: "CS",
+      type: String,
+      value: (data: RevenueData) => data.cs,
+      width: 20,
+      wrap: true,
+    },
+    {
+      column: "업체정산금",
+      type: Number,
+      value: (data: RevenueData) => {
+        const partnerProfile = allPartnerProfiles?.get(data.partnerName);
+
+        if (!partnerProfile) {
+          return NaN;
+        }
+
+        const commonFeeRate = LofaSellers.includes(data.seller)
+          ? partnerProfile.lofaFee
+          : partnerProfile.otherFee;
+        return getPartnerSettlement(data, commonFeeRate);
+      },
+      width: 20,
+      wrap: true,
+    },
+    {
+      column: "플랫폼수수료",
+      type: Number,
+      value: (data: RevenueData) => {
+        const sellerProfile = allSellerProfiles?.get(data.seller);
+
+        const platformFeeRate = sellerProfile ? sellerProfile.fee : 0;
+
+        return getPlatformFee(data, platformFeeRate);
+      },
+      width: 20,
+      wrap: true,
+    },
+    {
+      column: "로파할인부담금",
+      type: Number,
+      value: (data: RevenueData) => {
+        if (data.isDiscounted) {
+          if (data.cs == "정상" && data.orderStatus == "배송") {
+            return (
+              (data.price * data.amount * data.lofaDiscountLevyRate!) / 100
+            );
+          } else {
+            return 0;
+          }
+        } else {
+          return undefined;
+        }
+      },
+      width: 20,
+      wrap: true,
+    },
+    {
+      column: "수익금",
+      type: Number,
+      value: (data: RevenueData) => {
+        const partnerProfile = allPartnerProfiles?.get(data.partnerName);
+
+        if (!partnerProfile) {
+          return NaN;
+        }
+
+        const commonFeeRate = LofaSellers.includes(data.seller)
+          ? partnerProfile.lofaFee
+          : partnerProfile.otherFee;
+
+        const sellerProfile = allSellerProfiles?.get(data.seller);
+
+        const platformFeeRate = sellerProfile ? sellerProfile.fee : 0;
+
+        return getProceeds(data, commonFeeRate, platformFeeRate);
+      },
+      width: 20,
+      wrap: true,
+    },
+    {
+      column: "세후 순수익",
+      type: Number,
+      value: (data: RevenueData) => {
+        const partnerProfile: PartnerProfile = allPartnerProfiles?.get(
+          data.partnerName
+        );
+
+        if (!partnerProfile) {
+          return NaN;
+        }
+
+        const commonFeeRate = LofaSellers.includes(data.seller)
+          ? partnerProfile.lofaFee
+          : partnerProfile.otherFee;
+
+        const sellerProfile = allSellerProfiles?.get(data.seller);
+
+        const platformFeeRate = sellerProfile ? sellerProfile.fee : 0;
+
+        const businessTaxStandard = partnerProfile.businessTaxStandard;
+
+        return getNetProfitAfterTax(
+          data,
+          commonFeeRate,
+          platformFeeRate,
+          businessTaxStandard
+        );
+      },
+      width: 20,
+      wrap: true,
+    },
+    {
+      column: "수익률",
+      type: Number,
+      value: (data: RevenueData) => {
+        if (getSalesAmount(data) == 0) {
+          return 0;
+        }
+
+        const partnerProfile: PartnerProfile = allPartnerProfiles?.get(
+          data.partnerName
+        );
+
+        if (!partnerProfile) {
+          return NaN;
+        }
+
+        const commonFeeRate = LofaSellers.includes(data.seller)
+          ? partnerProfile.lofaFee
+          : partnerProfile.otherFee;
+
+        const sellerProfile = allSellerProfiles?.get(data.seller);
+
+        const platformFeeRate = sellerProfile ? sellerProfile.fee : 0;
+
+        const businessTaxStandard = partnerProfile.businessTaxStandard;
+
+        const netProfitAfterTax = getNetProfitAfterTax(
+          data,
+          commonFeeRate,
+          platformFeeRate,
+          businessTaxStandard
+        );
+
+        return (netProfitAfterTax / getSalesAmount(data)) * 100;
+      },
+      width: 20,
+      wrap: true,
+    },
+  ];
 
   return (
     <PageLayout>
@@ -1012,9 +1268,19 @@ export default function Page() {
       )}
 
       <Space h={10} />
-      <BlackButton onClick={() => setIsDeleteModalOpened(true)}>
-        선택 항목 삭제
-      </BlackButton>
+      <div>
+        * 데이터에 NaN이 보일 경우, 해당 자료의 공급처가 계약업체목록에 있는지
+        확인해주세요.
+      </div>
+      <div style={{ display: "flex" }}>
+        <BlackButton onClick={() => setIsDeleteModalOpened(true)}>
+          선택 항목 삭제
+        </BlackButton>
+        <Space w={20} />
+        <BlackButton onClick={() => writeExcel()}>
+          전체 엑셀 다운로드
+        </BlackButton>
+      </div>
     </PageLayout>
   );
 }

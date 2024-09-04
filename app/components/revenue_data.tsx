@@ -75,8 +75,8 @@ interface Props extends React.HTMLAttributes<HTMLDivElement> {
 function Box({ children, styleOverrides, ...props }: Props) {
   const orderBoxStyles: React.CSSProperties = {
     maxWidth: "100%",
-    height: "60%",
-    minHeight: "60%",
+    height: "55%",
+    minHeight: "55%",
     position: "relative",
     overflow: "scroll",
     ...styleOverrides,
@@ -256,6 +256,17 @@ export function getRevenueDataPeriod(items: RevenueData[]): {
   }
 }
 
+export function getDiscountedPrice(item: RevenueData) {
+  return item.isDiscounted
+    ? (item.price *
+        (100 -
+          item.lofaDiscountLevyRate! -
+          item.partnerDiscountLevyRate! -
+          item.platformDiscountLevyRate!)) /
+        100
+    : undefined;
+}
+
 //매출
 export function getSalesAmount(item: RevenueData) {
   const isCsOk = item.cs == "정상";
@@ -270,6 +281,49 @@ export function getSalesAmount(item: RevenueData) {
     : item.price;
 
   return isCsOk && isOrderStatusDeliver ? salesPrice * item.amount : 0;
+}
+
+export function getPartnerSettlement(item: RevenueData, commonFeeRate: number) {
+  return item.isDiscounted
+    ? (item.price *
+        item.amount *
+        (100 -
+          commonFeeRate -
+          item.partnerDiscountLevyRate! +
+          item.lofaAdjustmentFeeRate!)) /
+        100
+    : (item.price * item.amount * (100 - commonFeeRate)) / 100.0;
+}
+
+export function getPlatformFee(item: RevenueData, platformFeeRate: number) {
+  const isLofa = LofaSellers.includes(item.seller);
+  const platformSettlementStandard = NormalPriceStandardSellers.includes(
+    item.seller
+  )
+    ? "정상판매가"
+    : "할인판매가";
+
+  const platformSettlement = isLofa
+    ? getSalesAmount(item)
+    : item.isDiscounted
+    ? platformSettlementStandard == "정상판매가"
+      ? (item.price *
+          item.amount *
+          (100 -
+            platformFeeRate -
+            item.lofaDiscountLevyRate! -
+            item.partnerDiscountLevyRate! +
+            item.platformAdjustmentFeeRate!)) /
+        100
+      : (((item.price *
+          item.amount *
+          (100 - item.lofaDiscountLevyRate! - item.partnerDiscountLevyRate!)) /
+          100) *
+          (100 - platformFeeRate + item.platformAdjustmentFeeRate!)) /
+        100
+    : (getSalesAmount(item) * (100 - platformFeeRate)) / 100;
+
+  return getSalesAmount(item) - platformSettlement;
 }
 
 export function getProceeds(
@@ -320,6 +374,27 @@ export function getProceeds(
     : (item.price * item.amount * (100 - commonFeeRate)) / 100.0;
 
   return platformSettlement - partnerSettlement;
+}
+
+export function getNetProfitAfterTax(
+  item: RevenueData,
+  commonFeeRate: number,
+  platformFeeRate: number,
+  businessTaxStandard: string
+) {
+  switch (businessTaxStandard) {
+    case "일반":
+      return getProceeds(item, commonFeeRate, platformFeeRate) * 0.9;
+    case "간이":
+    case "비사업자":
+      return (
+        (getSalesAmount(item) - getPlatformFee(item, platformFeeRate)) * 0.9 -
+        getPartnerSettlement(item, commonFeeRate)
+      );
+    case "면세":
+    default:
+      return getProceeds(item, commonFeeRate, platformFeeRate);
+  }
 }
 
 function RevenueDataItem({
@@ -388,7 +463,7 @@ function RevenueDataItem({
     if (partnerProfile) {
       return isLofa ? partnerProfile.lofaFee : partnerProfile.otherFee;
     } else {
-      return 0;
+      return NaN;
     }
   }, [item]);
 
