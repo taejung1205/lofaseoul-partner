@@ -1,11 +1,12 @@
-import { Modal, Select } from "@mantine/core";
+import { Select } from "@mantine/core";
 import { Form } from "@remix-run/react";
 import { useState } from "react";
 import { BlackButton } from "./button";
 import { BasicModal, ModalButton } from "./modal";
 
-interface Props extends  React.HTMLAttributes<HTMLDivElement> {
+interface Props extends React.HTMLAttributes<HTMLDivElement> {
   styleOverrides?: React.CSSProperties;
+  isFromPartner?: boolean;
 }
 
 export type NoticeItem = {
@@ -15,6 +16,7 @@ export type NoticeItem = {
   topic: NoticeTopic;
   detail: string;
   replies: string[];
+  isFromPartner: boolean;
 };
 
 type NoticeTopic =
@@ -28,10 +30,7 @@ type NoticeTopic =
   | "재고요청"
   | "기타";
 
-function NoticeBox({
-  children,
-  ...props
-}: React.HTMLAttributes<HTMLDivElement>) {
+function NoticeBox({ children, ...props }: Props) {
   const boxStyles: React.CSSProperties = {
     backgroundColor: "#d9d9d9",
     border: "1px solid black",
@@ -64,15 +63,16 @@ function NoticeGridContainer({
 
 function NoticeGridItem({
   children,
+  isFromPartner,
   styleOverrides,
   ...props
 }: Props) {
   const gridItemStyles: React.CSSProperties = {
-    backgroundColor: "#f0f0f0",
+    backgroundColor: isFromPartner ? "#dfe4f5" : "#f0f0f0",
     border: "0.5px solid black",
     textAlign: "left",
     display: "flex",
-    ...styleOverrides
+    ...styleOverrides,
   };
 
   return (
@@ -114,7 +114,7 @@ function ReplyInputBox({
   const replyInputStyles: React.CSSProperties = {
     fontSize: "20px",
     fontWeight: 700,
-    width: "100%",
+    width: "90%",
     margin: "10px",
     padding: "10px",
     minHeight: "100px",
@@ -218,7 +218,7 @@ export function AdminNotice({
               />
               <input type="hidden" value={monthStr} name="month" required />
               <ModalButton
-                type='submit'
+                type="submit"
                 styleOverrides={{ borderColor: "red", color: "red" }}
               >
                 삭제
@@ -341,7 +341,7 @@ export function AdminNotice({
         </Form>
       </BasicModal>
 
-      <NoticeBox>
+      <NoticeBox isFromPartner={noticeItem.isFromPartner}>
         <div
           style={{
             display: "flex",
@@ -402,7 +402,7 @@ export function AdminNotice({
           )}
         </div>
         <NoticeGridContainer>
-          <NoticeGridItem>
+          <NoticeGridItem isFromPartner={noticeItem.isFromPartner}>
             <div style={{ padding: "13px", width: "120px" }}>공유 날짜</div>
             <div
               style={{
@@ -413,11 +413,14 @@ export function AdminNotice({
               {noticeItem.sharedDate ?? "공유되지 않음"}
             </div>
           </NoticeGridItem>
-          <NoticeGridItem>
+          <NoticeGridItem isFromPartner={noticeItem.isFromPartner}>
             <div style={{ padding: "13px", width: "120px" }}>공유 주제</div>
             <div style={{ padding: "13px" }}>{noticeItem.topic}</div>
           </NoticeGridItem>
-          <NoticeGridItem styleOverrides={{ gridColumnStart: "span 2" }}>
+          <NoticeGridItem
+            isFromPartner={noticeItem.isFromPartner}
+            styleOverrides={{ gridColumnStart: "span 2" }}
+          >
             <div style={{ padding: "13px", width: "120px" }}>상세 사유</div>
             <div
               style={{
@@ -432,7 +435,10 @@ export function AdminNotice({
             </div>
           </NoticeGridItem>
           {noticeItem.replies.length > 0 ? (
-            <NoticeGridItem styleOverrides={{ gridColumnStart: "span 2" }}>
+            <NoticeGridItem
+              isFromPartner={noticeItem.isFromPartner}
+              styleOverrides={{ gridColumnStart: "span 2" }}
+            >
               <div
                 style={{ padding: "13px", width: "120px", color: "#1859FF" }}
               >
@@ -454,7 +460,10 @@ export function AdminNotice({
           ) : (
             <></>
           )}
-          <NoticeGridItem styleOverrides={{ gridColumnStart: "span 2" }}>
+          <NoticeGridItem
+            isFromPartner={noticeItem.isFromPartner}
+            styleOverrides={{ gridColumnStart: "span 2" }}
+          >
             <Form
               method="post"
               style={{ display: "flex", width: "100%" }}
@@ -496,20 +505,23 @@ export function PartnerNotice({
 }) {
   return (
     <>
-      <NoticeBox>
+      <NoticeBox isFromPartner={noticeItem.isFromPartner}>
         <Form method="post" id="reply-form">
           <NoticeGridContainer>
-            <NoticeGridItem>
+            <NoticeGridItem isFromPartner={noticeItem.isFromPartner}>
               <div style={{ padding: "13px", width: "120px" }}>공유 날짜</div>
               <div style={{ padding: "13px" }}>
                 {noticeItem.sharedDate ?? "공유되지 않음"}
               </div>
             </NoticeGridItem>
-            <NoticeGridItem>
+            <NoticeGridItem isFromPartner={noticeItem.isFromPartner}>
               <div style={{ padding: "13px", width: "120px" }}>공유 주제</div>
               <div style={{ padding: "13px" }}>{noticeItem.topic}</div>
             </NoticeGridItem>
-            <NoticeGridItem styleOverrides={{ gridColumnStart: "span 2" }}>
+            <NoticeGridItem
+              isFromPartner={noticeItem.isFromPartner}
+              styleOverrides={{ gridColumnStart: "span 2" }}
+            >
               <div style={{ padding: "13px", width: "120px" }}>상세 사유</div>
               <div
                 style={{
@@ -524,7 +536,10 @@ export function PartnerNotice({
               </div>
             </NoticeGridItem>
             {noticeItem.replies.length > 0 ? (
-              <NoticeGridItem style={{ gridColumnStart: "span 2" }}>
+              <NoticeGridItem
+                isFromPartner={noticeItem.isFromPartner}
+                styleOverrides={{ gridColumnStart: "span 2" }}
+              >
                 <div
                   style={{ padding: "13px", width: "120px", color: "#1859FF" }}
                 >
@@ -533,7 +548,10 @@ export function PartnerNotice({
                 <div style={{ width: "calc(100% - 120px)" }}>
                   {noticeItem.replies.map((reply: string, index: number) => {
                     return (
-                      <div style={{ padding: "13px", whiteSpace: "pre-line" }}>
+                      <div
+                        style={{ padding: "13px", whiteSpace: "pre-line" }}
+                        key={`Reply_${index}`}
+                      >
                         {reply}
                       </div>
                     );
@@ -544,7 +562,8 @@ export function PartnerNotice({
               <></>
             )}
             <NoticeGridItem
-              style={{ gridColumnStart: "span 2", alignItems: "end" }}
+              isFromPartner={noticeItem.isFromPartner}
+              styleOverrides={{ gridColumnStart: "span 2", alignItems: "end" }}
             >
               <ReplyInputBox name="reply" form="reply-form" />
               <input type="hidden" value={"reply"} name="action" required />

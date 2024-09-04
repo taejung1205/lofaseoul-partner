@@ -1285,20 +1285,27 @@ export async function addNotice({
   topic,
   detail,
   monthStr,
+  isFromPartner,
 }: {
   partnerName: string;
   topic: string;
   detail: string;
   monthStr: string;
+  isFromPartner: boolean;
 }) {
   try {
     const docName = `${new Date().getTime()}`;
-    const data = {
+    const data: any = {
       partnerName: partnerName,
       topic: topic,
       detail: detail,
-      isShared: false,
+      isShared: isFromPartner ? true : false,
+      isFromPartner: isFromPartner,
     };
+    if (isFromPartner) {
+      const timestamp = Timestamp.fromDate(new Date());
+      data.sharedDate = timestamp;
+    }
     await setDoc(doc(firestore, `notices/${monthStr}/items/${docName}`), data);
 
     await setDoc(doc(firestore, `notices/${monthStr}`), { isShared: "true" });
@@ -1438,6 +1445,7 @@ export async function getNotices({
       topic: data.topic,
       detail: data.detail,
       replies: data.replies ?? [],
+      isFromPartner: data.isFromPartner ?? false,
     });
   });
   return list;
@@ -1480,6 +1488,7 @@ export async function getSharedNotices({
       topic: data.topic,
       detail: data.detail,
       replies: data.replies ?? [],
+      isFromPartner: data.isFromPartner ?? false,
     });
   });
   return list;
