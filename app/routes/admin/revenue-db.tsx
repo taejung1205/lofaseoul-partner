@@ -311,6 +311,8 @@ export default function Page() {
   const [isShowingSeller, setIsShowingSeller] = useState<boolean>(true);
   const [isShowingPartnerName, setIsShowingPartnerName] =
     useState<boolean>(true);
+  const [isShowingOrderNumber, setIsShowingOrderNumber] =
+    useState<boolean>(true);
   const [isShowingProductName, setIsShowingProductName] =
     useState<boolean>(true);
   const [isShowingOption, setIsShowingOption] = useState<boolean>(true);
@@ -774,6 +776,17 @@ export default function Page() {
               }}
             />
             <Space w={20} />
+            <div>주문번호</div>
+            <Space w={10} />
+            <Checkbox
+              color={"gray"}
+              size={"xs"}
+              checked={isShowingOrderNumber}
+              onChange={(event) => {
+                setIsShowingOrderNumber(event.currentTarget.checked);
+              }}
+            />
+            <Space w={20} />
             <div>상품명</div>
             <Space w={10} />
             <Checkbox
@@ -784,6 +797,7 @@ export default function Page() {
                 setIsShowingProductName(event.currentTarget.checked);
               }}
             />
+
             <Space w={20} />
             <div>옵션명</div>
             <Space w={10} />
@@ -963,6 +977,7 @@ export default function Page() {
             showingOrderDate: isShowingOrderDate,
             showingSeller: isShowingSeller,
             showingPartnerName: isShowingPartnerName,
+            showingOrderNumber: isShowingOrderNumber,
             showingProductName: isShowingProductName,
             showingOption: isShowingOption,
             showingIsDiscounted: isShowingIsDiscounted,

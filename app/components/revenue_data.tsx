@@ -13,6 +13,7 @@ export type RevenueData = {
   orderDate: Date; //구매일자
   seller: string; //판매처 (플랫폼)
   partnerName: string; //공급처 (파트너명)
+  orderNumber: string; //주문번호
   productName: string; //상품명
   optionName: string; //옵션명
   price: number; //판매가
@@ -32,6 +33,7 @@ export type RevenueDBShowingItems = {
   showingOrderDate: boolean;
   showingSeller: boolean;
   showingPartnerName: boolean;
+  showingOrderNumber: boolean;
   showingProductName: boolean;
   showingOption: boolean;
   showingIsDiscounted: boolean;
@@ -187,6 +189,11 @@ export function checkRevenueDataItem(item: RevenueData) {
   // Check if productName is defined and a non-empty string
   if (item.productName == undefined || item.productName.trim() === "") {
     return { isValid: false, message: "상품명이 누락된 항목이 존재합니다." };
+  }
+
+  // Check if orderNumber is defined and a non-empty string
+  if (item.orderNumber == undefined || item.orderNumber.trim() === "") {
+    return { isValid: false, message: "주문번호 누락된 항목이 존재합니다." };
   }
 
   // Check if price is defined, a number, and positive
@@ -499,6 +506,14 @@ function RevenueDataItem({
         <></>
       )}
 
+      {showingItems.showingOrderNumber ? (
+        <TextBox styleOverrides={{ minWidth: "160px", width: "160px" }}>
+          {item.orderNumber ?? ""}
+        </TextBox>
+      ) : (
+        <></>
+      )}
+
       {showingItems.showingProductName ? (
         <TextBox styleOverrides={{ minWidth: "320px", width: "320px" }}>
           {item.productName}
@@ -693,6 +708,7 @@ export function RevenueDataTable({
         showingOrderDate: true,
         showingSeller: true,
         showingPartnerName: true,
+        showingOrderNumber: true,
         showingProductName: true,
         showingOption: true,
         showingIsDiscounted: true,
@@ -755,6 +771,19 @@ export function RevenueDataTable({
               }}
             >
               공급처
+            </TextBox>
+          ) : (
+            <></>
+          )}
+
+          {showingItemsMemo.showingOrderNumber ? (
+            <TextBox
+              styleOverrides={{
+                minWidth: "160px",
+                width: "160px",
+              }}
+            >
+              주문번호
             </TextBox>
           ) : (
             <></>

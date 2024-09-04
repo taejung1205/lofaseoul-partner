@@ -240,6 +240,7 @@ export default function Page() {
             orderDate: element.주문일,
             seller: element.판매처?.toString(),
             partnerName: element.공급처?.toString(),
+            orderNumber: element.주문번호?.toString(),
             productName: element.상품명?.toString(),
             optionName: element.옵션명?.toString() ?? "",
             price: Number(element.판매가),
