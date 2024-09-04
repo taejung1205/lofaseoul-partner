@@ -8,6 +8,8 @@ import { PageLayout } from "~/components/page_layout";
 import * as xlsx from "xlsx";
 import { LoadingOverlay } from "@mantine/core";
 import { useNavigation } from "@remix-run/react";
+import { LoaderFunction, redirect } from "@remix-run/node";
+import { requireUser } from "~/services/session.server";
 
 type OrderEditItem = {
   orderStatus: string; //주문상태
@@ -19,6 +21,20 @@ type OrderEditItem = {
   cancelDate: string; //취소일
   orderer: string; //주문자
   shippingFee: string;
+};
+
+export const loader: LoaderFunction = async ({ request }) => {
+  //스태프는 접근 불가
+  const user = await requireUser(request);
+  if (user == null) {
+    return redirect("/logout");
+  }
+
+  if (user.isStaff) {
+    return redirect("/admin/dashboard");
+  }
+
+  return null;
 };
 
 export default function Page() {
@@ -42,7 +58,7 @@ export default function Page() {
       };
       reader.readAsArrayBuffer(e.target.files[0]);
       setFileName(e.target.files[0].name);
-      e.target.value = '';
+      e.target.value = "";
     }
   };
 

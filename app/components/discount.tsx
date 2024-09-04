@@ -111,20 +111,32 @@ function TextBox({ children, styleOverrides, ...props }: Props) {
  *  유효할 경우 true, 아닐 경우 문제가 있는 곳의 항목명
  */
 export function checkDiscountData(item: DiscountData) {
-  // Check if startDate is defined and a non-empty string
+  // Check if startDate is defined and not a NaN Date
   if (!(item.startDate instanceof Date) || isNaN(item.startDate.getTime())) {
-    return {
-      isValid: false,
-      message: `시작일이 유효하지 않은 항목이 존재합니다. (${item.startDate}) `,
-    };
+    //문자열로 들어왔을 가능성 확인
+    const date = new Date(item.startDate);
+    if (!(date instanceof Date) || isNaN(date.getTime())) {
+      return {
+        isValid: false,
+        message: `시작일이 유효하지 않은 항목이 존재합니다. (${item.startDate}) `,
+      };
+    } else {
+      item.startDate = date;
+    }
   }
 
-  // Check if endDate is defined and a non-empty string
+  // Check if endDate is defined and not a NaN Date
   if (!(item.endDate instanceof Date) || isNaN(item.endDate.getTime())) {
-    return {
-      isValid: false,
-      message: `종료일이 유효하지 않은 항목이 존재합니다. (${item.endDate}) `,
-    };
+    //문자열로 들어왔을 가능성 확인
+    const date = new Date(item.endDate);
+    if (!(date instanceof Date) || isNaN(date.getTime())) {
+      return {
+        isValid: false,
+        message: `종료일이 유효하지 않은 항목이 존재합니다. (${item.endDate}) `,
+      };
+    } else {
+      item.endDate = date;
+    }
   }
 
   // 시작일은 종료일보다 앞이여야 함

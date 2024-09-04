@@ -1,4 +1,4 @@
-import { Outlet, useSubmit } from "@remix-run/react";
+import { Outlet, useLoaderData, useSubmit } from "@remix-run/react";
 import { LoaderFunction, redirect } from "@remix-run/node";
 import { AdminHeader, MobileAdminHeader } from "~/components/header";
 import { AdminSidebar } from "~/components/sidebar";
@@ -39,11 +39,12 @@ export let loader: LoaderFunction = async ({ request }) => {
     return redirect("/partner/dashboard");
   }
 
-  return null;
+  return { user: user };
 };
 
 export default function Admin() {
   const submit = useSubmit();
+  const loaderData = useLoaderData();
   const viewportSize = useViewportSize();
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
 
@@ -58,12 +59,14 @@ export default function Admin() {
             isSidebarOpen={isSidebarOpen}
             onSidebarOpen={() => setIsSidebarOpen(true)}
             onSidebarClose={() => setIsSidebarOpen(false)}
+            isStaff={loaderData.user.isStaff}
           />
         ) : (
           <AdminHeader
             onLogoutClick={() => {
               submit(null, { method: "post", action: "/logout" });
             }}
+            isStaff={loaderData.user.isStaff}
           />
         )}
 
@@ -77,7 +80,7 @@ export default function Admin() {
           {isMobile(viewportSize.width) ? (
             <></>
           ) : (
-            <AdminSidebar isMobile={false} />
+            <AdminSidebar isMobile={false} isStaff={loaderData.user.isStaff} />
           )}
           <Outlet />
         </div>

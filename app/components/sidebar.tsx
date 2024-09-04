@@ -121,9 +121,11 @@ type PartnerPathname =
 export function AdminSidebar({
   isMobile = false,
   onSidebarClose,
+  isStaff,
 }: {
   isMobile?: boolean;
   onSidebarClose?: () => void;
+  isStaff: boolean;
 }) {
   const location = useLocation();
   const [currentPage, setCurrentPage] = useState<AdminPathname>(null);
@@ -306,61 +308,77 @@ export function AdminSidebar({
       <MenuButton name="주문서 조회" pathname="order-list" />
       <MenuButton name="온라인배송완료내역" pathname="shipped-list" />
       <MenuButton name="출고 지연주문건" pathname="delayed-order" />
-      <MenuButton name="정산내역 공유" pathname="settlement-share" />
-      <MenuButton name="정산내역 관리" pathname="settlement-manage" />
+      {isStaff ? (
+        <></>
+      ) : (
+        <MenuButton name="정산내역 공유" pathname="settlement-share" />
+      )}
+      {isStaff ? (
+        <></>
+      ) : (
+        <MenuButton name="정산내역 관리" pathname="settlement-manage" />
+      )}
       <MenuButton name="상품등록 관리" pathname="product-manage" />
       <MenuButton name="발신함 / 수신함" pathname="alert" />
-      <Category
-        name="• 주문서 수정"
-        onClick={() => {
-          setIsOrderEditOpen(!isOrderEditOpen);
-        }}
-        isCategoryOpen={
-          currentPage == "order-edit-exchange-refund" ||
-          currentPage == "order-edit-discount" ||
-          currentPage == "order-edit-discount-manage"
-            ? true
-            : isOrderEditOpen
-        }
-      >
-        <SubcategoryMenuButton
-          name="교환/환불내역 관리"
-          pathname="order-edit-exchange-refund"
-        />
-        <SubcategoryMenuButton
-          name="할인내역 추가"
-          pathname="order-edit-discount"
-        />
-        <SubcategoryMenuButton
-          name="할인내역 관리"
-          pathname="order-edit-discount-manage"
-        />
-      </Category>
-      <Category
-        name="• 수익통계"
-        onClick={() => {
-          setIsRevenueStatOpen(!isRevenueStatOpen);
-        }}
-        isCategoryOpen={
-          currentPage == "revenue-file-upload" ||
-          currentPage == "revenue-calculate" ||
-          currentPage == "revenue-chart" ||
-          currentPage == "revenue-db"
-            ? true
-            : isRevenueStatOpen
-        }
-      >
-        <SubcategoryMenuButton
-          name="통계용 파일 업로드"
-          pathname="revenue-file-upload"
-        />
-        <SubcategoryMenuButton
-          name="수익금 계산"
-          pathname="revenue-calculate"
-        />
-        <SubcategoryMenuButton name="통계차트조회" pathname="revenue-chart" />
-        <SubcategoryMenuButton name="정산통계 DB" pathname="revenue-db" />
-      </Category>
+      {isStaff ? (
+        <></>
+      ) : (
+        <Category
+          name="• 주문서 수정"
+          onClick={() => {
+            setIsOrderEditOpen(!isOrderEditOpen);
+          }}
+          isCategoryOpen={
+            currentPage == "order-edit-exchange-refund" ||
+            currentPage == "order-edit-discount" ||
+            currentPage == "order-edit-discount-manage"
+              ? true
+              : isOrderEditOpen
+          }
+        >
+          <SubcategoryMenuButton
+            name="교환/환불내역 관리"
+            pathname="order-edit-exchange-refund"
+          />
+          <SubcategoryMenuButton
+            name="할인내역 추가"
+            pathname="order-edit-discount"
+          />
+          <SubcategoryMenuButton
+            name="할인내역 관리"
+            pathname="order-edit-discount-manage"
+          />
+        </Category>
+      )}
+      {isStaff ? (
+        <></>
+      ) : (
+        <Category
+          name="• 수익통계"
+          onClick={() => {
+            setIsRevenueStatOpen(!isRevenueStatOpen);
+          }}
+          isCategoryOpen={
+            currentPage == "revenue-file-upload" ||
+            currentPage == "revenue-calculate" ||
+            currentPage == "revenue-chart" ||
+            currentPage == "revenue-db"
+              ? true
+              : isRevenueStatOpen
+          }
+        >
+          <SubcategoryMenuButton
+            name="통계용 파일 업로드"
+            pathname="revenue-file-upload"
+          />
+          <SubcategoryMenuButton
+            name="수익금 계산"
+            pathname="revenue-calculate"
+          />
+          <SubcategoryMenuButton name="통계차트조회" pathname="revenue-chart" />
+          <SubcategoryMenuButton name="정산통계 DB" pathname="revenue-db" />
+        </Category>
+      )}
     </SidebarBox>
   );
 }

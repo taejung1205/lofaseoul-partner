@@ -12,13 +12,19 @@ import dayPickerStyles from "react-day-picker/dist/style.css";
 import { DaySelectPopover } from "~/components/date";
 import { dateToDayStr, dayStrToDate, getTimezoneDate } from "~/utils/date";
 import { BlackButton } from "~/components/button";
-import { ActionFunction, json, LoaderFunction } from "@remix-run/node";
+import {
+  ActionFunction,
+  json,
+  LoaderFunction,
+  redirect,
+} from "@remix-run/node";
 import {
   deleteDiscountData,
   getDiscountData,
 } from "~/services/firebase.server";
 import { BasicModal, ModalButton } from "~/components/modal";
 import { DiscountData, DiscountDataTableMemo } from "~/components/discount";
+import { requireUser } from "~/services/session.server";
 
 function EditInputBox({
   width,
@@ -39,6 +45,16 @@ export function links() {
 }
 
 export const loader: LoaderFunction = async ({ request }) => {
+  //스태프는 접근 불가
+  const user = await requireUser(request);
+  if (user == null) {
+    return redirect("/logout");
+  }
+
+  if (user.isStaff) {
+    return redirect("/admin/dashboard");
+  }
+
   const url = new URL(request.url);
   const isSearched = url.searchParams.get("is-searched");
   if (isSearched !== null) {
@@ -99,12 +115,12 @@ export const action: ActionFunction = async ({ request }) => {
       if (result === true) {
         return json({
           status: "ok",
-          message: `수익통계 자료 삭제 요청이 등록되었습니다. 잠시 후 DB에 반영될 예정입니다.`,
+          message: `할인내역 자료 삭제 요청이 등록되었습니다. 잠시 후 DB에 반영될 예정입니다.`,
         });
       } else {
         return json({
           status: "error",
-          message: `수익통계 자료 삭제 요청 중 문제가 발생하였습니다. 개발자에게 문의해주세요.`,
+          message: `할인내역 자료 삭제 요청 중 문제가 발생하였습니다. 개발자에게 문의해주세요.`,
         });
       }
     }

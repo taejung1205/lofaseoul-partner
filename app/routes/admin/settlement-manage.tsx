@@ -1,4 +1,9 @@
-import { ActionFunction, json, LoaderFunction } from "@remix-run/node";
+import {
+  ActionFunction,
+  json,
+  LoaderFunction,
+  redirect,
+} from "@remix-run/node";
 import {
   Link,
   useActionData,
@@ -8,9 +13,7 @@ import {
 } from "@remix-run/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { CommonButton } from "~/components/button";
-import {
-  MonthSelectPopover
-} from "~/components/date";
+import { MonthSelectPopover } from "~/components/date";
 import { PageLayout } from "~/components/page_layout";
 import { SellerSelect } from "~/components/seller";
 import {
@@ -26,7 +29,14 @@ import {
 import writeXlsxFile from "write-excel-file";
 import { LoadingOverlay, Space } from "@mantine/core";
 import { BasicModal, ModalButton } from "~/components/modal";
-import { dateToKoreanMonth, dateToNumeralMonth, getTimezoneDate, koreanMonthToDate, numeralMonthToKorean } from "~/utils/date";
+import {
+  dateToKoreanMonth,
+  dateToNumeralMonth,
+  getTimezoneDate,
+  koreanMonthToDate,
+  numeralMonthToKorean,
+} from "~/utils/date";
+import { requireUser } from "~/services/session.server";
 
 interface EmptySettlementBoxProps extends React.HTMLProps<HTMLDivElement> {}
 
@@ -45,6 +55,16 @@ const EmptySettlementBox: React.FC<EmptySettlementBoxProps> = (props) => {
 };
 
 export const loader: LoaderFunction = async ({ request }) => {
+  //스태프는 접근 불가
+  const user = await requireUser(request);
+  if (user == null) {
+    return redirect("/logout");
+  }
+
+  if (user.isStaff) {
+    return redirect("/admin/dashboard");
+  }
+
   const url = new URL(request.url);
   const numeralMonth = url.searchParams.get("month");
 

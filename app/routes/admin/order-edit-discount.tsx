@@ -22,12 +22,28 @@ import {
   addDiscountData,
   getAllPartnerProfiles,
 } from "~/services/firebase.server";
-import { ActionFunction, json, LoaderFunction } from "@remix-run/node";
+import {
+  ActionFunction,
+  json,
+  LoaderFunction,
+  redirect,
+} from "@remix-run/node";
 import { BasicModal, ModalButton } from "~/components/modal";
 import { PartnerProfile } from "~/components/partner_profile";
 import { BlackButton } from "~/components/button";
+import { requireUser } from "~/services/session.server";
 
 export const loader: LoaderFunction = async ({ request }) => {
+  //스태프는 접근 불가
+  const user = await requireUser(request);
+  if (user == null) {
+    return redirect("/logout");
+  }
+
+  if (user.isStaff) {
+    return redirect("/admin/dashboard");
+  }
+
   const partnersMap = await getAllPartnerProfiles();
   const partnersArr = Array.from(partnersMap.values());
   return json({ partners: partnersArr });

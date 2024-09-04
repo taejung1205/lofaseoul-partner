@@ -107,6 +107,29 @@ export async function isAdmin(email: string) {
 }
 
 /**
+ * 해당 ID의 계정이 스태프인지 확인합니다.
+ * @param email: 이메일
+ * @returns true: 스태프, false: 일반 파트너 (또는 존재하지 않는 계정)
+ */
+export async function isStaff(email: string) {
+  const id = emailToId(email);
+  const accountsRef = collection(firestore, "accounts");
+  const idQuery = query(accountsRef, where("id", "==", id), limit(1));
+  const querySnap = await getDocs(idQuery);
+  if (!querySnap.empty) {
+    let result = false;
+    querySnap.forEach((doc) => {
+      if (doc.data().isStaff) {
+        result = true;
+      }
+    });
+    return result;
+  } else {
+    return false;
+  }
+}
+
+/**
  * 판매자의 정보들을 불러옵니다
  * @param param0
  * @returns

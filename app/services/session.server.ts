@@ -12,6 +12,7 @@ export type User = {
   email: string;
   uid: string;
   isAdmin: boolean;
+  isStaff: boolean;
 };
 
 // export the whole sessionStorage object
@@ -41,12 +42,11 @@ export async function createUserSession({
   user: User;
   isRedirect: boolean;
 }) {
-
   if (!user.idToken || !user.uid || !user.email) {
     return json(
       {
-        errorCode: 'session/missing-param',
-        errorMessage: 'Missing required session params',
+        errorCode: "session/missing-param",
+        errorMessage: "Missing required session params",
       },
       { status: 422 }
     );
@@ -57,17 +57,17 @@ export async function createUserSession({
   // The session cookie will have the same claims as the ID token.
 
   try {
-
     const sessionIdToken = await auth.createSessionCookie(user.idToken, {
       expiresIn,
     });
 
     const session = await getSession();
-    session.set('sessionIdToken', sessionIdToken); // update to sessionIdToken
+    session.set("sessionIdToken", sessionIdToken); // update to sessionIdToken
     session.set("idToken", user.idToken);
     session.set("email", user.email);
     session.set("uid", user.uid);
     session.set("isAdmin", user.isAdmin);
+    session.set("isStaff", user.isStaff);
 
     if (isRedirect) {
       if (user.isAdmin) {
@@ -108,31 +108,28 @@ export async function createUserSession({
 }
 
 export async function destroyUserSession(request: Request) {
-  const session = await getSession(request.headers.get('Cookie'));
+  const session = await getSession(request.headers.get("Cookie"));
   return redirect("/login", {
     headers: {
-      'Set-Cookie': await destroySession(session),
+      "Set-Cookie": await destroySession(session),
     },
   });
 }
 
-export async function requireUser(
-  request: Request
-) {
+export async function requireUser(request: Request) {
   const session = await getUserSession(request);
-  const tokenId = session.get('sessionIdToken');
-  const isAdmin = session.get('isAdmin');
-  if (!tokenId || typeof tokenId !== 'string' || isAdmin == undefined) {
+  const tokenId = session.get("sessionIdToken");
+  const isAdmin = session.get("isAdmin");
+  const isStaff = session.get("isStaff");
+  if (!tokenId || typeof tokenId !== "string" || isAdmin == undefined) {
     return null;
   }
   try {
     const decodedClaims = await auth.verifySessionCookie(tokenId);
-    return {...decodedClaims, isAdmin: isAdmin};
+    return { ...decodedClaims, isAdmin: isAdmin, isStaff: isStaff };
   } catch (error: any) {
     console.log(error);
     destroyUserSession(request);
     return null;
   }
 }
-
-

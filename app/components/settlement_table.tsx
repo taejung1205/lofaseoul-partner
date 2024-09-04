@@ -174,8 +174,19 @@ export function MarqueeOnHoverTextBox({
  *  유효할 경우 "ok", 아닐 경우 어디가 문제인지 나타내는 string
  */
 export function isSettlementItemValid(item: SettlementItem) {
-  if (!(item.orderDate instanceof Date) || isNaN(item.orderDate.getTime())) {
+  // Check if orderDate is defined and not a NaN Date
+  if (item.orderDate == undefined) {
     return "주문일이 누락되었습니다.";
+  }
+
+  if (!(item.orderDate instanceof Date) || isNaN(item.orderDate.getTime())) {
+    //문자열로 들어왔을 가능성 확인
+    const date = new Date(item.orderDate);
+    if (!(date instanceof Date) || isNaN(date.getTime())) {
+      return "주문일 형식이 유효하지 않습니다.";
+    } else {
+      item.orderDate = date;
+    }
   }
 
   if (item.providerName == undefined || item.providerName == "") {
@@ -202,15 +213,15 @@ export function isSettlementItemValid(item: SettlementItem) {
     return "수량이 누락되었습니다.";
   }
 
-  if(item.isDiscounted || item.isDiscountManuallyFixed){
-    if(item.discountedPrice == undefined){
-      return "할인판매가가 누락되었습니다."
+  if (item.isDiscounted || item.isDiscountManuallyFixed) {
+    if (item.discountedPrice == undefined) {
+      return "할인판매가가 누락되었습니다.";
     }
-    if(item.partnerDiscountLevy == undefined){
-      return "업체부담할인금이 누락되었습니다."
+    if (item.partnerDiscountLevy == undefined) {
+      return "업체부담할인금이 누락되었습니다.";
     }
-    if(item.lofaAdjustmentFee == undefined){
-      return "로파조정수수료가 누락되었습니다."
+    if (item.lofaAdjustmentFee == undefined) {
+      return "로파조정수수료가 누락되었습니다.";
     }
   }
   return "ok";
