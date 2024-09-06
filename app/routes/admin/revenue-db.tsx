@@ -562,16 +562,7 @@ export default function Page() {
       column: "업체정산금",
       type: Number,
       value: (data: RevenueData) => {
-        const partnerProfile = allPartnerProfiles?.get(data.partnerName);
-
-        if (!partnerProfile) {
-          return NaN;
-        }
-
-        const commonFeeRate = LofaSellers.includes(data.seller)
-          ? partnerProfile.lofaFee
-          : partnerProfile.otherFee;
-        return getPartnerSettlement(data, commonFeeRate);
+        return getPartnerSettlement(data);
       },
       width: 20,
       wrap: true,
@@ -580,11 +571,8 @@ export default function Page() {
       column: "플랫폼수수료",
       type: Number,
       value: (data: RevenueData) => {
-        const sellerProfile = allSellerProfiles?.get(data.seller);
 
-        const platformFeeRate = sellerProfile ? sellerProfile.fee : 0;
-
-        return getPlatformFee(data, platformFeeRate);
+        return getPlatformFee(data);
       },
       width: 20,
       wrap: true,
@@ -612,21 +600,8 @@ export default function Page() {
       column: "수익금",
       type: Number,
       value: (data: RevenueData) => {
-        const partnerProfile = allPartnerProfiles?.get(data.partnerName);
 
-        if (!partnerProfile) {
-          return NaN;
-        }
-
-        const commonFeeRate = LofaSellers.includes(data.seller)
-          ? partnerProfile.lofaFee
-          : partnerProfile.otherFee;
-
-        const sellerProfile = allSellerProfiles?.get(data.seller);
-
-        const platformFeeRate = sellerProfile ? sellerProfile.fee : 0;
-
-        return getProceeds(data, commonFeeRate, platformFeeRate);
+        return getProceeds(data);
       },
       width: 20,
       wrap: true,
@@ -635,29 +610,8 @@ export default function Page() {
       column: "세후 순수익",
       type: Number,
       value: (data: RevenueData) => {
-        const partnerProfile: PartnerProfile = allPartnerProfiles?.get(
-          data.partnerName
-        );
-
-        if (!partnerProfile) {
-          return NaN;
-        }
-
-        const commonFeeRate = LofaSellers.includes(data.seller)
-          ? partnerProfile.lofaFee
-          : partnerProfile.otherFee;
-
-        const sellerProfile = allSellerProfiles?.get(data.seller);
-
-        const platformFeeRate = sellerProfile ? sellerProfile.fee : 0;
-
-        const businessTaxStandard = partnerProfile.businessTaxStandard;
-
         return getNetProfitAfterTax(
           data,
-          commonFeeRate,
-          platformFeeRate,
-          businessTaxStandard
         );
       },
       width: 20,
@@ -671,29 +625,8 @@ export default function Page() {
           return 0;
         }
 
-        const partnerProfile: PartnerProfile = allPartnerProfiles?.get(
-          data.partnerName
-        );
-
-        if (!partnerProfile) {
-          return NaN;
-        }
-
-        const commonFeeRate = LofaSellers.includes(data.seller)
-          ? partnerProfile.lofaFee
-          : partnerProfile.otherFee;
-
-        const sellerProfile = allSellerProfiles?.get(data.seller);
-
-        const platformFeeRate = sellerProfile ? sellerProfile.fee : 0;
-
-        const businessTaxStandard = partnerProfile.businessTaxStandard;
-
         const netProfitAfterTax = getNetProfitAfterTax(
           data,
-          commonFeeRate,
-          platformFeeRate,
-          businessTaxStandard
         );
 
         return (netProfitAfterTax / getSalesAmount(data)) * 100;
@@ -1227,8 +1160,6 @@ export default function Page() {
           onCheckAll={onCheckAll}
           defaultAllCheck={false}
           isDBTable={true}
-          partnerProfiles={allPartnerProfiles}
-          sellerProfiles={allSellerProfiles}
           showingItems={{
             showingOrderDate: isShowingOrderDate,
             showingSeller: isShowingSeller,

@@ -185,7 +185,7 @@ function PartnerRevenueStatItem({
         {Math.floor(item.netProfitAfterTax).toLocaleString("ko-KR")}
       </TextBox>
       <TextBox styleOverrides={{ minWidth: "120px", width: "120px" }}>
-        {item.returnRate.toFixed(2)}
+        {item.returnRate ? item.returnRate.toFixed(2) : 0}
       </TextBox>
       <TextBox styleOverrides={{ minWidth: "270px", width: "360px" }}>
         {productCategoryStr}

@@ -2,10 +2,7 @@ import { Checkbox } from "@mantine/core";
 import React, { useMemo } from "react";
 import { useEffect, useState } from "react";
 import { dateToDayStr } from "~/utils/date";
-import { PartnerProfile } from "./partner_profile";
 import { LofaSellers, NormalPriceStandardSellers } from "./seller";
-import { SellerProfile } from "~/routes/admin/seller-manage";
-import { is } from "date-fns/locale";
 
 //통계용 파일 업로드에서 올릴 때 사용하는 양식입니다.
 //한 데이터는 한 거래를 나타냅니다.
@@ -26,6 +23,10 @@ export type RevenueData = {
   platformDiscountLevyRate?: number;
   lofaAdjustmentFeeRate?: number;
   platformAdjustmentFeeRate?: number;
+
+  commonFeeRate?: number;
+  platformFeeRate?: number;
+  businessTaxStandard?: string;
 };
 
 //정산통계 DB에서 보여주는 항목 선택지용
@@ -283,19 +284,25 @@ export function getSalesAmount(item: RevenueData) {
   return isCsOk && isOrderStatusDeliver ? salesPrice * item.amount : 0;
 }
 
-export function getPartnerSettlement(item: RevenueData, commonFeeRate: number) {
+export function getPartnerSettlement(item: RevenueData) {
+  if (item.commonFeeRate == undefined) {
+    return NaN;
+  }
   return item.isDiscounted
     ? (item.price *
         item.amount *
         (100 -
-          commonFeeRate -
+          item.commonFeeRate -
           item.partnerDiscountLevyRate! +
           item.lofaAdjustmentFeeRate!)) /
         100
-    : (item.price * item.amount * (100 - commonFeeRate)) / 100.0;
+    : (item.price * item.amount * (100 - item.commonFeeRate)) / 100.0;
 }
 
-export function getPlatformFee(item: RevenueData, platformFeeRate: number) {
+export function getPlatformFee(item: RevenueData) {
+  if (item.platformFeeRate == undefined) {
+    return NaN;
+  }
   const isLofa = LofaSellers.includes(item.seller);
   const platformSettlementStandard = NormalPriceStandardSellers.includes(
     item.seller
@@ -310,7 +317,7 @@ export function getPlatformFee(item: RevenueData, platformFeeRate: number) {
       ? (item.price *
           item.amount *
           (100 -
-            platformFeeRate -
+            item.platformFeeRate -
             item.lofaDiscountLevyRate! -
             item.partnerDiscountLevyRate! +
             item.platformAdjustmentFeeRate!)) /
@@ -319,18 +326,17 @@ export function getPlatformFee(item: RevenueData, platformFeeRate: number) {
           item.amount *
           (100 - item.lofaDiscountLevyRate! - item.partnerDiscountLevyRate!)) /
           100) *
-          (100 - platformFeeRate + item.platformAdjustmentFeeRate!)) /
+          (100 - item.platformFeeRate + item.platformAdjustmentFeeRate!)) /
         100
-    : (getSalesAmount(item) * (100 - platformFeeRate)) / 100;
+    : (getSalesAmount(item) * (100 - item.platformFeeRate)) / 100;
 
   return getSalesAmount(item) - platformSettlement;
 }
 
-export function getProceeds(
-  item: RevenueData,
-  commonFeeRate: number,
-  platformFeeRate: number
-) {
+export function getProceeds(item: RevenueData) {
+  if (item.commonFeeRate == undefined || item.platformFeeRate == undefined) {
+    return NaN;
+  }
   const isCsOK = item.cs == "정상";
   const isOrderStatusDeliver = item.orderStatus == "배송";
   if (!isCsOK || !isOrderStatusDeliver) {
@@ -350,7 +356,7 @@ export function getProceeds(
       ? (item.price *
           item.amount *
           (100 -
-            platformFeeRate -
+            item.platformFeeRate -
             item.lofaDiscountLevyRate! -
             item.partnerDiscountLevyRate! +
             item.platformAdjustmentFeeRate!)) /
@@ -359,41 +365,39 @@ export function getProceeds(
           item.amount *
           (100 - item.lofaDiscountLevyRate! - item.partnerDiscountLevyRate!)) /
           100) *
-          (100 - platformFeeRate + item.platformAdjustmentFeeRate!)) /
+          (100 - item.platformFeeRate + item.platformAdjustmentFeeRate!)) /
         100
-    : (getSalesAmount(item) * (100 - platformFeeRate)) / 100;
+    : (getSalesAmount(item) * (100 - item.platformFeeRate)) / 100;
 
   const partnerSettlement = item.isDiscounted
     ? (item.price *
         item.amount *
         (100 -
-          commonFeeRate -
+          item.commonFeeRate -
           item.partnerDiscountLevyRate! +
           item.lofaAdjustmentFeeRate!)) /
       100
-    : (item.price * item.amount * (100 - commonFeeRate)) / 100.0;
+    : (item.price * item.amount * (100 - item.commonFeeRate)) / 100.0;
 
   return platformSettlement - partnerSettlement;
 }
 
-export function getNetProfitAfterTax(
-  item: RevenueData,
-  commonFeeRate: number,
-  platformFeeRate: number,
-  businessTaxStandard: string
-) {
-  switch (businessTaxStandard) {
+export function getNetProfitAfterTax(item: RevenueData) {
+  if (!item.businessTaxStandard) {
+    return NaN;
+  }
+  switch (item.businessTaxStandard) {
     case "일반":
-      return getProceeds(item, commonFeeRate, platformFeeRate) * 0.9;
+      return getProceeds(item) * 0.9;
     case "간이":
     case "비사업자":
       return (
-        (getSalesAmount(item) - getPlatformFee(item, platformFeeRate)) * 0.9 -
-        getPartnerSettlement(item, commonFeeRate)
+        (getSalesAmount(item) - getPlatformFee(item)) * 0.9 -
+        getPartnerSettlement(item)
       );
     case "면세":
     default:
-      return getProceeds(item, commonFeeRate, platformFeeRate);
+      return getProceeds(item);
   }
 }
 
@@ -405,8 +409,6 @@ function RevenueDataItem({
   checkboxRequired = true,
   isDiscountPreview = false,
   isDBTable = false,
-  partnerProfile,
-  platformFeeRate,
   showingItems,
 }: {
   item: RevenueData;
@@ -416,8 +418,6 @@ function RevenueDataItem({
   checkboxRequired?: boolean;
   isDiscountPreview?: boolean;
   isDBTable?: boolean;
-  partnerProfile?: PartnerProfile;
-  platformFeeRate?: number;
   showingItems: RevenueDBShowingItems;
 }) {
   const [isChecked, setIsChecked] = useState<boolean>(check);
@@ -459,9 +459,17 @@ function RevenueDataItem({
     return isCsOK && isOrderStatusDeliver ? item.price * item.amount : 0;
   }, [item]);
 
+  const businessTaxStandard = useMemo(() => {
+    if (item.businessTaxStandard) {
+      return item.businessTaxStandard;
+    } else {
+      return "일반";
+    }
+  }, [item]);
+
   const commonFeeRate = useMemo(() => {
-    if (partnerProfile) {
-      return isLofa ? partnerProfile.lofaFee : partnerProfile.otherFee;
+    if (item.commonFeeRate != undefined) {
+      return item.commonFeeRate;
     } else {
       return NaN;
     }
@@ -484,6 +492,14 @@ function RevenueDataItem({
             item.lofaAdjustmentFeeRate!)) /
           100
       : (totalSalesAmount * (100 - commonFeeRate)) / 100.0;
+  }, [item]);
+
+  const platformFeeRate = useMemo(() => {
+    if (item.platformFeeRate != undefined) {
+      return item.platformFeeRate;
+    } else {
+      return NaN;
+    }
   }, [item]);
 
   const platformSettlement = useMemo(() => {
@@ -525,19 +541,15 @@ function RevenueDataItem({
   }, [item]);
 
   const netProfitAfterTax = useMemo(() => {
-    if (partnerProfile) {
-      switch (partnerProfile.businessTaxStandard) {
-        case "일반":
-          return proceeds * 0.9;
-        case "간이":
-        case "비사업자":
-          return platformSettlement * 0.9 - partnerSettlement;
-        case "면세":
-        default:
-          return proceeds;
-      }
-    } else {
-      return proceeds;
+    switch (businessTaxStandard) {
+      case "일반":
+        return proceeds * 0.9;
+      case "간이":
+      case "비사업자":
+        return platformSettlement * 0.9 - partnerSettlement;
+      case "면세":
+      default:
+        return proceeds;
     }
   }, [item]);
 
@@ -753,8 +765,6 @@ export function RevenueDataTable({
   checkboxRequired = true,
   isDiscountPreview = false,
   isDBTable = false,
-  partnerProfiles,
-  sellerProfiles,
   showingItems,
 }: {
   items: RevenueData[];
@@ -765,8 +775,6 @@ export function RevenueDataTable({
   checkboxRequired?: boolean;
   isDiscountPreview?: boolean;
   isDBTable?: boolean;
-  partnerProfiles?: Map<string, PartnerProfile>;
-  sellerProfiles?: Map<string, SellerProfile>;
   showingItems?: RevenueDBShowingItems;
 }) {
   const [allChecked, setAllChecked] = useState<boolean>(false);
@@ -1004,20 +1012,6 @@ export function RevenueDataTable({
         </Header>
         <ItemsBox>
           {items.map((item, index) => {
-            let partnerProfile;
-            let platformFeeRate;
-            if (partnerProfiles) {
-              partnerProfile = partnerProfiles.get(item.partnerName);
-            }
-            if (sellerProfiles) {
-              const sellerProfile = sellerProfiles.get(item.seller);
-              if (sellerProfile) {
-                platformFeeRate = sellerProfile.fee;
-              } else {
-                platformFeeRate = 0;
-              }
-            }
-
             return (
               <RevenueDataItem
                 key={`RevenueDataItem-${index}`}
@@ -1028,8 +1022,6 @@ export function RevenueDataTable({
                 checkboxRequired={checkboxRequired}
                 isDiscountPreview={isDiscountPreview}
                 isDBTable={isDBTable}
-                partnerProfile={partnerProfile}
-                platformFeeRate={platformFeeRate}
                 showingItems={showingItemsMemo}
               />
             );

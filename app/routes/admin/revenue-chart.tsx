@@ -531,10 +531,7 @@ export default function Page() {
 
         const currentProceeds = productMap.get(item.productName) || 0;
 
-        productMap.set(
-          item.productName,
-          currentProceeds + getProceedsFromItem(item)
-        );
+        productMap.set(item.productName, currentProceeds + getProceeds(item));
         lineGraphDataMap.set(dateKey, productMap);
       }
     });
@@ -748,7 +745,7 @@ export default function Page() {
 
     const proceedsKey = `${data.seller}_proceeds` as keyof BarGraphData;
 
-    const proceeds = getProceedsFromItem(data);
+    const proceeds = getProceeds(data);
 
     (barGraphData[proceedsKey] as number) =
       ((barGraphData[proceedsKey] as number) ?? 0) + proceeds;
@@ -789,7 +786,7 @@ export default function Page() {
 
       productProceedsMap.set(
         item.productName,
-        existingProceeds + getProceedsFromItem(item)
+        existingProceeds + getProceeds(item)
       );
     });
 
@@ -824,29 +821,6 @@ export default function Page() {
 
     // 3. 상위 5개 상품을 반환
     return sortedProducts.slice(0, 5);
-  }
-
-  function getProceedsFromItem(item: RevenueData) {
-    const partnerProfile = allPartnerProfiles?.get(item.partnerName);
-
-    if (!partnerProfile) {
-      setNoticeModalStr(
-        `해당 공급처 정보를 불러오는 데에 실패했습니다. ${item.partnerName}`
-      );
-      setIsNoticeModalOpened(true);
-      return 0;
-    }
-
-    const sellerProfile = allSellerProfiles?.get(item.seller);
-
-    const commonFeeRate = LofaSellers.includes(item.seller)
-      ? partnerProfile.lofaFee
-      : partnerProfile.otherFee;
-
-    const platformFeeRate = sellerProfile ? sellerProfile.fee : 0;
-
-    const proceeds = getProceeds(item, commonFeeRate, platformFeeRate);
-    return proceeds;
   }
 
   function GraphComponent({
@@ -1295,6 +1269,11 @@ export default function Page() {
             />
           ))}
         </div>
+      </div>
+      <Space h={10} />
+      <div>
+        * 데이터에 NaN이 보일 경우, 해당 자료의 공급처가 계약업체목록에 있는지
+        확인해주세요.
       </div>
     </PageLayout>
   );
