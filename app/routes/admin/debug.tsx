@@ -1,11 +1,20 @@
 import { ActionFunction } from "@remix-run/node";
 import { useSubmit } from "@remix-run/react";
 import { useRef } from "react";
-import { debug_addUploadedDate, debug_deleteAllTestRevenueData, debug_initializeIsDiscountedForSettlements } from "~/services/firebase-debug.server";
+import {
+  debug_addExtraDataToRevenueDB,
+  debug_addUploadedDate,
+  debug_deleteAllTestRevenueData,
+  debug_fixRevenueDataProviderName,
+  debug_initializeIsDiscountedForSettlements,
+} from "~/services/firebase-debug.server";
 
 export const action: ActionFunction = async ({ request }) => {
   console.log("request submitted");
-  debug_deleteAllTestRevenueData();
+  // await debug_fixRevenueDataProviderName("LOFA COLLAB", "로파콜랍");
+  // await debug_fixRevenueDataProviderName("DOUBLE NOD", "더블노드");
+  // await debug_fixRevenueDataProviderName("LOFA ORIGINAL", "로파오리지널");
+  await debug_addExtraDataToRevenueDB();
   return null;
 };
 

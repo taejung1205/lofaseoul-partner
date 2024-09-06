@@ -19,6 +19,8 @@ import {
   ref,
   uploadBytes,
 } from "firebase/storage";
+import { getAllPartnerProfiles, getAllSellerProfiles } from "./firebase.server";
+import { LofaSellers } from "~/components/seller";
 
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
@@ -227,5 +229,87 @@ export async function debug_deleteAllTestRevenueData() {
     console.log("All test revenue data deleted successfully.");
   } catch (error) {
     console.error("Error deleting test revenue data:", error);
+  }
+}
+
+export async function debug_addExtraDataToRevenueDB() {
+  const partnerProfiles = await getAllPartnerProfiles(true);
+  const sellers = await getAllSellerProfiles();
+
+  const revenueDataRef = collection(firestore, `revenue-db`);
+
+  try {
+    // 쿼리로 문서들 가져오기
+    const querySnapshot = await getDocs(revenueDataRef);
+
+    // 문서들을 반복하면서 수정
+    const promises = querySnapshot.docs.map((docSnapshot) => {
+      const data = docSnapshot.data();
+      const partnerProfile = partnerProfiles.get(data.partnerName);
+
+      if (partnerProfile) {
+        const isLofa = LofaSellers.includes(data.seller);
+
+        const commonFeeRate = isLofa
+          ? partnerProfile.lofaFee
+          : partnerProfile.otherFee;
+
+        const businessTaxStandard = partnerProfile.businessTaxStandard;
+
+        const sellerProfile = sellers.get(data.seller);
+
+        let platformFeeRate = 0;
+        if (sellerProfile) {
+          platformFeeRate = sellerProfile.fee;
+        }
+
+        updateDoc(doc(firestore, `revenue-db/${docSnapshot.id}`), {
+          commonFeeRate: commonFeeRate,
+          businessTaxStandard: businessTaxStandard,
+          platformFeeRate: platformFeeRate,
+        });
+
+        console.log(`${docSnapshot.id} editted`);
+      } else {
+        console.log(`${data.partnerName} not found`);
+      }
+    });
+
+    // 모든 삭제 작업이 완료될 때까지 대기
+    await Promise.all(promises);
+
+    console.log("All test revenue data editted successfully.");
+  } catch (error) {
+    console.error("Error editting test revenue data:", error);
+  }
+}
+
+export async function debug_fixRevenueDataProviderName(
+  from: string,
+  to: string
+) {
+  const revenueDataRef = collection(firestore, `revenue-db`);
+  const revenueDataQuery = query(
+    revenueDataRef,
+    where("partnerName", "==", from)
+  );
+
+  try {
+    // 쿼리로 문서들 가져오기
+    const querySnapshot = await getDocs(revenueDataQuery);
+
+    // 문서들을 반복하면서 수정
+    const promises = querySnapshot.docs.map((docSnapshot) => {
+      updateDoc(doc(firestore, `revenue-db/${docSnapshot.id}`), {
+        partnerName: to,
+      });
+    });
+
+    // 모든 삭제 작업이 완료될 때까지 대기
+    await Promise.all(promises);
+
+    console.log("All test revenue data editted successfully.");
+  } catch (error) {
+    console.error("Error editting test revenue data:", error);
   }
 }

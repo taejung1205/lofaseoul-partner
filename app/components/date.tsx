@@ -124,6 +124,15 @@ export function WeekSelectPopover({
             day: {
               fontSize: "16px",
             },
+            caption: {
+              display: "flex",
+              justifyContent: "space-betwen",
+              alignItems: "center",
+              width: "280px",
+            },
+            caption_label: {
+              fontSize: "20px",
+            },
           }}
           modifiersStyles={{
             selected: {

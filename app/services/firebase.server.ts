@@ -342,7 +342,7 @@ export async function deleteSettlements({
       updateTime: time,
     };
     await setDoc(doc(firestore, `settlements-data-delete/${monthStr}`), data);
-    addLog("addSettlements", data);
+    addLog("deleteSettlements", data);
     return true;
   } catch (error: any) {
     sendAligoMessage({
@@ -2281,7 +2281,6 @@ export async function getRevenueStats({
   startDate: Date;
   endDate: Date;
 }) {
-  const sellerProfiles = await getAllSellerProfiles();
   const partnerProfiles = await getAllPartnerProfiles(true);
   const revenueDataRef = collection(firestore, `revenue-db`);
   let revenueDataQuery = query(
@@ -2299,16 +2298,10 @@ export async function getRevenueStats({
       const isLofa = LofaSellers.includes(data.seller);
       const isCsOK = data.cs == "정상";
       const isOrderStatusDeliver = data.orderStatus == "배송";
+
       const partnerProfile: PartnerProfile = partnerProfiles.get(
         data.partnerName
       );
-      const commonFeeRate = isLofa
-        ? partnerProfile.lofaFee
-        : partnerProfile.otherFee; //정상수수료율
-      const platformFeeRate =
-        sellerProfiles.get(data.seller) != undefined
-          ? sellerProfiles.get(data.seller).fee
-          : 0;
 
       if (!searchResult.has(data.partnerName)) {
         let partnerStat: PartnerRevenueStat = {
@@ -2351,10 +2344,11 @@ export async function getRevenueStats({
             ? data.price * data.amount
             : 0;
         totalSalesAmount = lofaSalesAmount + otherSalesAmount;
-        partnerSettlement = (totalSalesAmount * (100 - commonFeeRate)) / 100;
+        partnerSettlement =
+          (totalSalesAmount * (100 - (data.commonFeeRate ?? NaN))) / 100;
         platformSettlement = isLofa
           ? totalSalesAmount
-          : (totalSalesAmount * (100 - platformFeeRate)) / 100; //플랫폼정산금
+          : (totalSalesAmount * (100 - (data.platformFeeRate ?? NaN))) / 100; //플랫폼정산금
         platformFee = totalSalesAmount - platformSettlement;
         lofaDiscountLevy = 0;
         if (!isCsOK || !isOrderStatusDeliver) {
@@ -2390,7 +2384,7 @@ export async function getRevenueStats({
         partnerSettlement =
           (normalPriceTotalSalesAmount *
             (100 -
-              commonFeeRate -
+              (data.commonFeeRate ?? NaN) -
               data.partnerDiscountLevyRate +
               data.lofaAdjustmentFeeRate)) /
           100;
@@ -2403,7 +2397,7 @@ export async function getRevenueStats({
           : platformSettlementStandard == "정상판매가"
           ? (normalPriceTotalSalesAmount *
               (100 -
-                platformFeeRate -
+                (data.platformFeeRate ?? NaN) -
                 data.lofaDiscountLevyRate -
                 data.partnerDiscountLevyRate +
                 data.platformAdjustmentFeeRate)) /
@@ -2413,7 +2407,9 @@ export async function getRevenueStats({
                 data.lofaDiscountLevyRate -
                 data.partnerDiscountLevyRate)) /
               100) *
-              (100 - platformFeeRate + data.platformAdjustmentFeeRate)) /
+              (100 -
+                (data.platformFeeRate ?? NaN) +
+                data.platformAdjustmentFeeRate)) /
             100; //플랫폼정산금
         platformFee = totalSalesAmount - platformSettlement;
         lofaDiscountLevy =
@@ -2421,7 +2417,7 @@ export async function getRevenueStats({
       }
 
       proceeds = totalSalesAmount - partnerSettlement - platformFee;
-      switch (partnerProfile.businessTaxStandard) {
+      switch (data.businessTaxStandard) {
         case "일반":
           netProfitAfterTax = proceeds * 0.9;
           break;
@@ -2444,8 +2440,11 @@ export async function getRevenueStats({
       stat.lofaDiscountLevy += lofaDiscountLevy;
       stat.proceeds += proceeds;
       stat.netProfitAfterTax += netProfitAfterTax;
-
-      stat.productCategory = partnerProfile.productCategory ?? [];
+      if (partnerProfile) {
+        stat.productCategory = partnerProfile.productCategory ?? [];
+      } else {
+        stat.productCategory = [];
+      }
     });
   } catch (error: any) {
     return error.message as string;
