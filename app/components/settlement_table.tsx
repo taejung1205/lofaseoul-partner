@@ -27,6 +27,7 @@ export type SettlementItem = {
   partnerDiscountLevy?: number; //업체부담할인금
   lofaAdjustmentFee?: number; //로파조정수수료
   isDiscountManuallyFixed?: boolean; //할인이 수동으로 수정되었는지 여부, 이게 true이면 할인이 자동으로 적용되지 않음
+  isSeparatingShippingFee?: boolean; //배송비 분리 여부
 };
 
 interface Props extends React.HTMLAttributes<HTMLDivElement> {
