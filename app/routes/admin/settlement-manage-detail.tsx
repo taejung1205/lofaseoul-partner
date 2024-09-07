@@ -331,6 +331,9 @@ export default function AdminSettlementShare() {
   const [orderDateEdit, setOrderDateEdit] = useState<string>("");
   const [providerNameEdit, setProviderNameEdit] = useState<string>("");
 
+  const [isSeperatingShippingFee, setIsSeparatingShippingFee] =
+    useState<boolean>(false);
+
   const [isManuallyFixingDiscount, setIsManuallyFixingDiscount] =
     useState<boolean>(false);
   const [discountedPriceEdit, setDiscountedPriceEdit] = useState<number>(0);
@@ -593,6 +596,7 @@ export default function AdminSettlementShare() {
       setDiscountedPriceEdit(settlement.discountedPrice ?? settlement.price);
       setPartnerDiscountLevyEdit(settlement.partnerDiscountLevy ?? 0);
       setLofaAdjustmentFeeEdit(settlement.lofaAdjustmentFee ?? 0);
+      setIsSeparatingShippingFee(settlement.isSeparatingShippingFee ?? false);
     } else {
       setSellerEdit("");
       setOrderNumberEdit("");
@@ -609,6 +613,7 @@ export default function AdminSettlementShare() {
       setDiscountedPriceEdit(0);
       setPartnerDiscountLevyEdit(0);
       setLofaAdjustmentFeeEdit(0);
+      setIsSeparatingShippingFee(false);
     }
   }
 
@@ -632,6 +637,7 @@ export default function AdminSettlementShare() {
       orderTag: orderTagEdit,
       providerName: providerNameEdit,
       isDiscounted: isDiscounted,
+      isSeparatingShippingFee: isSeperatingShippingFee,
     };
 
     if (isManuallyFixingDiscount || isDiscounted) {
@@ -930,14 +936,6 @@ export default function AdminSettlementShare() {
               alignItems: "center",
             }}
           >
-            <div style={{ width: "100px" }}>수수료</div>
-            <EditInputBox
-              type="number"
-              name="fee"
-              value={feeEdit}
-              onChange={(e) => setFeeEdit(Number(e.target.value))}
-              required
-            />
             <div style={{ width: "100px" }}>배송비</div>
             <EditInputBox
               type="number"
@@ -946,7 +944,40 @@ export default function AdminSettlementShare() {
               onChange={(e) => setShippingFeeEdit(Number(e.target.value))}
               required
             />
+            <div style={{ width: "100px" }}>수수료</div>
+            <EditInputBox
+              type="number"
+              name="fee"
+              value={feeEdit}
+              onChange={(e) => setFeeEdit(Number(e.target.value))}
+              required
+            />
           </div>
+          <Space h={10} />
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+            }}
+          >
+            <div style={{ width: "150px", fontSize: "16px" }}>
+              배송비 별도 적용
+            </div>
+            <Checkbox
+              size={"sm"}
+              checked={isSeperatingShippingFee}
+              onChange={(event) => {
+                setIsSeparatingShippingFee(event.currentTarget.checked);
+                if (event.currentTarget.checked) {
+                  setNoticeModalStr(
+                    "배송비 별도 적용을 체크할 경우, 해당 주문건은 주문번호 중복 여부에 관계 없이 배송비가 합산에 적용됩니다."
+                  );
+                  setIsNoticeModalOpened(true);
+                }
+              }}
+            />
+          </div>
+          <Space h={10} />
           <div
             style={{
               display: "flex",
