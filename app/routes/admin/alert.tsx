@@ -14,10 +14,12 @@ import { MonthSelectPopover } from "~/components/date";
 import { BasicModal, ModalButton } from "~/components/modal";
 import { AdminNotice, NoticeItem, TopicSelect } from "~/components/notice";
 import { PageLayout } from "~/components/page_layout";
+import { CommonSelect } from "~/components/select";
 import {
   addNotice,
   deleteNotice,
   editNotice,
+  getAllPartnerProfiles,
   getNotices,
   getPartnerProfile,
   replyNotice,
@@ -118,13 +120,19 @@ export const loader: LoaderFunction = async ({ request }) => {
   const url = new URL(request.url);
   const month = url.searchParams.get("month");
   const partnerName = url.searchParams.get("partner");
+  const partnersMap = await getAllPartnerProfiles();
+  const partnerNamesArr = Array.from(partnersMap.keys());
 
   if (month !== null) {
     const notices = await getNotices({
       monthStr: month,
       partnerName: partnerName ?? "",
     });
-    return json({ monthStr: month, notices: notices });
+    return json({
+      monthStr: month,
+      notices: notices,
+      partnerNamesArr: partnerNamesArr,
+    });
   } else {
     const todayMonth = dateToKoreanMonth(new Date());
     const notices = await getNotices({
@@ -132,7 +140,11 @@ export const loader: LoaderFunction = async ({ request }) => {
       partnerName: partnerName ?? "",
     });
     // console.log(notices);
-    return json({ monthStr: todayMonth, notices: notices });
+    return json({
+      monthStr: todayMonth,
+      notices: notices,
+      partnerNamesArr: partnerNamesArr,
+    });
   }
 };
 
@@ -295,6 +307,7 @@ export default function AdminAlert() {
   const [isNoticeModalOpened, setIsNoticeModalOpened] =
     useState<boolean>(false);
 
+  //메세지 발송에 사용되는 항목들
   const [partnerNameEdit, setPartnerNameEdit] = useState<string>("");
   const [topicEdit, setTopicEdit] = useState<string>("기타");
   const [detailEdit, setDetailEdit] = useState<string>("");
@@ -304,6 +317,14 @@ export default function AdminAlert() {
   const actionData = useActionData();
   const submit = useSubmit();
   const navigation = useNavigation();
+
+  const partnerNamesList = useMemo(() => {
+    if (loaderData) {
+      return loaderData.partnerNamesArr;
+    } else {
+      return undefined;
+    }
+  }, [loaderData]);
 
   useEffect(() => {
     if (monthStr !== null) {
@@ -387,12 +408,13 @@ export default function AdminAlert() {
             }}
           >
             <div style={{ width: "110px" }}>대상 파트너</div>
-            <EditInputBox
-              type="text"
-              name="partnerName"
-              value={partnerNameEdit}
-              onChange={(e) => setPartnerNameEdit(e.target.value)}
-              required
+            <CommonSelect
+              selected={partnerNameEdit}
+              setSelected={(partnerName: string) => {
+                setPartnerNameEdit(partnerName);
+              }}
+              items={partnerNamesList ?? []}
+              width="400px"
             />
             <div style={{ width: "100px" }}>공유 주제</div>
             <TopicSelect topic={topicEdit} setTopic={setTopicEdit} />

@@ -18,7 +18,7 @@ import {
 } from "~/utils/date";
 import { json, LoaderFunction, redirect } from "@remix-run/node";
 import { CommonButton } from "~/components/button";
-import { LofaSellers, SellerSelect } from "~/components/seller";
+import { SellerSelect } from "~/components/seller";
 import { endOfMonth, startOfMonth } from "date-fns";
 import {
   getAllPartnerProfiles,
