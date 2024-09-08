@@ -14,10 +14,12 @@ import { MonthSelectPopover } from "~/components/date";
 import { BasicModal, ModalButton } from "~/components/modal";
 import { AdminNotice, NoticeItem, TopicSelect } from "~/components/notice";
 import { PageLayout } from "~/components/page_layout";
+import { CommonSelect } from "~/components/select";
 import {
   addNotice,
   deleteNotice,
   editNotice,
+  getAllPartnerProfiles,
   getNotices,
   getPartnerProfile,
   replyNotice,
@@ -118,13 +120,19 @@ export const loader: LoaderFunction = async ({ request }) => {
   const url = new URL(request.url);
   const month = url.searchParams.get("month");
   const partnerName = url.searchParams.get("partner");
+  const partnersMap = await getAllPartnerProfiles();
+  const partnerNamesArr = Array.from(partnersMap.keys());
 
   if (month !== null) {
     const notices = await getNotices({
       monthStr: month,
       partnerName: partnerName ?? "",
     });
-    return json({ monthStr: month, notices: notices });
+    return json({
+      monthStr: month,
+      notices: notices,
+      partnerNamesArr: partnerNamesArr,
+    });
   } else {
     const todayMonth = dateToKoreanMonth(new Date());
     const notices = await getNotices({
@@ -132,7 +140,11 @@ export const loader: LoaderFunction = async ({ request }) => {
       partnerName: partnerName ?? "",
     });
     // console.log(notices);
-    return json({ monthStr: todayMonth, notices: notices });
+    return json({
+      monthStr: todayMonth,
+      notices: notices,
+      partnerNamesArr: partnerNamesArr,
+    });
   }
 };
 
@@ -295,6 +307,7 @@ export default function AdminAlert() {
   const [isNoticeModalOpened, setIsNoticeModalOpened] =
     useState<boolean>(false);
 
+  //메세지 발송에 사용되는 항목들
   const [partnerNameEdit, setPartnerNameEdit] = useState<string>("");
   const [topicEdit, setTopicEdit] = useState<string>("기타");
   const [detailEdit, setDetailEdit] = useState<string>("");
@@ -304,6 +317,14 @@ export default function AdminAlert() {
   const actionData = useActionData();
   const submit = useSubmit();
   const navigation = useNavigation();
+
+  const partnerNamesList = useMemo(() => {
+    if (loaderData) {
+      return loaderData.partnerNamesArr;
+    } else {
+      return undefined;
+    }
+  }, [loaderData]);
 
   useEffect(() => {
     if (monthStr !== null) {
@@ -343,27 +364,6 @@ export default function AdminAlert() {
         }
         overlayBlur={2}
       />
-      {/* 안내용 모달 */}
-      <BasicModal
-        opened={isNoticeModalOpened}
-        onClose={() => setIsNoticeModalOpened(false)}
-      >
-        <div
-          style={{
-            justifyContent: "center",
-            textAlign: "center",
-            fontWeight: "700",
-          }}
-        >
-          {noticeModalStr}
-          <div style={{ height: "20px" }} />
-          <div style={{ display: "flex", justifyContent: "center" }}>
-            <ModalButton onClick={() => setIsNoticeModalOpened(false)}>
-              확인
-            </ModalButton>
-          </div>
-        </div>
-      </BasicModal>
 
       {/* 메세지 추가 모달 */}
       <BasicModal
@@ -387,12 +387,13 @@ export default function AdminAlert() {
             }}
           >
             <div style={{ width: "110px" }}>대상 파트너</div>
-            <EditInputBox
-              type="text"
-              name="partnerName"
-              value={partnerNameEdit}
-              onChange={(e) => setPartnerNameEdit(e.target.value)}
-              required
+            <CommonSelect
+              selected={partnerNameEdit}
+              setSelected={(partnerName: string) => {
+                setPartnerNameEdit(partnerName);
+              }}
+              items={partnerNamesList ?? []}
+              width="400px"
             />
             <div style={{ width: "100px" }}>공유 주제</div>
             <TopicSelect topic={topicEdit} setTopic={setTopicEdit} />
@@ -420,17 +421,44 @@ export default function AdminAlert() {
             <ModalButton
               type="submit"
               onClick={async () => {
-                const formData = new FormData(formRef.current ?? undefined);
-                formData.set("month", monthStr);
-                formData.set("partner", partnerNameEdit);
-                formData.set("topic", topicEdit);
-                formData.set("detail", detailEdit);
-                formData.set("action", "add");
-                submit(formData, { method: "post" });
-                setIsNewNoticeModalOpened(false);
+                if (partnerNameEdit) {
+                  const formData = new FormData(formRef.current ?? undefined);
+                  formData.set("month", monthStr);
+                  formData.set("partner", partnerNameEdit);
+                  formData.set("topic", topicEdit);
+                  formData.set("detail", detailEdit);
+                  formData.set("action", "add");
+                  submit(formData, { method: "post" });
+                  setIsNewNoticeModalOpened(false);
+                } else {
+                  setIsNoticeModalOpened(true);
+                  setNoticeModalStr("대상 업체를 선택해야 합니다.");
+                }
               }}
             >
               생성
+            </ModalButton>
+          </div>
+        </div>
+      </BasicModal>
+
+      {/* 안내용 모달 */}
+      <BasicModal
+        opened={isNoticeModalOpened}
+        onClose={() => setIsNoticeModalOpened(false)}
+      >
+        <div
+          style={{
+            justifyContent: "center",
+            textAlign: "center",
+            fontWeight: "700",
+          }}
+        >
+          {noticeModalStr}
+          <div style={{ height: "20px" }} />
+          <div style={{ display: "flex", justifyContent: "center" }}>
+            <ModalButton onClick={() => setIsNoticeModalOpened(false)}>
+              확인
             </ModalButton>
           </div>
         </div>
@@ -460,19 +488,23 @@ export default function AdminAlert() {
               }
               monthStr={selectedMonthStr ?? ""}
             />
-            <PartnerNameInputBox
-              type="text"
-              name="name"
-              value={partnerName}
-              placeholder="파트너명"
-              onChange={(e) => setPartnerName(e.target.value)}
-              required
+            <Space w={20} />
+            <CommonSelect
+              selected={partnerName}
+              setSelected={(partnerName: string) => {
+                setPartnerName(partnerName);
+              }}
+              items={partnerNamesList ?? []}
+              width="400px"
             />
+
             <Space w={20} />
             <Link
               to={
                 partnerName.length > 0
-                  ? `/admin/alert?month=${selectedMonthStr}&partner=${partnerName}`
+                  ? `/admin/alert?month=${selectedMonthStr}&partner=${encodeURIComponent(
+                      partnerName
+                    )}`
                   : `/admin/alert?month=${selectedMonthStr}`
               }
             >
