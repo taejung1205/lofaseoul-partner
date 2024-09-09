@@ -22,7 +22,6 @@ import {
   getAllSellerSettlementSum,
   SettlementSumBar,
 } from "~/components/settlement_sum";
-import { getSettlements, getSettlementSum } from "~/services/firebase.server";
 import { PageLayout } from "~/components/page_layout";
 import { BlackBottomButton, CommonButton } from "~/components/button";
 import { requireUser } from "~/services/session.server";
@@ -38,6 +37,10 @@ import {
   getTimezoneDate,
   numeralMonthToKorean,
 } from "~/utils/date";
+import {
+  getSettlements,
+  getSettlementSum,
+} from "~/services/firebase/settlement.server";
 
 interface Props extends React.HTMLAttributes<HTMLDivElement> {
   styleOverrides?: React.CSSProperties;

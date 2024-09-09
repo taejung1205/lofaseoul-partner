@@ -15,7 +15,7 @@ import {
   redirect,
 } from "@remix-run/node";
 import { requireUser } from "~/services/session.server";
-import { applyExchangeRefundData } from "~/services/firebase.server";
+import { applyExchangeRefundData } from "~/services/firebase/firebase.server";
 import {
   checkExchangeRefundData,
   ExchangeRefundData,

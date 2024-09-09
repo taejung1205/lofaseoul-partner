@@ -1,6 +1,6 @@
 // app/services/session.server.ts
 import { createCookieSessionStorage, json, redirect } from "@remix-run/node";
-import { auth } from "./firebaseAdmin.server";
+import { auth } from "./firebase/firebaseAdmin.server";
 
 const sessionSecret = process.env.SESSION_SECRET;
 if (!sessionSecret) {

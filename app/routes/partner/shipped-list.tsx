@@ -18,13 +18,16 @@ import {
   redirect,
 } from "@remix-run/node";
 import { OrderItem, OrderTable } from "~/components/order";
-import { editWaybills, getPartnerWaybills } from "~/services/firebase.server";
 import { BasicModal, ModalButton } from "~/components/modal";
 import { requireUser } from "~/services/session.server";
 import { LoadingOverlay, Space } from "@mantine/core";
 import { useViewportSize } from "@mantine/hooks";
 import { isMobile } from "~/utils/mobile";
 import { dateToDayStr, dayStrToDate, getTimezoneDate } from "~/utils/date";
+import {
+  editWaybills,
+  getPartnerWaybills,
+} from "~/services/firebase/waybill.server";
 
 function EmptySettlementBox(props: React.HTMLProps<HTMLDivElement>) {
   const styles: React.CSSProperties = {

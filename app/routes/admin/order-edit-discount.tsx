@@ -21,7 +21,7 @@ import {
 import {
   addDiscountData,
   getAllPartnerProfiles,
-} from "~/services/firebase.server";
+} from "~/services/firebase/firebase.server";
 import {
   ActionFunction,
   json,

@@ -12,7 +12,7 @@ import {
   addPartnerProfile,
   deletePartnerProfile,
   getAllPartnerProfiles,
-} from "~/services/firebase.server";
+} from "~/services/firebase/firebase.server";
 import writeXlsxFile from "write-excel-file";
 import { useNavigation } from "@remix-run/react";
 

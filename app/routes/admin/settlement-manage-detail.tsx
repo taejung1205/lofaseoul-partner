@@ -20,7 +20,6 @@ import {
 } from "~/components/seller";
 import {
   isSettlementItemValid,
-  setSettlementPartnerName,
   SettlementItem,
   SettlementTable,
 } from "~/components/settlement_table";
@@ -29,14 +28,9 @@ import {
   SettlementSumBar,
 } from "~/components/settlement_sum";
 import {
-  addSettlements,
-  deleteSettlements,
   getPartnerProfile,
   getAllPartnerProfiles,
-  getSettlements,
-  getSettlementSum,
-  deleteSettlementsShippingFee,
-} from "~/services/firebase.server";
+} from "~/services/firebase/firebase.server";
 import { BasicModal, ModalButton } from "~/components/modal";
 import { PageLayout } from "~/components/page_layout";
 import { CommonButton } from "~/components/button";
@@ -53,6 +47,13 @@ import {
 } from "~/utils/date";
 import { PartnerProfile } from "~/components/partner_profile";
 import { requireUser } from "~/services/session.server";
+import {
+  addSettlements,
+  deleteSettlements,
+  deleteSettlementsShippingFee,
+  getSettlements,
+  getSettlementSum,
+} from "~/services/firebase/settlement.server";
 
 interface EmptySettlementBoxProps extends React.HTMLProps<HTMLDivElement> {}
 
