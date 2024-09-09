@@ -14,16 +14,16 @@ import { sendAligoMessage } from "../aligo.server";
 import { addLog, getPartnerProfile } from "./firebase.server";
 import { firestore } from "./firebaseInit.server";
 import { dateToDayStr, getTimezoneDate } from "~/utils/date";
-import { NoticeItem } from "~/components/notice";
+import { MessageItem } from "~/components/message";
 
 /**
- * 알림을 추가합니다
+ * 쪽지를 추가합니다
  * @param month: 월, partnerName: 파트너명, detail: 상세 내용, topic: 공유주제
  * @returns
  * 성공하면 true 실패시 error message
  *
  */
-export async function addNotice({
+export async function addMessage({
   partnerName,
   topic,
   detail,
@@ -62,13 +62,13 @@ export async function addNotice({
 }
 
 /**
- * 알림을 수정합니다.
+ * 쪽지를 수정합니다.
  * @param month: 월, partnerName: 파트너명, detail: 상세 내용, topic: 공유주제, id: 해당 doc id
  * @returns
  * 성공하면 true 실패시 error message
  *
  */
-export async function editNotice({
+export async function editMessage({
   partnerName,
   topic,
   detail,
@@ -101,13 +101,13 @@ export async function editNotice({
 }
 
 /**
- * 알림을 공유합니다..
+ * 쪽지를 공유합니다.
  * @param month: 월, id: 해당 doc id
  * @returns
  * 성공하면 true 실패시 error message
  *
  */
-export async function shareNotice({
+export async function shareMessage({
   monthStr,
   id,
   partnerName,
@@ -130,7 +130,7 @@ export async function shareNotice({
     const phone = profile?.phone ?? "";
     if (phone.length > 0) {
       const response = await sendAligoMessage({
-        text: `[로파파트너] [${topic}]에 대하여 긴급알림이 있습니다. 파트너사이트의 '발신함 / 수신함'을 확인 부탁드립니다.`,
+        text: `[로파파트너] [${topic}]에 대하여 긴급알림이 있습니다. 파트너사이트의 '쪽지함'을 확인 부탁드립니다.`,
         receiver: phone,
       });
       if (response.result_code != 1) {
@@ -149,12 +149,12 @@ export async function shareNotice({
 }
 
 /**
- * 알림들을 불러옵니다
+ * 쪽지들을 불러옵니다
  * @param month: 월, partnerName: 파트너명 (비어있을 경우 모든 파트너)
  * @returns
  *  List of NoticeItem
  */
-export async function getNotices({
+export async function getMessages({
   monthStr: month,
   partnerName,
 }: {
@@ -173,7 +173,7 @@ export async function getNotices({
     querySnap = await getDocs(noticesRef);
   }
 
-  const list: NoticeItem[] = [];
+  const list: MessageItem[] = [];
   querySnap.docs.forEach((doc) => {
     const data = doc.data();
     const timestamp: Timestamp | undefined = data.sharedDate;
@@ -195,12 +195,12 @@ export async function getNotices({
 }
 
 /**
- * 공유된 알림들에 한하여 불러옵니다 (파트너 전용)
+ * 공유된 쪽지들에 한하여 불러옵니다 (파트너 전용)
  * @param month: 월, partnerName: 파트너명
  * @returns
  *  List of NoticeItem
  */
-export async function getSharedNotices({
+export async function getSharedMessages({
   monthStr: month,
   partnerName,
 }: {
@@ -216,7 +216,7 @@ export async function getSharedNotices({
   );
   querySnap = await getDocs(noticeQuery);
 
-  const list: NoticeItem[] = [];
+  const list: MessageItem[] = [];
   querySnap.docs.forEach((doc) => {
     const data = doc.data();
     const timestamp: Timestamp | undefined = data.sharedDate;
@@ -238,11 +238,11 @@ export async function getSharedNotices({
 }
 
 /**
- * 알림을 삭제합니다.
- * @param month: 월, id: 삭제할 알림 문서 아이디
+ * 쪽지를 삭제합니다.
+ * @param month: 월, id: 삭제할 쪽지 문서 아이디
  * @returns
  */
-export async function deleteNotice({
+export async function deleteMessage({
   monthStr,
   id,
 }: {
@@ -267,13 +267,13 @@ export async function deleteNotice({
 }
 
 /**
- * 알림에 대해 답신합니다.
+ * 쪽지에 대해 답신합니다.
  * @param month: 월, id: 해당 doc id, reply: 답신
  * @returns
  * 성공하면 true 실패시 error message
  *
  */
-export async function replyNotice({
+export async function replyMessage({
   monthStr,
   id,
   reply,

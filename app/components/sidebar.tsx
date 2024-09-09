@@ -88,7 +88,7 @@ export function SubcategoryButton({
 }
 type AdminPathname =
   | null
-  | "alert"
+  | "message"
   | "dashboard"
   | "delayed-order"
   | "order-share"
@@ -109,7 +109,7 @@ type AdminPathname =
 
 type PartnerPathname =
   | null
-  | "alert"
+  | "message"
   | "dashboard"
   | "delayed-order"
   | "waybill-share"
@@ -218,8 +218,8 @@ export function AdminSidebar({
         setCurrentPage("dashboard");
         break;
 
-      case "/admin/alert":
-        setCurrentPage("alert");
+      case "/admin/message":
+        setCurrentPage("message");
         break;
 
       case "/admin/delayed-order":
@@ -319,7 +319,7 @@ export function AdminSidebar({
         <MenuButton name="정산내역 관리" pathname="settlement-manage" />
       )}
       <MenuButton name="상품등록 관리" pathname="product-manage" />
-      <MenuButton name="발신함 / 수신함" pathname="alert" />
+      <MenuButton name="쪽지함" pathname="message" />
       {isStaff ? (
         <></>
       ) : (
@@ -427,8 +427,8 @@ export function PartnerSidebar({
         setCurrentPage("dashboard");
         break;
 
-      case "/partner/alert":
-        setCurrentPage("alert");
+      case "/partner/message":
+        setCurrentPage("message");
         break;
 
       case "/partner/delayed-order":
@@ -475,7 +475,7 @@ export function PartnerSidebar({
       <MenuButton name="출고 지연주문건" pathname="delayed-order" />
       <MenuButton name="정산내역" pathname="settlement-list" />
       <MenuButton name="상품 관리" pathname="product-manage" />
-      <MenuButton name="발신함 / 수신함" pathname="alert" />
+      <MenuButton name="쪽지함" pathname="message" />
     </SidebarBox>
   );
 }

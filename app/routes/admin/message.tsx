@@ -12,7 +12,7 @@ import { LoaderFunction } from "react-router-dom";
 import { CommonButton } from "~/components/button";
 import { MonthSelectPopover } from "~/components/date";
 import { BasicModal, ModalButton } from "~/components/modal";
-import { AdminNotice, NoticeItem, TopicSelect } from "~/components/notice";
+import { AdminMessage, MessageItem, TopicSelect } from "~/components/message";
 import { PageLayout } from "~/components/page_layout";
 import { CommonSelect } from "~/components/select";
 import {
@@ -20,18 +20,18 @@ import {
   getPartnerProfile,
 } from "~/services/firebase/firebase.server";
 import {
-  addNotice,
-  deleteNotice,
-  editNotice,
-  getNotices,
-  replyNotice,
-  shareNotice,
-} from "~/services/firebase/notice.server";
+  addMessage,
+  deleteMessage,
+  editMessage,
+  getMessages,
+  replyMessage,
+  shareMessage,
+} from "~/services/firebase/message.server";
 import { dateToKoreanMonth, koreanMonthToDate } from "~/utils/date";
 
-interface EmptyNoticeBoxProps extends React.HTMLProps<HTMLDivElement> {}
+interface EmptyMessageBoxProps extends React.HTMLProps<HTMLDivElement> {}
 
-const EmptyNoticeBox: React.FC<EmptyNoticeBoxProps> = (props) => {
+const EmptyMessageBox: React.FC<EmptyMessageBoxProps> = (props) => {
   const styles: React.CSSProperties = {
     display: "flex",
     textAlign: "center",
@@ -71,10 +71,10 @@ const PartnerNameInputBox: React.FC<PartnerNameInputBoxProps> = (props) => {
   );
 };
 
-interface NewNoticeButtonProps
+interface NewMessageButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement> {}
 
-const NewNoticeButton: React.FC<NewNoticeButtonProps> = (props) => {
+const NewMessageButton: React.FC<NewMessageButtonProps> = (props) => {
   const styles: React.CSSProperties = {
     backgroundColor: "white",
     border: "3px solid black",
@@ -126,25 +126,25 @@ export const loader: LoaderFunction = async ({ request }) => {
   const partnerNamesArr = Array.from(partnersMap.keys());
 
   if (month !== null) {
-    const notices = await getNotices({
+    const messages = await getMessages({
       monthStr: month,
       partnerName: partnerName ?? "",
     });
     return json({
       monthStr: month,
-      notices: notices,
+      messages: messages,
       partnerNamesArr: partnerNamesArr,
     });
   } else {
     const todayMonth = dateToKoreanMonth(new Date());
-    const notices = await getNotices({
+    const messages = await getMessages({
       monthStr: todayMonth,
       partnerName: partnerName ?? "",
     });
-    // console.log(notices);
+
     return json({
       monthStr: todayMonth,
-      notices: notices,
+      messages: messages,
       partnerNamesArr: partnerNamesArr,
     });
   }
@@ -170,7 +170,7 @@ export const action: ActionFunction = async ({ request }) => {
           message: `유효하지 않은 파트너명입니다.${"\n"}${partnerName}`,
         });
       }
-      const result = await addNotice({
+      const result = await addMessage({
         partnerName: partnerName,
         monthStr: month,
         topic: topic,
@@ -178,22 +178,22 @@ export const action: ActionFunction = async ({ request }) => {
         isFromPartner: false,
       });
       if (result == true) {
-        return json({ message: `알림 생성이 완료되었습니다.` });
+        return json({ message: `쪽지 생성이 완료되었습니다.` });
       } else {
         return json({
-          message: `알림 생성 과정 중 문제가 발생했습니다.${"\n"}${result}`,
+          message: `쪽지 생성 과정 중 문제가 발생했습니다.${"\n"}${result}`,
         });
       }
     } else {
       return json({
-        message: `알림 생성 과정 중 문제가 발생했습니다. (formData)`,
+        message: `쪽지 생성 과정 중 문제가 발생했습니다. (formData)`,
       });
     }
   } else if (actionType == "delete") {
     const id = body.get("id")?.toString();
     const month = body.get("month")?.toString();
     if (id !== undefined && month !== undefined) {
-      const result = await deleteNotice({ monthStr: month, id: id });
+      const result = await deleteMessage({ monthStr: month, id: id });
       if (result == true) {
         return json({ message: `삭제가 완료되었습니다.` });
       } else {
@@ -221,7 +221,7 @@ export const action: ActionFunction = async ({ request }) => {
           message: `유효하지 않은 파트너명입니다.${"\n"}${partnerName}`,
         });
       }
-      const result = await editNotice({
+      const result = await editMessage({
         partnerName: partnerName,
         monthStr: month,
         topic: topic,
@@ -229,15 +229,15 @@ export const action: ActionFunction = async ({ request }) => {
         id: id,
       });
       if (result == true) {
-        return json({ message: `알림 수정이 완료되었습니다.` });
+        return json({ message: `쪽지 수정이 완료되었습니다.` });
       } else {
         return json({
-          message: `알림 수정 과정 중 문제가 발생했습니다.${"\n"}${result}`,
+          message: `쪽지 수정 과정 중 문제가 발생했습니다.${"\n"}${result}`,
         });
       }
     } else {
       return json({
-        message: `알림 수정 과정 중 문제가 발생했습니다. (formData)`,
+        message: `쪽지 수정 과정 중 문제가 발생했습니다. (formData)`,
       });
     }
   } else if (actionType == "share") {
@@ -251,7 +251,7 @@ export const action: ActionFunction = async ({ request }) => {
       partnerName !== undefined &&
       topic !== undefined
     ) {
-      const result = await shareNotice({
+      const result = await shareMessage({
         monthStr: month,
         id: id,
         partnerName: partnerName,
@@ -275,7 +275,7 @@ export const action: ActionFunction = async ({ request }) => {
       reply !== undefined &&
       reply.length > 0
     ) {
-      const result = await replyNotice({
+      const result = await replyMessage({
         monthStr: month,
         id: id,
         reply: reply,
@@ -302,10 +302,10 @@ export default function AdminAlert() {
   const [selectedMonthStr, setSelectedMonthStr] = useState<string>(); //선택중인 날짜의 string (XX년 XX월)
   const [partnerName, setPartnerName] = useState<string>(""); //파트너명 (조회된 파트너명으로 시작, 입력창으로 수정 및 조회)
 
-  const [isNewNoticeModalOpened, setIsNewNoticeModalOpened] =
+  const [isNewMessageModalOpened, setIsNewMessageModalOpened] =
     useState<boolean>(false);
 
-  const [noticeModalStr, setNoticeModalStr] = useState<string>(""); //안내 모달창에서 뜨는 메세지
+  const [messageModalStr, setNoticeModalStr] = useState<string>(""); //안내 모달창에서 뜨는 메세지
   const [isNoticeModalOpened, setIsNoticeModalOpened] =
     useState<boolean>(false);
 
@@ -369,9 +369,9 @@ export default function AdminAlert() {
 
       {/* 메세지 추가 모달 */}
       <BasicModal
-        opened={isNewNoticeModalOpened}
+        opened={isNewMessageModalOpened}
         onClose={() => {
-          setIsNewNoticeModalOpened(false);
+          setIsNewMessageModalOpened(false);
         }}
       >
         <div
@@ -417,7 +417,7 @@ export default function AdminAlert() {
           </div>
           <div style={{ height: "20px" }} />
           <div style={{ display: "flex", justifyContent: "center" }}>
-            <ModalButton onClick={() => setIsNewNoticeModalOpened(false)}>
+            <ModalButton onClick={() => setIsNewMessageModalOpened(false)}>
               취소
             </ModalButton>
             <ModalButton
@@ -431,7 +431,7 @@ export default function AdminAlert() {
                   formData.set("detail", detailEdit);
                   formData.set("action", "add");
                   submit(formData, { method: "post" });
-                  setIsNewNoticeModalOpened(false);
+                  setIsNewMessageModalOpened(false);
                 } else {
                   setIsNoticeModalOpened(true);
                   setNoticeModalStr("대상 업체를 선택해야 합니다.");
@@ -456,7 +456,7 @@ export default function AdminAlert() {
             fontWeight: "700",
           }}
         >
-          {noticeModalStr}
+          {messageModalStr}
           <div style={{ height: "20px" }} />
           <div style={{ display: "flex", justifyContent: "center" }}>
             <ModalButton onClick={() => setIsNoticeModalOpened(false)}>
@@ -504,23 +504,23 @@ export default function AdminAlert() {
             <Link
               to={
                 partnerName.length > 0
-                  ? `/admin/alert?month=${selectedMonthStr}&partner=${encodeURIComponent(
+                  ? `/admin/message?month=${selectedMonthStr}&partner=${encodeURIComponent(
                       partnerName
                     )}`
-                  : `/admin/alert?month=${selectedMonthStr}`
+                  : `/admin/message?month=${selectedMonthStr}`
               }
             >
               <CommonButton>조회하기</CommonButton>
             </Link>
           </div>
-          <NewNoticeButton onClick={() => setIsNewNoticeModalOpened(true)}>
+          <NewMessageButton onClick={() => setIsNewMessageModalOpened(true)}>
             신규 생성
-          </NewNoticeButton>
+          </NewMessageButton>
         </div>
-        {loaderData.notices != undefined && loaderData.notices.length > 0 ? (
-          NoticeItems(loaderData.notices, monthStr)
+        {loaderData.messages != undefined && loaderData.messages.length > 0 ? (
+          MessageItems(loaderData.messages, monthStr)
         ) : (
-          <EmptyNoticeBox
+          <EmptyMessageBox
             style={{
               display: "flex",
               textAlign: "center",
@@ -531,8 +531,8 @@ export default function AdminAlert() {
               width: "inherit",
             }}
           >
-            공유한 알림이 없습니다.
-          </EmptyNoticeBox>
+            공유한 쪽지가 없습니다.
+          </EmptyMessageBox>
         )}
         <div style={{ minHeight: "70px" }} />
       </PageLayout>
@@ -540,12 +540,12 @@ export default function AdminAlert() {
   );
 }
 
-function NoticeItems(noticeItems: NoticeItem[], monthStr: string) {
-  return noticeItems.map((doc: NoticeItem, index: number) => {
+function MessageItems(messageItems: MessageItem[], monthStr: string) {
+  return messageItems.map((doc: MessageItem, index: number) => {
     return (
-      <AdminNotice
-        noticeItem={doc}
-        key={`NoticeItem_${index}`}
+      <AdminMessage
+        messageItem={doc}
+        key={`MessageItem_${index}`}
         monthStr={monthStr}
       />
     );
