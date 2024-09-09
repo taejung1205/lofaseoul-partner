@@ -22,7 +22,6 @@ import {
   SettlementSumItem,
   SettlementSumTable,
 } from "~/components/settlement_sum";
-import { sendSettlementNoticeEmail } from "~/services/firebase/firebase.server";
 import writeXlsxFile from "write-excel-file";
 import { LoadingOverlay, Space } from "@mantine/core";
 import { BasicModal, ModalButton } from "~/components/modal";
@@ -34,7 +33,10 @@ import {
   numeralMonthToKorean,
 } from "~/utils/date";
 import { requireUser } from "~/services/session.server";
-import { getAllSettlementSum } from "~/services/firebase/settlement.server";
+import {
+  getAllSettlementSum,
+  sendSettlementNoticeEmail,
+} from "~/services/firebase/settlement.server";
 
 interface EmptySettlementBoxProps extends React.HTMLProps<HTMLDivElement> {}
 

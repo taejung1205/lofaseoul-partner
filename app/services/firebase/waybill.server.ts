@@ -2,6 +2,7 @@ import {
   collection,
   doc,
   DocumentData,
+  getCountFromServer,
   getDocs,
   limit,
   orderBy,
@@ -307,4 +308,31 @@ export async function editWaybills({
     });
     return error.message ?? error;
   }
+}
+
+/**
+ * 이전날 공유된 (즉 오늘날로 등록된) 운송장 건수를 불러옵니다.
+ * @returns
+ */
+export async function getTodayWaybillsCount() {
+  const today = dateToDayStr(new Date());
+  const waybillsRef = collection(firestore, `waybills/${today}/items`);
+  const snapshot = await getCountFromServer(waybillsRef);
+  return snapshot.data().count;
+}
+
+/**
+ * 해당 파트너가 이전날 공유한 (즉 오늘날로 등록된) 운송장 건수를 불러옵니다.
+ * @param partnerName: 파트너명
+ * @returns
+ */
+export async function getPartnerTodayWaybillsCount(partnerName: string) {
+  const today = dateToDayStr(new Date());
+  const waybillsRef = collection(firestore, `waybills/${today}/items`);
+  const waybillQuery = query(
+    waybillsRef,
+    where("partnerName", "==", partnerName)
+  );
+  const snapshot = await getCountFromServer(waybillQuery);
+  return snapshot.data().count;
 }

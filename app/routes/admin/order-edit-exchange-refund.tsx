@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   FileNameBox,
   FileUpload,
@@ -15,7 +15,6 @@ import {
   redirect,
 } from "@remix-run/node";
 import { requireUser } from "~/services/session.server";
-import { applyExchangeRefundData } from "~/services/firebase/firebase.server";
 import {
   checkExchangeRefundData,
   ExchangeRefundData,
@@ -23,6 +22,7 @@ import {
 } from "~/components/exchange_refund";
 import { BasicModal, ModalButton } from "~/components/modal";
 import { BlackButton } from "~/components/button";
+import { applyExchangeRefundData } from "~/services/firebase/exchangeRefund.server";
 
 export const loader: LoaderFunction = async ({ request }) => {
   //스태프는 접근 불가

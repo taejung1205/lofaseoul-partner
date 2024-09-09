@@ -16,15 +16,17 @@ import { AdminNotice, NoticeItem, TopicSelect } from "~/components/notice";
 import { PageLayout } from "~/components/page_layout";
 import { CommonSelect } from "~/components/select";
 import {
+  getAllPartnerProfiles,
+  getPartnerProfile,
+} from "~/services/firebase/firebase.server";
+import {
   addNotice,
   deleteNotice,
   editNotice,
-  getAllPartnerProfiles,
   getNotices,
-  getPartnerProfile,
   replyNotice,
   shareNotice,
-} from "~/services/firebase/firebase.server";
+} from "~/services/firebase/notice.server";
 import { dateToKoreanMonth, koreanMonthToDate } from "~/utils/date";
 
 interface EmptyNoticeBoxProps extends React.HTMLProps<HTMLDivElement> {}

@@ -5,15 +5,15 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { BasicModal, ModalButton } from "~/components/modal";
 import { PageLayout } from "~/components/page_layout";
 import { LoadedProduct } from "~/components/product";
+import writeXlsxFile from "write-excel-file";
+import JSZip from "jszip";
+import { saveAs } from "file-saver";
 import {
   acceptProducts,
   declineProducts,
   deleteProducts,
   getAllProducts,
-} from "~/services/firebase/firebase.server";
-import writeXlsxFile from "write-excel-file";
-import JSZip from "jszip";
-import { saveAs } from "file-saver";
+} from "~/services/firebase/product.server";
 
 function EmptyProductsBox({
   children,

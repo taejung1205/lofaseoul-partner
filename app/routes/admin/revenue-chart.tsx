@@ -23,7 +23,6 @@ import { endOfMonth, startOfMonth } from "date-fns";
 import {
   getAllPartnerProfiles,
   getAllSellerProfiles,
-  getRevenueData,
 } from "~/services/firebase/firebase.server";
 import React from "react";
 import {
@@ -45,6 +44,7 @@ import {
 import { CommonSelect } from "~/components/select";
 import { SellerProfile } from "./seller-manage";
 import { requireUser } from "~/services/session.server";
+import { getRevenueData } from "~/services/firebase/revenueData.server";
 
 export function links() {
   return [{ rel: "stylesheet", href: dayPickerStyles }];

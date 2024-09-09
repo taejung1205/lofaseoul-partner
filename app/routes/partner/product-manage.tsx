@@ -22,7 +22,7 @@ import {
   deleteProduct,
   getPartnerProducts,
   uploadProductImage,
-} from "~/services/firebase/firebase.server";
+} from "~/services/firebase/product.server";
 import { requireUser } from "~/services/session.server";
 import { sanitizeFileName } from "~/utils/filename";
 import { cropImage, resizeFile } from "~/utils/resize-image";

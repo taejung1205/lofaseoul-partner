@@ -3,11 +3,9 @@ import { LoaderFunction } from "@remix-run/node";
 import { useLoaderData, useNavigation } from "@remix-run/react";
 import { json } from "react-router";
 import { PageLayout } from "~/components/page_layout";
-import {
-  getDelayedOrdersCount,
-  getTodayOrdersCount,
-  getTodayWaybillsCount,
-} from "~/services/firebase/firebase.server";
+import { getDelayedOrdersCount } from "~/services/firebase/delayedOrder.server";
+import { getTodayOrdersCount } from "~/services/firebase/order.server";
+import { getTodayWaybillsCount } from "~/services/firebase/waybill.server";
 
 function DashboardItemBox({
   children,
