@@ -12,7 +12,7 @@ import { PageLayout } from "~/components/page_layout";
 import {
   editSellerProfile,
   getAllSellerProfiles,
-} from "~/services/firebase.server";
+} from "~/services/firebase/firebase.server";
 
 export type SellerProfile = {
   name: string;

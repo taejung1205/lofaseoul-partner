@@ -21,7 +21,7 @@ import {
 import {
   deleteDiscountData,
   getDiscountData,
-} from "~/services/firebase.server";
+} from "~/services/firebase/firebase.server";
 import { BasicModal, ModalButton } from "~/components/modal";
 import { DiscountData, DiscountDataTableMemo } from "~/components/discount";
 import { requireUser } from "~/services/session.server";

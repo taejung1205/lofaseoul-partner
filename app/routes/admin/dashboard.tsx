@@ -7,7 +7,7 @@ import {
   getDelayedOrdersCount,
   getTodayOrdersCount,
   getTodayWaybillsCount,
-} from "~/services/firebase.server";
+} from "~/services/firebase/firebase.server";
 
 function DashboardItemBox({
   children,

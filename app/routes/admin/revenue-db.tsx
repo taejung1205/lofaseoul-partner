@@ -24,7 +24,7 @@ import {
   getAllPartnerProfiles,
   getAllSellerProfiles,
   getRevenueData,
-} from "~/services/firebase.server";
+} from "~/services/firebase/firebase.server";
 import { BasicModal, ModalButton } from "~/components/modal";
 import {
   getDiscountedPrice,

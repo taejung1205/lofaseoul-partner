@@ -1,12 +1,10 @@
 // Your web app's Firebase configuration
 
-import { initializeApp } from "firebase/app";
 import {
   collection,
   deleteDoc,
   doc,
   getDocs,
-  getFirestore,
   query,
   updateDoc,
   where,
@@ -14,35 +12,13 @@ import {
 import {
   deleteObject,
   getDownloadURL,
-  getStorage,
   listAll,
   ref,
   uploadBytes,
 } from "firebase/storage";
 import { getAllPartnerProfiles, getAllSellerProfiles } from "./firebase.server";
 import { LofaSellers } from "~/components/seller";
-
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: process.env.FIREBASE_API_KEY,
-  authDomain: process.env.FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.FIREBASE_PROJECT_ID,
-  storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.FIREBASE_APP_ID,
-  measurementId: process.env.FIREBASE_MEASUREMENT_ID,
-};
-
-// Initialize Firebase
-let firebaseApp: any;
-let firestore: any;
-let storage: any;
-
-if (!firebaseApp?.apps.length || !firestore.apps.length) {
-  firebaseApp = initializeApp(firebaseConfig);
-  firestore = getFirestore(firebaseApp);
-  storage = getStorage(firebaseApp);
-}
+import { firestore, storage } from "./firebaseInit.server";
 
 export async function debug_fixProductStorage() {
   const productsRef = collection(firestore, `products`);

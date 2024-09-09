@@ -24,7 +24,7 @@ import {
   getPartnerProfile,
   replyNotice,
   shareNotice,
-} from "~/services/firebase.server";
+} from "~/services/firebase/firebase.server";
 import { dateToKoreanMonth, koreanMonthToDate } from "~/utils/date";
 
 interface EmptyNoticeBoxProps extends React.HTMLProps<HTMLDivElement> {}

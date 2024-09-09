@@ -5,7 +5,7 @@ import { useLoaderData, useNavigation } from "@remix-run/react";
 import { useMemo } from "react";
 import { PageLayout } from "~/components/page_layout";
 import { PartnerProfile } from "~/components/partner_profile";
-import { getPartnerProfile } from "~/services/firebase.server";
+import { getPartnerProfile } from "~/services/firebase/firebase.server";
 import { requireUser } from "~/services/session.server";
 import { isMobile } from "~/utils/mobile";
 

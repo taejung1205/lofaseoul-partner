@@ -32,7 +32,7 @@ import {
   addRevenueData,
   getAllPartnerProfiles,
   getDiscountData,
-} from "~/services/firebase.server";
+} from "~/services/firebase/firebase.server";
 import { adjustSellerName } from "~/components/seller";
 import { dateToDayStr } from "~/utils/date";
 import { requireUser } from "~/services/session.server";

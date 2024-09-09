@@ -17,11 +17,7 @@ import {
   useNavigation,
   useSubmit,
 } from "@remix-run/react";
-import {
-  addOrders,
-  getAllPartnerProfiles,
-  isTodayOrderShared,
-} from "~/services/firebase.server";
+import { getAllPartnerProfiles } from "~/services/firebase/firebase.server";
 import { PartnerProfile } from "~/components/partner_profile";
 import { BasicModal, ModalButton } from "~/components/modal";
 import { LoadingOverlay } from "@mantine/core";
@@ -31,6 +27,10 @@ import {
   FileUploadButton,
 } from "~/components/file_upload";
 import { adjustSellerName } from "~/components/seller";
+import {
+  addOrders,
+  isTodayOrderShared,
+} from "~/services/firebase/order.server";
 
 function ShareButton({
   children,

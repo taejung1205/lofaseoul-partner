@@ -18,7 +18,7 @@ import { OrderItem, OrderTable } from "~/components/order";
 import {
   getPartnerDelayedOrders,
   shareDelayedWaybills,
-} from "~/services/firebase.server";
+} from "~/services/firebase/firebase.server";
 import { requireUser } from "~/services/session.server";
 import { LoadingOverlay } from "@mantine/core";
 import { BlackBottomButton } from "~/components/button";

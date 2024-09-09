@@ -10,7 +10,7 @@ import {
   declineProducts,
   deleteProducts,
   getAllProducts,
-} from "~/services/firebase.server";
+} from "~/services/firebase/firebase.server";
 import writeXlsxFile from "write-excel-file";
 import JSZip from "jszip";
 import { saveAs } from "file-saver";

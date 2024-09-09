@@ -9,16 +9,14 @@ import {
   useNavigation,
   useSubmit,
 } from "@remix-run/react";
-import {
-  DaySelectPopover,
-} from "~/components/date";
+import { DaySelectPopover } from "~/components/date";
 import { CommonButton } from "~/components/button";
 import { ActionFunction, json, LoaderFunction } from "@remix-run/node";
 import { BasicModal, ModalButton } from "~/components/modal";
 import { OrderItem, OrderTable } from "~/components/order";
-import { deleteOrders, getAllOrders } from "~/services/firebase.server";
 import { LoadingOverlay, Space } from "@mantine/core";
 import { dateToDayStr, dayStrToDate, getTimezoneDate } from "~/utils/date";
+import { deleteOrders, getAllOrders } from "~/services/firebase/order.server";
 
 interface EmptySettlementBoxProps extends React.HTMLProps<HTMLDivElement> {}
 

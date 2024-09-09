@@ -29,11 +29,11 @@ import {
   SettlementTableMemo,
 } from "~/components/settlement_table";
 import { SettlementItem } from "~/components/settlement_table";
+import { getAllPartnerProfiles } from "~/services/firebase/firebase.server";
 import {
   addSettlements,
-  getAllPartnerProfiles,
   getSettlementMonthes,
-} from "~/services/firebase.server";
+} from "~/services/firebase/settlement.server";
 import { requireUser } from "~/services/session.server";
 import { dateToKoreanMonth, getTimezoneDate } from "~/utils/date";
 

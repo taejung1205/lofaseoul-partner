@@ -13,7 +13,7 @@ import { OrderItem, OrderTable } from "~/components/order";
 import {
   getAllDelayedOrders,
   getPartnerProfile,
-} from "~/services/firebase.server";
+} from "~/services/firebase/firebase.server";
 import { sendAligoMessage } from "~/services/aligo.server";
 import { LoadingOverlay } from "@mantine/core";
 

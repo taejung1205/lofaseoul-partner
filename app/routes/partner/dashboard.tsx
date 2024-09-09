@@ -9,7 +9,7 @@ import {
   getPartnerDelayedOrdersCount,
   getPartnerTodayOrdersCount,
   getPartnerTodayWaybillsCount,
-} from "~/services/firebase.server";
+} from "~/services/firebase/firebase.server";
 import { requireUser } from "~/services/session.server";
 import { isMobile } from "~/utils/mobile";
 

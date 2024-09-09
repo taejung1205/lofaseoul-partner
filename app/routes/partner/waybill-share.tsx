@@ -27,7 +27,6 @@ import {
   OrderTable,
   setOrderPartnerName,
 } from "~/components/order";
-import { getPartnerOrders, addWaybills } from "~/services/firebase.server";
 import writeXlsxFile from "write-excel-file";
 import * as xlsx from "xlsx";
 import { BasicModal, ModalButton } from "~/components/modal";
@@ -38,6 +37,8 @@ import { useViewportSize } from "@mantine/hooks";
 import { isMobile } from "~/utils/mobile";
 import { adjustSellerName } from "~/components/seller";
 import { dateToDayStr, dayStrToDate, getTimezoneDate } from "~/utils/date";
+import { getPartnerOrders } from "~/services/firebase/order.server";
+import { addWaybills } from "~/services/firebase/waybill.server";
 
 function FileNameBox({
   isMobile,
