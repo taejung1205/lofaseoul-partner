@@ -18,13 +18,13 @@ import {
   LoaderFunction,
   redirect,
 } from "@remix-run/node";
-import {
-  deleteDiscountData,
-  getDiscountData,
-} from "~/services/firebase/firebase.server";
 import { BasicModal, ModalButton } from "~/components/modal";
 import { DiscountData, DiscountDataTableMemo } from "~/components/discount";
 import { requireUser } from "~/services/session.server";
+import {
+  deleteDiscountData,
+  getDiscountData,
+} from "~/services/firebase/discount.server";
 
 function EditInputBox({
   width,

@@ -10,12 +10,10 @@ import {
 import { ActionFunction, json, LoaderFunction } from "@remix-run/node";
 import { BasicModal, ModalButton } from "~/components/modal";
 import { OrderItem, OrderTable } from "~/components/order";
-import {
-  getAllDelayedOrders,
-  getPartnerProfile,
-} from "~/services/firebase/firebase.server";
+import { getPartnerProfile } from "~/services/firebase/firebase.server";
 import { sendAligoMessage } from "~/services/aligo.server";
 import { LoadingOverlay } from "@mantine/core";
+import { getAllDelayedOrders } from "~/services/firebase/delayedOrder.server";
 
 function EmptySettlementBox({
   children,

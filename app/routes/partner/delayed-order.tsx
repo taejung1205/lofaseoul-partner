@@ -15,15 +15,15 @@ import {
 } from "@remix-run/node";
 import { BasicModal, ModalButton } from "~/components/modal";
 import { OrderItem, OrderTable } from "~/components/order";
-import {
-  getPartnerDelayedOrders,
-  shareDelayedWaybills,
-} from "~/services/firebase/firebase.server";
 import { requireUser } from "~/services/session.server";
 import { LoadingOverlay } from "@mantine/core";
 import { BlackBottomButton } from "~/components/button";
 import { useViewportSize } from "@mantine/hooks";
 import { isMobile } from "~/utils/mobile";
+import {
+  getPartnerDelayedOrders,
+  shareDelayedWaybills,
+} from "~/services/firebase/delayedOrder.server";
 
 function EmptySettlementBox({
   children,

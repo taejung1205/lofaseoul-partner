@@ -9,12 +9,12 @@ import {
   PartnerRevenueStat,
   PartnerRevenueStatTableMemo,
 } from "~/components/revenue_stat";
-import { getRevenueStats } from "~/services/firebase/firebase.server";
 import { dateToDayStr, dayStrToDate, getTimezoneDate } from "~/utils/date";
 import writeXlsxFile from "write-excel-file";
 import dayPickerStyles from "react-day-picker/dist/style.css";
 import { BasicModal, ModalButton } from "~/components/modal";
 import { requireUser } from "~/services/session.server";
+import { getRevenueStats } from "~/services/firebase/revenueData.server";
 
 export function links() {
   return [{ rel: "stylesheet", href: dayPickerStyles }];

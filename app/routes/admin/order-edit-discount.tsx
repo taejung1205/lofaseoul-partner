@@ -18,10 +18,7 @@ import {
   DiscountData,
   DiscountDataTableMemo,
 } from "~/components/discount";
-import {
-  addDiscountData,
-  getAllPartnerProfiles,
-} from "~/services/firebase/firebase.server";
+import { getAllPartnerProfiles } from "~/services/firebase/firebase.server";
 import {
   ActionFunction,
   json,
@@ -32,6 +29,7 @@ import { BasicModal, ModalButton } from "~/components/modal";
 import { PartnerProfile } from "~/components/partner_profile";
 import { BlackButton } from "~/components/button";
 import { requireUser } from "~/services/session.server";
+import { addDiscountData } from "~/services/firebase/discount.server";
 
 export const loader: LoaderFunction = async ({ request }) => {
   //스태프는 접근 불가

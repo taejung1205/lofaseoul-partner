@@ -5,11 +5,9 @@ import { useLoaderData, useNavigation } from "@remix-run/react";
 import { useMemo } from "react";
 import { json } from "react-router";
 import { PageLayout } from "~/components/page_layout";
-import {
-  getPartnerDelayedOrdersCount,
-  getPartnerTodayOrdersCount,
-  getPartnerTodayWaybillsCount,
-} from "~/services/firebase/firebase.server";
+import { getPartnerDelayedOrdersCount } from "~/services/firebase/delayedOrder.server";
+import { getPartnerTodayOrdersCount } from "~/services/firebase/order.server";
+import { getPartnerTodayWaybillsCount } from "~/services/firebase/waybill.server";
 import { requireUser } from "~/services/session.server";
 import { isMobile } from "~/utils/mobile";
 

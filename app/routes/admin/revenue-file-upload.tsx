@@ -28,14 +28,12 @@ import {
   LoaderFunction,
   redirect,
 } from "@remix-run/node";
-import {
-  addRevenueData,
-  getAllPartnerProfiles,
-  getDiscountData,
-} from "~/services/firebase/firebase.server";
+import { getAllPartnerProfiles } from "~/services/firebase/firebase.server";
 import { adjustSellerName } from "~/components/seller";
 import { dateToDayStr } from "~/utils/date";
 import { requireUser } from "~/services/session.server";
+import { addRevenueData } from "~/services/firebase/revenueData.server";
+import { getDiscountData } from "~/services/firebase/discount.server";
 
 export const loader: LoaderFunction = async ({ request }) => {
   //스태프는 접근 불가

@@ -1,15 +1,16 @@
 import {
-    collection,
-    doc,
-    getDoc,
-    getDocs,
-    limit,
-    orderBy,
-    query,
-    setDoc,
-    Timestamp,
-    where,
-    writeBatch,
+  collection,
+  doc,
+  getCountFromServer,
+  getDoc,
+  getDocs,
+  limit,
+  orderBy,
+  query,
+  setDoc,
+  Timestamp,
+  where,
+  writeBatch,
 } from "firebase/firestore";
 import { dateToDayStr, dayStrToDate } from "~/utils/date";
 import { firestore } from "./firebaseInit.server";
@@ -254,4 +255,28 @@ export async function deleteOrders({
     });
     return error.message ?? error;
   }
+}
+
+/**
+ * 오늘 공유한 주문 건수를 불러옵니다.
+ * @returns
+ */
+export async function getTodayOrdersCount() {
+  const today = dateToDayStr(new Date());
+  const ordersRef = collection(firestore, `orders/${today}/items`);
+  const snapshot = await getCountFromServer(ordersRef);
+  return snapshot.data().count;
+}
+
+/**
+ * 해당 파트너가 오늘 공유받은 주문 건수를 불러옵니다.
+ * @param partnerName: 파트너명
+ * @returns
+ */
+export async function getPartnerTodayOrdersCount(partnerName: string) {
+  const today = dateToDayStr(new Date());
+  const ordersRef = collection(firestore, `orders/${today}/items`);
+  const orderQuery = query(ordersRef, where("partnerName", "==", partnerName));
+  const snapshot = await getCountFromServer(orderQuery);
+  return snapshot.data().count;
 }

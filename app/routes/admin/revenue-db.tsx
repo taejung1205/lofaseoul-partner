@@ -11,7 +11,7 @@ import { PageLayout } from "~/components/page_layout";
 import dayPickerStyles from "react-day-picker/dist/style.css";
 import { DaySelectPopover } from "~/components/date";
 import { dateToDayStr, dayStrToDate, getTimezoneDate } from "~/utils/date";
-import { LofaSellers, SellerSelect } from "~/components/seller";
+import { SellerSelect } from "~/components/seller";
 import { BlackButton } from "~/components/button";
 import {
   ActionFunction,
@@ -20,10 +20,8 @@ import {
   redirect,
 } from "@remix-run/node";
 import {
-  deleteRevenueData,
   getAllPartnerProfiles,
   getAllSellerProfiles,
-  getRevenueData,
 } from "~/services/firebase/firebase.server";
 import { BasicModal, ModalButton } from "~/components/modal";
 import {
@@ -45,6 +43,10 @@ import { SellerProfile } from "./seller-manage";
 import { CommonSelect } from "~/components/select";
 import { requireUser } from "~/services/session.server";
 import writeXlsxFile from "write-excel-file";
+import {
+  deleteRevenueData,
+  getRevenueData,
+} from "~/services/firebase/revenueData.server";
 
 function EditInputBox({
   width,
@@ -571,7 +573,6 @@ export default function Page() {
       column: "플랫폼수수료",
       type: Number,
       value: (data: RevenueData) => {
-
         return getPlatformFee(data);
       },
       width: 20,
@@ -600,7 +601,6 @@ export default function Page() {
       column: "수익금",
       type: Number,
       value: (data: RevenueData) => {
-
         return getProceeds(data);
       },
       width: 20,
@@ -610,9 +610,7 @@ export default function Page() {
       column: "세후 순수익",
       type: Number,
       value: (data: RevenueData) => {
-        return getNetProfitAfterTax(
-          data,
-        );
+        return getNetProfitAfterTax(data);
       },
       width: 20,
       wrap: true,
@@ -625,9 +623,7 @@ export default function Page() {
           return 0;
         }
 
-        const netProfitAfterTax = getNetProfitAfterTax(
-          data,
-        );
+        const netProfitAfterTax = getNetProfitAfterTax(data);
 
         return (netProfitAfterTax / getSalesAmount(data)) * 100;
       },

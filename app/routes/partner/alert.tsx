@@ -18,7 +18,7 @@ import {
   addNotice,
   getSharedNotices,
   replyNotice,
-} from "~/services/firebase/firebase.server";
+} from "~/services/firebase/notice.server";
 import { requireUser } from "~/services/session.server";
 import { dateToKoreanMonth, koreanMonthToDate } from "~/utils/date";
 
