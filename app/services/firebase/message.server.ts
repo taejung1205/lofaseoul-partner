@@ -14,16 +14,16 @@ import { sendAligoMessage } from "../aligo.server";
 import { addLog, getPartnerProfile } from "./firebase.server";
 import { firestore } from "./firebaseInit.server";
 import { dateToDayStr, getTimezoneDate } from "~/utils/date";
-import { NoticeItem } from "~/components/notice";
+import { MessageItem } from "~/components/message";
 
 /**
- * 알림을 추가합니다
+ * 쪽지를 추가합니다
  * @param month: 월, partnerName: 파트너명, detail: 상세 내용, topic: 공유주제
  * @returns
  * 성공하면 true 실패시 error message
  *
  */
-export async function addNotice({
+export async function addMessage({
   partnerName,
   topic,
   detail,
@@ -49,11 +49,11 @@ export async function addNotice({
       const timestamp = Timestamp.fromDate(new Date());
       data.sharedDate = timestamp;
     }
-    await setDoc(doc(firestore, `notices/${monthStr}/items/${docName}`), data);
+    await setDoc(doc(firestore, `messages/${monthStr}/items/${docName}`), data);
 
-    await setDoc(doc(firestore, `notices/${monthStr}`), { isShared: "true" });
+    await setDoc(doc(firestore, `messages/${monthStr}`), { isShared: "true" });
 
-    addLog("addNotice", data);
+    addLog("addMessage", data);
 
     return true;
   } catch (error: any) {
@@ -62,13 +62,13 @@ export async function addNotice({
 }
 
 /**
- * 알림을 수정합니다.
+ * 쪽지를 수정합니다.
  * @param month: 월, partnerName: 파트너명, detail: 상세 내용, topic: 공유주제, id: 해당 doc id
  * @returns
  * 성공하면 true 실패시 error message
  *
  */
-export async function editNotice({
+export async function editMessage({
   partnerName,
   topic,
   detail,
@@ -88,8 +88,8 @@ export async function editNotice({
       detail: detail,
       isShared: false,
     };
-    await setDoc(doc(firestore, `notices/${monthStr}/items/${id}`), data);
-    addLog("editNotice", { id: id, ...data });
+    await setDoc(doc(firestore, `messages/${monthStr}/items/${id}`), data);
+    addLog("editMessage", { id: id, ...data });
     return true;
   } catch (error: any) {
     await sendAligoMessage({
@@ -101,13 +101,13 @@ export async function editNotice({
 }
 
 /**
- * 알림을 공유합니다..
+ * 쪽지를 공유합니다.
  * @param month: 월, id: 해당 doc id
  * @returns
  * 성공하면 true 실패시 error message
  *
  */
-export async function shareNotice({
+export async function shareMessage({
   monthStr,
   id,
   partnerName,
@@ -124,20 +124,20 @@ export async function shareNotice({
       isShared: true,
       sharedDate: timestamp,
     };
-    await updateDoc(doc(firestore, `notices/${monthStr}/items/${id}`), data);
+    await updateDoc(doc(firestore, `messages/${monthStr}/items/${id}`), data);
 
     const profile = await getPartnerProfile({ name: partnerName });
     const phone = profile?.phone ?? "";
     if (phone.length > 0) {
       const response = await sendAligoMessage({
-        text: `[로파파트너] [${topic}]에 대하여 긴급알림이 있습니다. 파트너사이트의 '발신함 / 수신함'을 확인 부탁드립니다.`,
+        text: `[로파파트너] [${topic}]에 대하여 긴급알림이 있습니다. 파트너사이트의 '쪽지함'을 확인 부탁드립니다.`,
         receiver: phone,
       });
       if (response.result_code != 1) {
         throw Error(`ALIGO 오류: ${response.message}`);
       }
     }
-    await addLog("shareNotice", { id: id, ...data });
+    await addLog("shareMessage", { id: id, ...data });
     return true;
   } catch (error: any) {
     await sendAligoMessage({
@@ -149,31 +149,31 @@ export async function shareNotice({
 }
 
 /**
- * 알림들을 불러옵니다
+ * 쪽지들을 불러옵니다
  * @param month: 월, partnerName: 파트너명 (비어있을 경우 모든 파트너)
  * @returns
- *  List of NoticeItem
+ *  List of MessageItem
  */
-export async function getNotices({
+export async function getMessages({
   monthStr: month,
   partnerName,
 }: {
   monthStr: string;
   partnerName: string;
 }) {
-  const noticesRef = collection(firestore, `notices/${month}/items`);
+  const messagesRef = collection(firestore, `messages/${month}/items`);
   let querySnap;
   if (partnerName.length > 0) {
-    const noticeQuery = query(
-      noticesRef,
+    const messageQuery = query(
+      messagesRef,
       where("partnerName", "==", partnerName)
     );
-    querySnap = await getDocs(noticeQuery);
+    querySnap = await getDocs(messageQuery);
   } else {
-    querySnap = await getDocs(noticesRef);
+    querySnap = await getDocs(messagesRef);
   }
 
-  const list: NoticeItem[] = [];
+  const list: MessageItem[] = [];
   querySnap.docs.forEach((doc) => {
     const data = doc.data();
     const timestamp: Timestamp | undefined = data.sharedDate;
@@ -195,28 +195,28 @@ export async function getNotices({
 }
 
 /**
- * 공유된 알림들에 한하여 불러옵니다 (파트너 전용)
+ * 공유된 쪽지들에 한하여 불러옵니다 (파트너 전용)
  * @param month: 월, partnerName: 파트너명
  * @returns
- *  List of NoticeItem
+ *  List of MessageItem
  */
-export async function getSharedNotices({
+export async function getSharedMessages({
   monthStr: month,
   partnerName,
 }: {
   monthStr: string;
   partnerName: string;
 }) {
-  const noticesRef = collection(firestore, `notices/${month}/items`);
+  const messagesRef = collection(firestore, `messages/${month}/items`);
   let querySnap;
-  const noticeQuery = query(
-    noticesRef,
+  const messageQuery = query(
+    messagesRef,
     where("partnerName", "==", partnerName),
     where("isShared", "==", true)
   );
-  querySnap = await getDocs(noticeQuery);
+  querySnap = await getDocs(messageQuery);
 
-  const list: NoticeItem[] = [];
+  const list: MessageItem[] = [];
   querySnap.docs.forEach((doc) => {
     const data = doc.data();
     const timestamp: Timestamp | undefined = data.sharedDate;
@@ -238,11 +238,11 @@ export async function getSharedNotices({
 }
 
 /**
- * 알림을 삭제합니다.
- * @param month: 월, id: 삭제할 알림 문서 아이디
+ * 쪽지를 삭제합니다.
+ * @param month: 월, id: 삭제할 쪽지 문서 아이디
  * @returns
  */
-export async function deleteNotice({
+export async function deleteMessage({
   monthStr,
   id,
 }: {
@@ -250,12 +250,12 @@ export async function deleteNotice({
   id: string;
 }) {
   try {
-    await deleteDoc(doc(firestore, `notices/${monthStr}/items/${id}`)).catch(
+    await deleteDoc(doc(firestore, `messages/${monthStr}/items/${id}`)).catch(
       (error) => {
         return error.message;
       }
     );
-    addLog("deleteNotice", { monthStr: monthStr, id: id });
+    addLog("deleteMessage", { monthStr: monthStr, id: id });
     return true;
   } catch (error: any) {
     await sendAligoMessage({
@@ -267,13 +267,13 @@ export async function deleteNotice({
 }
 
 /**
- * 알림에 대해 답신합니다.
+ * 쪽지에 대해 답신합니다.
  * @param month: 월, id: 해당 doc id, reply: 답신
  * @returns
  * 성공하면 true 실패시 error message
  *
  */
-export async function replyNotice({
+export async function replyMessage({
   monthStr,
   id,
   reply,
@@ -296,9 +296,9 @@ export async function replyNotice({
     const data = {
       replies: arrayUnion(replyStr),
     };
-    await updateDoc(doc(firestore, `notices/${monthStr}/items/${id}`), data);
+    await updateDoc(doc(firestore, `messages/${monthStr}/items/${id}`), data);
 
-    addLog("replyNotice", { monthStr: monthStr, id: id, ...data });
+    addLog("replyMessage", { monthStr: monthStr, id: id, ...data });
 
     return true;
   } catch (error: any) {

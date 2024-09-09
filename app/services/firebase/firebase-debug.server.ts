@@ -6,6 +6,7 @@ import {
   doc,
   getDocs,
   query,
+  setDoc,
   updateDoc,
   where,
 } from "firebase/firestore";
@@ -287,5 +288,48 @@ export async function debug_fixRevenueDataProviderName(
     console.log("All test revenue data editted successfully.");
   } catch (error) {
     console.error("Error editting test revenue data:", error);
+  }
+}
+
+export async function debug_changeNoticeToMessage() {
+  try {
+    const year = 24;
+
+    for (let month = 1; month <= 9; month++) {
+      const monthStr = month.toString().padStart(2, "0"); // '01', '02', ..., '12'
+
+      await setDoc(doc(firestore, "messages", `${year}년 ${monthStr}월`), {
+        isShared: true,
+      });
+
+      const noticeItemsCollectionRef = collection(
+        firestore,
+        "notices",
+        `${year}년 ${monthStr}월`,
+        "items"
+      );
+
+      const itemsSnap = await getDocs(noticeItemsCollectionRef);
+
+      itemsSnap.docs.forEach(async (item) => {
+        const data = item.data();
+        await setDoc(
+          doc(
+            firestore,
+            "messages",
+            `${year}년 ${monthStr}월`,
+            "items",
+            item.id
+          ),
+          data
+        ).catch((error) => {
+          console.error(`Error updating document ${item.id}: `, error);
+        });
+      });
+    }
+
+    console.log("All items have been updated successfully.");
+  } catch (error) {
+    console.error("Error initializing isDiscounted fields: ", error);
   }
 }

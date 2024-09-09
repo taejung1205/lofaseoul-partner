@@ -9,17 +9,17 @@ interface Props extends React.HTMLAttributes<HTMLDivElement> {
   isFromPartner?: boolean;
 }
 
-export type NoticeItem = {
+export type MessageItem = {
   partnerName: string;
   docId: string;
   sharedDate: string | undefined;
-  topic: NoticeTopic;
+  topic: MessageTopic;
   detail: string;
   replies: string[];
   isFromPartner: boolean;
 };
 
-type NoticeTopic =
+type MessageTopic =
   | "교환요청"
   | "반품요청"
   | "배송 중 파손 고지"
@@ -30,7 +30,7 @@ type NoticeTopic =
   | "재고요청"
   | "기타";
 
-function NoticeBox({ children, ...props }: Props) {
+function MessageBox({ children, ...props }: Props) {
   const boxStyles: React.CSSProperties = {
     backgroundColor: "#d9d9d9",
     border: "1px solid black",
@@ -45,7 +45,7 @@ function NoticeBox({ children, ...props }: Props) {
   );
 }
 
-function NoticeGridContainer({
+function MessageGridContainer({
   children,
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) {
@@ -61,7 +61,7 @@ function NoticeGridContainer({
   );
 }
 
-function NoticeGridItem({
+function MessageGridItem({
   children,
   isFromPartner,
   styleOverrides,
@@ -166,14 +166,14 @@ export function TopicSelect({
   );
 }
 
-export function AdminNotice({
-  noticeItem,
+export function AdminMessage({
+  messageItem,
   monthStr,
   key,
 }: // isEdit,
 // onEditClick,
 {
-  noticeItem: NoticeItem;
+  messageItem: MessageItem;
   monthStr: string;
   key: string;
   // isEdit: boolean;
@@ -184,10 +184,10 @@ export function AdminNotice({
   const [isEditModalOpened, setIsEditModalOpened] = useState<boolean>(false);
   const [isShareModalOpened, setIsShareModalOpened] = useState<boolean>(false);
   const [partnerNameEdit, setPartnerNameEdit] = useState<string>(
-    noticeItem.partnerName
+    messageItem.partnerName
   );
-  const [topicEdit, setTopicEdit] = useState<string>(noticeItem.topic);
-  const [detailEdit, setDetailEdit] = useState<string>(noticeItem.detail);
+  const [topicEdit, setTopicEdit] = useState<string>(messageItem.topic);
+  const [detailEdit, setDetailEdit] = useState<string>(messageItem.detail);
   return (
     <div key={key}>
       {/* 삭제 모달*/}
@@ -202,7 +202,7 @@ export function AdminNotice({
             fontWeight: "700",
           }}
         >
-          해당 알림을 삭제하시겠습니까?
+          해당 쪽지를 삭제하시겠습니까?
           <div style={{ height: "20px" }} />
           <div style={{ display: "flex", justifyContent: "center" }}>
             <ModalButton onClick={() => setIsDeleteModalOpened(false)}>
@@ -212,7 +212,7 @@ export function AdminNotice({
               <input type="hidden" value={"delete"} name="action" required />
               <input
                 type="hidden"
-                value={noticeItem.docId}
+                value={messageItem.docId}
                 name="id"
                 required
               />
@@ -240,8 +240,8 @@ export function AdminNotice({
             fontWeight: "700",
           }}
         >
-          해당 알림을 공유하시겠십니까? <br />
-          공유한 알림은 수정할 수 없습니다.
+          해당 쪽지를 공유하시겠십니까? <br />
+          공유한 쪽지는 수정할 수 없습니다.
           <div style={{ height: "20px" }} />
           <div style={{ display: "flex", justifyContent: "center" }}>
             <ModalButton onClick={() => setIsShareModalOpened(false)}>
@@ -251,20 +251,20 @@ export function AdminNotice({
               <input type="hidden" value={"share"} name="action" required />
               <input
                 type="hidden"
-                value={noticeItem.docId}
+                value={messageItem.docId}
                 name="id"
                 required
               />
               <input type="hidden" value={monthStr} name="month" required />
               <input
                 type="hidden"
-                value={noticeItem.partnerName}
+                value={messageItem.partnerName}
                 name="partner"
                 required
               />
               <input
                 type="hidden"
-                value={noticeItem.topic}
+                value={messageItem.topic}
                 name="topic"
                 required
               />
@@ -286,7 +286,7 @@ export function AdminNotice({
           onSubmit={() => setIsEditModalOpened(false)}
         >
           <input type="hidden" value={"edit"} name="action" required />
-          <input type="hidden" value={noticeItem.docId} name="id" required />
+          <input type="hidden" value={messageItem.docId} name="id" required />
           <input type="hidden" value={monthStr} name="month" required />
           <div
             style={{
@@ -341,7 +341,7 @@ export function AdminNotice({
         </Form>
       </BasicModal>
 
-      <NoticeBox isFromPartner={noticeItem.isFromPartner}>
+      <MessageBox isFromPartner={messageItem.isFromPartner}>
         <div
           style={{
             display: "flex",
@@ -352,8 +352,8 @@ export function AdminNotice({
             alignItems: "center",
           }}
         >
-          <div>{noticeItem.partnerName}</div>
-          {noticeItem.sharedDate == undefined ? (
+          <div>{messageItem.partnerName}</div>
+          {messageItem.sharedDate == undefined ? (
             <div style={{ display: "flex" }}>
               <img
                 src={"/images/icon_edit.svg"}
@@ -401,24 +401,24 @@ export function AdminNotice({
             </div>
           )}
         </div>
-        <NoticeGridContainer>
-          <NoticeGridItem isFromPartner={noticeItem.isFromPartner}>
+        <MessageGridContainer>
+          <MessageGridItem isFromPartner={messageItem.isFromPartner}>
             <div style={{ padding: "13px", width: "120px" }}>공유 날짜</div>
             <div
               style={{
                 padding: "13px",
-                color: noticeItem.sharedDate == undefined ? "red" : "black",
+                color: messageItem.sharedDate == undefined ? "red" : "black",
               }}
             >
-              {noticeItem.sharedDate ?? "공유되지 않음"}
+              {messageItem.sharedDate ?? "공유되지 않음"}
             </div>
-          </NoticeGridItem>
-          <NoticeGridItem isFromPartner={noticeItem.isFromPartner}>
+          </MessageGridItem>
+          <MessageGridItem isFromPartner={messageItem.isFromPartner}>
             <div style={{ padding: "13px", width: "120px" }}>공유 주제</div>
-            <div style={{ padding: "13px" }}>{noticeItem.topic}</div>
-          </NoticeGridItem>
-          <NoticeGridItem
-            isFromPartner={noticeItem.isFromPartner}
+            <div style={{ padding: "13px" }}>{messageItem.topic}</div>
+          </MessageGridItem>
+          <MessageGridItem
+            isFromPartner={messageItem.isFromPartner}
             styleOverrides={{ gridColumnStart: "span 2" }}
           >
             <div style={{ padding: "13px", width: "120px" }}>상세 사유</div>
@@ -431,12 +431,12 @@ export function AdminNotice({
                 lineHeight: "1.5",
               }}
             >
-              {noticeItem.detail}
+              {messageItem.detail}
             </div>
-          </NoticeGridItem>
-          {noticeItem.replies.length > 0 ? (
-            <NoticeGridItem
-              isFromPartner={noticeItem.isFromPartner}
+          </MessageGridItem>
+          {messageItem.replies.length > 0 ? (
+            <MessageGridItem
+              isFromPartner={messageItem.isFromPartner}
               styleOverrides={{ gridColumnStart: "span 2" }}
             >
               <div
@@ -445,7 +445,7 @@ export function AdminNotice({
                 업체 회신
               </div>
               <div style={{ width: "calc(100% - 120px)" }}>
-                {noticeItem.replies.map((reply: string, index: number) => {
+                {messageItem.replies.map((reply: string, index: number) => {
                   return (
                     <div
                       style={{ padding: "13px", whiteSpace: "pre-line" }}
@@ -456,12 +456,12 @@ export function AdminNotice({
                   );
                 })}
               </div>
-            </NoticeGridItem>
+            </MessageGridItem>
           ) : (
             <></>
           )}
-          <NoticeGridItem
-            isFromPartner={noticeItem.isFromPartner}
+          <MessageGridItem
+            isFromPartner={messageItem.isFromPartner}
             styleOverrides={{ gridColumnStart: "span 2" }}
           >
             <Form
@@ -473,7 +473,7 @@ export function AdminNotice({
               <input type="hidden" value={"reply"} name="action" required />
               <input
                 type="hidden"
-                value={noticeItem.docId}
+                value={messageItem.docId}
                 name="id"
                 required
               />
@@ -482,10 +482,10 @@ export function AdminNotice({
                 {"메세지 추가"}
               </BlackButton>
             </Form>
-          </NoticeGridItem>
-        </NoticeGridContainer>
-      </NoticeBox>
-      {noticeItem.replies.length == 0 && noticeItem.sharedDate != undefined ? (
+          </MessageGridItem>
+        </MessageGridContainer>
+      </MessageBox>
+      {messageItem.replies.length == 0 && messageItem.sharedDate != undefined ? (
         <div style={{ padding: "13px", width: "120px", color: "#FF0000" }}>
           미회신
         </div>
@@ -496,30 +496,30 @@ export function AdminNotice({
   );
 }
 
-export function PartnerNotice({
-  noticeItem,
+export function PartnerMessage({
+  messageItem,
   monthStr,
 }: {
-  noticeItem: NoticeItem;
+  messageItem: MessageItem;
   monthStr: string;
 }) {
   return (
     <>
-      <NoticeBox isFromPartner={noticeItem.isFromPartner}>
+      <MessageBox isFromPartner={messageItem.isFromPartner}>
         <Form method="post" id="reply-form">
-          <NoticeGridContainer>
-            <NoticeGridItem isFromPartner={noticeItem.isFromPartner}>
+          <MessageGridContainer>
+            <MessageGridItem isFromPartner={messageItem.isFromPartner}>
               <div style={{ padding: "13px", width: "120px" }}>공유 날짜</div>
               <div style={{ padding: "13px" }}>
-                {noticeItem.sharedDate ?? "공유되지 않음"}
+                {messageItem.sharedDate ?? "공유되지 않음"}
               </div>
-            </NoticeGridItem>
-            <NoticeGridItem isFromPartner={noticeItem.isFromPartner}>
+            </MessageGridItem>
+            <MessageGridItem isFromPartner={messageItem.isFromPartner}>
               <div style={{ padding: "13px", width: "120px" }}>공유 주제</div>
-              <div style={{ padding: "13px" }}>{noticeItem.topic}</div>
-            </NoticeGridItem>
-            <NoticeGridItem
-              isFromPartner={noticeItem.isFromPartner}
+              <div style={{ padding: "13px" }}>{messageItem.topic}</div>
+            </MessageGridItem>
+            <MessageGridItem
+              isFromPartner={messageItem.isFromPartner}
               styleOverrides={{ gridColumnStart: "span 2" }}
             >
               <div style={{ padding: "13px", width: "120px" }}>상세 사유</div>
@@ -532,12 +532,12 @@ export function PartnerNotice({
                   lineHeight: "1.5",
                 }}
               >
-                {noticeItem.detail}
+                {messageItem.detail}
               </div>
-            </NoticeGridItem>
-            {noticeItem.replies.length > 0 ? (
-              <NoticeGridItem
-                isFromPartner={noticeItem.isFromPartner}
+            </MessageGridItem>
+            {messageItem.replies.length > 0 ? (
+              <MessageGridItem
+                isFromPartner={messageItem.isFromPartner}
                 styleOverrides={{ gridColumnStart: "span 2" }}
               >
                 <div
@@ -546,7 +546,7 @@ export function PartnerNotice({
                   회신 완료
                 </div>
                 <div style={{ width: "calc(100% - 120px)" }}>
-                  {noticeItem.replies.map((reply: string, index: number) => {
+                  {messageItem.replies.map((reply: string, index: number) => {
                     return (
                       <div
                         style={{ padding: "13px", whiteSpace: "pre-line" }}
@@ -557,30 +557,30 @@ export function PartnerNotice({
                     );
                   })}
                 </div>
-              </NoticeGridItem>
+              </MessageGridItem>
             ) : (
               <></>
             )}
-            <NoticeGridItem
-              isFromPartner={noticeItem.isFromPartner}
+            <MessageGridItem
+              isFromPartner={messageItem.isFromPartner}
               styleOverrides={{ gridColumnStart: "span 2", alignItems: "end" }}
             >
               <ReplyInputBox name="reply" form="reply-form" />
               <input type="hidden" value={"reply"} name="action" required />
               <input
                 type="hidden"
-                value={noticeItem.docId}
+                value={messageItem.docId}
                 name="id"
                 required
               />
               <input type="hidden" value={monthStr} name="month" required />
               <BlackButton type="submit">
-                {noticeItem.replies.length > 0 ? "추가답신" : "답신하기"}
+                {messageItem.replies.length > 0 ? "추가답신" : "답신하기"}
               </BlackButton>
-            </NoticeGridItem>
-          </NoticeGridContainer>
+            </MessageGridItem>
+          </MessageGridContainer>
         </Form>
-      </NoticeBox>
+      </MessageBox>
     </>
   );
 }

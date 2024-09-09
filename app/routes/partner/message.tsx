@@ -12,17 +12,17 @@ import { LoaderFunction } from "react-router-dom";
 import { CommonButton } from "~/components/button";
 import { MonthSelectPopover } from "~/components/date";
 import { BasicModal, ModalButton } from "~/components/modal";
-import { NoticeItem, PartnerNotice, TopicSelect } from "~/components/notice";
+import { MessageItem, PartnerMessage, TopicSelect } from "~/components/message";
 import { PageLayout } from "~/components/page_layout";
 import {
-  addNotice,
-  getSharedNotices,
-  replyNotice,
-} from "~/services/firebase/notice.server";
+  addMessage,
+  getSharedMessages,
+  replyMessage,
+} from "~/services/firebase/message.server";
 import { requireUser } from "~/services/session.server";
 import { dateToKoreanMonth, koreanMonthToDate } from "~/utils/date";
 
-function EmptyNoticeBox({
+function EmptyMessageBox({
   children,
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) {
@@ -69,25 +69,25 @@ export const loader: LoaderFunction = async ({ request }) => {
   const month = url.searchParams.get("month");
 
   if (month !== null) {
-    const notices = await getSharedNotices({
+    const messages = await getSharedMessages({
       monthStr: month,
       partnerName: partnerName,
     });
     return json({
       monthStr: month,
-      notices: notices,
+      messages: messages,
       partnerName: partnerName,
     });
   } else {
     const todayMonth = dateToKoreanMonth(new Date());
-    const notices = await getSharedNotices({
+    const messages = await getSharedMessages({
       monthStr: todayMonth,
       partnerName: partnerName,
     });
-    // console.log(notices);
+    // console.log(messages);
     return json({
       monthStr: todayMonth,
-      notices: notices,
+      messages: messages,
       partnerName: partnerName,
     });
   }
@@ -101,7 +101,7 @@ export const action: ActionFunction = async ({ request }) => {
     const month = body.get("month")?.toString();
     const reply = body.get("reply")?.toString();
     if (id !== undefined && month !== undefined && reply !== undefined) {
-      const result = await replyNotice({
+      const result = await replyMessage({
         monthStr: month,
         id: id,
         reply: reply,
@@ -126,7 +126,7 @@ export const action: ActionFunction = async ({ request }) => {
       month !== undefined &&
       partnerName !== undefined
     ) {
-      const result = await addNotice({
+      const result = await addMessage({
         partnerName: partnerName,
         monthStr: month,
         topic: topic,
@@ -153,7 +153,7 @@ export default function PartnerAlert() {
   const [selectedDate, setSelectedDate] = useState<Date>(); // 선택중인 날짜 (현재 조회된 월이 아닌, MonthSelectPopover로 선택중인 날짜)
   const [selectedMonthStr, setSelectedMonthStr] = useState<string>(); //선택중인 날짜의 string (XX년 XX월)
 
-  const [isNewNoticeModalOpened, setIsNewNoticeModalOpened] =
+  const [isNewMessageModalOpened, setIsNewMessageModalOpened] =
     useState<boolean>(false);
 
   const [noticeModalStr, setNoticeModalStr] = useState<string>(""); //안내 모달창에서 뜨는 메세지
@@ -226,9 +226,9 @@ export default function PartnerAlert() {
 
       {/* 메세지 추가 모달 */}
       <BasicModal
-        opened={isNewNoticeModalOpened}
+        opened={isNewMessageModalOpened}
         onClose={() => {
-          setIsNewNoticeModalOpened(false);
+          setIsNewMessageModalOpened(false);
         }}
       >
         <div
@@ -265,7 +265,7 @@ export default function PartnerAlert() {
           </div>
           <div style={{ height: "20px" }} />
           <div style={{ display: "flex", justifyContent: "center" }}>
-            <ModalButton onClick={() => setIsNewNoticeModalOpened(false)}>
+            <ModalButton onClick={() => setIsNewMessageModalOpened(false)}>
               취소
             </ModalButton>
             <ModalButton
@@ -278,7 +278,7 @@ export default function PartnerAlert() {
                 formData.set("detail", detailEdit);
                 formData.set("action", "add");
                 submit(formData, { method: "post" });
-                setIsNewNoticeModalOpened(false);
+                setIsNewMessageModalOpened(false);
               }}
             >
               생성
@@ -312,19 +312,19 @@ export default function PartnerAlert() {
               monthStr={selectedMonthStr ?? ""}
             />
             <Space w={20} />
-            <Link to={`/partner/alert?month=${selectedMonthStr}`}>
+            <Link to={`/partner/message?month=${selectedMonthStr}`}>
               <CommonButton>조회하기</CommonButton>
             </Link>
             <Space w={20} />
-            <CommonButton onClick={() => setIsNewNoticeModalOpened(true)}>
+            <CommonButton onClick={() => setIsNewMessageModalOpened(true)}>
               신규 생성
             </CommonButton>
           </div>
         </div>
         <div style={{ height: "20px" }} />
-        {loaderData.notices != undefined && loaderData.notices.length > 0 ? (
+        {loaderData.messages != undefined && loaderData.messages.length > 0 ? (
           <>
-            {UnrepliedNoticeItems(loaderData.notices, monthStr)}
+            {UnrepliedMessageItems(loaderData.messages, monthStr)}
             <div
               style={{
                 backgroundColor: "#D9D9D9",
@@ -337,10 +337,10 @@ export default function PartnerAlert() {
             >
               회신한 일람
             </div>
-            {RepliedNoticeItems(loaderData.notices, monthStr)}
+            {RepliedMessageItems(loaderData.messages, monthStr)}
           </>
         ) : (
-          <EmptyNoticeBox>공유된 알림이 없습니다.</EmptyNoticeBox>
+          <EmptyMessageBox>공유된 쪽지가 없습니다.</EmptyMessageBox>
         )}
 
         <div style={{ minHeight: "70px" }} />
@@ -349,16 +349,16 @@ export default function PartnerAlert() {
   );
 }
 
-function UnrepliedNoticeItems(noticeItems: NoticeItem[], monthStr: string) {
-  return noticeItems.map((item: NoticeItem, index: number) => {
+function UnrepliedMessageItems(messageItems: MessageItem[], monthStr: string) {
+  return messageItems.map((item: MessageItem, index: number) => {
     const replies = item.replies;
     if (replies.length > 0) {
       return null;
     } else {
       return (
-        <PartnerNotice
-          noticeItem={item}
-          key={`NoticeItem_${index}`}
+        <PartnerMessage
+          messageItem={item}
+          key={`MessageItem_${index}`}
           monthStr={monthStr}
         />
       );
@@ -366,16 +366,16 @@ function UnrepliedNoticeItems(noticeItems: NoticeItem[], monthStr: string) {
   });
 }
 
-function RepliedNoticeItems(noticeItems: NoticeItem[], monthStr: string) {
-  return noticeItems.map((item: NoticeItem, index: number) => {
+function RepliedMessageItems(messageItems: MessageItem[], monthStr: string) {
+  return messageItems.map((item: MessageItem, index: number) => {
     const replies = item.replies;
     if (replies.length == 0) {
       return null;
     } else {
       return (
-        <PartnerNotice
-          noticeItem={item}
-          key={`NoticeItem_${index}`}
+        <PartnerMessage
+          messageItem={item}
+          key={`MessageItem_${index}`}
           monthStr={monthStr}
         />
       );
