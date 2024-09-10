@@ -79,21 +79,6 @@ function InfoText(
 export const action: ActionFunction = async ({ request }) => {
   const body = await request.formData();
   const actionType = body.get("action")?.toString();
-  if (actionType === "send") {
-    const text = body.get("text")?.toString();
-    const receiver = "01021629843";
-    if (text !== undefined) {
-      const response = await sendAligoMessage({
-        text: text,
-        receiver: receiver,
-      });
-      if (response.result_code !== undefined && response.result_code == 1) {
-        return json({ message: `메세지가 전송되었습니다.` });
-      } else {
-        return json({ message: `메세지 전송 중 오류가 발생했습니다.` });
-      }
-    }
-  }
 
   return null;
 };
@@ -229,30 +214,6 @@ export default function AdminSettlementShare() {
     setItemsChecked(Array(items.length ?? 0).fill(isChecked));
   }
 
-  function sendMessage() {
-    let orderNumberList: string[] = [];
-    for (let i = 0; i < items.length; i++) {
-      if (itemsChecked[i]) {
-        orderNumberList.push(items[i].orderNumber);
-      }
-    }
-    if (orderNumberList.length == 0) {
-      setNoticeModalStr("선택된 운송장이 없습니다.");
-      setIsNoticeModalOpened(true);
-      return null;
-    }
-
-    let orderNumberListStr = `${orderNumberList[0]}`;
-    for (let i = 1; i < orderNumberList.length; i++) {
-      orderNumberListStr += `, ${orderNumberList[i]}`;
-    }
-    const text = `[${loaderData.partnerName}]이 ${loaderData.monthStr}에 공유된 정산건 중 [${orderNumberListStr}]에 대해 오류를 보고하였습니다. 내용을 확인 부탁드립니다.`;
-    const formData = new FormData(formRef.current ?? undefined);
-    formData.set("text", text);
-    formData.set("action", "send");
-    submit(formData, { method: "post" });
-  }
-
   async function writeExcel() {
     await writeXlsxFile(items, {
       schema,
@@ -285,36 +246,6 @@ export default function AdminSettlementShare() {
           <div style={{ display: "flex", justifyContent: "center" }}>
             <ModalButton onClick={() => setIsNoticeModalOpened(false)}>
               확인
-            </ModalButton>
-          </div>
-        </div>
-      </BasicModal>
-
-      <BasicModal
-        opened={isSendModalOpened}
-        onClose={() => setIsSendModalOpened}
-      >
-        <div
-          style={{
-            justifyContent: "center",
-            textAlign: "center",
-            fontWeight: "700",
-          }}
-        >
-          {`선택된 정산건에 대해 오류를 보고하시겠습니까?`}
-
-          <div style={{ height: "20px" }} />
-          <div style={{ display: "flex", justifyContent: "center" }}>
-            <ModalButton onClick={() => setIsSendModalOpened(false)}>
-              취소
-            </ModalButton>
-            <ModalButton
-              onClick={() => {
-                sendMessage();
-                setIsSendModalOpened(false);
-              }}
-            >
-              공유
             </ModalButton>
           </div>
         </div>
@@ -430,14 +361,6 @@ export default function AdminSettlementShare() {
                 width: "100%",
               }}
             >
-              <BlackBottomButton
-                onClick={() => {
-                  setIsSendModalOpened(true);
-                }}
-              >
-                오류 보고
-              </BlackBottomButton>
-              <Space h={20} w={30} />
               <div
                 style={{
                   width: "100%",
