@@ -368,7 +368,7 @@ export default function AdminSettlementShare() {
                   fontSize: isMobileMemo ? "16px" : "20px",
                 }}
               >
-                다량의 오류가 보일 시에는 kyj@tabacpress.xyz로 문의
+                다량의 오류가 보일 시에는 syj@tabacpress.xyz로 문의
                 부탁드립니다.
               </div>
             </div>
