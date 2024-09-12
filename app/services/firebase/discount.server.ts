@@ -95,12 +95,12 @@ export async function deleteDiscountData({ data }: { data: string }) {
 export async function getDiscountData({
   startDate,
   endDate,
-  partnerName,
+  providerName,
   productName,
 }: {
   startDate: Date;
   endDate: Date;
-  partnerName: string;
+  providerName: string;
   productName: string;
 }) {
   //OR Query 한도때문에 query array의 길이의 곱이 30을 넘을 수 없음
@@ -113,10 +113,10 @@ export async function getDiscountData({
     )
   );
 
-  if (partnerName.length > 0) {
+  if (providerName.length > 0) {
     discountDataQuery = query(
       discountDataQuery,
-      where("partnerName", "==", partnerName)
+      where("providerName", "==", providerName)
     );
   }
 
