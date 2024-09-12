@@ -66,7 +66,7 @@ export const loader: LoaderFunction = async ({ request }) => {
         message: `검색 조건에 오류가 발생하였습니다.`,
       });
     }
-    const partnerName = url.searchParams.get("partner-name");
+    const providerName = url.searchParams.get("provider-name");
     const productName = url.searchParams.get("product-name");
 
     const startDate = new Date(`${startDateStr}T00:00:00.000+09:00`);
@@ -82,7 +82,7 @@ export const loader: LoaderFunction = async ({ request }) => {
     const searchResult = await getDiscountData({
       startDate: startDate,
       endDate: endDate,
-      partnerName: partnerName ?? "",
+      providerName: providerName ?? "",
       productName: productName ?? "",
     });
 
@@ -92,7 +92,7 @@ export const loader: LoaderFunction = async ({ request }) => {
       message: `${searchResult.length}건을 조회하였습니다.`,
       startDate: startDateStr,
       endDate: endDateStr,
-      partnerName: partnerName,
+      providerName: providerName,
       productName: productName,
     });
   } else {
@@ -153,8 +153,8 @@ export default function Page() {
   }, [loaderData]);
 
   const searchedPartnerName = useMemo(() => {
-    if (loaderData && loaderData.partnerName) {
-      return loaderData.partnerName;
+    if (loaderData && loaderData.providerName) {
+      return loaderData.providerName;
     } else {
       return "";
     }
@@ -171,7 +171,7 @@ export default function Page() {
   //검색조건
   const [startDate, setStartDate] = useState<Date>(); //검색기준일 시작
   const [endDate, setEndDate] = useState<Date>(); //검색기준일 종료
-  const [partnerName, setPartnerName] = useState<string>(searchedPartnerName); // 공급처
+  const [providerName, setPartnerName] = useState<string>(searchedPartnerName); // 공급처
   const [productName, setProductName] = useState<string>(searchedProductName); //상품명
 
   const [itemsChecked, setItemsChecked] = useState<boolean[]>([]); //체크된 정산내역 index 배열
@@ -382,8 +382,8 @@ export default function Page() {
           <Space w={10} />
           <EditInputBox
             type="text"
-            name="partnerName"
-            value={partnerName}
+            name="providerName"
+            value={providerName}
             onChange={(e) => setPartnerName(e.target.value)}
             required
           />
@@ -408,7 +408,7 @@ export default function Page() {
               startDate ? dateToDayStr(startDate) : ""
             }&end-date=${
               endDate ? dateToDayStr(endDate) : ""
-            }&partner-name=${partnerName}&product-name=${encodeURIComponent(
+            }&provider-name=${providerName}&product-name=${encodeURIComponent(
               productName
             )}`}
             onClick={() => setIsSearchClicked(true)}

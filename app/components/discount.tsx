@@ -8,7 +8,7 @@ import { dateToDayStr } from "~/utils/date";
 export type DiscountData = {
   startDate: Date; //할인 시작일
   endDate: Date; //할인 종료일
-  partnerName: string; //공급처 (파트너명)
+  providerName: string; //공급처 (파트너명)
   productName: string; //상품명
   partnerDiscountLevyRate: number; //업체부담할인율
   lofaDiscountLevyRate: number; //로파부담할인율
@@ -147,8 +147,8 @@ export function checkDiscountData(item: DiscountData) {
     };
   }
 
-  // Check if partnerName is defined and a non-empty string
-  if (item.partnerName == undefined || item.partnerName.trim() === "") {
+  // Check if providerName is defined and a non-empty string
+  if (item.providerName == undefined || item.providerName.trim() === "") {
     return { isValid: false, message: "공급처가 누락된 항목이 존재합니다." };
   }
 
@@ -205,7 +205,7 @@ function DiscountDataItem({
       <TextBox
         styleOverrides={{ minWidth: "160px", fontSize: "12px", width: "160px" }}
       >
-        {item.partnerName}
+        {item.providerName}
       </TextBox>
       <TextBox
         styleOverrides={{ minWidth: "420px", fontSize: "12px", width: "420px" }}

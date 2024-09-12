@@ -150,7 +150,7 @@ export default function Page() {
           let item: DiscountData = {
             startDate: element.할인시작일,
             endDate: element.할인종료일,
-            partnerName: element.공급처?.toString(),
+            providerName: element.공급처?.toString(),
             productName: element.상품명?.toString(),
             partnerDiscountLevyRate: Number(element.업체부담할인율) ?? 0,
             lofaDiscountLevyRate: Number(element.로파부담할인율) ?? 0,
@@ -175,7 +175,7 @@ export default function Page() {
           item.startDate = new Date(item.startDate!.getTime() + 5 * 60000);
           item.endDate = new Date(item.endDate!.getTime() + 5 * 60000);
 
-          const partnerProfile = partnerProfiles.get(item.partnerName);
+          const partnerProfile = partnerProfiles.get(item.providerName);
 
           if (partnerProfile === undefined) {
             console.log(item);
@@ -183,7 +183,7 @@ export default function Page() {
               `유효하지 않은 엑셀 파일입니다. ${
                 i + 2
               }행의 공급처가 계약업체목록에 있는지 확인해주세요. (${
-                item.partnerName
+                item.providerName
               })`
             );
             setIsNoticeModalOpened(true);
