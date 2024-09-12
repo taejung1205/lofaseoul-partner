@@ -333,3 +333,27 @@ export async function debug_changeNoticeToMessage() {
     console.error("Error initializing isDiscounted fields: ", error);
   }
 }
+
+export async function debug_changePartnerNameToProviderName() {
+  const revenueDataRef = collection(firestore, `revenue-db`);
+
+  try {
+    // 쿼리로 문서들 가져오기
+    const querySnapshot = await getDocs(revenueDataRef);
+
+    // 문서들을 반복하면서 수정
+    const promises = querySnapshot.docs.map((docSnapshot) => {
+      const data = docSnapshot.data();
+      updateDoc(doc(firestore, `revenue-db/${docSnapshot.id}`), {
+        providerName: data.partnerName,
+      });
+    });
+
+    // 모든 삭제 작업이 완료될 때까지 대기
+    await Promise.all(promises);
+
+    console.log("All test revenue data editted successfully.");
+  } catch (error) {
+    console.error("Error editting test revenue data:", error);
+  }
+}

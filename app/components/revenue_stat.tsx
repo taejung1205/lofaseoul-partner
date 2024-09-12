@@ -9,7 +9,7 @@ import { useEffect, useMemo, useState } from "react";
 export type PartnerRevenueStat = {
   startDateStr: string; //통계 시작일
   endDateStr: string; //통계 종료일
-  partnerName: string; //공급처
+  providerName: string; //공급처
   lofaSalesAmount: number; //로파판매액 (할인판매가 기준 자사몰, 쇼룸 매출액)
   otherSalesAmount: number; //외부판매액 (할인판매가 기준 외부플랫폼 매출액)
   totalSalesAmount: number; //총판매액 (로파판매액 + 외부판매액)
@@ -158,7 +158,7 @@ function PartnerRevenueStatItem({
         {isSum ? "합계" : `${item.startDateStr} ~ ${item.endDateStr}`}
       </TextBox>
       <TextBox styleOverrides={{ minWidth: "180px", width: "180px" }}>
-        {item.partnerName}
+        {item.providerName}
       </TextBox>
       <TextBox styleOverrides={{ minWidth: "120px", width: "120px" }}>
         {Math.floor(item.lofaSalesAmount).toLocaleString("ko-KR")}
@@ -194,7 +194,7 @@ function PartnerRevenueStatItem({
         <div style={{ minWidth: "120px" }} />
       ) : (
         <Link
-          to={`/admin/revenue-db?is-searched=true&start-date=${item.startDateStr}&end-date=${item.endDateStr}&seller=all&partner-name=${item.partnerName}&product-name=&order-status=전체&cs=전체&filter-discount=전체`}
+          to={`/admin/revenue-db?is-searched=true&start-date=${item.startDateStr}&end-date=${item.endDateStr}&seller=all&provider-name=${item.providerName}&product-name=&order-status=전체&cs=전체&filter-discount=전체`}
         >
           <TextBox styleOverrides={{ color: "blue" }}>자세히</TextBox>
         </Link>
@@ -228,7 +228,7 @@ export function PartnerRevenueStatTable({
     const sum: PartnerRevenueStat = {
       startDateStr: "",
       endDateStr: "",
-      partnerName: "",
+      providerName: "",
       lofaSalesAmount: 0,
       otherSalesAmount: 0,
       totalSalesAmount: 0,

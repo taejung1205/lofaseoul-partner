@@ -237,7 +237,7 @@ export default function Page() {
           let item: RevenueData = {
             orderDate: element.주문일,
             seller: element.판매처?.toString(),
-            partnerName: element.공급처?.toString(),
+            providerName: element.공급처?.toString(),
             orderNumber: element.주문번호?.toString(),
             productName: element.상품명?.toString(),
             optionName: element.옵션명?.toString() ?? "",
@@ -264,7 +264,7 @@ export default function Page() {
           //xlsx Date 인식 시간 오차 해결을 위한 보정
           item.orderDate = new Date(item.orderDate!.getTime() + 5 * 60000);
 
-          const partnerProfile = partnerProfiles.get(item.partnerName);
+          const partnerProfile = partnerProfiles.get(item.providerName);
 
           if (partnerProfile === undefined) {
             console.log(item);
@@ -272,7 +272,7 @@ export default function Page() {
               `유효하지 않은 엑셀 파일입니다. ${
                 i + 2
               }행의 공급처가 계약업체목록에 있는지 확인해주세요. (${
-                item.partnerName
+                item.providerName
               })`
             );
             setIsNoticeModalOpened(true);

@@ -81,7 +81,7 @@ export const loader: LoaderFunction = async ({ request }) => {
         const searchResult = await getRevenueData({
           startDate: startDate,
           endDate: endDate,
-          partnerName: "",
+          providerName: "",
           productName: "",
           seller: "all",
           orderStatus: "전체",
@@ -125,7 +125,7 @@ export const loader: LoaderFunction = async ({ request }) => {
       const searchResult = await getRevenueData({
         startDate: startDate,
         endDate: endDate,
-        partnerName: "",
+        providerName: "",
         productName: "",
         seller: "all",
         orderStatus: "전체",
@@ -225,12 +225,12 @@ export default function Page() {
     searchedPeriodType ?? "month"
   );
   const [seller, setSeller] = useState<string>("all"); // 판매처
-  const [partnerName, setPartnerName] = useState<string>("전체"); // 공급처
+  const [providerName, setProviderName] = useState<string>("전체"); // 공급처
   const [productName, setProductName] = useState<string>(""); //상품명
   const [productCategory, setProductCategory] = useState<string>("전체");
 
   const [sellerList, setSellerList] = useState<string[]>([]);
-  const [partnerNameList, setPartnerNameList] = useState<string[]>([]);
+  const [providerNameList, setProviderNameList] = useState<string[]>([]);
   const [productNameList, setProductNameList] = useState<string[]>([]);
   const [productCategoryList, setProductCategoryList] = useState<string[]>([]);
 
@@ -285,14 +285,14 @@ export default function Page() {
     return filterSearchedData(
       searchedData,
       sellerList,
-      partnerNameList,
+      providerNameList,
       productNameList,
       productCategoryList
     );
   }, [
     searchedData,
     sellerList,
-    partnerNameList,
+    providerNameList,
     productNameList,
     productCategoryList,
   ]);
@@ -644,8 +644,8 @@ export default function Page() {
     setSellerList((prev) => [...prev, seller]);
   }
 
-  function addPartnerName(partnerName: string) {
-    setPartnerNameList((prev) => [...prev, partnerName]);
+  function addProviderName(providerName: string) {
+    setProviderNameList((prev) => [...prev, providerName]);
   }
 
   function addProductName(productName: string) {
@@ -665,12 +665,12 @@ export default function Page() {
     }
   }
 
-  function deletePartnerName(index: number) {
-    const first1 = partnerNameList.slice(0, index);
-    const last1 = partnerNameList.slice(index + 1);
-    setPartnerNameList(first1.concat(last1));
+  function deleteProviderName(index: number) {
+    const first1 = providerNameList.slice(0, index);
+    const last1 = providerNameList.slice(index + 1);
+    setProviderNameList(first1.concat(last1));
     if (first1.concat(last1).length == 0) {
-      setPartnerName("전체");
+      setProviderName("전체");
     }
   }
 
@@ -695,16 +695,16 @@ export default function Page() {
   function filterSearchedData(
     searchedData: RevenueData[],
     sellers: string[],
-    partnerNames: string[],
+    providerNames: string[],
     productNames: string[],
     productCategories: string[]
   ): RevenueData[] {
     return searchedData.filter((data) => {
       const isSellerSatisfied =
         sellers.length > 0 ? sellers.includes(data.seller) : true;
-      const isPartnerNameSatisfied =
-        partnerNames.length > 0
-          ? partnerNames.includes(data.partnerName)
+      const isProviderNameSatisfied =
+        providerNames.length > 0
+          ? providerNames.includes(data.providerName)
           : true;
       const isProductNameSatisfied =
         productNames.length > 0
@@ -715,7 +715,7 @@ export default function Page() {
         productCategories.length > 0 ? false : true;
 
       if (!isProductCategorySatisfied) {
-        const partnerProfile = allPartnerProfiles?.get(data.partnerName);
+        const partnerProfile = allPartnerProfiles?.get(data.providerName);
         if (!partnerProfile?.productCategory) {
           return false;
         }
@@ -729,7 +729,7 @@ export default function Page() {
 
       return (
         isSellerSatisfied &&
-        isPartnerNameSatisfied &&
+        isProviderNameSatisfied &&
         isProductNameSatisfied &&
         isProductCategorySatisfied
       );
@@ -1127,15 +1127,15 @@ export default function Page() {
                 <div>공급처</div>
                 <Space w={10} />
                 <CommonSelect
-                  selected={partnerName}
-                  setSelected={(partnerName: string) => {
-                    setPartnerName(partnerName);
-                    if (partnerName == "전체") {
-                      setPartnerNameList([]);
+                  selected={providerName}
+                  setSelected={(providerName: string) => {
+                    setProviderName(providerName);
+                    if (providerName == "전체") {
+                      setProviderNameList([]);
                       return;
                     }
-                    if (!partnerNameList.includes(partnerName)) {
-                      addPartnerName(partnerName);
+                    if (!providerNameList.includes(providerName)) {
+                      addProviderName(providerName);
                     }
                   }}
                   items={
@@ -1150,10 +1150,10 @@ export default function Page() {
               <div
                 style={{ display: "flex", flexWrap: "wrap", maxWidth: "400px" }}
               >
-                {partnerNameList.map((item, index) => {
+                {providerNameList.map((item, index) => {
                   return (
                     <div
-                      key={`PartnerNameListItem-${index}`}
+                      key={`ProviderNameListItem-${index}`}
                       style={{
                         display: "flex",
                         justifyContent: "start",
@@ -1167,7 +1167,7 @@ export default function Page() {
                       <Space w={5} />
                       <DeleteButton
                         onClick={() => {
-                          deletePartnerName(index);
+                          deleteProviderName(index);
                         }}
                       />
                     </div>

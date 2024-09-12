@@ -53,14 +53,14 @@ export async function addRevenueData({ data }: { data: string }) {
 
 /**
  * 조건을 만족하는 수익통계 데이터를 불러옵니다
- * @param partnerName: 파트너명, monthStr: 월
+ * @param providerName: 공급처명, monthStr: 월
  * @returns
  *  Array of RevenueData
  */
 export async function getRevenueData({
   startDate,
   endDate,
-  partnerName,
+  providerName,
   productName,
   seller,
   orderStatus,
@@ -70,7 +70,7 @@ export async function getRevenueData({
 }: {
   startDate: Date;
   endDate: Date;
-  partnerName: string;
+  providerName: string;
   productName: string;
   seller: string;
   orderStatus: string;
@@ -197,10 +197,10 @@ export async function getRevenueData({
     where("isDiscounted", "in", filterDiscountQueryArray) //Max 2
   );
 
-  if (partnerName.length > 0) {
+  if (providerName.length > 0) {
     revenueDataQuery = query(
       revenueDataQuery,
-      where("partnerName", "==", partnerName)
+      where("providerName", "==", providerName)
     );
   }
 
@@ -224,7 +224,7 @@ export async function getRevenueData({
         searchResult.push({ data: data, id: doc.id });
       } else {
         //상품분류 검색이 있는데, 데이터의 상품분류 항목이 없으면 포함X
-        const partnerProfile = partnerProfiles.get(data.partnerName);
+        const partnerProfile = partnerProfiles.get(data.providerName);
         const productCategories = partnerProfile.productCategory;
         if (productCategories) {
           for (let i = 0; i < productCategory.length; i++) {
@@ -295,14 +295,14 @@ export async function getRevenueStats({
       const isOrderStatusDeliver = data.orderStatus == "배송";
 
       const partnerProfile: PartnerProfile = partnerProfiles.get(
-        data.partnerName
+        data.providerName
       );
 
-      if (!searchResult.has(data.partnerName)) {
+      if (!searchResult.has(data.providerName)) {
         let partnerStat: PartnerRevenueStat = {
           startDateStr: dateToDayStr(startDate),
           endDateStr: dateToDayStr(endDate),
-          partnerName: data.partnerName,
+          providerName: data.providerName,
           lofaSalesAmount: 0,
           otherSalesAmount: 0,
           totalSalesAmount: 0,
@@ -315,7 +315,7 @@ export async function getRevenueStats({
           productCategory: [], //TODO: add product category
         };
 
-        searchResult.set(data.partnerName, partnerStat);
+        searchResult.set(data.providerName, partnerStat);
       }
 
       let lofaSalesAmount;
@@ -426,7 +426,7 @@ export async function getRevenueStats({
           break;
       }
 
-      const stat = searchResult.get(data.partnerName) as PartnerRevenueStat;
+      const stat = searchResult.get(data.providerName) as PartnerRevenueStat;
       stat.lofaSalesAmount += lofaSalesAmount;
       stat.otherSalesAmount += otherSalesAmount;
       stat.totalSalesAmount += totalSalesAmount;

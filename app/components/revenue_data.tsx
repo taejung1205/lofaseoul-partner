@@ -9,7 +9,7 @@ import { LofaSellers, NormalPriceStandardSellers } from "./seller";
 export type RevenueData = {
   orderDate: Date; //구매일자
   seller: string; //판매처 (플랫폼)
-  partnerName: string; //공급처 (파트너명)
+  providerName: string; //공급처 (파트너명)
   orderNumber: string; //주문번호
   productName: string; //상품명
   optionName: string; //옵션명
@@ -23,7 +23,6 @@ export type RevenueData = {
   platformDiscountLevyRate?: number;
   lofaAdjustmentFeeRate?: number;
   platformAdjustmentFeeRate?: number;
-
   commonFeeRate?: number;
   platformFeeRate?: number;
   businessTaxStandard?: string;
@@ -33,7 +32,7 @@ export type RevenueData = {
 export type RevenueDBShowingItems = {
   showingOrderDate: boolean;
   showingSeller: boolean;
-  showingPartnerName: boolean;
+  showingProviderName: boolean;
   showingOrderNumber: boolean;
   showingProductName: boolean;
   showingOption: boolean;
@@ -182,8 +181,8 @@ export function checkRevenueDataItem(item: RevenueData) {
     return { isValid: false, message: "판매처가 누락된 항목이 존재합니다." };
   }
 
-  // Check if partnerName is defined and a non-empty string
-  if (item.partnerName == undefined || item.partnerName.trim() === "") {
+  // Check if providerName is defined and a non-empty string
+  if (item.providerName == undefined || item.providerName.trim() === "") {
     return { isValid: false, message: "공급처가 누락된 항목이 존재합니다." };
   }
 
@@ -585,9 +584,9 @@ function RevenueDataItem({
         <></>
       )}
 
-      {showingItems.showingPartnerName ? (
+      {showingItems.showingProviderName ? (
         <TextBox styleOverrides={{ minWidth: "160px", width: "160px" }}>
-          {item.partnerName}
+          {item.providerName}
         </TextBox>
       ) : (
         <></>
@@ -790,7 +789,7 @@ export function RevenueDataTable({
       return {
         showingOrderDate: true,
         showingSeller: true,
-        showingPartnerName: true,
+        showingProviderName: true,
         showingOrderNumber: true,
         showingProductName: true,
         showingOption: true,
@@ -846,7 +845,7 @@ export function RevenueDataTable({
             <></>
           )}
 
-          {showingItemsMemo.showingPartnerName ? (
+          {showingItemsMemo.showingProviderName ? (
             <TextBox
               styleOverrides={{
                 minWidth: "160px",
