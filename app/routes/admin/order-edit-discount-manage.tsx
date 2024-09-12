@@ -152,7 +152,7 @@ export default function Page() {
     }
   }, [loaderData]);
 
-  const searchedPartnerName = useMemo(() => {
+  const searchedProviderName = useMemo(() => {
     if (loaderData && loaderData.providerName) {
       return loaderData.providerName;
     } else {
@@ -171,7 +171,7 @@ export default function Page() {
   //검색조건
   const [startDate, setStartDate] = useState<Date>(); //검색기준일 시작
   const [endDate, setEndDate] = useState<Date>(); //검색기준일 종료
-  const [providerName, setPartnerName] = useState<string>(searchedPartnerName); // 공급처
+  const [providerName, setProviderName] = useState<string>(searchedProviderName); // 공급처
   const [productName, setProductName] = useState<string>(searchedProductName); //상품명
 
   const [itemsChecked, setItemsChecked] = useState<boolean[]>([]); //체크된 정산내역 index 배열
@@ -384,7 +384,7 @@ export default function Page() {
             type="text"
             name="providerName"
             value={providerName}
-            onChange={(e) => setPartnerName(e.target.value)}
+            onChange={(e) => setProviderName(e.target.value)}
             required
           />
         </div>

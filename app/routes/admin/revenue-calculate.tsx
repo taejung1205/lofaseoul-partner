@@ -241,7 +241,7 @@ const schema = [
   {
     column: "공급처",
     type: String,
-    value: (stat: PartnerRevenueStat) => stat.partnerName,
+    value: (stat: PartnerRevenueStat) => stat.providerName,
     width: 20,
     wrap: true,
   },

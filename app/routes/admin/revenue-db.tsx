@@ -96,7 +96,7 @@ export const loader: LoaderFunction = async ({ request }) => {
         sellerProfiles: sellerProfiles,
       });
     }
-    const partnerName = url.searchParams.get("partner-name");
+    const providerName = url.searchParams.get("provider-name");
     const productName = url.searchParams.get("product-name");
     const seller = url.searchParams.get("seller");
     const orderStatus = url.searchParams.get("order-status");
@@ -119,7 +119,7 @@ export const loader: LoaderFunction = async ({ request }) => {
     const searchResult = await getRevenueData({
       startDate: startDate,
       endDate: endDate,
-      partnerName: partnerName ?? "",
+      providerName: providerName ?? "",
       productName: productName ?? "",
       seller: seller ?? "all",
       orderStatus: orderStatus ?? "전체",
@@ -134,7 +134,7 @@ export const loader: LoaderFunction = async ({ request }) => {
       message: `${searchResult.length}건을 조회하였습니다.`,
       startDate: startDateStr,
       endDate: endDateStr,
-      partnerName: partnerName,
+      providerName: providerName,
       productName: productName,
       seller: seller,
       orderStatus: orderStatus,
@@ -203,9 +203,9 @@ export default function Page() {
     }
   }, [loaderData]);
 
-  const searchedPartnerName = useMemo(() => {
-    if (loaderData && loaderData.partnerName) {
-      return loaderData.partnerName;
+  const searchedProviderName = useMemo(() => {
+    if (loaderData && loaderData.providerName) {
+      return loaderData.providerName;
     } else {
       return "";
     }
@@ -296,7 +296,7 @@ export default function Page() {
   const [startDate, setStartDate] = useState<Date>(); //주문일 시작
   const [endDate, setEndDate] = useState<Date>(); //주문일 종료
   const [seller, setSeller] = useState<string>(searchedSeller); // 판매처
-  const [partnerName, setPartnerName] = useState<string>(searchedPartnerName); // 공급처
+  const [providerName, setProviderName] = useState<string>(searchedProviderName); // 공급처
   const [productName, setProductName] = useState<string>(searchedProductName); //상품명
   const [cs, setCs] = useState<string | null>(searchedCs); //CS
   const [orderStatus, setOrderStatus] = useState<string | null>(
@@ -321,7 +321,7 @@ export default function Page() {
   //볼 항목 선택
   const [isShowingOrderDate, setIsShowingOrderDate] = useState<boolean>(true);
   const [isShowingSeller, setIsShowingSeller] = useState<boolean>(true);
-  const [isShowingPartnerName, setIsShowingPartnerName] =
+  const [isShowingProviderName, setIsShowingProviderName] =
     useState<boolean>(true);
   const [isShowingOrderNumber, setIsShowingOrderNumber] =
     useState<boolean>(true);
@@ -490,7 +490,7 @@ export default function Page() {
     {
       column: "공급처",
       type: String,
-      value: (data: RevenueData) => data.partnerName,
+      value: (data: RevenueData) => data.providerName,
       width: 20,
       wrap: true,
     },
@@ -729,9 +729,9 @@ export default function Page() {
           <Space w={10} />
           <EditInputBox
             type="text"
-            name="partnerName"
-            value={partnerName}
-            onChange={(e) => setPartnerName(e.target.value)}
+            name="providerName"
+            value={providerName}
+            onChange={(e) => setProviderName(e.target.value)}
             required
           />
         </div>
@@ -862,7 +862,7 @@ export default function Page() {
               startDate ? dateToDayStr(startDate) : ""
             }&end-date=${
               endDate ? dateToDayStr(endDate) : ""
-            }&seller=${seller}&partner-name=${partnerName}&product-name=${encodeURIComponent(
+            }&seller=${seller}&provider-name=${providerName}&product-name=${encodeURIComponent(
               productName
             )}&order-status=${encodeURIComponent(
               orderStatus ?? "전체"
@@ -955,9 +955,9 @@ export default function Page() {
             <Checkbox
               color={"gray"}
               size={"xs"}
-              checked={isShowingPartnerName}
+              checked={isShowingProviderName}
               onChange={(event) => {
-                setIsShowingPartnerName(event.currentTarget.checked);
+                setIsShowingProviderName(event.currentTarget.checked);
               }}
             />
             <Space w={20} />
@@ -1159,7 +1159,7 @@ export default function Page() {
           showingItems={{
             showingOrderDate: isShowingOrderDate,
             showingSeller: isShowingSeller,
-            showingPartnerName: isShowingPartnerName,
+            showingProviderName: isShowingProviderName,
             showingOrderNumber: isShowingOrderNumber,
             showingProductName: isShowingProductName,
             showingOption: isShowingOption,
