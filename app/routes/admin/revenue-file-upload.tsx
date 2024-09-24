@@ -83,6 +83,7 @@ export const action: ActionFunction = async ({ request }) => {
     const searchResult = await getDiscountData({
       startDate: startDate,
       endDate: endDate,
+      seller: "",
       providerName: "",
       productName: "",
     });

@@ -25,6 +25,7 @@ import {
   deleteDiscountData,
   getDiscountData,
 } from "~/services/firebase/discount.server";
+import { SellerSelect } from "~/components/seller";
 
 function EditInputBox({
   width,
@@ -33,7 +34,7 @@ function EditInputBox({
   const inputStyles: React.CSSProperties = {
     fontSize: "20px",
     fontWeight: 700,
-    width: width ?? "200px",
+    width: width ?? "160px",
     height: "40px",
     border: "3px black solid",
   };
@@ -66,6 +67,7 @@ export const loader: LoaderFunction = async ({ request }) => {
         message: `검색 조건에 오류가 발생하였습니다.`,
       });
     }
+    const seller = url.searchParams.get("seller");
     const providerName = url.searchParams.get("provider-name");
     const productName = url.searchParams.get("product-name");
 
@@ -82,6 +84,7 @@ export const loader: LoaderFunction = async ({ request }) => {
     const searchResult = await getDiscountData({
       startDate: startDate,
       endDate: endDate,
+      seller: seller ?? "",
       providerName: providerName ?? "",
       productName: productName ?? "",
     });
@@ -171,7 +174,9 @@ export default function Page() {
   //검색조건
   const [startDate, setStartDate] = useState<Date>(); //검색기준일 시작
   const [endDate, setEndDate] = useState<Date>(); //검색기준일 종료
-  const [providerName, setProviderName] = useState<string>(searchedProviderName); // 공급처
+  const [seller, setSeller] = useState<string>("all");
+  const [providerName, setProviderName] =
+    useState<string>(searchedProviderName); // 공급처
   const [productName, setProductName] = useState<string>(searchedProductName); //상품명
 
   const [itemsChecked, setItemsChecked] = useState<boolean[]>([]); //체크된 정산내역 index 배열
@@ -378,6 +383,12 @@ export default function Page() {
         </div>
         <Space w={30} />
         <div style={{ display: "flex", alignItems: "center", height: "40px" }}>
+          <div>판매처</div>
+          <Space w={10} />
+          <SellerSelect seller={seller} setSeller={setSeller} />
+        </div>
+        <Space w={30} />
+        <div style={{ display: "flex", alignItems: "center", height: "40px" }}>
           <div>공급처</div>
           <Space w={10} />
           <EditInputBox
@@ -410,7 +421,7 @@ export default function Page() {
               endDate ? dateToDayStr(endDate) : ""
             }&provider-name=${providerName}&product-name=${encodeURIComponent(
               productName
-            )}`}
+            )}&seller=${encodeURIComponent(seller)}`}
             onClick={() => setIsSearchClicked(true)}
           >
             <BlackButton>검색</BlackButton>
