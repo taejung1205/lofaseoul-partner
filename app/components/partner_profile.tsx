@@ -366,18 +366,27 @@ export function PartnerProfile({
                 {partnerProfile.businessTaxStandard}
               </div>
             </ProfileGridItem>
-            <ProfileGridItem isMobile={isMobileMemo}>
-              <div style={{ padding: "13px", width: "120px" }}>공급처명</div>
-              <div style={{ padding: "13px" }}>
-                {partnerProfile.providerName ?? partnerProfile.name}
-              </div>
-            </ProfileGridItem>
-            <ProfileGridItem isMobile={isMobileMemo}>
-              <div style={{ padding: "13px", width: "120px" }}>상품분류</div>
-              {partnerProfile.productCategory?.map((val) => (
-                <ProductCategoryItem item={val} />
-              )) ?? <></>}
-            </ProfileGridItem>
+            {isPartner ? (
+              <></>
+            ) : (
+              <ProfileGridItem isMobile={isMobileMemo}>
+                <div style={{ padding: "13px", width: "120px" }}>공급처명</div>
+                <div style={{ padding: "13px" }}>
+                  {partnerProfile.providerName ?? partnerProfile.name}
+                </div>
+              </ProfileGridItem>
+            )}
+
+            {isPartner ? (
+              <></>
+            ) : (
+              <ProfileGridItem isMobile={isMobileMemo}>
+                <div style={{ padding: "13px", width: "120px" }}>상품분류</div>
+                {partnerProfile.productCategory?.map((val) => (
+                  <ProductCategoryItem item={val} />
+                )) ?? <></>}
+              </ProfileGridItem>
+            )}
           </ProfileGridContainer>
         </PartnerProfileBox>
       </>
