@@ -9,6 +9,7 @@ export type DiscountData = {
   startDate: Date; //할인 시작일
   endDate: Date; //할인 종료일
   providerName: string; //공급처 (파트너명)
+  seller: string; //판매처
   productName: string; //상품명
   partnerDiscountLevyRate: number; //업체부담할인율
   lofaDiscountLevyRate: number; //로파부담할인율
@@ -147,6 +148,11 @@ export function checkDiscountData(item: DiscountData) {
     };
   }
 
+  // Check if seller is defined and a non-empty string
+  if (item.seller == undefined || item.seller.trim() === "") {
+    return { isValid: false, message: "판매처가 누락된 항목이 존재합니다." };
+  }
+
   // Check if providerName is defined and a non-empty string
   if (item.providerName == undefined || item.providerName.trim() === "") {
     return { isValid: false, message: "공급처가 누락된 항목이 존재합니다." };
@@ -201,6 +207,11 @@ function DiscountDataItem({
       </TextBox>
       <TextBox styleOverrides={{ minWidth: "90px", width: "90px" }}>
         {dateToDayStr(item.endDate)}
+      </TextBox>
+      <TextBox
+        styleOverrides={{ minWidth: "160px", fontSize: "12px", width: "160px" }}
+      >
+        {item.seller}
       </TextBox>
       <TextBox
         styleOverrides={{ minWidth: "160px", fontSize: "12px", width: "160px" }}
@@ -276,6 +287,14 @@ export function DiscountDataTable({
           </TextBox>
           <TextBox styleOverrides={{ minWidth: "90px", width: "90px" }}>
             할인종료일
+          </TextBox>
+          <TextBox
+            styleOverrides={{
+              minWidth: "160px",
+              width: "160px",
+            }}
+          >
+            판매처
           </TextBox>
           <TextBox
             styleOverrides={{

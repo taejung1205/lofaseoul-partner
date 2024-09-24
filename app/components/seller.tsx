@@ -2,6 +2,7 @@ import { Select } from "@mantine/core";
 import { SettlementItem } from "./settlement_table";
 import { OrderItem } from "./order";
 import { RevenueData } from "./revenue_data";
+import { DiscountData } from "./discount";
 
 export const PossibleSellers = [
   "29cm",
@@ -33,7 +34,7 @@ export const NormalPriceStandardSellers = [
  *  유효할 경우 true, 아닐 경우 false
  */
 export function adjustSellerName(
-  item: OrderItem | SettlementItem | RevenueData
+  item: OrderItem | SettlementItem | RevenueData | DiscountData
 ) {
   if (PossibleSellers.includes(item.seller)) {
     return true;

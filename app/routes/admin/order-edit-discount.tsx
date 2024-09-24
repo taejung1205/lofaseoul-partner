@@ -30,6 +30,7 @@ import { PartnerProfile } from "~/components/partner_profile";
 import { BlackButton } from "~/components/button";
 import { requireUser } from "~/services/session.server";
 import { addDiscountData } from "~/services/firebase/discount.server";
+import { adjustSellerName } from "~/components/seller";
 
 export const loader: LoaderFunction = async ({ request }) => {
   //스태프는 접근 불가
@@ -150,6 +151,7 @@ export default function Page() {
           let item: DiscountData = {
             startDate: element.할인시작일,
             endDate: element.할인종료일,
+            seller: element.판매처?.toString(),
             providerName: element.공급처?.toString(),
             productName: element.상품명?.toString(),
             partnerDiscountLevyRate: Number(element.업체부담할인율) ?? 0,
@@ -189,6 +191,20 @@ export default function Page() {
             setIsNoticeModalOpened(true);
             setFileName("");
             setItems([]);
+            return false;
+          }
+
+          const isSellerNameValid = adjustSellerName(item);
+
+          if (!isSellerNameValid) {
+            console.log(item);
+            setNoticeModalStr(
+              `${i + 2}행의 판매처가 유효하지 않습니다. (${item.seller}) `
+            );
+            setIsNoticeModalOpened(true);
+            setFileName("");
+            setItems([]);
+            e.target.value = "";
             return false;
           }
 

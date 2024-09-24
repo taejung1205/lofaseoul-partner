@@ -36,6 +36,7 @@ export async function addDiscountData({ data }: { data: string }) {
       const discountDataRef = collection(firestore, `discount-db`);
       let discountDataQuery = query(
         discountDataRef,
+        where("seller", "==", item.seller),
         where("productName", "==", item.productName),
         where("endDate", ">=", Timestamp.fromDate(startDate)),
         where("startDate", "<=", Timestamp.fromDate(endDate))
@@ -95,30 +96,33 @@ export async function deleteDiscountData({ data }: { data: string }) {
 export async function getDiscountData({
   startDate,
   endDate,
+  seller,
   providerName,
   productName,
 }: {
   startDate: Date;
   endDate: Date;
+  seller: string;
   providerName: string;
   productName: string;
 }) {
   //OR Query 한도때문에 query array의 길이의 곱이 30을 넘을 수 없음
   const discountDataRef = collection(firestore, `discount-db`);
+  const isUsingSeller = seller.length > 0 && seller != "all";
+  const isUsingProviderName = providerName.length > 0;
   let discountDataQuery = query(
     discountDataRef,
     and(
       where("startDate", "<=", Timestamp.fromDate(endDate)),
-      where("endDate", ">=", Timestamp.fromDate(startDate))
+      where("endDate", ">=", Timestamp.fromDate(startDate)),
+      where("seller", isUsingSeller ? "==" : ">=", isUsingSeller ? seller : ""),
+      where(
+        "providerName",
+        isUsingProviderName ? "==" : ">=",
+        isUsingProviderName ? providerName : ""
+      )
     )
   );
-
-  if (providerName.length > 0) {
-    discountDataQuery = query(
-      discountDataQuery,
-      where("providerName", "==", providerName)
-    );
-  }
 
   const querySnap = await getDocs(discountDataQuery);
   const searchResult: { data: DocumentData; id: string }[] = [];
