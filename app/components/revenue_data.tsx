@@ -270,7 +270,6 @@ export function getDiscountedPrice(item: RevenueData) {
 //매출
 export function getSalesAmount(item: RevenueData) {
   const isCsOk = item.cs == "정상";
-  const isOrderStatusDeliver = item.orderStatus == "배송";
   const salesPrice = item.isDiscounted
     ? (item.price *
         (100 -
@@ -280,7 +279,7 @@ export function getSalesAmount(item: RevenueData) {
       100
     : item.price;
 
-  return isCsOk && isOrderStatusDeliver ? salesPrice * item.amount : 0;
+  return isCsOk ? salesPrice * item.amount : 0;
 }
 
 export function getPartnerSettlement(item: RevenueData) {
@@ -337,8 +336,7 @@ export function getProceeds(item: RevenueData) {
     return NaN;
   }
   const isCsOK = item.cs == "정상";
-  const isOrderStatusDeliver = item.orderStatus == "배송";
-  if (!isCsOK || !isOrderStatusDeliver) {
+  if (!isCsOK) {
     return 0;
   }
   const isLofa = LofaSellers.includes(item.seller);
@@ -433,10 +431,6 @@ function RevenueDataItem({
     return item.cs == "정상";
   }, [item]);
 
-  const isOrderStatusDeliver = useMemo(() => {
-    return item.orderStatus == "배송";
-  }, [item]);
-
   const discountedPrice = useMemo(() => {
     return item.isDiscounted
       ? (item.price *
@@ -449,13 +443,11 @@ function RevenueDataItem({
   }, [item.isDiscounted]);
 
   const totalSalesAmount = useMemo(() => {
-    return isCsOK && isOrderStatusDeliver
-      ? (discountedPrice ?? item.price) * item.amount
-      : 0;
+    return isCsOK ? (discountedPrice ?? item.price) * item.amount : 0;
   }, [item]);
 
   const normalPriceTotalSalesAmount = useMemo(() => {
-    return isCsOK && isOrderStatusDeliver ? item.price * item.amount : 0;
+    return isCsOK ? item.price * item.amount : 0;
   }, [item]);
 
   const businessTaxStandard = useMemo(() => {

@@ -296,7 +296,8 @@ export default function Page() {
   const [startDate, setStartDate] = useState<Date>(); //주문일 시작
   const [endDate, setEndDate] = useState<Date>(); //주문일 종료
   const [seller, setSeller] = useState<string>(searchedSeller); // 판매처
-  const [providerName, setProviderName] = useState<string>(searchedProviderName); // 공급처
+  const [providerName, setProviderName] =
+    useState<string>(searchedProviderName); // 공급처
   const [productName, setProductName] = useState<string>(searchedProductName); //상품명
   const [cs, setCs] = useState<string | null>(searchedCs); //CS
   const [orderStatus, setOrderStatus] = useState<string | null>(
@@ -583,7 +584,7 @@ export default function Page() {
       type: Number,
       value: (data: RevenueData) => {
         if (data.isDiscounted) {
-          if (data.cs == "정상" && data.orderStatus == "배송") {
+          if (data.cs == "정상") {
             return (
               (data.price * data.amount * data.lofaDiscountLevyRate!) / 100
             );
