@@ -600,8 +600,7 @@ export default function Page() {
         const currentAmount = productMap.get(item.productName) || 0;
 
         const isCsOk = item.cs == "정상";
-        const isOrderStatusDeliver = item.orderStatus == "배송";
-        if (isCsOk && isOrderStatusDeliver) {
+        if (isCsOk) {
           productMap.set(item.productName, currentAmount + item.amount);
         }
 
@@ -808,8 +807,7 @@ export default function Page() {
     data.forEach((item) => {
       const existingAmount = productAmountMap.get(item.productName) || 0;
       const isCsOk = item.cs == "정상";
-      const isOrderStatusDeliver = item.orderStatus == "배송";
-      if (isCsOk && isOrderStatusDeliver) {
+      if (isCsOk) {
         productAmountMap.set(item.productName, existingAmount + item.amount);
       }
     });
