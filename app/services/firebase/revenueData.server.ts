@@ -13,6 +13,10 @@ import { PartnerProfile } from "~/components/partner_profile";
 import { dateToDayStr } from "~/utils/date";
 import { sendAligoMessage } from "../aligo.server";
 import {
+  getNetProfitAfterTax,
+  getPartnerSettlement,
+  getPlatformFee,
+  getProceeds,
   PossibleCS,
   PossibleOrderStatus,
   RevenueData,
@@ -320,11 +324,11 @@ export async function getRevenueStats({
       let lofaSalesAmount;
       let otherSalesAmount;
       let totalSalesAmount;
-      let partnerSettlement;
-      let platformFee;
+      let partnerSettlement = getPartnerSettlement(data);
+      let platformFee = getPlatformFee(data);
       let lofaDiscountLevy;
-      let proceeds;
-      let netProfitAfterTax;
+      let proceeds = getProceeds(data);
+      let netProfitAfterTax = getNetProfitAfterTax(data);
 
       let platformSettlement;
 
@@ -332,12 +336,9 @@ export async function getRevenueStats({
         lofaSalesAmount = isCsOK && isLofa ? data.price * data.amount : 0;
         otherSalesAmount = isCsOK && !isLofa ? data.price * data.amount : 0;
         totalSalesAmount = lofaSalesAmount + otherSalesAmount;
-        partnerSettlement =
-          (totalSalesAmount * (100 - (data.commonFeeRate ?? NaN))) / 100;
         platformSettlement = isLofa
           ? totalSalesAmount
           : (totalSalesAmount * (100 - (data.platformFeeRate ?? NaN))) / 100; //플랫폼정산금
-        platformFee = totalSalesAmount - platformSettlement;
         lofaDiscountLevy = 0;
         if (!isCsOK) {
           netProfitAfterTax = 0;
@@ -369,13 +370,6 @@ export async function getRevenueStats({
             : 0;
         totalSalesAmount = lofaSalesAmount + otherSalesAmount;
         const normalPriceTotalSalesAmount = data.price * data.amount;
-        partnerSettlement =
-          (normalPriceTotalSalesAmount *
-            (100 -
-              (data.commonFeeRate ?? NaN) -
-              data.partnerDiscountLevyRate +
-              data.lofaAdjustmentFeeRate)) /
-          100;
         const platformSettlementStandard: "정상판매가" | "할인판매가" =
           NormalPriceStandardSellers.includes(data.seller)
             ? "정상판매가"
@@ -399,24 +393,8 @@ export async function getRevenueStats({
                 (data.platformFeeRate ?? NaN) +
                 data.platformAdjustmentFeeRate)) /
             100; //플랫폼정산금
-        platformFee = totalSalesAmount - platformSettlement;
         lofaDiscountLevy =
           (normalPriceTotalSalesAmount * data.lofaDiscountLevyRate) / 100;
-      }
-
-      proceeds = totalSalesAmount - partnerSettlement - platformFee;
-      switch (data.businessTaxStandard) {
-        case "일반":
-          netProfitAfterTax = proceeds * 0.9;
-          break;
-        case "간이":
-        case "비사업자":
-          netProfitAfterTax = platformSettlement * 0.9 - partnerSettlement;
-          break;
-        case "면세":
-        default:
-          netProfitAfterTax = proceeds;
-          break;
       }
 
       const stat = searchResult.get(data.providerName) as PartnerRevenueStat;

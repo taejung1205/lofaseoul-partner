@@ -17,6 +17,8 @@ export type RevenueData = {
   amount: number; //수량
   orderStatus: string; //주문상태
   cs: string; // C/S
+  category: string; //카테고리
+  cost: number; //원가
   isDiscounted: boolean;
   lofaDiscountLevyRate?: number;
   partnerDiscountLevyRate?: number;
@@ -49,6 +51,8 @@ export type RevenueDBShowingItems = {
   showingProceeds: boolean;
   showingNetProfitAfterTax: boolean;
   showingReturnRate: boolean;
+  showingCategory: boolean;
+  showingCost: boolean;
 };
 
 export const PossibleOrderStatus = ["발주", "접수", "송장", "배송"];
@@ -67,6 +71,8 @@ export const PossibleCS = [
   "맞교환",
   "배송후교환C",
 ];
+
+export const PossibleCategory = ["위탁", "사입", "제조"];
 
 interface Props extends React.HTMLAttributes<HTMLDivElement> {
   styleOverrides?: React.CSSProperties;
@@ -230,6 +236,23 @@ export function checkRevenueDataItem(item: RevenueData) {
     };
   }
 
+  // Check if category is defined and a non-empty string
+  if (item.category == undefined || item.category.trim() === "") {
+    return { isValid: false, message: "카테고리가 누락된 항목이 존재합니다." };
+  }
+
+  if (!PossibleCategory.includes(item.category)) {
+    return {
+      isValid: false,
+      message: `카테고리가 유효하지 않은 항목이 존재합니다. (${item.cs})`,
+    };
+  }
+
+  // Check if cost is defined, a number, and positive
+  if (item.cost == undefined || Number.isNaN(item.cost)) {
+    return { isValid: false, message: "원가가 누락된 항목이 존재합니다." };
+  }
+
   // If all checks passed, the item is valid
   return { isValid: true, message: "ok" };
 }
@@ -257,6 +280,10 @@ export function getRevenueDataPeriod(items: RevenueData[]): {
 }
 
 export function getDiscountedPrice(item: RevenueData) {
+  const isCsOK = item.cs == "정상";
+  if (!isCsOK) {
+    return 0;
+  }
   return item.isDiscounted
     ? (item.price *
         (100 -
@@ -270,14 +297,7 @@ export function getDiscountedPrice(item: RevenueData) {
 //매출
 export function getSalesAmount(item: RevenueData) {
   const isCsOk = item.cs == "정상";
-  const salesPrice = item.isDiscounted
-    ? (item.price *
-        (100 -
-          item.lofaDiscountLevyRate! -
-          item.partnerDiscountLevyRate! -
-          item.platformDiscountLevyRate!)) /
-      100
-    : item.price;
+  const salesPrice = getDiscountedPrice(item) ?? item.price;
 
   return isCsOk ? salesPrice * item.amount : 0;
 }
@@ -286,6 +306,16 @@ export function getPartnerSettlement(item: RevenueData) {
   if (item.commonFeeRate == undefined) {
     return NaN;
   }
+
+  const isCsOK = item.cs == "정상";
+  if (!isCsOK) {
+    return 0;
+  }
+
+  if (item.category == "사입" || item.category == "제조") {
+    return item.cost * item.amount;
+  }
+
   return item.isDiscounted
     ? (item.price *
         item.amount *
@@ -301,6 +331,12 @@ export function getPlatformFee(item: RevenueData) {
   if (item.platformFeeRate == undefined) {
     return NaN;
   }
+
+  const isCsOK = item.cs == "정상";
+  if (!isCsOK) {
+    return 0;
+  }
+
   const isLofa = LofaSellers.includes(item.seller);
   const platformSettlementStandard = NormalPriceStandardSellers.includes(
     item.seller
@@ -366,15 +402,7 @@ export function getProceeds(item: RevenueData) {
         100
     : (getSalesAmount(item) * (100 - item.platformFeeRate)) / 100;
 
-  const partnerSettlement = item.isDiscounted
-    ? (item.price *
-        item.amount *
-        (100 -
-          item.commonFeeRate -
-          item.partnerDiscountLevyRate! +
-          item.lofaAdjustmentFeeRate!)) /
-      100
-    : (item.price * item.amount * (100 - item.commonFeeRate)) / 100.0;
+  const partnerSettlement = getPartnerSettlement(item);
 
   return platformSettlement - partnerSettlement;
 }
@@ -432,38 +460,15 @@ function RevenueDataItem({
   }, [item]);
 
   const discountedPrice = useMemo(() => {
-    return item.isDiscounted
-      ? (item.price *
-          (100 -
-            item.lofaDiscountLevyRate! -
-            item.partnerDiscountLevyRate! -
-            item.platformDiscountLevyRate!)) /
-          100
-      : undefined;
+    return getDiscountedPrice(item);
   }, [item.isDiscounted]);
 
   const totalSalesAmount = useMemo(() => {
-    return isCsOK ? (discountedPrice ?? item.price) * item.amount : 0;
+    return getSalesAmount(item);
   }, [item]);
 
   const normalPriceTotalSalesAmount = useMemo(() => {
     return isCsOK ? item.price * item.amount : 0;
-  }, [item]);
-
-  const businessTaxStandard = useMemo(() => {
-    if (item.businessTaxStandard) {
-      return item.businessTaxStandard;
-    } else {
-      return "일반";
-    }
-  }, [item]);
-
-  const commonFeeRate = useMemo(() => {
-    if (item.commonFeeRate != undefined) {
-      return item.commonFeeRate;
-    } else {
-      return NaN;
-    }
   }, [item]);
 
   const platformSettlementStandard = useMemo(() => {
@@ -475,14 +480,11 @@ function RevenueDataItem({
   }, [item]);
 
   const partnerSettlement = useMemo(() => {
-    return item.isDiscounted
-      ? (normalPriceTotalSalesAmount *
-          (100 -
-            commonFeeRate -
-            item.partnerDiscountLevyRate! +
-            item.lofaAdjustmentFeeRate!)) /
-          100
-      : (totalSalesAmount * (100 - commonFeeRate)) / 100.0;
+    return getPartnerSettlement(item);
+  }, [item]);
+
+  const proceeds = useMemo(() => {
+    return getProceeds(item);
   }, [item]);
 
   const platformFeeRate = useMemo(() => {
@@ -527,21 +529,8 @@ function RevenueDataItem({
     }
   }, [item]);
 
-  const proceeds = useMemo(() => {
-    return platformSettlement - partnerSettlement;
-  }, [item]);
-
   const netProfitAfterTax = useMemo(() => {
-    switch (businessTaxStandard) {
-      case "일반":
-        return proceeds * 0.9;
-      case "간이":
-      case "비사업자":
-        return platformSettlement * 0.9 - partnerSettlement;
-      case "면세":
-      default:
-        return proceeds;
-    }
+    return getNetProfitAfterTax(item);
   }, [item]);
 
   return (
@@ -679,12 +668,29 @@ function RevenueDataItem({
         <></>
       )}
 
+      {showingItems.showingCategory ? (
+        <TextBox styleOverrides={{ minWidth: "60px", width: "60px" }}>
+          {item.category}
+        </TextBox>
+      ) : (
+        <></>
+      )}
+
+      {showingItems.showingCost ? (
+        <TextBox styleOverrides={{ minWidth: "60px", width: "60px" }}>
+          {item.cost}
+        </TextBox>
+      ) : (
+        <></>
+      )}
+
       {isDBTable && showingItems.showingPartnerSettlement ? (
         <TextBox styleOverrides={{ minWidth: "60px", width: "60px" }}>
-          {partnerSettlement.toLocaleString(undefined, {
+          {partnerSettlement}
+          {/* {partnerSettlement.toLocaleString(undefined, {
             minimumFractionDigits: 0,
             maximumFractionDigits: 0,
-          })}
+          })} */}
         </TextBox>
       ) : (
         <></>
@@ -714,7 +720,7 @@ function RevenueDataItem({
 
       {isDBTable && showingItems.showingProceeds ? (
         <TextBox styleOverrides={{ minWidth: "60px", width: "60px" }}>
-          {(platformSettlement - partnerSettlement).toLocaleString(undefined, {
+          {proceeds.toLocaleString(undefined, {
             minimumFractionDigits: 0,
             maximumFractionDigits: 0,
           })}
@@ -798,6 +804,8 @@ export function RevenueDataTable({
         showingProceeds: true,
         showingNetProfitAfterTax: true,
         showingReturnRate: true,
+        showingCategory: true,
+        showingCost: true,
       };
     }
   }, [showingItems]);
@@ -946,6 +954,22 @@ export function RevenueDataTable({
           {showingItemsMemo.showingCs ? (
             <TextBox styleOverrides={{ minWidth: "180px", width: "180px" }}>
               CS
+            </TextBox>
+          ) : (
+            <></>
+          )}
+
+          {showingItemsMemo.showingCategory ? (
+            <TextBox styleOverrides={{ minWidth: "60px", width: "60px" }}>
+              카테고리
+            </TextBox>
+          ) : (
+            <></>
+          )}
+
+          {showingItemsMemo.showingCost ? (
+            <TextBox styleOverrides={{ minWidth: "60px", width: "60px" }}>
+              원가
             </TextBox>
           ) : (
             <></>

@@ -247,6 +247,8 @@ export default function Page() {
             orderStatus: element.상태?.toString(),
             cs: element["CS"]?.toString(),
             isDiscounted: false,
+            category: element.카테고리?.toString(),
+            cost: Number(element.원가),
           };
 
           const result = checkRevenueDataItem(item);
