@@ -15,6 +15,7 @@ import {
 } from "~/services/firebase/firebase.server";
 import writeXlsxFile from "write-excel-file";
 import { useNavigation } from "@remix-run/react";
+import { BasicModal, ModalButton } from "~/components/modal";
 
 function MyButton({
   children,
@@ -94,6 +95,12 @@ export const action: ActionFunction = async ({ request }) => {
 
       if (typeof addPartnerResult == "string") {
         error = addPartnerResult;
+        return json({
+          status: "error",
+          message: `오류가 발생했습니다.\n${error}`,
+        });
+      } else {
+        return json({ status: "ok", message: "성공적으로 추가되었습니다." });
       }
     }
   } else if (actionType === "delete") {
@@ -107,11 +114,15 @@ export const action: ActionFunction = async ({ request }) => {
       });
       if (typeof deletePartnerResult == "string") {
         error = deletePartnerResult;
+        return json({
+          status: "error",
+          message: `오류가 발생했습니다.\n${error}`,
+        });
+      } else {
+        return json({ status: "ok", message: "성공적으로 삭제되었습니다." });
       }
     }
   }
-
-  return json({ error: error });
 };
 
 export let loader: LoaderFunction = async ({ request }) => {
@@ -123,13 +134,23 @@ export let loader: LoaderFunction = async ({ request }) => {
 export default function AdminPartnerList() {
   const [currentEdit, setCurrentEdit] = useState<number>(-1);
   const [isCreatingProfile, setIsCreatingProfile] = useState<boolean>(false);
+  const [noticeModalStr, setNoticeModalStr] = useState<string>(""); //안내 모달창에서 뜨는 메세지
+  const [isNoticeModalOpened, setIsNoticeModalOpened] =
+    useState<boolean>(false);
+  const [isRefreshRequired, setIsRefreshRequired] = useState<boolean>(false);
+
   const loaderData = useLoaderData(); //Partner Profile List
   const actionData = useActionData();
   const navigation = useNavigation();
 
   useEffect(() => {
-    setIsCreatingProfile(false);
-    setCurrentEdit(-1);
+    if (actionData) {
+      if (actionData.status == "ok") {
+        setIsRefreshRequired(true);
+      }
+      setNoticeModalStr(actionData.message);
+      setIsNoticeModalOpened(true);
+    }
   }, [actionData]);
 
   async function writeExcel() {
@@ -146,81 +167,114 @@ export default function AdminPartnerList() {
   }
 
   return (
-    <PageLayout>
-      <LoadingOverlay visible={navigation.state == "loading"} overlayBlur={2} />
-      {actionData?.error?.length > 0 ? (
-        <div style={{ margin: "10px" }}>{actionData.error}</div>
-      ) : (
-        <></>
-      )}
-      <div style={{ display: "flex" }}>
-        <MyButton onClick={() => setIsCreatingProfile((prev) => !prev)}>
-          신규 생성
-        </MyButton>
-        <Space w={20} />
-        <MyButton onClick={() => writeExcel()}>목록 다운로드</MyButton>
-      </div>
-
-      <div style={{ minHeight: "40px" }} />
-      {isCreatingProfile ? (
-        <PartnerProfile
-          partnerProfile={{
-            name: "",
-            id: "",
-            password: "",
-            email: "",
-            phone: "",
-            lofaFee: 0,
-            otherFee: 0,
-            gwangjuBiennaleFee: 0,
-            shippingFee: 0,
-            brn: "",
-            bankAccount: "",
-            businessName: "",
-            businessTaxStandard: "일반",
-            providerName: "",
-            productCategory: [],
+    <>
+      {/* 안내용 모달 */}
+      <BasicModal
+        opened={isNoticeModalOpened}
+        onClose={() => setIsNoticeModalOpened(false)}
+      >
+        <div
+          style={{
+            justifyContent: "center",
+            textAlign: "center",
+            fontWeight: "700",
           }}
-          isNew={true}
-          isEdit={true}
-          onEditClick={() => {}}
-          isPartner={false}
+        >
+          {noticeModalStr}
+          <div style={{ height: "20px" }} />
+          <div style={{ display: "flex", justifyContent: "center" }}>
+            <ModalButton
+              onClick={() => {
+                setIsNoticeModalOpened(false);
+                if (isRefreshRequired) {
+                  window.location.reload();
+                }
+              }}
+            >
+              확인
+            </ModalButton>
+          </div>
+        </div>
+      </BasicModal>
+      <PageLayout>
+        <LoadingOverlay
+          visible={navigation.state == "loading"}
+          overlayBlur={2}
         />
-      ) : (
-        <></>
-      )}
-      {loaderData.map((doc: DocumentData, index: number) => {
-        return (
+        {actionData?.error?.length > 0 ? (
+          <div style={{ margin: "10px" }}>{actionData.error}</div>
+        ) : (
+          <></>
+        )}
+        <div style={{ display: "flex" }}>
+          <MyButton onClick={() => setIsCreatingProfile((prev) => !prev)}>
+            신규 생성
+          </MyButton>
+          <Space w={20} />
+          <MyButton onClick={() => writeExcel()}>목록 다운로드</MyButton>
+        </div>
+
+        <div style={{ minHeight: "40px" }} />
+        {isCreatingProfile ? (
           <PartnerProfile
-            key={`PartnerProfile-${index}`}
             partnerProfile={{
-              name: doc.name,
-              id: doc.id,
-              password: doc.password,
-              email: doc.email,
-              phone: doc.phone,
-              lofaFee: doc.lofaFee,
-              otherFee: doc.otherFee,
-              gwangjuBiennaleFee: doc.gwangjuBiennaleFee,
-              shippingFee: doc.shippingFee,
-              brn: doc.brn,
-              bankAccount: doc.bankAccount,
-              businessName: doc.businessName,
-              businessTaxStandard: doc.businessTaxStandard,
-              providerName: doc.providerName,
-              productCategory: doc.productCategory,
+              name: "",
+              id: "",
+              password: "",
+              email: "",
+              phone: "",
+              lofaFee: 0,
+              otherFee: 0,
+              gwangjuBiennaleFee: 0,
+              shippingFee: 0,
+              brn: "",
+              bankAccount: "",
+              businessName: "",
+              businessTaxStandard: "일반",
+              providerName: "",
+              productCategory: [],
             }}
-            isEdit={currentEdit == index}
-            onEditClick={() => {
-              setCurrentEdit(index);
-            }}
+            isNew={true}
+            isEdit={true}
+            onEditClick={() => {}}
             isPartner={false}
-            isNew={false}
           />
-        );
-      })}
-      <div style={{ minHeight: "40px" }} />
-    </PageLayout>
+        ) : (
+          <></>
+        )}
+        {loaderData.map((doc: DocumentData, index: number) => {
+          return (
+            <PartnerProfile
+              key={`PartnerProfile-${index}`}
+              partnerProfile={{
+                name: doc.name,
+                id: doc.id,
+                password: doc.password,
+                email: doc.email,
+                phone: doc.phone,
+                lofaFee: doc.lofaFee,
+                otherFee: doc.otherFee,
+                gwangjuBiennaleFee: doc.gwangjuBiennaleFee,
+                shippingFee: doc.shippingFee,
+                brn: doc.brn,
+                bankAccount: doc.bankAccount,
+                businessName: doc.businessName,
+                businessTaxStandard: doc.businessTaxStandard,
+                providerName: doc.providerName,
+                productCategory: doc.productCategory,
+              }}
+              isEdit={currentEdit == index}
+              onEditClick={() => {
+                setCurrentEdit(index);
+              }}
+              isPartner={false}
+              isNew={false}
+            />
+          );
+        })}
+        <div style={{ minHeight: "40px" }} />
+      </PageLayout>
+    </>
   );
 }
 
