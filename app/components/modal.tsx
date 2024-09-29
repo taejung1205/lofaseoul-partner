@@ -28,6 +28,7 @@ export function ModalContent({ children, ...props }: React.HTMLAttributes<HTMLDi
     padding: '20px',
     borderRadius: '8px',
     fontSize: '20px',
+    whiteSpace: 'pre'
   };
 
   return (

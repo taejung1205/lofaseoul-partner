@@ -248,7 +248,7 @@ export function PartnerProfile({
                 />
                 <ModalButton
                   type="submit"
-                  style={{ borderColor: "red", color: "red" }}
+                  styleOverrides={{ borderColor: "red", color: "red" }}
                 >
                   삭제
                 </ModalButton>
