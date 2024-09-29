@@ -183,6 +183,7 @@ export async function addPartnerProfile({
     phone: partnerProfile.phone,
     lofaFee: partnerProfile.lofaFee,
     otherFee: partnerProfile.otherFee,
+    gwangjuBiennaleFee: partnerProfile.gwangjuBiennaleFee, 
     shippingFee: partnerProfile.shippingFee,
     brn: partnerProfile.brn,
     bankAccount: partnerProfile.bankAccount,

@@ -3,9 +3,10 @@ import { useSubmit } from "@remix-run/react";
 import { useRef } from "react";
 import {
   debug_addExtraDataToRevenueDB,
+  debug_addGwangjuBiennaleFee,
   debug_changeNoticeToMessage,
   debug_changePartnerNameToProviderName,
-} from "~/services/firebase/firebase-debug.server";
+} from "~/services/firebase/debug.server";
 
 export const action: ActionFunction = async ({ request }) => {
   console.log("request submitted");
@@ -14,7 +15,7 @@ export const action: ActionFunction = async ({ request }) => {
   // await debug_fixRevenueDataProviderName("LOFA ORIGINAL", "로파오리지널");
   //await debug_addExtraDataToRevenueDB();
   // await debug_changeNoticeToMessage();\
-  await debug_changePartnerNameToProviderName();
+  await debug_addGwangjuBiennaleFee();
   return null;
 };
 
