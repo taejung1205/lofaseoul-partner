@@ -25,6 +25,7 @@ export const NormalPriceStandardSellers = [
   "로파공홈",
   "용산쇼룸",
   "예약거래",
+  "광주비엔날레"
 ];
 
 /**
