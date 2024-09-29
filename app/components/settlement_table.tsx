@@ -262,6 +262,8 @@ export function setSettlementFee(
   }
   if (LofaSellers.includes(item.seller)) {
     item.fee = partnerProfile.lofaFee;
+  } else if(item.seller == "광주비엔날레"){
+    item.fee = partnerProfile.gwangjuBiennaleFee;
   } else {
     item.fee = partnerProfile.otherFee;
   }

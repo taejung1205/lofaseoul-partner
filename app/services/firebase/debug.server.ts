@@ -111,6 +111,21 @@ export async function debug_fixPartnerProfileTaxStandard() {
   });
 }
 
+export async function debug_addGwangjuBiennaleFee() {
+  const accountsRef = collection(firestore, "accounts");
+  const querySnap = await getDocs(accountsRef);
+  querySnap.docs.forEach(async (item) => {
+    const data = item.data();
+    if (!data.gwangjuBiennaleFee) {
+      await updateDoc(doc(firestore, "accounts", data.name), {
+        gwangjuBiennaleFee: 38,
+      }).catch((error) => {
+        return error.message;
+      });
+    }
+  });
+}
+
 export async function debug_fixPartnerProviderNameStandard() {
   const accountsRef = collection(firestore, "accounts");
   const querySnap = await getDocs(accountsRef);

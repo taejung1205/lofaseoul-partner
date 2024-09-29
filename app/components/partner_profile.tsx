@@ -13,6 +13,7 @@ export type PartnerProfile = {
   email: string;
   phone: string;
   lofaFee: number;
+  gwangjuBiennaleFee: number;
   otherFee: number;
   shippingFee: number;
   brn: string;
@@ -175,6 +176,9 @@ export function PartnerProfile({
   const [phoneEdit, setPhoneEdit] = useState(partnerProfile.phone);
   const [lofaFeeEdit, setLofaFeeEdit] = useState(partnerProfile.lofaFee);
   const [otherFeeEdit, setOtherFeeEdit] = useState(partnerProfile.otherFee);
+  const [gwangjuBiennaleFeeEdit, setGwangjuBiennaleFeeEdit] = useState(
+    partnerProfile.gwangjuBiennaleFee
+  );
   const [shippingFeeEdit, setShippingFeeEdit] = useState(
     partnerProfile.shippingFee
   );
@@ -328,7 +332,11 @@ export function PartnerProfile({
               >
                 <div style={{ fontSize: "12px" }}>로파 공홈 및 쇼룸</div>
                 <div style={{ padding: "13px" }}>{partnerProfile.lofaFee}%</div>
-                <div style={{ fontSize: "12px" }}>타 채널</div>
+                <div style={{ fontSize: "12px" }}>광주비엔날레</div>
+                <div style={{ padding: "13px" }}>
+                  {partnerProfile.gwangjuBiennaleFee}%
+                </div>
+                <div style={{ fontSize: "12px" }}>기타 채널</div>
                 <div style={{ padding: "13px" }}>
                   {partnerProfile.otherFee}%
                 </div>
@@ -498,7 +506,19 @@ export function PartnerProfile({
                   style={{ width: "50px" }}
                 />
                 <Space w={10} />
-                <div style={{ fontSize: "15px" }}>타 채널</div>
+                <div style={{ fontSize: "15px" }}>광주비엔날레</div>
+                <InputBox
+                  type="number"
+                  name="gwangjuBiennaleFee"
+                  value={gwangjuBiennaleFeeEdit}
+                  onChange={(e) =>
+                    setGwangjuBiennaleFeeEdit(Number(e.target.value))
+                  }
+                  required
+                  style={{ width: "50px" }}
+                />
+                <Space w={10} />
+                <div style={{ fontSize: "15px" }}>기타 채널</div>
                 <InputBox
                   type="number"
                   name="otherFee"

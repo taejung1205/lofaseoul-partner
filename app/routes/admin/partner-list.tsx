@@ -50,6 +50,7 @@ export const action: ActionFunction = async ({ request }) => {
     const phone = body.get("phone")?.toString();
     const lofaFee = Number(body.get("lofaFee"));
     const otherFee = Number(body.get("otherFee"));
+    const gwangjuBiennaleFee = Number(body.get("gwangjuBiennaleFee"));
     const shippingFee = Number(body.get("shippingFee"));
     const brn = body.get("brn")?.toString();
     const bankAccount = body.get("bankAccount")?.toString();
@@ -78,6 +79,7 @@ export const action: ActionFunction = async ({ request }) => {
         phone: phone,
         lofaFee: lofaFee,
         otherFee: otherFee,
+        gwangjuBiennaleFee: gwangjuBiennaleFee,
         shippingFee: shippingFee,
         brn: brn ?? "",
         bankAccount: bankAccount ?? "",
@@ -170,6 +172,7 @@ export default function AdminPartnerList() {
             phone: "",
             lofaFee: 0,
             otherFee: 0,
+            gwangjuBiennaleFee: 0,
             shippingFee: 0,
             brn: "",
             bankAccount: "",
@@ -198,6 +201,7 @@ export default function AdminPartnerList() {
               phone: doc.phone,
               lofaFee: doc.lofaFee,
               otherFee: doc.otherFee,
+              gwangjuBiennaleFee: doc.gwangjuBiennaleFee,
               shippingFee: doc.shippingFee,
               brn: doc.brn,
               bankAccount: doc.bankAccount,
@@ -270,7 +274,13 @@ const schema = [
     width: 20,
   },
   {
-    column: "외부채널 수수료",
+    column: "광주비엔날레 수수료",
+    type: Number,
+    value: (profile: PartnerProfile) => profile.gwangjuBiennaleFee,
+    width: 20,
+  },
+  {
+    column: "기타채널 수수료",
     type: Number,
     value: (profile: PartnerProfile) => profile.otherFee,
     width: 20,

@@ -45,6 +45,7 @@ export default function AdminPartnerList() {
             phone: loaderData.phone,
             lofaFee: loaderData.lofaFee,
             otherFee: loaderData.otherFee,
+            gwangjuBiennaleFee: loaderData.gwangjuBiennaleFee,
             shippingFee: loaderData.shippingFee,
             brn: loaderData.brn,
             bankAccount: loaderData.bankAccount,
