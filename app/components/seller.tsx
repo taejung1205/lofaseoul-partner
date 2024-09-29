@@ -13,6 +13,7 @@ export const PossibleSellers = [
   "오늘의집",
   "카카오",
   "무신사",
+  "광주비엔날레"
 ];
 
 export const LofaSellers = ["로파공홈", "용산쇼룸", "예약거래"];
@@ -73,6 +74,7 @@ export function SellerSelect({
         { value: "카카오", label: "카카오" },
         { value: "무신사", label: "무신사" },
         { value: "예약거래", label: "예약거래" },
+        { value: "광주비엔날레", label: "광주비엔날레" },
         { value: "etc", label: "기타" },
       ]}
       styles={{

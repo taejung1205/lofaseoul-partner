@@ -350,6 +350,8 @@ export default function Page() {
   const [isShowingNetProfitAfterTax, setIsShowingNetProfitAfterTax] =
     useState<boolean>(true);
   const [isShowingReturnRate, setIsShowingReturnRate] = useState<boolean>(true);
+  const [isShowingCategory, setIsShowingCategory] = useState<boolean>(true);
+  const [isShowingCost, setIsShowingCost] = useState<boolean>(true);
 
   const [isShowingShowing, setIsShowingShowing] = useState<boolean>(false);
 
@@ -558,6 +560,20 @@ export default function Page() {
       column: "CS",
       type: String,
       value: (data: RevenueData) => data.cs,
+      width: 20,
+      wrap: true,
+    },
+    {
+      column: "카테고리",
+      type: String,
+      value: (data: RevenueData) => data.category,
+      width: 20,
+      wrap: true,
+    },
+    {
+      column: "원가",
+      type: Number,
+      value: (data: RevenueData) => data.cost,
       width: 20,
       wrap: true,
     },
@@ -1077,6 +1093,28 @@ export default function Page() {
               }}
             />
             <Space w={20} />
+            <div>카테고리</div>
+            <Space w={10} />
+            <Checkbox
+              color={"gray"}
+              size={"xs"}
+              checked={isShowingCategory}
+              onChange={(event) => {
+                setIsShowingCategory(event.currentTarget.checked);
+              }}
+            />
+            <Space w={20} />
+            <div>원가</div>
+            <Space w={10} />
+            <Checkbox
+              color={"gray"}
+              size={"xs"}
+              checked={isShowingCost}
+              onChange={(event) => {
+                setIsShowingCost(event.currentTarget.checked);
+              }}
+            />
+            <Space w={20} />
             <div>업체정산금</div>
             <Space w={10} />
             <Checkbox
@@ -1177,6 +1215,8 @@ export default function Page() {
             showingProceeds: isShowingProceeds,
             showingNetProfitAfterTax: isShowingNetProfitAfterTax,
             showingReturnRate: isShowingReturnRate,
+            showingCategory: isShowingCategory,
+            showingCost: isShowingCost,
           }}
         />
       ) : (
