@@ -5,6 +5,8 @@ import {
   doc,
   DocumentData,
   getDocs,
+  or,
+  orderBy,
   query,
   setDoc,
   Timestamp,
@@ -36,10 +38,14 @@ export async function addDiscountData({ data }: { data: string }) {
       const discountDataRef = collection(firestore, `discount-db`);
       let discountDataQuery = query(
         discountDataRef,
-        where("seller", "==", item.seller),
-        where("productName", "==", item.productName),
-        where("endDate", ">=", Timestamp.fromDate(startDate)),
-        where("startDate", "<=", Timestamp.fromDate(endDate))
+        and(
+          where("seller", "==", item.seller),
+          where("productName", "==", item.productName),
+          or(
+            where("endDate", ">=", Timestamp.fromDate(startDate)),
+            where("startDate", "<=", Timestamp.fromDate(endDate))
+          )
+        )
       );
       const querySnapshot = await getDocs(discountDataQuery);
       if (!querySnapshot.empty) {
@@ -134,5 +140,8 @@ export async function getDiscountData({
       searchResult.push({ data: data, id: doc.id });
     }
   });
-  return searchResult;
+  return searchResult.sort((a, b) => {
+    // orderDate가 있는 항목은 날짜 순으로 정렬
+    return a.data.startDate - b.data.startDate;
+  });
 }
