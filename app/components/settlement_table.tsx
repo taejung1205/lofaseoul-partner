@@ -326,6 +326,12 @@ function SettlementItem({
       </TextBox>
       <TextBox
         isMobile={isMobileMemo}
+        styleOverrides={{ width: "90px", minWidth: "90px" }}
+      >
+        {item.providerName}
+      </TextBox>
+      <TextBox
+        isMobile={isMobileMemo}
         styleOverrides={{ width: "60px", minWidth: "60px" }}
       >
         {item.seller}
@@ -450,6 +456,12 @@ export function SettlementTable({
           styleOverrides={{ width: "90px", minWidth: "90px" }}
         >
           주문일
+        </TextBox>
+        <TextBox
+          isMobile={isMobileMemo}
+          styleOverrides={{ width: "90px", minWidth: "90px" }}
+        >
+          공급처
         </TextBox>
         <TextBox
           isMobile={isMobileMemo}
