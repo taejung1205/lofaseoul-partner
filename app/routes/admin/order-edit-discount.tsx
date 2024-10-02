@@ -277,7 +277,7 @@ export default function Page() {
                 if (discountDataList.length == 0) {
                   setNoticeModalStr("선택된 항목이 없습니다.");
                   setIsNoticeModalOpened(true);
-                } else if (discountDataList.length < 20) {
+                } else if (discountDataList.length > 20) {
                   setNoticeModalStr(
                     "한 번에 최대 20개의 할인내역만 업로드가 가능합니다."
                   );
