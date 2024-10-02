@@ -260,8 +260,8 @@ export default function Page() {
   function resetCheck(pageIndex: number) {
     const newArr = Array(
       Math.min(
-        discountDataItems.slice(pageIndex * 20, (pageIndex + 1) * 20).length,
-        20
+        discountDataItems.slice(pageIndex * 100, (pageIndex + 1) * 100).length,
+        100
       )
     ).fill(false);
     setItemsChecked(newArr);
@@ -342,7 +342,7 @@ export default function Page() {
                 for (let i = 0; i < itemsChecked.length; i++) {
                   if (itemsChecked[i]) {
                     deletingList.push(
-                      discountDataItems[i + pageIndex * 20].id
+                      discountDataItems[i + pageIndex * 100].id
                     );
                   }
                 }
@@ -432,7 +432,7 @@ export default function Page() {
       {/* TODO: 볼 항목 선택 */}
       {discountDataItems ? (
         <DiscountDataTableMemo
-          items={discountData.slice(pageIndex * 20, (pageIndex + 1) * 20)}
+          items={discountData.slice(pageIndex * 100, (pageIndex + 1) * 100)}
           itemsChecked={itemsChecked}
           onItemCheck={onItemCheck}
           onCheckAll={onCheckAll}
@@ -443,7 +443,7 @@ export default function Page() {
       )}
       {discountDataItems ? (
         <PageIndex
-          pageCount={Math.ceil(discountDataItems.length / 20)}
+          pageCount={Math.ceil(discountDataItems.length / 100)}
           currentIndex={pageIndex}
           onIndexClick={(index: number) => {
             setPageIndex(index);

@@ -28,6 +28,7 @@ function Box({ children, styleOverrides, ...props }: Props) {
     minHeight: "60%",
     position: "relative",
     overflow: "scroll",
+    width: "inherit",
     ...styleOverrides,
   };
 
