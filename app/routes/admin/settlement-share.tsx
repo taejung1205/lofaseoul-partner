@@ -390,6 +390,11 @@ export default function AdminSettlementShare() {
         )}
         <Space h={20} />
         <div>{`* 할인은 '주문서 수정 > 할인내역 추가'에서 등록한 할인내역을 바탕으로 정산내역 공유 후 적용됩니다.`}</div>
+        <div>
+          {`* `}
+          <span style={{ color: "red" }}>*</span>
+          {`로 표시된 항목은 엑셀 내 모든 항목에 필수적으로 기입되야 합니다.`}
+        </div>
       </PageLayout>
     </>
   );

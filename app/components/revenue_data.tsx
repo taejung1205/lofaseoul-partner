@@ -832,6 +832,7 @@ export function RevenueDataTable({
           {showingItemsMemo.showingOrderDate ? (
             <TextBox styleOverrides={{ minWidth: "90px", width: "90px" }}>
               주문일
+              {isDBTable ? <></> : <span style={{ color: "red" }}>*</span>}
             </TextBox>
           ) : (
             <></>
@@ -840,6 +841,7 @@ export function RevenueDataTable({
           {showingItemsMemo.showingSeller ? (
             <TextBox styleOverrides={{ minWidth: "90px", width: "90px" }}>
               판매처
+              {isDBTable ? <></> : <span style={{ color: "red" }}>*</span>}
             </TextBox>
           ) : (
             <></>
@@ -853,6 +855,7 @@ export function RevenueDataTable({
               }}
             >
               공급처
+              {isDBTable ? <></> : <span style={{ color: "red" }}>*</span>}
             </TextBox>
           ) : (
             <></>
@@ -866,6 +869,7 @@ export function RevenueDataTable({
               }}
             >
               주문번호
+              {isDBTable ? <></> : <span style={{ color: "red" }}>*</span>}
             </TextBox>
           ) : (
             <></>
@@ -879,6 +883,7 @@ export function RevenueDataTable({
               }}
             >
               상품명
+              {isDBTable ? <></> : <span style={{ color: "red" }}>*</span>}
             </TextBox>
           ) : (
             <></>
@@ -912,7 +917,7 @@ export function RevenueDataTable({
               </TextBox>
             ) : (
               <TextBox styleOverrides={{ minWidth: "60px", width: "60px" }}>
-                판매가
+                판매가<span style={{ color: "red" }}>*</span>
               </TextBox>
             )
           ) : (
@@ -930,6 +935,7 @@ export function RevenueDataTable({
           {showingItemsMemo.showingAmount ? (
             <TextBox styleOverrides={{ minWidth: "60px", width: "60px" }}>
               주문수량
+              {isDBTable ? <></> : <span style={{ color: "red" }}>*</span>}
             </TextBox>
           ) : (
             <></>
@@ -945,7 +951,7 @@ export function RevenueDataTable({
 
           {showingItemsMemo.showingOrderStatus ? (
             <TextBox styleOverrides={{ minWidth: "60px", width: "60px" }}>
-              상태
+              상태{isDBTable ? <></> : <span style={{ color: "red" }}>*</span>}
             </TextBox>
           ) : (
             <></>
@@ -953,7 +959,7 @@ export function RevenueDataTable({
 
           {showingItemsMemo.showingCs ? (
             <TextBox styleOverrides={{ minWidth: "180px", width: "180px" }}>
-              CS
+              CS{isDBTable ? <></> : <span style={{ color: "red" }}>*</span>}
             </TextBox>
           ) : (
             <></>
@@ -962,6 +968,7 @@ export function RevenueDataTable({
           {showingItemsMemo.showingCategory ? (
             <TextBox styleOverrides={{ minWidth: "60px", width: "60px" }}>
               카테고리
+              {isDBTable ? <></> : <span style={{ color: "red" }}>*</span>}
             </TextBox>
           ) : (
             <></>
@@ -969,7 +976,7 @@ export function RevenueDataTable({
 
           {showingItemsMemo.showingCost ? (
             <TextBox styleOverrides={{ minWidth: "60px", width: "60px" }}>
-              원가
+              원가{isDBTable ? <></> : <span style={{ color: "red" }}>*</span>}
             </TextBox>
           ) : (
             <></>

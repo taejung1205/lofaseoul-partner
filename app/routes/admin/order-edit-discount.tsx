@@ -317,6 +317,11 @@ export default function Page() {
         <BlackButton onClick={() => setIsUploadModalOpened(true)}>
           업로드
         </BlackButton>
+        <div>
+          {`* `}
+          <span style={{ color: "red" }}>*</span>
+          {`로 표시된 항목은 엑셀 내 모든 항목에 필수적으로 기입되야 합니다. 빈 수치는 0으로 입력됩니다.`}
+        </div>
       </PageLayout>
     </>
   );
