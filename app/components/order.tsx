@@ -118,34 +118,50 @@ function TextBox({ children, styleOverrides, ...props }: Props) {
  * 배송사번호, 운송장 공유 일자를 제외하고 비어있는 값이 있으면 유효하지 않은 값으로 간주합니다.
  * @param item : OrderItem
  * @returns
- *  유효할 경우 true, 아닐 경우 false
+ *  유효할 경우 'ok', 아닐 경우 오류사유
  */
-export function isOrderItemValid(item: OrderItem) {
-  if (
-    item.seller == undefined ||
-    item.seller == "" ||
-    item.orderNumber == undefined ||
-    item.orderNumber == "" ||
-    item.productName == undefined ||
-    item.productName == "" ||
-    item.amount == undefined ||
-    item.zipCode == undefined ||
-    item.zipCode == "" ||
-    item.address == undefined ||
-    item.address == "" ||
-    item.phone == undefined ||
-    item.phone == "" ||
-    item.orderer == undefined ||
-    item.orderer == "" ||
-    item.receiver == undefined ||
-    item.receiver == "" ||
-    item.managementNumber == undefined ||
-    item.managementNumber == ""
-  ) {
-    return false;
-  } else {
-    return true;
+export function isOrderItemValid(item: OrderItem): string {
+  if (item.seller == undefined || item.seller == "") {
+    return "판매처가 누락되었습니다.";
   }
+
+  if (item.orderNumber == undefined || item.orderNumber == "") {
+    return "주문번호가 누락되었습니다.";
+  }
+
+  if (item.productName == undefined || item.productName == "") {
+    return "상품명이 누락되었습니다.";
+  }
+
+  if (item.amount == undefined) {
+    return "수량이 누락되었습니다.";
+  }
+
+  if (item.zipCode == undefined || item.zipCode == "") {
+    return "우편번호가 누락되었습니다.";
+  }
+
+  if (item.address == undefined || item.address == "") {
+    return "주소가 누락되었습니다.";
+  }
+
+  if (item.phone == undefined || item.phone == "") {
+    return "연락처가 누락되었습니다.";
+  }
+
+  if (item.orderer == undefined || item.orderer == "") {
+    return "주문자명이 누락되었습니다.";
+  }
+
+  if (item.receiver == undefined || item.receiver == "") {
+    return "수취인이 누락되었습니다.";
+  }
+
+  if (item.managementNumber == undefined || item.managementNumber == "") {
+    return "관리번호가 누락되었습니다.";
+  }
+
+  return "ok";
 }
 
 /**
@@ -419,9 +435,15 @@ export function OrderTable({
           ) : (
             <></>
           )}
-          <TextBox styleOverrides={{ minWidth: "90px" }}>관리번호</TextBox>
-          <TextBox styleOverrides={{ minWidth: "90px" }}>판매처</TextBox>
-          <TextBox styleOverrides={{ minWidth: "160px" }}>주문번호</TextBox>
+          <TextBox styleOverrides={{ minWidth: "90px" }}>
+            관리번호<span style={{ color: "red" }}>*</span>
+          </TextBox>
+          <TextBox styleOverrides={{ minWidth: "90px" }}>
+            판매처<span style={{ color: "red" }}>*</span>
+          </TextBox>
+          <TextBox styleOverrides={{ minWidth: "160px" }}>
+            주문번호<span style={{ color: "red" }}>*</span>
+          </TextBox>
 
           {isWaybillEdit || isWaybill ? (
             <>
@@ -432,17 +454,31 @@ export function OrderTable({
             <></>
           )}
 
-          <TextBox styleOverrides={{ minWidth: "450px" }}>상품명</TextBox>
+          <TextBox styleOverrides={{ minWidth: "450px" }}>
+            상품명<span style={{ color: "red" }}>*</span>
+          </TextBox>
           <TextBox styleOverrides={{ minWidth: "250px" }}>옵션명</TextBox>
-          <TextBox styleOverrides={{ minWidth: "30px" }}>수량</TextBox>
-          <TextBox styleOverrides={{ minWidth: "60px" }}>우편번호</TextBox>
-          <TextBox styleOverrides={{ minWidth: "400px" }}>주소</TextBox>
-          <TextBox styleOverrides={{ minWidth: "160px" }}>연락처</TextBox>
+          <TextBox styleOverrides={{ minWidth: "30px" }}>
+            수량<span style={{ color: "red" }}>*</span>
+          </TextBox>
+          <TextBox styleOverrides={{ minWidth: "60px" }}>
+            우편번호<span style={{ color: "red" }}>*</span>
+          </TextBox>
+          <TextBox styleOverrides={{ minWidth: "400px" }}>
+            주소<span style={{ color: "red" }}>*</span>
+          </TextBox>
+          <TextBox styleOverrides={{ minWidth: "160px" }}>
+            연락처<span style={{ color: "red" }}>*</span>
+          </TextBox>
           <TextBox styleOverrides={{ minWidth: "160px" }}>
             주문자 전화번호
           </TextBox>
-          <TextBox styleOverrides={{ minWidth: "90px" }}>주문자명</TextBox>
-          <TextBox styleOverrides={{ minWidth: "90px" }}>수취인</TextBox>
+          <TextBox styleOverrides={{ minWidth: "90px" }}>
+            주문자명<span style={{ color: "red" }}>*</span>
+          </TextBox>
+          <TextBox styleOverrides={{ minWidth: "90px" }}>
+            수취인<span style={{ color: "red" }}>*</span>
+          </TextBox>
           <TextBox styleOverrides={{ minWidth: "90px" }}>통관부호</TextBox>
           <TextBox styleOverrides={{ minWidth: "250px" }}>배송요청사항</TextBox>
           <div style={{ width: "16px" }} />

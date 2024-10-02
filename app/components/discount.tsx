@@ -284,10 +284,10 @@ export function DiscountDataTable({
           )}
 
           <TextBox styleOverrides={{ minWidth: "90px", width: "90px" }}>
-            할인시작일
+            할인시작일<span style={{ color: "red" }}>*</span>
           </TextBox>
           <TextBox styleOverrides={{ minWidth: "90px", width: "90px" }}>
-            할인종료일
+            할인종료일<span style={{ color: "red" }}>*</span>
           </TextBox>
           <TextBox
             styleOverrides={{
@@ -295,7 +295,7 @@ export function DiscountDataTable({
               width: "160px",
             }}
           >
-            판매처
+            판매처<span style={{ color: "red" }}>*</span>
           </TextBox>
           <TextBox
             styleOverrides={{
@@ -303,7 +303,7 @@ export function DiscountDataTable({
               width: "160px",
             }}
           >
-            공급처
+            공급처<span style={{ color: "red" }}>*</span>
           </TextBox>
           <TextBox
             styleOverrides={{
@@ -311,7 +311,7 @@ export function DiscountDataTable({
               width: "420px",
             }}
           >
-            상품명
+            상품명<span style={{ color: "red" }}>*</span>
           </TextBox>
           <TextBox
             styleOverrides={{

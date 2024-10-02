@@ -169,7 +169,7 @@ export function MarqueeOnHoverTextBox({
 
 /**
  * 엑셀에서 읽어온 해당 정산아이템이 유효한 지를 확인합니다.
- * 파트너명, 옵션명을 제외하고 비어있는 값이 있으면 유효하지 않은 값으로 간주합니다.
+ * 일부를 제외하고 비어있는 값이 있으면 유효하지 않은 값으로 간주합니다.
  * @param item : SettlementItem
  * @returns
  *  유효할 경우 "ok", 아닐 경우 어디가 문제인지 나타내는 string
@@ -262,7 +262,7 @@ export function setSettlementFee(
   }
   if (LofaSellers.includes(item.seller)) {
     item.fee = partnerProfile.lofaFee;
-  } else if(item.seller == "광주비엔날레"){
+  } else if (item.seller == "광주비엔날레") {
     item.fee = partnerProfile.gwangjuBiennaleFee;
   } else {
     item.fee = partnerProfile.otherFee;
@@ -455,25 +455,25 @@ export function SettlementTable({
           isMobile={isMobileMemo}
           styleOverrides={{ width: "90px", minWidth: "90px" }}
         >
-          주문일
+          주문일<span style={{ color: "red" }}>*</span>
         </TextBox>
         <TextBox
           isMobile={isMobileMemo}
           styleOverrides={{ width: "90px", minWidth: "90px" }}
         >
-          공급처
+          공급처<span style={{ color: "red" }}>*</span>
         </TextBox>
         <TextBox
           isMobile={isMobileMemo}
           styleOverrides={{ width: "60px", minWidth: "60px" }}
         >
-          판매처
+          판매처<span style={{ color: "red" }}>*</span>
         </TextBox>
         <TextBox
           isMobile={isMobileMemo}
           styleOverrides={{ width: "150px", minWidth: "150px" }}
         >
-          주문번호
+          주문번호<span style={{ color: "red" }}>*</span>
         </TextBox>
         <MarqueeOnHoverTextBox
           isMobile={isMobileMemo}
@@ -485,7 +485,7 @@ export function SettlementTable({
           onMouseEnter={() => {}}
           onMouseLeave={() => {}}
         >
-          상품명
+          상품명<span style={{ color: "red" }}>*</span>
         </MarqueeOnHoverTextBox>
         <MarqueeOnHoverTextBox
           isMobile={isMobileMemo}
@@ -503,13 +503,13 @@ export function SettlementTable({
           isMobile={isMobileMemo}
           styleOverrides={{ width: "60px", minWidth: "60px" }}
         >
-          판매단가
+          판매단가<span style={{ color: "red" }}>*</span>
         </TextBox>
         <TextBox
           isMobile={isMobileMemo}
           styleOverrides={{ width: "30px", minWidth: "30px" }}
         >
-          수량
+          수량<span style={{ color: "red" }}>*</span>
         </TextBox>
         <TextBox
           isMobile={isMobileMemo}
