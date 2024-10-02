@@ -5,6 +5,7 @@ import {
   doc,
   DocumentData,
   getDocs,
+  orderBy,
   query,
   setDoc,
   Timestamp,
@@ -121,7 +122,8 @@ export async function getDiscountData({
         isUsingProviderName ? "==" : ">=",
         isUsingProviderName ? providerName : ""
       )
-    )
+    ),
+    orderBy("startDate")
   );
 
   const querySnap = await getDocs(discountDataQuery);
