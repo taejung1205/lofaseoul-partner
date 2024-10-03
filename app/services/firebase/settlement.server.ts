@@ -236,24 +236,8 @@ export async function sendSettlementNoticeEmail({
 }) {
   addLog("sendSettlementNoticeEmail", { partnerList: partnerList });
   const profilesMap = await getAllPartnerProfiles();
-  // let countForRateLimit = 0;
-  // let successCount = 0;
-  // let start = performance.now();
   const mailList = [];
   for (let i = 0; i < partnerList.length; i++) {
-    // countForRateLimit++;
-    // if (countForRateLimit >= 10) {
-    //   countForRateLimit = 0;
-    //   const end = performance.now();
-    //   const spentTime = end - start;
-    //   if (spentTime < 1000) {
-    //     await new Promise((resolve) => setTimeout(resolve, 1000 - spentTime));
-    //     console.log(`At index i, Waited for ${1000 - spentTime} milisecond`);
-    //   } else {
-    //     console.log(`At index i, spent time is ${spentTime}`);
-    //   }
-    //   start = performance.now();
-    // }
     const partnerName = partnerList[i];
     const partnerProfile = profilesMap.get(partnerName);
     if (partnerProfile) {
@@ -267,29 +251,14 @@ export async function sendSettlementNoticeEmail({
           html: html,
         };
         mailList.push(mailItem);
-        // const result = await sendResendEmail({
-        //   to: email,
-        //   subject: `[로파서울] ${partnerName} 정산안내 및 증빙 요청`,
-        //   html: html,
-        // });
-        // successCount++;
-        // if (result.error) {
-        //   return {
-        //     status: "error",
-        //     message: result.error.message,
-        //     partnerName: partnerName,
-        //   };
-        // }
       }
     } else {
       return {
         status: "error",
         message: `partner profile '${partnerName}' not found`,
-        partnerName: partnerName,
       };
     }
   }
-  
 
   const result = await sendResendBatchEmail({ mailList: mailList });
   console.log(result);
@@ -303,6 +272,6 @@ export async function sendSettlementNoticeEmail({
 
   return {
     status: "ok",
-    message: `파트너 N곳에 메일이 전송되었습니다. (메일이 누락된 경우 제외 처리)`,
+    message: `메일이 전송되었습니다.`,
   };
 }

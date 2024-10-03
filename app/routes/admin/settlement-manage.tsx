@@ -92,7 +92,7 @@ export const action: ActionFunction = async ({ request }) => {
       if (result.status == "error") {
         return {
           status: "error",
-          message: `${result.partnerName}에게 메일 전송 중에 오류가 발생했습니다.\n${result.message}`,
+          message: `메일 전송 중 오류가 발생했습니다.\n${result.message}`,
         };
       } else {
         return { status: "ok", message: result.message };
@@ -290,8 +290,7 @@ export default function AdminSettlementManage() {
             fontWeight: "700",
           }}
         >
-          {`선택된 파트너 ${selectedPartners.length}곳에 안내 메일을 전송하시겠습니까?
-          (건당 약 0.5초 소요)`}
+          {`선택된 파트너 ${selectedPartners.length}곳에 안내 메일을 전송하시겠습니까?`}
           <div style={{ height: "20px" }} />
           <div style={{ display: "flex", justifyContent: "center" }}>
             <ModalButton
