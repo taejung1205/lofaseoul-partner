@@ -7,15 +7,21 @@ import {
   debug_changeNoticeToMessage,
   debug_changePartnerNameToProviderName,
 } from "~/services/firebase/debug.server";
+import { addLog } from "~/services/firebase/firebase.server";
+import { sendSettlementNoticeEmail } from "~/services/firebase/settlement.server";
+import { sendResendBatchEmail } from "~/services/resend.server";
 
 export const action: ActionFunction = async ({ request }) => {
   console.log("request submitted");
-  // await debug_fixRevenueDataProviderName("LOFA COLLAB", "로파콜랍");
-  // await debug_fixRevenueDataProviderName("DOUBLE NOD", "더블노드");
-  // await debug_fixRevenueDataProviderName("LOFA ORIGINAL", "로파오리지널");
-  //await debug_addExtraDataToRevenueDB();
-  // await debug_changeNoticeToMessage();\
-  await debug_addGwangjuBiennaleFee();
+  // await sendSettlementNoticeEmail({
+  //   partnerList: ["김태정 테스트계정", "김태정 테스트계정"],
+  // });
+  // const result =
+  // console.log(result);
+  // await addLog("test", result);
+  // if(result.data){
+  //   console.log(result.data);
+  // }
   return null;
 };
 
