@@ -203,15 +203,13 @@ export default function AdminSettlementShare() {
           if (checkValidResult !== "ok") {
             if (i == 0) {
               setNoticeModalStr(
-                `유효하지 않은 엑셀 파일입니다.
-                첫 번째 줄의 ${checkValidResult}
-                항목 이름이 정상적인지 확인해주세요.`
+                `유효하지 않은 엑셀 파일입니다.\n첫 번째 줄의 ${checkValidResult}\n항목 이름이 정상적인지 확인해주세요.`
               );
             } else {
               setNoticeModalStr(
-                `유효하지 않은 엑셀 파일입니다.
-                ${i + 2}번째 줄의 ${checkValidResult}
-                해당 아이템을 확인해주세요.`
+                `유효하지 않은 엑셀 파일입니다.\n${
+                  i + 2
+                }번째 줄의 ${checkValidResult}\n해당 아이템을 확인해주세요.`
               );
             }
             setIsNoticeModalOpened(true);
@@ -241,7 +239,7 @@ export default function AdminSettlementShare() {
           const partnerProfile = partnerProfiles.get(item.providerName);
           if (partnerProfile === undefined) {
             setNoticeModalStr(
-              `유효하지 않은 엑셀 파일입니다. ${i + 2}번째줄의 '${
+              `유효하지 않은 엑셀 파일입니다.\n${i + 2}번째줄의 '${
                 item.providerName
               }'가 계약업체목록에 있는지 확인해주세요. (공급처명 기준) `
             );

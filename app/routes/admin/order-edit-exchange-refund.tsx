@@ -120,7 +120,7 @@ export default function Page() {
           if (!result.isValid) {
             console.log(item);
             setNoticeModalStr(
-              `유효하지 않은 엑셀 파일입니다. ${i + 2}행에 ${result.message} `
+              `유효하지 않은 엑셀 파일입니다.\n${i + 2}행에 ${result.message} `
             );
             setIsNoticeModalOpened(true);
             setFileName("");

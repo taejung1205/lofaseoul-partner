@@ -187,15 +187,13 @@ export default function AdminOrderShare() {
           if (checkValidResult !== "ok") {
             if (i == 0) {
               setNoticeModalStr(
-                `유효하지 않은 엑셀 파일입니다.
-                첫 번째 줄의 ${checkValidResult}
-                항목 이름이 정상적인지 확인해주세요.`
+                `유효하지 않은 엑셀 파일입니다.\n첫 번째 줄의 ${checkValidResult}\n항목 이름이 정상적인지 확인해주세요.`
               );
             } else {
               setNoticeModalStr(
-                `유효하지 않은 엑셀 파일입니다.
-                ${i + 2}번째 줄의 ${checkValidResult}
-                해당 아이템을 확인해주세요.`
+                `유효하지 않은 엑셀 파일입니다.\n${
+                  i + 2
+                }번째 줄의 ${checkValidResult}\n해당 아이템을 확인해주세요.`
               );
             }
             setIsNoticeModalOpened(true);
