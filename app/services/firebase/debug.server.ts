@@ -4,11 +4,13 @@ import {
   collection,
   deleteDoc,
   doc,
+  getDoc,
   getDocs,
   query,
   setDoc,
   updateDoc,
   where,
+  writeBatch,
 } from "firebase/firestore";
 import {
   deleteObject,
@@ -370,5 +372,97 @@ export async function debug_changePartnerNameToProviderName() {
     console.log("All test revenue data editted successfully.");
   } catch (error) {
     console.error("Error editting test revenue data:", error);
+  }
+}
+
+export async function debug_addProviderNameToDelayedOrders() {
+  const revenueDataRef = collection(firestore, `delayed-orders`);
+
+  try {
+    // 쿼리로 문서들 가져오기
+    const querySnapshot = await getDocs(revenueDataRef);
+
+    const partnerProfiles = await getAllPartnerProfiles();
+
+    // 문서들을 반복하면서 수정
+    const promises = querySnapshot.docs.map((docSnapshot) => {
+      const data = docSnapshot.data();
+
+      const providerName =
+        partnerProfiles.get(data?.partnerName ?? "")?.providerName ?? "";
+      if (providerName.length == 0) {
+        console.log(`partnerName of ${data?.partnerName} not found`);
+      }
+
+      updateDoc(doc(firestore, `delayed-orders/${docSnapshot.id}`), {
+        providerName: providerName,
+      });
+    });
+
+    // 모든 삭제 작업이 완료될 때까지 대기
+    await Promise.all(promises);
+
+    console.log("All editted successfully.");
+  } catch (error) {
+    console.error("Error editting test revenue data:", error);
+  }
+}
+
+export async function debug_addProviderNameToWaybills() {
+  const ordersCollectionRef = collection(firestore, "waybills");
+
+  try {
+    // Fetch all order documents from the 'orders' collection
+    const ordersSnapshot = await getDocs(ordersCollectionRef);
+
+    // Initialize Firestore batch
+    let batch = writeBatch(firestore);
+    const BATCH_SIZE = 500; // Firestore allows a maximum of 500 writes per batch
+    let batchCount = 0;
+
+    const partnerProfiles = await getAllPartnerProfiles();
+
+    // Loop through each order document
+    for (const orderDoc of ordersSnapshot.docs) {
+      const orderId = orderDoc.id;
+      const itemsCollectionRef = collection(
+        firestore,
+        `waybills/${orderId}/items`
+      );
+      const itemsSnapshot = await getDocs(itemsCollectionRef);
+
+      // Loop through each item in the 'items' subcollection
+      for (const itemDoc of itemsSnapshot.docs) {
+        const itemRef = doc(firestore, `waybills/${orderId}/items`, itemDoc.id);
+        const data = (await getDoc(itemRef)).data();
+
+        const providerName =
+          partnerProfiles.get(data?.partnerName ?? "")?.providerName ?? "";
+        if (providerName.length == 0) {
+          console.log(`partnerName of ${data?.partnerName} not found`);
+        }
+
+        // Add update operation to the batch
+        batch.update(itemRef, { providerName: providerName });
+        batchCount++;
+
+        // If the batch size reaches the limit, commit the batch and start a new one
+        if (batchCount === BATCH_SIZE) {
+          await batch.commit();
+          console.log(`Batch of ${BATCH_SIZE} items committed.`);
+
+          // Start a new batch
+          batch = writeBatch(firestore);
+          batchCount = 0;
+        }
+      }
+      console.log(`${orderId} added .`);
+    }
+
+    // Commit the batch update
+    await batch.commit();
+    console.log("All waybill items updated successfully.");
+  } catch (error) {
+    console.error("Error updating items:", error);
   }
 }

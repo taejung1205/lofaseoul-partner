@@ -11,7 +11,7 @@ import {
   where,
   writeBatch,
 } from "firebase/firestore";
-import { addLog } from "./firebase.server";
+import { addLog, getPartnerProfile } from "./firebase.server";
 import { sendAligoMessage } from "../aligo.server";
 import { firestore } from "./firebaseInit.server";
 import { dateToDayStr } from "~/utils/date";
@@ -39,9 +39,16 @@ export async function getAllDelayedOrders() {
 export async function getPartnerDelayedOrders(partnerName: string) {
   const ordersRef = collection(firestore, `delayed-orders`);
 
+  const partnerProfile = await getPartnerProfile({ name: partnerName });
+  if (!partnerProfile) {
+    return [];
+  }
+
+  const providerName = partnerProfile.providerName;
+
   const ordersQuery = query(
     ordersRef,
-    where("partnerName", "==", partnerName),
+    where("providerName", "==", providerName),
     orderBy("orderTimestamp")
   );
   const querySnap = await getDocs(ordersQuery);
@@ -86,9 +93,7 @@ export async function shareDelayedWaybills({
         where("managementNumber", "==", item.managementNumber),
         where("optionName", "==", item.optionName),
         where("orderNumber", "==", item.orderNumber),
-        where("orderer", "==", item.orderer),
-        where("ordererPhone", "==", item.ordererPhone),
-        where("partnerName", "==", item.partnerName),
+        where("providerName", "==", item.providerName),
         where("phone", "==", item.phone),
         where("productName", "==", item.productName),
         where("receiver", "==", item.receiver),
@@ -187,7 +192,7 @@ export async function getDelayedOrdersCount(day: number) {
  */
 export async function getPartnerDelayedOrdersCount(
   day: number,
-  partnerName: string
+  providerName: string
 ) {
   const date = new Date();
   date.setDate(date.getDate() - day);
@@ -197,7 +202,7 @@ export async function getPartnerDelayedOrdersCount(
   const delayQuery = query(
     delayedRef,
     where("orderTimestamp", "<=", timestamp),
-    where("partnerName", "==", partnerName)
+    where("providerName", "==", providerName)
   );
   const snapshot = await getCountFromServer(delayQuery);
   return snapshot.data().count;

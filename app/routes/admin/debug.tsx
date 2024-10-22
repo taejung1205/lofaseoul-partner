@@ -1,15 +1,7 @@
 import { ActionFunction } from "@remix-run/node";
 import { useSubmit } from "@remix-run/react";
 import { useRef } from "react";
-import {
-  debug_addExtraDataToRevenueDB,
-  debug_addGwangjuBiennaleFee,
-  debug_changeNoticeToMessage,
-  debug_changePartnerNameToProviderName,
-} from "~/services/firebase/debug.server";
-import { addLog } from "~/services/firebase/firebase.server";
-import { sendSettlementNoticeEmail } from "~/services/firebase/settlement.server";
-import { sendResendBatchEmail } from "~/services/resend.server";
+import { debug_addProviderNameToWaybills } from "~/services/firebase/debug.server";
 
 export const action: ActionFunction = async ({ request }) => {
   console.log("request submitted");
@@ -22,6 +14,7 @@ export const action: ActionFunction = async ({ request }) => {
   // if(result.data){
   //   console.log(result.data);
   // }
+  await debug_addProviderNameToWaybills();
   return null;
 };
 

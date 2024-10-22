@@ -21,12 +21,7 @@ import {
   LoaderFunction,
   redirect,
 } from "@remix-run/node";
-import {
-  isOrderItemValid,
-  OrderItem,
-  OrderTable,
-  setOrderPartnerName,
-} from "~/components/order";
+import { isOrderItemValid, OrderItem, OrderTable } from "~/components/order";
 import writeXlsxFile from "write-excel-file";
 import * as xlsx from "xlsx";
 import { BasicModal, ModalButton } from "~/components/modal";
@@ -39,6 +34,7 @@ import { adjustSellerName } from "~/components/seller";
 import { dateToDayStr, dayStrToDate, getTimezoneDate } from "~/utils/date";
 import { getPartnerOrders } from "~/services/firebase/order.server";
 import { addWaybills } from "~/services/firebase/waybill.server";
+import { getPartnerProfile } from "~/services/firebase/firebase.server";
 
 function FileNameBox({
   isMobile,
@@ -127,20 +123,22 @@ export const loader: LoaderFunction = async ({ request }) => {
 
   const url = new URL(request.url);
   const day = url.searchParams.get("day");
+  const partnerProfile = await getPartnerProfile({ name: partnerName });
+  const providerName = partnerProfile!.providerName;
 
   if (day !== null) {
     const orders = await getPartnerOrders({
       dayStr: day,
       partnerName: partnerName,
     });
-    return json({ day: day, orders: orders, name: partnerName });
+    return json({ day: day, orders: orders, name: providerName });
   } else {
     const today = dateToDayStr(new Date());
     const orders = await getPartnerOrders({
       dayStr: today,
       partnerName: partnerName,
     });
-    return json({ day: today, orders: orders, name: partnerName });
+    return json({ day: today, orders: orders, name: providerName });
   }
 };
 
@@ -276,13 +274,10 @@ export default function PartnerWaybillShare() {
             productName: element.상품명?.toString(),
             optionName: element.옵션명?.toString() ?? "",
             amount: Number(element.배송수량),
-            orderer: element.주문자명?.toString(),
             receiver: element.수취인?.toString(),
-            partnerName: "",
             zipCode: element.우편번호?.toString(),
             address: element.주소?.toString(),
             phone: element.연락처?.toString(),
-            ordererPhone: element["주문자 전화번호"]?.toString() ?? "",
             customsCode: element.통관부호?.toString() ?? "",
             deliveryRequest: element.배송요청사항?.toString() ?? "",
             managementNumber: element.관리번호?.toString(),
@@ -290,6 +285,7 @@ export default function PartnerWaybillShare() {
             waybillNumber: element.송장번호?.toString() ?? "",
             waybillSharedDate: "",
             orderSharedDate: "",
+            providerName: "",
           };
 
           let isValid = isOrderItemValid(item);
@@ -304,32 +300,6 @@ export default function PartnerWaybillShare() {
           }
 
           adjustSellerName(item);
-
-          let nameResult = setOrderPartnerName(item);
-
-          if (!nameResult || item.partnerName.length == 0) {
-            console.log(item);
-            setNoticeModalStr(
-              "유효하지 않은 엑셀 파일입니다.\n상품명에 파트너 이름이 들어있는지 확인해주세요."
-            );
-            setIsNoticeModalOpened(true);
-            setFileName("");
-            setItems([]);
-            e.target.value = "";
-            return false;
-          }
-
-          if (item.partnerName !== loaderData.name) {
-            console.log(item);
-            setNoticeModalStr(
-              `유효하지 않은 엑셀 파일입니다.\n상품명에 기록된 파트너명을 확인해주세요. (${item.partnerName})`
-            );
-            setIsNoticeModalOpened(true);
-            setFileName("");
-            setItems([]);
-            e.target.value = "";
-            return false;
-          }
 
           if (!PossibleShippingCompanies.includes(item.shippingCompany)) {
             warningMessage =
@@ -422,18 +392,6 @@ export default function PartnerWaybillShare() {
         column: "송장번호",
         type: String,
         value: (item: OrderItem) => item.waybillNumber,
-        width: 15,
-      },
-      {
-        column: "주문자명",
-        type: String,
-        value: (item: OrderItem) => item.orderer,
-        width: 10,
-      },
-      {
-        column: "주문자 전화번호",
-        type: String,
-        value: (item: OrderItem) => item.ordererPhone,
         width: 15,
       },
       {

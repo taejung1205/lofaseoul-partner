@@ -6,6 +6,7 @@ import { useMemo } from "react";
 import { json } from "react-router";
 import { PageLayout } from "~/components/page_layout";
 import { getPartnerDelayedOrdersCount } from "~/services/firebase/delayedOrder.server";
+import { getPartnerProfile } from "~/services/firebase/firebase.server";
 import { getPartnerTodayOrdersCount } from "~/services/firebase/order.server";
 import { getPartnerTodayWaybillsCount } from "~/services/firebase/waybill.server";
 import { requireUser } from "~/services/session.server";
@@ -51,9 +52,16 @@ export const loader: LoaderFunction = async ({ request }) => {
     return redirect("/logout");
   }
 
-  const ordersCount = await getPartnerTodayOrdersCount(partnerName);
-  const waybillsCount = await getPartnerTodayWaybillsCount(partnerName);
-  const delayedOrdersCount = await getPartnerDelayedOrdersCount(3, partnerName);
+  const partnerProfile = await getPartnerProfile({ name: partnerName });
+
+  const providerName = partnerProfile!.providerName;
+
+  const ordersCount = await getPartnerTodayOrdersCount(providerName);
+  const waybillsCount = await getPartnerTodayWaybillsCount(providerName);
+  const delayedOrdersCount = await getPartnerDelayedOrdersCount(
+    3,
+    providerName
+  );
 
   return json({
     ordersCount: ordersCount,

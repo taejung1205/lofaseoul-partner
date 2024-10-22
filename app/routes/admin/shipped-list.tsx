@@ -344,6 +344,13 @@ const schema = [
     wrap: true,
   },
   {
+    column: "공급처명",
+    type: String,
+    value: (item: OrderItem) => item.providerName,
+    width: 20,
+    wrap: true,
+  },
+  {
     column: "상품명",
     type: String,
     value: (item: OrderItem) => item.productName,
@@ -397,18 +404,6 @@ const schema = [
     column: "송장번호",
     type: String,
     value: (item: OrderItem) => item.waybillNumber,
-    width: 15,
-  },
-  {
-    column: "주문자명",
-    type: String,
-    value: (item: OrderItem) => item.orderer,
-    width: 10,
-  },
-  {
-    column: "주문자 전화번호",
-    type: String,
-    value: (item: OrderItem) => item.ordererPhone,
     width: 15,
   },
   {

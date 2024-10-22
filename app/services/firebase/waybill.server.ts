@@ -12,7 +12,7 @@ import {
   writeBatch,
 } from "firebase/firestore";
 import { sendAligoMessage } from "../aligo.server";
-import { addLog } from "./firebase.server";
+import { addLog, getPartnerProfile } from "./firebase.server";
 import { firestore } from "./firebaseInit.server";
 import { OrderItem } from "~/components/order";
 import { dateToDayStr } from "~/utils/date";
@@ -57,9 +57,7 @@ export async function addWaybills({
         where("managementNumber", "==", item.managementNumber),
         where("optionName", "==", item.optionName),
         where("orderNumber", "==", item.orderNumber),
-        where("orderer", "==", item.orderer),
-        where("ordererPhone", "==", item.ordererPhone),
-        where("partnerName", "==", item.partnerName),
+        where("providerName", "==", item.providerName),
         where("phone", "==", item.phone),
         where("productName", "==", item.productName),
         where("receiver", "==", item.receiver),
@@ -185,9 +183,16 @@ export async function getPartnerWaybills({
 }) {
   const ordersRef = collection(firestore, `waybills/${dayStr}/items`);
 
+  const partnerProfile = await getPartnerProfile({ name: partnerName });
+  if (!partnerProfile) {
+    return [];
+  }
+
+  const providerName = partnerProfile.providerName;
+
   const ordersQuery = query(
     ordersRef,
-    where("partnerName", "==", partnerName),
+    where("providerName", "==", providerName),
     orderBy("managementNumber")
   );
   const querySnap = await getDocs(ordersQuery);
@@ -233,9 +238,7 @@ export async function editWaybills({
         where("managementNumber", "==", item.managementNumber),
         where("optionName", "==", item.optionName),
         where("orderNumber", "==", item.orderNumber),
-        where("orderer", "==", item.orderer),
-        where("ordererPhone", "==", item.ordererPhone),
-        where("partnerName", "==", item.partnerName),
+        where("providerName", "==", item.providerName),
         where("phone", "==", item.phone),
         where("productName", "==", item.productName),
         where("receiver", "==", item.receiver),
@@ -326,12 +329,12 @@ export async function getTodayWaybillsCount() {
  * @param partnerName: 파트너명
  * @returns
  */
-export async function getPartnerTodayWaybillsCount(partnerName: string) {
+export async function getPartnerTodayWaybillsCount(providerName: string) {
   const today = dateToDayStr(new Date());
   const waybillsRef = collection(firestore, `waybills/${today}/items`);
   const waybillQuery = query(
     waybillsRef,
-    where("partnerName", "==", partnerName)
+    where("providerName", "==", providerName)
   );
   const snapshot = await getCountFromServer(waybillQuery);
   return snapshot.data().count;

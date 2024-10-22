@@ -255,7 +255,7 @@ export default function Page() {
           if (!result.isValid) {
             console.log(item);
             setNoticeModalStr(
-              `유효하지 않은 엑셀 파일입니다. ${i + 2}행에 ${result.message} `
+              `유효하지 않은 엑셀 파일입니다.\n${i + 2}행에 ${result.message} `
             );
             setIsNoticeModalOpened(true);
             setFileName("");
@@ -272,7 +272,7 @@ export default function Page() {
           if (partnerProfile === undefined) {
             console.log(item);
             setNoticeModalStr(
-              `유효하지 않은 엑셀 파일입니다. ${
+              `유효하지 않은 엑셀 파일입니다.\n${
                 i + 2
               }행의 공급처가 계약업체목록에 있는지 확인해주세요. (${
                 item.providerName
