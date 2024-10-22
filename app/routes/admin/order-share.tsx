@@ -8,7 +8,6 @@ import {
   isOrderItemValid,
   OrderItem,
   OrderTableMemo,
-  setOrderPartnerName,
 } from "~/components/order";
 import * as xlsx from "xlsx";
 import {
@@ -108,7 +107,7 @@ export default function AdminOrderShare() {
   const partnerProfiles = useMemo(() => {
     let map = new Map();
     loaderData.partners.forEach((partner: PartnerProfile) => {
-      map.set(partner.name, partner);
+      map.set(partner.providerName, partner);
     });
     return map;
   }, [loaderData]);
@@ -138,8 +137,8 @@ export default function AdminOrderShare() {
     setItemsChecked(Array(items.length).fill(isChecked));
   }
 
-  function shareOrder(settlementList: OrderItem[], dayStr: string) {
-    const json = JSON.stringify(settlementList);
+  function shareOrder(orderList: OrderItem[], dayStr: string) {
+    const json = JSON.stringify(orderList);
     const formData = new FormData(formRef.current ?? undefined);
     formData.set("order", json);
     formData.set("day", dayStr);
@@ -153,6 +152,7 @@ export default function AdminOrderShare() {
     if (e.target.files) {
       const reader = new FileReader();
       reader.onload = (e: any) => {
+        console.log(partnerProfiles);
         const array: OrderItem[] = [];
         const data = e.target.result;
         const workbook = xlsx.read(data, { type: "array" });
@@ -168,13 +168,11 @@ export default function AdminOrderShare() {
             productName: element.상품명?.toString(),
             optionName: element.옵션명?.toString() ?? "",
             amount: Number(element.배송수량),
-            orderer: element.주문자명?.toString(),
+            providerName: element.공급처?.toString(),
             receiver: element.수취인?.toString(),
-            partnerName: "",
             zipCode: element.우편번호?.toString(),
             address: element.주소?.toString(),
             phone: element.연락처?.toString(),
-            ordererPhone: element["주문자 전화번호"]?.toString() ?? "",
             customsCode: element.통관부호?.toString() ?? "",
             deliveryRequest: element.배송요청사항?.toString() ?? "",
             managementNumber: element.관리번호?.toString(),
@@ -209,26 +207,12 @@ export default function AdminOrderShare() {
 
           adjustSellerName(item);
 
-          let nameResult = setOrderPartnerName(item);
-
-          if (!nameResult || item.partnerName.length == 0) {
-            console.log(item);
-            setNoticeModalStr(
-              "유효하지 않은 엑셀 파일입니다.\n상품명에 파트너 이름이 들어있는지 확인해주세요."
-            );
-            setIsNoticeModalOpened(true);
-            setFileName("");
-            setItems([]);
-            e.target.value = "";
-            return false;
-          }
-
-          const partnerProfile = partnerProfiles.get(item.partnerName);
+          const partnerProfile = partnerProfiles.get(item.providerName);
 
           if (partnerProfile === undefined) {
             console.log(item);
             setNoticeModalStr(
-              `유효하지 않은 엑셀 파일입니다.\n상품명의 파트너가 계약 업체 목록에 있는지 확인해주세요. (${item.partnerName})`
+              `유효하지 않은 엑셀 파일입니다.\n상품명의 파트너가 계약 업체 목록에 있는지 확인해주세요. (${item.providerName})`
             );
             setIsNoticeModalOpened(true);
             setFileName("");

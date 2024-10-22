@@ -10,7 +10,7 @@ import {
 import { ActionFunction, json, LoaderFunction } from "@remix-run/node";
 import { BasicModal, ModalButton } from "~/components/modal";
 import { OrderItem, OrderTable } from "~/components/order";
-import { getPartnerProfile } from "~/services/firebase/firebase.server";
+import { getAllPartnerProfiles } from "~/services/firebase/firebase.server";
 import { sendAligoMessage } from "~/services/aligo.server";
 import { LoadingOverlay } from "@mantine/core";
 import { getAllDelayedOrders } from "~/services/firebase/delayedOrder.server";
@@ -63,14 +63,13 @@ export const action: ActionFunction = async ({ request }) => {
   try {
     const body = await request.formData();
     const actionType = body.get("action")?.toString();
+    const partnerProfiles = await getAllPartnerProfiles(true);
     if (actionType === "send") {
       const receivers = body.get("receivers")?.toString();
       if (receivers !== undefined) {
         const receiversArr: string[] = JSON.parse(receivers);
         for (let i = 0; receiversArr.length; i++) {
-          const profile: any = await getPartnerProfile({
-            name: receiversArr[i],
-          });
+          const profile = partnerProfiles.get(receiversArr[i]) ?? null;
           if (profile == null || profile.phone == undefined) {
             throw Error("해당 파트너를 찾을 수 없습니다.");
           } else {
@@ -171,7 +170,7 @@ export default function AdminDelayedOrder() {
 
     for (let i = 0; i < items.length; i++) {
       if (itemsChecked[i]) {
-        const partner = items[i].partnerName;
+        const partner = items[i].providerName;
         if (!receiverList.includes(partner)) {
           receiverList.push(partner);
         }

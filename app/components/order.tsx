@@ -13,15 +13,15 @@ export type OrderItem = {
   zipCode: string;
   address: string;
   phone: string;
-  ordererPhone: string;
-  orderer: string;
+  // ordererPhone: string;
+  // orderer: string;
   receiver: string;
   customsCode: string;
   deliveryRequest: string;
   managementNumber: string; //관리번호
   shippingCompany: string;
   waybillNumber: string;
-  partnerName: string;
+  providerName: string;
   orderSharedDate: string; //주문서가 공유된 날짜 XXXX-XX-XX
   waybillSharedDate: string; //운송장이 마지막으로 공유된 날짜 XXXX-XX-XX
 };
@@ -114,7 +114,7 @@ function TextBox({ children, styleOverrides, ...props }: Props) {
 
 /**
  * 엑셀에서 읽어온 해당 주문서 아이템이 유효한 지를 확인합니다.
- * 옵션명, 파트너명, 송장번호, 주문자 번호, 통관부호, 배송요청사항,
+ * 옵션명, 파트너명, 송장번호, 통관부호, 배송요청사항,
  * 배송사번호, 운송장 공유 일자를 제외하고 비어있는 값이 있으면 유효하지 않은 값으로 간주합니다.
  * @param item : OrderItem
  * @returns
@@ -149,8 +149,8 @@ export function isOrderItemValid(item: OrderItem): string {
     return "연락처가 누락되었습니다.";
   }
 
-  if (item.orderer == undefined || item.orderer == "") {
-    return "주문자명이 누락되었습니다.";
+  if (item.providerName == undefined || item.providerName == "") {
+    return "공급처명이 누락되었습니다.";
   }
 
   if (item.receiver == undefined || item.receiver == "") {
@@ -162,24 +162,6 @@ export function isOrderItemValid(item: OrderItem): string {
   }
 
   return "ok";
-}
-
-/**
- * 상품명을 바탕으로 파트너명을 도출해 해당 주문서 아이템 정보에 넣습니다.
- * @param item : SettlementItem (must be valid)
- * @return
- *  파트너명을 유효하게 찾았을 경우 true,
- *  실패했을 경우 false
- */
-export function setOrderPartnerName(item: OrderItem) {
-  const regExp = /\[(.*?)\]/;
-  let match = item.productName.match(regExp);
-  if (match) {
-    item.partnerName = match[1];
-    return true;
-  } else {
-    return false;
-  }
 }
 
 function OrderItem({
@@ -327,6 +309,9 @@ function OrderItem({
       ) : (
         <></>
       )}
+      <TextBox styleOverrides={{ minWidth: "150px", width: "150px" }}>
+        {item.providerName}
+      </TextBox>
       <TextBox
         styleOverrides={{ minWidth: "450px", fontSize: "12px", width: "450px" }}
       >
@@ -337,10 +322,10 @@ function OrderItem({
       >
         {item.optionName}
       </TextBox>
-      <TextBox styleOverrides={{ minWidth: "30px", width: "30px" }}>
+      <TextBox styleOverrides={{ minWidth: "40px", width: "40px" }}>
         {item.amount}
       </TextBox>
-      <TextBox styleOverrides={{ minWidth: "60px", width: "60px" }}>
+      <TextBox styleOverrides={{ minWidth: "90px", width: "90px" }}>
         {item.zipCode}
       </TextBox>
       <TextBox
@@ -350,12 +335,6 @@ function OrderItem({
       </TextBox>
       <TextBox styleOverrides={{ minWidth: "160px", width: "160px" }}>
         {item.phone}
-      </TextBox>
-      <TextBox styleOverrides={{ minWidth: "160px", width: "160px" }}>
-        {item.ordererPhone}
-      </TextBox>
-      <TextBox styleOverrides={{ minWidth: "90px", width: "90px" }}>
-        {item.orderer}
       </TextBox>
       <TextBox styleOverrides={{ minWidth: "90px", width: "90px" }}>
         {item.receiver}
@@ -454,14 +433,17 @@ export function OrderTable({
             <></>
           )}
 
+          <TextBox styleOverrides={{ minWidth: "150px" }}>
+            공급처명<span style={{ color: "red" }}>*</span>
+          </TextBox>
           <TextBox styleOverrides={{ minWidth: "450px" }}>
             상품명<span style={{ color: "red" }}>*</span>
           </TextBox>
           <TextBox styleOverrides={{ minWidth: "250px" }}>옵션명</TextBox>
-          <TextBox styleOverrides={{ minWidth: "30px" }}>
+          <TextBox styleOverrides={{ minWidth: "40px" }}>
             수량<span style={{ color: "red" }}>*</span>
           </TextBox>
-          <TextBox styleOverrides={{ minWidth: "60px" }}>
+          <TextBox styleOverrides={{ minWidth: "90px" }}>
             우편번호<span style={{ color: "red" }}>*</span>
           </TextBox>
           <TextBox styleOverrides={{ minWidth: "400px" }}>
@@ -469,12 +451,6 @@ export function OrderTable({
           </TextBox>
           <TextBox styleOverrides={{ minWidth: "160px" }}>
             연락처<span style={{ color: "red" }}>*</span>
-          </TextBox>
-          <TextBox styleOverrides={{ minWidth: "160px" }}>
-            주문자 전화번호
-          </TextBox>
-          <TextBox styleOverrides={{ minWidth: "90px" }}>
-            주문자명<span style={{ color: "red" }}>*</span>
           </TextBox>
           <TextBox styleOverrides={{ minWidth: "90px" }}>
             수취인<span style={{ color: "red" }}>*</span>

@@ -16,7 +16,11 @@ import { dateToDayStr, dayStrToDate } from "~/utils/date";
 import { firestore } from "./firebaseInit.server";
 import { OrderItem } from "~/components/order";
 import { PartnerProfile } from "~/components/partner_profile";
-import { addLog, getAllPartnerProfiles } from "./firebase.server";
+import {
+  addLog,
+  getAllPartnerProfiles,
+  getPartnerProfile,
+} from "./firebase.server";
 import { sendAligoMessage } from "../aligo.server";
 
 /**
@@ -50,7 +54,9 @@ export async function addOrders({
   dayStr: string;
 }) {
   try {
-    let partnerMap: Map<string, PartnerProfile> = await getAllPartnerProfiles();
+    let partnerMap: Map<string, PartnerProfile> = await getAllPartnerProfiles(
+      true
+    );
     const phoneList: string[] = [];
     const phoneOrderCount: Map<string, number> = new Map();
     let orderBatch = writeBatch(firestore);
@@ -60,7 +66,7 @@ export async function addOrders({
       const item = orders[i];
 
       //연락 돌릴 연락처 && 건수 추가
-      const partner = partnerMap.get(item.partnerName);
+      const partner = partnerMap.get(item.providerName);
       if (partner == undefined) {
         throw Error("오류: 존재하지 않는 파트너입니다.");
       }
@@ -163,9 +169,16 @@ export async function getPartnerOrders({
 }) {
   const ordersRef = collection(firestore, `orders/${dayStr}/items`);
 
+  const partnerProfile = await getPartnerProfile({ name: partnerName });
+  if (!partnerProfile) {
+    return [];
+  }
+
+  const providerName = partnerProfile.providerName;
+
   const ordersQuery = query(
     ordersRef,
-    where("partnerName", "==", partnerName),
+    where("providerName", "==", providerName),
     orderBy("managementNumber")
   );
   const querySnap = await getDocs(ordersQuery);
@@ -206,9 +219,7 @@ export async function deleteOrders({
         where("managementNumber", "==", item.managementNumber),
         where("optionName", "==", item.optionName),
         where("orderNumber", "==", item.orderNumber),
-        where("orderer", "==", item.orderer),
-        where("ordererPhone", "==", item.ordererPhone),
-        where("partnerName", "==", item.partnerName),
+        where("providerName", "==", item.providerName),
         where("phone", "==", item.phone),
         where("productName", "==", item.productName),
         where("receiver", "==", item.receiver),
@@ -270,13 +281,16 @@ export async function getTodayOrdersCount() {
 
 /**
  * 해당 파트너가 오늘 공유받은 주문 건수를 불러옵니다.
- * @param partnerName: 파트너명
+ * @param providerName: 파트너명
  * @returns
  */
-export async function getPartnerTodayOrdersCount(partnerName: string) {
+export async function getPartnerTodayOrdersCount(providerName: string) {
   const today = dateToDayStr(new Date());
   const ordersRef = collection(firestore, `orders/${today}/items`);
-  const orderQuery = query(ordersRef, where("partnerName", "==", partnerName));
+  const orderQuery = query(
+    ordersRef,
+    where("providerName", "==", providerName)
+  );
   const snapshot = await getCountFromServer(orderQuery);
   return snapshot.data().count;
 }
