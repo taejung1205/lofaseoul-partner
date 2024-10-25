@@ -131,14 +131,14 @@ export const loader: LoaderFunction = async ({ request }) => {
       dayStr: day,
       partnerName: partnerName,
     });
-    return json({ day: day, orders: orders, name: providerName });
+    return json({ day: day, orders: orders, providerName: providerName });
   } else {
     const today = dateToDayStr(new Date());
     const orders = await getPartnerOrders({
       dayStr: today,
       partnerName: partnerName,
     });
-    return json({ day: today, orders: orders, name: providerName });
+    return json({ day: today, orders: orders, providerName: providerName });
   }
 };
 
@@ -285,7 +285,8 @@ export default function PartnerWaybillShare() {
             waybillNumber: element.송장번호?.toString() ?? "",
             waybillSharedDate: "",
             orderSharedDate: "",
-            providerName: "",
+            providerName:
+              element.공급처명?.toString() ?? loaderData.providerName ?? "",
           };
 
           let isValid = isOrderItemValid(item);
@@ -335,6 +336,13 @@ export default function PartnerWaybillShare() {
         column: "주문번호",
         type: String,
         value: (item: OrderItem) => item.orderNumber,
+        width: 30,
+        wrap: true,
+      },
+      {
+        column: "공급처명",
+        type: String,
+        value: (item: OrderItem) => item.providerName,
         width: 30,
         wrap: true,
       },
