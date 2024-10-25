@@ -285,8 +285,7 @@ export default function PartnerWaybillShare() {
             waybillNumber: element.송장번호?.toString() ?? "",
             waybillSharedDate: "",
             orderSharedDate: "",
-            providerName:
-              element.공급처명?.toString() ?? loaderData.providerName ?? "",
+            providerName: loaderData.providerName,
           };
 
           let isValid = isOrderItemValid(item);
