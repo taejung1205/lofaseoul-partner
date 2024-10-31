@@ -318,7 +318,7 @@ export async function editWaybills({
  * @returns
  */
 export async function getTodayWaybillsCount() {
-  const today = dateToDayStr(getTimezoneDate(new Date()));
+  const today = dateToDayStr((new Date()));
   const waybillsRef = collection(firestore, `waybills/${today}/items`);
   const snapshot = await getCountFromServer(waybillsRef);
   return snapshot.data().count;
@@ -330,7 +330,7 @@ export async function getTodayWaybillsCount() {
  * @returns
  */
 export async function getPartnerTodayWaybillsCount(providerName: string) {
-  const today = dateToDayStr(getTimezoneDate(new Date()));
+  const today = dateToDayStr((new Date()));
   const waybillsRef = collection(firestore, `waybills/${today}/items`);
   const waybillQuery = query(
     waybillsRef,
