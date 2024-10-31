@@ -12,7 +12,7 @@ import {
   where,
   writeBatch,
 } from "firebase/firestore";
-import { dateToDayStr, dayStrToDate, getTimezoneDate } from "~/utils/date";
+import { dateToDayStr, dayStrToDate } from "~/utils/date";
 import { firestore } from "./firebaseInit.server";
 import { OrderItem } from "~/components/order";
 import { PartnerProfile } from "~/components/partner_profile";

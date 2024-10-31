@@ -15,7 +15,7 @@ import { sendAligoMessage } from "../aligo.server";
 import { addLog, getPartnerProfile } from "./firebase.server";
 import { firestore } from "./firebaseInit.server";
 import { OrderItem } from "~/components/order";
-import { dateToDayStr, getTimezoneDate } from "~/utils/date";
+import { dateToDayStr } from "~/utils/date";
 
 /**
  * 운송장이 기입된 주문서들을 공유합니다.
@@ -38,7 +38,7 @@ export async function addWaybills({
   try {
     let waybillBatch = writeBatch(firestore);
 
-    let day = getTimezoneDate(new Date());
+    let day = new Date();
     day.setDate(day.getDate() + 1);
     const nextDayStr = dateToDayStr(day);
 
@@ -318,7 +318,7 @@ export async function editWaybills({
  * @returns
  */
 export async function getTodayWaybillsCount() {
-  const today = dateToDayStr((new Date()));
+  const today = dateToDayStr(new Date());
   const waybillsRef = collection(firestore, `waybills/${today}/items`);
   const snapshot = await getCountFromServer(waybillsRef);
   return snapshot.data().count;
@@ -330,7 +330,7 @@ export async function getTodayWaybillsCount() {
  * @returns
  */
 export async function getPartnerTodayWaybillsCount(providerName: string) {
-  const today = dateToDayStr((new Date()));
+  const today = dateToDayStr(new Date());
   const waybillsRef = collection(firestore, `waybills/${today}/items`);
   const waybillQuery = query(
     waybillsRef,
