@@ -22,7 +22,7 @@ import {
 import { addLog, getAllPartnerProfiles, getAllSellerProfiles } from "./firebase.server";
 import { LofaSellers } from "~/components/seller";
 import { firestore, storage } from "./firebaseInit.server";
-import { dateToDayStr } from "~/utils/date";
+import { dateToDayStr, getTimezoneDate } from "~/utils/date";
 
 export async function debug_fixProductStorage() {
   const productsRef = collection(firestore, `products`);
@@ -469,7 +469,7 @@ export async function debug_addProviderNameToWaybills() {
 }
 
 export async function debug_timezone() {
-  let day = new Date();
+  let day = getTimezoneDate(new Date());
   day.setDate(day.getDate() + 1);
   const hour = day.getHours();
   const nextDayStr = dateToDayStr(day);
