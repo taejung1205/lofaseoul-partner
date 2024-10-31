@@ -19,9 +19,10 @@ import {
   ref,
   uploadBytes,
 } from "firebase/storage";
-import { getAllPartnerProfiles, getAllSellerProfiles } from "./firebase.server";
+import { addLog, getAllPartnerProfiles, getAllSellerProfiles } from "./firebase.server";
 import { LofaSellers } from "~/components/seller";
 import { firestore, storage } from "./firebaseInit.server";
+import { dateToDayStr, getTimezoneDate } from "~/utils/date";
 
 export async function debug_fixProductStorage() {
   const productsRef = collection(firestore, `products`);
@@ -465,4 +466,16 @@ export async function debug_addProviderNameToWaybills() {
   } catch (error) {
     console.error("Error updating items:", error);
   }
+}
+
+export async function debug_timezone() {
+  let day = getTimezoneDate(new Date());
+  day.setDate(day.getDate() + 1);
+  const hour = day.getHours();
+  const nextDayStr = dateToDayStr(day);
+
+  addLog("timezone", {
+    date: nextDayStr,
+    hour: hour
+  })
 }
