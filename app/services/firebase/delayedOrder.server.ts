@@ -14,7 +14,7 @@ import {
 import { addLog, getPartnerProfile } from "./firebase.server";
 import { sendAligoMessage } from "../aligo.server";
 import { firestore } from "./firebaseInit.server";
-import { dateToDayStr } from "~/utils/date";
+import { dateToDayStr, getTimezoneDate } from "~/utils/date";
 import { OrderItem } from "~/components/order";
 
 /**
@@ -75,7 +75,7 @@ export async function shareDelayedWaybills({
   try {
     let waybillBatch = writeBatch(firestore);
 
-    let nextDay = new Date();
+    let nextDay = getTimezoneDate(new Date());
     nextDay.setDate(nextDay.getDate() + 1);
     const nextDayStr = dateToDayStr(nextDay);
 
@@ -172,7 +172,7 @@ export async function shareDelayedWaybills({
  * @returns
  */
 export async function getDelayedOrdersCount(day: number) {
-  const date = new Date();
+  const date = getTimezoneDate(new Date());
   date.setDate(date.getDate() - day);
   const timestamp = Timestamp.fromDate(date);
 
@@ -194,7 +194,7 @@ export async function getPartnerDelayedOrdersCount(
   day: number,
   providerName: string
 ) {
-  const date = new Date();
+  const date = getTimezoneDate(new Date());
   date.setDate(date.getDate() - day);
   const timestamp = Timestamp.fromDate(date);
 

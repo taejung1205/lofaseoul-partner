@@ -469,9 +469,9 @@ export async function debug_addProviderNameToWaybills() {
 }
 
 export async function debug_timezone() {
-  let day = getTimezoneDate(new Date());
+  let day = (new Date());
   day.setDate(day.getDate() + 1);
-  const hour = day.getHours();
+  const hour = day.getUTCHours();
   const nextDayStr = dateToDayStr(day);
 
   addLog("timezone", {
