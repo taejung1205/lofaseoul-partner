@@ -469,13 +469,15 @@ export async function debug_addProviderNameToWaybills() {
 }
 
 export async function debug_timezone() {
-  let day = getTimezoneDate(new Date());
+  let day = (getTimezoneDate(new Date()));
   day.setDate(day.getDate() + 1);
   const hour = day.getHours();
+  const utchour = day.getUTCHours();
   const nextDayStr = dateToDayStr(day);
 
   addLog("timezone", {
     date: nextDayStr,
-    hour: hour
+    hour: hour,
+    utchour: utchour
   })
 }
