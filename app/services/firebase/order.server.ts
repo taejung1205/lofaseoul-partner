@@ -12,7 +12,7 @@ import {
   where,
   writeBatch,
 } from "firebase/firestore";
-import { dateToDayStr, dayStrToDate } from "~/utils/date";
+import { dateToDayStr, dayStrToDate, getTimezoneDate } from "~/utils/date";
 import { firestore } from "./firebaseInit.server";
 import { OrderItem } from "~/components/order";
 import { PartnerProfile } from "~/components/partner_profile";
@@ -30,7 +30,7 @@ import { sendAligoMessage } from "../aligo.server";
  *  정산 기록이 있을 경우 오늘 날짜의 string, 없을 경우 null
  */
 export async function isTodayOrderShared() {
-  const today = dateToDayStr(new Date(), false);
+  const today = dateToDayStr(getTimezoneDate(new Date()));
   const docRef = doc(firestore, "orders", today);
   const docSnap = await getDoc(docRef);
   if (docSnap.exists()) {
@@ -273,7 +273,7 @@ export async function deleteOrders({
  * @returns
  */
 export async function getTodayOrdersCount() {
-  const today = dateToDayStr(new Date(), false);
+  const today = dateToDayStr(getTimezoneDate(new Date()));
   const ordersRef = collection(firestore, `orders/${today}/items`);
   const snapshot = await getCountFromServer(ordersRef);
   return snapshot.data().count;
@@ -285,7 +285,7 @@ export async function getTodayOrdersCount() {
  * @returns
  */
 export async function getPartnerTodayOrdersCount(providerName: string) {
-  const today = dateToDayStr(new Date(), false);
+  const today = dateToDayStr(getTimezoneDate(new Date()));
   const ordersRef = collection(firestore, `orders/${today}/items`);
   const orderQuery = query(
     ordersRef,

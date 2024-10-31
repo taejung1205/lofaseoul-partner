@@ -286,7 +286,7 @@ export async function replyMessage({
 }) {
   try {
     const time = getTimezoneDate(new Date());
-    const dateStr = dateToDayStr(new Date());
+    const dateStr = dateToDayStr(getTimezoneDate(new Date()));
     const timeStr = `${dateStr} ${time.getHours()}:${String(
       time.getMinutes()
     ).padStart(2, "0")}`;

@@ -2,6 +2,7 @@ import { ActionFunction } from "@remix-run/node";
 import { useSubmit } from "@remix-run/react";
 import { useRef } from "react";
 import { debug_addProviderNameToWaybills, debug_timezone } from "~/services/firebase/debug.server";
+import { addLog } from "~/services/firebase/firebase.server";
 
 export const action: ActionFunction = async ({ request }) => {
   console.log("request submitted");
@@ -14,6 +15,7 @@ export const action: ActionFunction = async ({ request }) => {
   // if(result.data){
   //   console.log(result.data);
   // }
+  await addLog("test-action", {hour: new Date().getHours()})
   await debug_timezone();
   return null;
 };
