@@ -1101,9 +1101,10 @@ export default function AdminSettlementShare() {
             />
             <div style={{ width: "100px" }}>정산금액</div>
             <div>
-              {(priceEdit * Math.abs(amountEdit) * (100 - feeEdit)) / 100.0 -
+              {((priceEdit * (100 - feeEdit)) / 100.0 -
                 partnerDiscountLevyEdit +
-                lofaAdjustmentFeeEdit}
+                lofaAdjustmentFeeEdit) *
+                Math.abs(amountEdit)}
             </div>
           </div>
           <div style={{ height: "20px" }} />
