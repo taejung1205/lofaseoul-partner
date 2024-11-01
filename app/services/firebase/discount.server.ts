@@ -41,7 +41,7 @@ export async function addDiscountData({ data }: { data: string }) {
         and(
           where("seller", "==", item.seller),
           where("productName", "==", item.productName),
-          or(
+          and(
             where("endDate", ">=", Timestamp.fromDate(startDate)),
             where("startDate", "<=", Timestamp.fromDate(endDate))
           )
@@ -49,9 +49,12 @@ export async function addDiscountData({ data }: { data: string }) {
       );
       const querySnapshot = await getDocs(discountDataQuery);
       if (!querySnapshot.empty) {
-        return `중복된 할인내역이 있습니다. (${dateToDayStr(
-          startDate
-        )}~${dateToDayStr(endDate)} ${item.productName})`;
+        const data = await querySnapshot.docs[0].data();
+        return `중복된 할인내역이 있습니다.\n(${startDate}~${endDate} ${
+          item.productName
+        })\n(${data.startDate.toDate()}~${data.endDate.toDate()} ${
+          item.productName
+        })`;
       }
     }
 
