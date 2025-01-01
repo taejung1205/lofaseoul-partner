@@ -210,12 +210,80 @@ export default function Page() {
 
           array.push(item);
         }
+
+        const isOverlapping = hasOverlappingDiscounts(array);
+        if (isOverlapping != null) {
+          setNoticeModalStr(
+            `파일에 기간이 겹치는 할인내역이 존재합니다.\n${isOverlapping}`
+          );
+          setIsNoticeModalOpened(true);
+          setFileName("");
+          setItems([]);
+          e.target.value = "";
+          return false;
+        }
+
         console.log("할인내역 개수: ", array.length);
         setItems(array);
       };
       reader.readAsArrayBuffer(e.target.files[0]);
       setFileName(e.target.files[0].name);
       e.target.value = "";
+    }
+
+    function hasOverlappingDiscounts(items: DiscountData[]): string | null {
+      // 그룹화: productName별로 아이템 분류
+      const groupedByProductName = items.reduce(
+        (acc: Record<string, DiscountData[]>, item) => {
+          if (!acc[item.productName]) {
+            acc[item.productName] = [];
+          }
+          acc[item.productName].push(item);
+          return acc;
+        },
+        {}
+      );
+
+      // 기간 겹침 확인 함수
+      function isOverlapping(
+        period1: { startDate: Date; endDate: Date },
+        period2: { startDate: Date; endDate: Date }
+      ): boolean {
+        return (
+          period1.startDate <= period2.endDate &&
+          period2.startDate <= period1.endDate
+        );
+      }
+
+      // 그룹 내 기간 겹침 확인
+      for (const productName in groupedByProductName) {
+        const periods = groupedByProductName[productName];
+
+        // 기간 정렬 (선택사항, 빠른 확인 가능)
+        periods.sort(
+          (a, b) =>
+            new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
+        );
+
+        for (let i = 0; i < periods.length; i++) {
+          for (let j = i + 1; j < periods.length; j++) {
+            const period1 = {
+              startDate: new Date(periods[i].startDate),
+              endDate: new Date(periods[i].endDate),
+            };
+            const period2 = {
+              startDate: new Date(periods[j].startDate),
+              endDate: new Date(periods[j].endDate),
+            };
+
+            if (isOverlapping(period1, period2)) {
+              return productName; // 처음 발견된 중복 항목 반환
+            }
+          }
+        }
+      }
+
+      return null; // 중복 없음
     }
   };
 
