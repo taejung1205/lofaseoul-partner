@@ -5,7 +5,7 @@ import {
   debug_addProviderNameToWaybills,
   debug_timezone,
 } from "~/services/firebase/debug.server";
-import { getDiscountData } from "~/services/firebase/discount.server";
+import { deleteDiscountData, getDiscountData } from "~/services/firebase/discount.server";
 import { addLog } from "~/services/firebase/firebase.server";
 
 export const action: ActionFunction = async ({ request }) => {
@@ -74,9 +74,21 @@ export const action: ActionFunction = async ({ request }) => {
       }
     }
   }
+
+  // Collect IDs from overlaps, excluding one item per group
+const excludedIds: string[] = overlaps.flatMap((overlap) => {
+  // Keep all items except one (e.g., the first item)
+  return overlap.items.slice(1).map((item) => item.id);
+});
+
+const ids = JSON.stringify(excludedIds);
+const result = await deleteDiscountData({
+  data: ids,
+});
   
   if (overlaps.length > 0) {
     console.log("Overlapping items found:", overlaps);
+
     return overlaps;
   } else {
     console.log("No overlapping items found.");
