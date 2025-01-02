@@ -243,7 +243,7 @@ export default function Page() {
         },
         {}
       );
-
+    
       // 기간 겹침 확인 함수
       function isOverlapping(
         period1: { startDate: Date; endDate: Date },
@@ -254,36 +254,42 @@ export default function Page() {
           period2.startDate <= period1.endDate
         );
       }
-
+    
       // 그룹 내 기간 겹침 확인
       for (const productName in groupedByProductName) {
         const periods = groupedByProductName[productName];
-
+    
         // 기간 정렬 (선택사항, 빠른 확인 가능)
         periods.sort(
           (a, b) =>
             new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
         );
-
+    
         for (let i = 0; i < periods.length; i++) {
           for (let j = i + 1; j < periods.length; j++) {
             const period1 = {
               startDate: new Date(periods[i].startDate),
               endDate: new Date(periods[i].endDate),
+              seller: periods[i].seller,
             };
             const period2 = {
               startDate: new Date(periods[j].startDate),
               endDate: new Date(periods[j].endDate),
+              seller: periods[j].seller,
             };
-
-            if (isOverlapping(period1, period2)) {
+    
+            // 기간이 겹치고 seller가 동일한 경우
+            if (
+              isOverlapping(period1, period2) &&
+              period1.seller === period2.seller
+            ) {
               return productName; // 처음 발견된 중복 항목 반환
             }
           }
         }
       }
-
-      return null; // 중복 없음
+    
+      return null; // 겹치는 항목이 없을 경우
     }
   };
 

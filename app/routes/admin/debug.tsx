@@ -25,7 +25,6 @@ export const action: ActionFunction = async ({ request }) => {
     productName: string;
   }
 
-  // Helper function to check if two date ranges overlap
   const isOverlap = (
     range1: { startDate: Date; endDate: Date },
     range2: { startDate: Date; endDate: Date }
@@ -34,43 +33,48 @@ export const action: ActionFunction = async ({ request }) => {
       range1.startDate <= range2.endDate && range1.endDate >= range2.startDate
     );
   };
-
-  // Group by productName
-  const groupedByProductName: Record<
+  
+  // Group by productName and seller
+  const groupedByProductNameAndSeller: Record<
     string,
-    { id: string; startDate: Date; endDate: Date }[]
+    { seller: string; id: string; startDate: Date; endDate: Date }[]
   > = searchResult.reduce((acc, item) => {
-    const { productName, startDate, endDate } = item.data;
-    if (!acc[productName]) {
-      acc[productName] = [];
+    const { productName, seller, startDate, endDate } = item.data;
+    const key = `${productName}_${seller}`; // Combine productName and seller as the key
+    if (!acc[key]) {
+      acc[key] = [];
     }
-    acc[productName].push({
+    acc[key].push({
+      seller,
       id: item.id,
       startDate: new Date(startDate),
       endDate: new Date(endDate),
     });
     return acc;
-  }, {} as Record<string, { id: string; startDate: Date; endDate: Date }[]>);
-
+  }, {} as Record<string, { seller: string; id: string; startDate: Date; endDate: Date }[]>);
+  
   // Check for overlaps in each group
   const overlaps: {
     productName: string;
+    seller: string;
     items: { id: string; startDate: Date; endDate: Date }[];
   }[] = [];
-
-  for (const [productName, items] of Object.entries(groupedByProductName)) {
+  
+  for (const [key, items] of Object.entries(groupedByProductNameAndSeller)) {
+    const [productName, seller] = key.split("_"); // Extract productName and seller from the key
     for (let i = 0; i < items.length; i++) {
       for (let j = i + 1; j < items.length; j++) {
         if (isOverlap(items[i], items[j])) {
           overlaps.push({
             productName,
+            seller,
             items: [items[i], items[j]],
           });
         }
       }
     }
   }
-
+  
   if (overlaps.length > 0) {
     console.log("Overlapping items found:", overlaps);
     return overlaps;
