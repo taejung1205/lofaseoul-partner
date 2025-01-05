@@ -126,9 +126,9 @@ export async function getDiscountData({
       discountDataRef,
       and(
         where("providerName", "==", providerName),
-        where("seller", "==", seller),
+        where("endDate", ">=", Timestamp.fromDate(startDate)),
         where("startDate", "<=", Timestamp.fromDate(endDate)),
-        where("endDate", ">=", Timestamp.fromDate(startDate))
+        where("seller", "==", seller)
       )
     );
   } else if (isUsingProviderName && !isUsingSeller) {
@@ -136,16 +136,16 @@ export async function getDiscountData({
       discountDataRef,
       and(
         where("providerName", "==", providerName),
-        where("startDate", "<=", Timestamp.fromDate(endDate)),
-        where("endDate", ">=", Timestamp.fromDate(startDate))
+        where("endDate", ">=", Timestamp.fromDate(startDate)),
+        where("startDate", "<=", Timestamp.fromDate(endDate))
       )
     );
   } else if (!isUsingProviderName && isUsingSeller) {
     discountDataQuery = query(
       discountDataRef,
       and(
-        where("startDate", "<=", Timestamp.fromDate(endDate)),
         where("endDate", ">=", Timestamp.fromDate(startDate)),
+        where("startDate", "<=", Timestamp.fromDate(endDate)),
         where("seller", "==", seller)
       )
     );
@@ -153,8 +153,8 @@ export async function getDiscountData({
     discountDataQuery = query(
       discountDataRef,
       and(
-        where("startDate", "<=", Timestamp.fromDate(endDate)),
-        where("endDate", ">=", Timestamp.fromDate(startDate))
+        where("endDate", ">=", Timestamp.fromDate(startDate)),
+        where("startDate", "<=", Timestamp.fromDate(endDate))
       )
     );
   }
