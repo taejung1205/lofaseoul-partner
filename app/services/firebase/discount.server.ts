@@ -119,19 +119,45 @@ export async function getDiscountData({
   const discountDataRef = collection(firestore, `discount-db`);
   const isUsingSeller = seller.length > 0 && seller != "all";
   const isUsingProviderName = providerName.length > 0;
-  let discountDataQuery = query(
-    discountDataRef,
-    and(
-      where("startDate", "<=", Timestamp.fromDate(endDate)),
-      where("endDate", ">=", Timestamp.fromDate(startDate)),
-      where("seller", isUsingSeller ? "==" : ">=", isUsingSeller ? seller : ""),
-      where(
-        "providerName",
-        isUsingProviderName ? "==" : ">=",
-        isUsingProviderName ? providerName : ""
+  let discountDataQuery;
+
+  if (isUsingProviderName && isUsingSeller) {
+    discountDataQuery = query(
+      discountDataRef,
+      and(
+        where("providerName", "==", providerName),
+        where("seller", "==", seller),
+        where("startDate", "<=", Timestamp.fromDate(endDate)),
+        where("endDate", ">=", Timestamp.fromDate(startDate))
       )
-    )
-  );
+    );
+  } else if (isUsingProviderName && !isUsingSeller) {
+    discountDataQuery = query(
+      discountDataRef,
+      and(
+        where("providerName", "==", providerName),
+        where("startDate", "<=", Timestamp.fromDate(endDate)),
+        where("endDate", ">=", Timestamp.fromDate(startDate))
+      )
+    );
+  } else if (!isUsingProviderName && isUsingSeller) {
+    discountDataQuery = query(
+      discountDataRef,
+      and(
+        where("startDate", "<=", Timestamp.fromDate(endDate)),
+        where("endDate", ">=", Timestamp.fromDate(startDate)),
+        where("seller", "==", seller)
+      )
+    );
+  } else {
+    discountDataQuery = query(
+      discountDataRef,
+      and(
+        where("startDate", "<=", Timestamp.fromDate(endDate)),
+        where("endDate", ">=", Timestamp.fromDate(startDate))
+      )
+    );
+  }
 
   const querySnap = await getDocs(discountDataQuery);
   const searchResult: { data: DocumentData; id: string }[] = [];
